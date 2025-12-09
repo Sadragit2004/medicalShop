@@ -1,0 +1,381 @@
+{% extends "account_template.html" %}
+
+{% block content %}
+  <!-- ALL ICONS -->
+  <svg class="hidden">
+    <symbol id="moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
+      <path fill-rule="evenodd"
+        d="M9.528 1.718a.75.75 0 0 1 .162.819A8.97 8.97 0 0 0 9 6a9 9 0 0 0 9 9 8.97 8.97 0 0 0 3.463-.69.75.75 0 0 1 .981.98 10.503 10.503 0 0 1-9.694 6.46c-5.799 0-10.5-4.7-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 0 1 .818.162Z"
+        clip-rule="evenodd" />
+    </symbol>
+    <symbol id="sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
+      <path
+        d="M12 2.25a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0V3a.75.75 0 0 1 .75-.75ZM7.5 12a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM18.894 6.166a.75.75 0 0 0-1.06-1.06l-1.591 1.59a.75.75 0 1 0 1.06 1.061l1.591-1.59ZM21.75 12a.75.75 0 0 1-.75.75h-2.25a.75.75 0 0 1 0-1.5H21a.75.75 0 0 1 .75.75ZM17.834 18.894a.75.75 0 0 0 1.06-1.06l-1.59-1.591a.75.75 0 1 0-1.061 1.06l1.59 1.591ZM12 18a.75.75 0 0 1 .75.75V21a.75.75 0 0 1-1.5 0v-2.25A.75.75 0 0 1 12 18ZM7.758 17.303a.75.75 0 0 0-1.061-1.06l-1.591 1.59a.75.75 0 0 0 1.06 1.061l1.591-1.59ZM6 12a.75.75 0 0 1-.75.75H3a.75.75 0 0 1 0-1.5h2.25A.75.75 0 0 1 6 12ZM6.697 7.757a.75.75 0 0 0 1.06-1.06l-1.59-1.591a.75.75 0 0 0-1.061 1.06l1.59 1.591Z" />
+    </symbol>
+    <symbol id="chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+      stroke="currentColor" class="size-6">
+      <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+    </symbol>
+  </svg>
+
+  <section class="relative flex items-center justify-center min-h-screen w-full">
+    <!-- background -->
+    <div class="pointer-events-none absolute inset-0 flex w-screen items-center justify-center overflow-hidden
+  [mask-image:radial-gradient(circle_at_center,rgba(255,255,255,1)_0%,rgba(255,255,255,0)_85%)]">
+
+      <svg
+        class="absolute left-0 top-0 h-full w-full stroke-black/10 stroke-[2]
+    [mask-image:radial-gradient(circle_at_center,rgba(255,255,255,1)_20%,rgba(255,255,255,0)_95%)] dark:stroke-white/10">
+        <rect width="100%" height="100%" stroke-width="0" fill="url(#grid-pattern)"></rect>
+        <defs>
+          <pattern id="grid-pattern" viewBox="0 0 64 64" width="60" height="60" patternUnits="userSpaceOnUse">
+            <path d="M64 0H0V64" fill="none"></path>
+          </pattern>
+        </defs>
+      </svg>
+    </div>
+
+    <div
+      class="relative w-[27rem] mx-5 flex flex-col justify-center pt-12 pb-8 px-4 md:px-8 bg-white dark:bg-gray-800 shadow-md rounded-xl">
+      <div class="flex items-center justify-center">
+        <button class="toggle-theme absolute left-2 top-2 flex-center p-1.5 rounded-full text-gray-300">
+          <svg class="inline-block dark:hidden size-5">
+            <use href="#moon" />
+          </svg>
+          <svg class="hidden dark:inline size-5">
+            <use href="#sun" />
+          </svg>
+        </button>
+        <a href="/" class="flex flex-col text-center">
+          <span class="font-MorabbaMedium text-4xl flex items-center">
+            <span class="text-blue-500">کارین</span> شاپ
+          </span>
+        </a>
+      </div>
+
+      <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+        <!-- تغییر متن: کد تأیید -->
+        <p class="mb-2 text-gray-800 dark:text-gray-100 font-DanaMedium text-lg">کد تأیید را وارد کنید</p>
+
+        <!-- فرم اصلی برای تأیید کد -->
+        <form class="space-y-5" method="POST">
+          {% csrf_token %}
+
+          <div>
+            <!-- تغییر متن: توضیح کد تأیید -->
+            <label for="code" class="block text-sm/6 font-medium text-gray-500 dark:text-gray-300">
+              کد ۵ رقمی ارسال شده به شماره <span class="text-blue-500 font-medium">{{ mobile }}</span> را وارد کنید
+            </label>
+
+            <!-- فیلدهای کد OTP -->
+            <div class="flex justify-center gap-3 mt-3" dir="ltr">
+              {% for i in "12345" %}
+                <input
+                  type="text"
+                  name="code{{ i }}"
+                  maxlength="1"
+                  inputmode="numeric"
+                  class="w-14 h-14 rounded-lg bg-slate-100 dark:bg-gray-900 border border-transparent text-gray-800 dark:text-gray-100 text-center text-xl font-bold focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-blue-400 outline-none transition-all appearance-none"
+                  autocomplete="off"
+                  {% if forloop.first %}autofocus{% endif %}
+                >
+              {% endfor %}
+            </div>
+
+            <!-- تایمر -->
+            <div class="mt-4 text-center">
+              <div class="text-gray-500 dark:text-gray-400 text-sm">
+                زمان باقی‌مانده:
+                <span id="timer" class="font-medium text-indigo-500">02:00</span>
+              </div>
+            </div>
+
+            <!-- نمایش خطاها -->
+            {% if form.non_field_errors %}
+              <div class="mt-2 text-center">
+                {% for error in form.non_field_errors %}
+                  <p class="text-sm text-red-500">{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+
+          <div>
+            <button type="submit" name="verify" class="submit-btn w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-md transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+              تأیید کد
+            </button>
+          </div>
+        </form>
+
+        <!-- لینک‌های پایین -->
+        <div class="mt-6 space-y-3">
+          <!-- فرم ارسال مجدد -->
+          <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="resend" value="true">
+            <button type="submit"
+                    id="resendBtn"
+                    class="flex items-center gap-x-1 text-blue-400 hover:text-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-blue-400"
+                    {% if not can_resend %}disabled{% endif %}>
+              <span id="resendText">
+                {% if can_resend %}
+                  ارسال مجدد کد
+                {% else %}
+                  ارسال مجدد کد (<span id="countdown">120</span> ثانیه)
+                {% endif %}
+              </span>
+              <svg class="size-4 rotate-90">
+                <use href="#chevron" />
+              </svg>
+            </button>
+          </form>
+
+          <div>
+            <a href="{% url 'account:send_mobile' %}" class="flex items-center gap-x-1 text-blue-400 hover:text-blue-500 transition-all">
+              تغییر شماره موبایل
+              <svg class="size-4 rotate-90">
+                <use href="#chevron" />
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- نمایش پیام‌ها -->
+        {% if messages %}
+          <div class="mt-6 text-center">
+            {% for message in messages %}
+              <div class="p-3 rounded-md {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // تابع تغییر تم
+      function toggleDarkMode() {
+        const html = document.documentElement;
+        const moonIcon = document.querySelector('#moon-icon');
+        const sunIcon = document.querySelector('#sun-icon');
+
+        if (html.classList.contains('dark')) {
+          html.classList.remove('dark');
+          localStorage.theme = 'light';
+          if (moonIcon) moonIcon.classList.remove('hidden');
+          if (sunIcon) sunIcon.classList.add('hidden');
+        } else {
+          html.classList.add('dark');
+          localStorage.theme = 'dark';
+          if (moonIcon) moonIcon.classList.add('hidden');
+          if (sunIcon) sunIcon.classList.remove('hidden');
+        }
+      }
+
+      // متصل کردن دکمه تغییر تم
+      const toggleBtn = document.querySelector('.toggle-theme');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', toggleDarkMode);
+      }
+
+      // مدیریت فیلدهای کد OTP
+      const inputs = document.querySelectorAll('input[type="text"][maxlength="1"]');
+
+      inputs.forEach((input, index) => {
+        // فقط اعداد قبول کن
+        input.addEventListener('input', function(e) {
+          this.value = this.value.replace(/[^0-9]/g, '');
+
+          // اگر عدد وارد شد به فیلد بعدی برو
+          if (this.value.length === 1 && index < inputs.length - 1) {
+            inputs[index + 1].focus();
+            inputs[index + 1].select();
+          }
+        });
+
+        // پشتیبانی از backspace
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Backspace' && this.value === '' && index > 0) {
+            inputs[index - 1].focus();
+            inputs[index - 1].select();
+          }
+        });
+
+        // پشتیبانی از arrow keys
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'ArrowLeft' && index > 0) {
+            inputs[index - 1].focus();
+            inputs[index - 1].select();
+          } else if (e.key === 'ArrowRight' && index < inputs.length - 1) {
+            inputs[index + 1].focus();
+            inputs[index + 1].select();
+          }
+        });
+
+        // پشتیبانی از paste
+        input.addEventListener('paste', function(e) {
+          e.preventDefault();
+          const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
+
+          if (pastedData.length >= 5) {
+            inputs.forEach((input, i) => {
+              if (i < 5) {
+                input.value = pastedData[i] || '';
+              }
+            });
+            inputs[4].focus();
+            inputs[4].select();
+          }
+        });
+
+        // انتخاب متن هنگام فوکوس
+        input.addEventListener('focus', function() {
+          this.select();
+        });
+      });
+
+      // تایمر و مدیریت ارسال مجدد
+      const timerElement = document.getElementById('timer');
+      const countdownElement = document.getElementById('countdown');
+      const resendBtn = document.getElementById('resendBtn');
+      const resendText = document.getElementById('resendText');
+
+      // زمان اولیه از Django (اگر وجود دارد) یا 120 ثانیه
+      const initialTime = {{ remaining_seconds|default:120 }};
+      let timeLeft = initialTime;
+      const canResendInitial = {{ can_resend|yesno:"true,false" }};
+
+      // تابع بروزرسانی تایمر
+      function updateTimer() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+
+        // بروزرسانی نمایش تایمر
+        if (timerElement) {
+          timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        if (countdownElement) {
+          countdownElement.textContent = timeLeft;
+        }
+
+        // اگر زمان تمام شد
+        if (timeLeft <= 0) {
+          // تایمر را به 00:00 تنظیم کن
+          if (timerElement) {
+            timerElement.textContent = "00:00";
+            timerElement.classList.remove('text-indigo-500');
+            timerElement.classList.add('text-red-500');
+          }
+
+          // دکمه ارسال مجدد را فعال کن
+          if (resendBtn) {
+            resendBtn.disabled = false;
+            if (resendText) {
+              resendText.innerHTML = 'ارسال مجدد کد';
+            }
+          }
+          return; // تایمر را متوقف کن
+        }
+
+        // کاهش زمان و ادامه تایمر
+        timeLeft--;
+        setTimeout(updateTimer, 1000);
+      }
+
+      // تنظیم وضعیت اولیه
+      if (canResendInitial) {
+        // اگر از ابتدا می‌توان ارسال مجدد کرد
+        if (timerElement) {
+          timerElement.textContent = "00:00";
+          timerElement.classList.remove('text-indigo-500');
+          timerElement.classList.add('text-red-500');
+        }
+        if (resendBtn) {
+          resendBtn.disabled = false;
+        }
+      } else if (timeLeft > 0) {
+        // اگر زمان باقی‌مانده وجود دارد، تایمر را شروع کن
+        updateTimer();
+      } else {
+        // اگر زمان صفر است
+        if (timerElement) {
+          timerElement.textContent = "00:00";
+          timerElement.classList.remove('text-indigo-500');
+          timerElement.classList.add('text-red-500');
+        }
+        if (resendBtn) {
+          resendBtn.disabled = false;
+          if (resendText) {
+            resendText.innerHTML = 'ارسال مجدد کد';
+          }
+        }
+      }
+
+      // فرم اصلی - اعتبارسنجی قبل از ارسال
+      const mainForm = document.querySelector('form[method="POST"]');
+      if (mainForm && !mainForm.querySelector('input[name="resend"]')) {
+        mainForm.addEventListener('submit', function(e) {
+          // فقط اگر دکمه تأیید کد زده شده
+          if (e.submitter && e.submitter.name === 'verify') {
+            // جمع‌آوری همه کدها
+            let fullCode = '';
+            inputs.forEach(input => {
+              fullCode += input.value;
+            });
+
+            // اگر کد کامل نیست، جلوگیری از ارسال
+            if (fullCode.length !== 5) {
+              e.preventDefault();
+              alert('لطفاً کد ۵ رقمی را کامل وارد کنید.');
+              // فوکوس روی اولین فیلد خالی
+              inputs.forEach(input => {
+                if (input.value === '') {
+                  input.focus();
+                  return;
+                }
+              });
+              return false;
+            }
+
+            // ایجاد یک فیلد مخفی برای کد کامل
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'otp_code';
+            hiddenInput.value = fullCode;
+            this.appendChild(hiddenInput);
+          }
+        });
+      }
+
+      // مدیریت نمایش پیام‌های Django
+      {% if messages %}
+        // اگر پیام موفقیت ارسال مجدد داریم
+        {% for message in messages %}
+          {% if 'ارسال شد' in message.message or 'ارسال مجدد' in message.message %}
+            // بازنشانی تایمر بعد از ارسال مجدد موفق
+            if (timeLeft <= 0) {
+              timeLeft = 120; // 2 دقیقه جدید
+              if (timerElement) {
+                timerElement.textContent = "02:00";
+                timerElement.classList.remove('text-red-500');
+                timerElement.classList.add('text-indigo-500');
+              }
+              if (resendBtn) {
+                resendBtn.disabled = true;
+                if (resendText) {
+                  resendText.innerHTML = 'ارسال مجدد کد (<span id="countdown">120</span> ثانیه)';
+                }
+              }
+              // تایمر جدید را شروع کن
+              setTimeout(updateTimer, 1000);
+            }
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    });
+  </script>
+{% endblock content %}
