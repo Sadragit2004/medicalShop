@@ -222,13 +222,20 @@
         <div class="w-full lg:w-1/4 lg:sticky top-5 flex flex-col gap-y-6">
             <!-- PRICE -->
             {% if default_sale_type %}
-            <div class="flex items-center gap-x-1">
-                <p class="text-2xl font-DanaDemiBold" id="current-price">{{ default_sale_type.price|intcomma }}</p>
-                <p class="">تومان</p>
-                {% if default_sale_type.typeSale == 2 %}
-                <span class="text-sm text-gray-500 mr-2" id="carton-unit-info">
-                    (هر کارتن {{ default_sale_type.memberCarton }} عددی)
+            <div class="space-y-2">
+                {% if discount_percent %}
+                <span class="inline-block px-2 py-1 rounded-lg bg-red-50 text-red-600 text-xs font-DanaDemiBold">
+                    {{ discount_percent }}% تخفیف
                 </span>
+                {% endif %}
+                <div class="flex items-baseline gap-x-1">
+                    <p class="text-2xl font-DanaDemiBold text-blue-600" id="current-price">{{ default_sale_type.price|intcomma }}</p>
+                    <p class="">تومان</p>
+                </div>
+                {% if default_sale_type.typeSale == 2 %}
+                <p class="text-sm text-gray-500" id="carton-unit-info">
+                    هر کارتن {{ default_sale_type.memberCarton }} عددی
+                </p>
                 {% endif %}
             </div>
 
@@ -288,17 +295,15 @@
             </div>
 
             <!-- نمایش جمع کل -->
-            <div class="w-full flex items-center justify-between dark:bg-gray-900 dark:text-gray-400 bg-gray-100 transition-all rounded-lg py-2 px-2 xl:px-3 font-DanaMedium text-sm xl:text-base">
-                <p>مجموع خرید :</p>
-                <div class="flex flex-col items-end">
-                    <p id="total-price">{{ default_sale_type.price|intcomma }} تومان</p>
-                    {% if default_sale_type.typeSale == 2 %}
-                    <small class="text-xs text-gray-500" id="carton-detail">
-                        1 کارتن × {{ default_sale_type.price|intcomma }}
-                    </small>
-                    {% endif %}
-                </div>
+            <div class="w-full flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg py-3 px-4 font-DanaMedium text-lg">
+                <p class="text-gray-700">مجموع خرید:</p>
+                <p id="total-price" class="text-blue-600">{{ default_sale_type.price|intcomma }} تومان</p>
             </div>
+            {% if default_sale_type.typeSale == 2 %}
+            <div class="text-sm text-gray-500 text-center" id="carton-detail">
+                1 کارتن × {{ default_sale_type.memberCarton|default:1 }} عدد × {{ default_sale_type.price|intcomma }}
+            </div>
+            {% endif %}
 
             <!-- پیشنهاد خرید -->
             <div class="relative overflow-hidden text-sm font-DanaDemiBold text-right">
@@ -413,7 +418,7 @@
                             </div>
                         </div>
                         <!-- badge offer -->
-                        {% if related.has_discount %}
+                        {% if related.discount_percent %}
                         <span class="product-card_badge">{{ related.discount_percent }}% تخفیف‌</span>
                         {% endif %}
                     </div>
@@ -448,7 +453,12 @@
                             </div>
                             <!-- Price -->
                             <div class="product-card_price">
+                                {% if related.discount_percent %}
+                                <del class="text-xs text-gray-400">{{ related.price|intcomma }}</del>
+                                <p>{{ related.final_price|intcomma }}</p>
+                                {% else %}
                                 <p>{{ related.price|intcomma }}</p>
+                                {% endif %}
                                 <span>تومان</span>
                             </div>
                         </div>
@@ -735,7 +745,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentSaleType === 2) { // CARTON = 2
             // quantity را به عنوان تعداد کارتن در نظر می‌گیریم
             cartons = quantity;
-            total = currentPrice * currentMemberCarton * cartons; // قیمت پایه × تعداد در کارتن × تعداد کارتن
+            total = currentPrice * currentMemberCarton * cartons; // قیمت نهایی × تعداد در کارتن × تعداد کارتن
 
             // نمایش اطلاعات کارتن
             if (cartonCountElement) {
@@ -776,6 +786,39 @@ document.addEventListener('DOMContentLoaded', function() {
         // نمایش قیمت کل
         totalPriceElement.textContent = total.toLocaleString('fa-IR') + ' تومان';
 
+        // به‌روزرسانی نمایش قیمت واحد (بالای باکس)
+        const currentPriceEl = document.getElementById('current-price');
+        const currentPriceOriginalEl = document.getElementById('current-price-original');
+        if (currentPriceEl) {
+            currentPriceEl.textContent = currentPrice.toLocaleString('fa-IR');
+        }
+        if (currentPriceOriginalEl) {
+            if (currentBasePrice > currentPrice) {
+                currentPriceOriginalEl.classList.remove('hidden');
+                currentPriceOriginalEl.textContent = currentBasePrice.toLocaleString('fa-IR');
+            } else {
+                currentPriceOriginalEl.classList.add('hidden');
+            }
+        }
+
+        // نمایش قیمت پایه (خط خورده) در صورت وجود تخفیف
+        const totalPriceOriginal = document.getElementById('total-price-original');
+        if (totalPriceOriginal) {
+            let baseTotal;
+            if (currentSaleType === 2) {
+                baseTotal = currentBasePrice * currentMemberCarton * cartons;
+            } else {
+                baseTotal = currentBasePrice * quantity;
+            }
+
+            if (currentBasePrice > currentPrice) {
+                totalPriceOriginal.classList.remove('hidden');
+                totalPriceOriginal.textContent = baseTotal.toLocaleString('fa-IR') + ' تومان';
+            } else {
+                totalPriceOriginal.classList.add('hidden');
+            }
+        }
+
         // مدیریت وضعیت دکمه کاهش
         const minQuantity = currentLimitedSale > 0 ? currentLimitedSale :
                            (currentSaleType === 2 ? 1 : 1);
@@ -810,7 +853,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // به‌روزرسانی متغیرها
                 currentSaleType = parseInt(btn.getAttribute('data-sale-type'));
-                currentPrice = parseInt(btn.getAttribute('data-price'));
+                currentPrice = parseInt(btn.getAttribute('data-final-price') || btn.getAttribute('data-price'));
+                currentBasePrice = parseInt(btn.getAttribute('data-price'));
                 currentMemberCarton = parseInt(btn.getAttribute('data-member-carton')) || 1;
                 currentLimitedSale = parseInt(btn.getAttribute('data-limited-sale')) || 0;
                 currentSaleId = parseInt(btn.getAttribute('data-sale-id'));
@@ -823,7 +867,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // به‌روزرسانی اطلاعات کارتن
                 if (cartonUnitInfoElement) {
                     if (currentSaleType === 2) {
-                        cartonUnitInfoElement.textContent = `(هر کارتن ${currentMemberCarton} عددی)`;
+                        cartonUnitInfoElement.textContent = `هر کارتن ${currentMemberCarton} عددی`;
                         cartonUnitInfoElement.classList.remove('hidden');
                     } else {
                         cartonUnitInfoElement.classList.add('hidden');

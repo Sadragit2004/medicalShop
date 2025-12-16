@@ -12,7 +12,8 @@ urlpatterns = [
     path('ckeditor',include('ckeditor_uploader.urls')),
     path('account/',include('apps.user.urls',namespace='user')),
     path('product/',include('apps.product.urls',namespace='product')),
-    
+    path('discount/',include('apps.discount.urls',namespace='discount')),
+
 
 
 

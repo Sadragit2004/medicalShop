@@ -446,14 +446,15 @@
 
                             <!-- Price -->
                             <div class="product-card_price">
-                                {% if product.discount_percent > 0 %}
+                                {% if product.discount_percent %}
                                 <del>
                                     <p>{{ product.price|intcomma }}</p>
                                     <h6 class="inline">تومان</h6>
                                 </del>
-                                {% endif %}
-
+                                <p class="text-blue-600 font-DanaDemiBold">{{ product.final_price|intcomma }}</p>
+                                {% else %}
                                 <p>{{ product.price|intcomma }}</p>
+                                {% endif %}
                                 <span>تومان</span>
                             </div>
                         </div>

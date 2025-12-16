@@ -1,5 +1,6 @@
 from django.shortcuts import render
-from django.db.models import Min, Max, OuterRef, Subquery
+from django.db.models import Min, Max, OuterRef, Subquery, F, Value, PositiveIntegerField, ExpressionWrapper
+from django.db.models.functions import Coalesce, Floor
 from datetime import timedelta
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
@@ -9,6 +10,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
 from .models import Product,ProductFeature,ProductSaleType,ProductGallery,Comment,Rating,SaleType,Brand,Feature,FeatureValue
+from apps.discount.models import DiscountBasket
 
 
 # 1. محبوب‌ترین برندها
@@ -54,21 +56,39 @@ def latest_products(request):
     """
     from .models import Product, ProductGallery
 
-    # گرفتن محصولات جدید
+    now = timezone.now()
+    discount_subquery = DiscountBasket.objects.filter(
+        isActive=True,
+        startDate__lte=now,
+        endDate__gte=now,
+        discountOfBasket__product=OuterRef('pk')
+    ).order_by('-discount').values('discount')[:1]
+
+    # گرفتن محصولات جدید + قیمت پایه و تخفیف
     products = Product.objects.filter(
         isActive=True
     ).select_related('brand').prefetch_related(
         'category', 'saleTypes'
+    ).annotate(
+        price=Subquery(
+            ProductSaleType.objects.filter(
+                product=OuterRef('pk'),
+                isActive=True
+            ).order_by('price').values('price')[:1]
+        ),
+        discount_percent=Subquery(discount_subquery),
+        final_price=ExpressionWrapper(
+            Floor(F('price') * (100 - Coalesce(Subquery(discount_subquery), Value(0))) / Value(100)),
+            output_field=PositiveIntegerField()
+        )
     ).order_by('-createdAt')[:12]
 
     # آماده کردن داده‌ها برای تمپلیت
     product_list = []
     for product in products:
-        # گرفتن قیمت
-        default_price = 0
-        sale_type = product.saleTypes.filter(isActive=True).first()
-        if sale_type:
-            default_price = sale_type.price
+        base_price = product.price or 0
+        discount_percent = product.discount_percent or 0
+        final_price = product.final_price or base_price
 
         # گرفتن تصویر اصلی
         main_image = product.mainImage.url if product.mainImage else ''
@@ -89,9 +109,9 @@ def latest_products(request):
             'short_title': product.title[:40] + '...' if len(product.title) > 40 else product.title,
             'main_image': main_image,
             'hover_image': hover_image,  # این مهمه
-            'final_price': default_price,
-            'base_price': default_price,
-            'discount_percentage': 0,
+            'final_price': int(final_price),
+            'base_price': int(base_price),
+            'discount_percentage': int(discount_percent),
             'rating': product.average_rating,
             'comments_count': product.total_comments,
             'shipping_today': True,
@@ -148,7 +168,15 @@ def product_detail(request, slug):
     # 5. آمارهای امتیاز و کامنت (از propertyهای خود مدل Product استفاده می‌کنیم)
     comment_stats = product.comment_stats
 
-    # 6. قیمت‌ها
+    # 6. قیمت‌ها + تخفیف
+    now = timezone.now()
+    discount_percent = DiscountBasket.objects.filter(
+        isActive=True,
+        startDate__lte=now,
+        endDate__gte=now,
+        discountOfBasket__product=product
+    ).order_by('-discount').values_list('discount', flat=True).first() or 0
+
     sale_types = ProductSaleType.objects.filter(
         product=product,
         isActive=True
@@ -161,31 +189,49 @@ def product_detail(request, slug):
 
     # محاسبه finalPrice برای هر نوع فروش
     for sale in sale_types:
+        # قیمت پایه هر نوع فروش
         if sale.typeSale == SaleType.CARTON and sale.memberCarton and sale.price:
-            # برای کارتن فروشی: finalPrice = price * memberCarton
-            sale.final_price = sale.price * sale.memberCarton
+            base_price = sale.price * sale.memberCarton
         else:
-            # برای سایر انواع: finalPrice = price
-            sale.final_price = sale.price
+            base_price = sale.price
 
-        # اگر در مدل ذخیره شده باشد، از آن استفاده کن
         if sale.finalPrice:
-            sale.final_price = sale.finalPrice
+            base_price = sale.finalPrice
+
+        # قیمت نهایی پس از تخفیف
+        discounted_price = base_price
+        if discount_percent:
+            discounted_price = int(base_price * (100 - discount_percent) / 100)
+
+        sale.base_price = base_price
+        sale.final_price = discounted_price
 
     # محاسبه finalPrice برای نوع پیش‌فرض
     if default_sale_type:
         if default_sale_type.typeSale == SaleType.CARTON and default_sale_type.memberCarton:
-            default_final_price = default_sale_type.price * default_sale_type.memberCarton
+            default_base_price = default_sale_type.price * default_sale_type.memberCarton
         else:
-            default_final_price = default_sale_type.price
+            default_base_price = default_sale_type.price
 
-        # اگر در مدل ذخیره شده باشد
         if default_sale_type.finalPrice:
-            default_final_price = default_sale_type.finalPrice
+            default_base_price = default_sale_type.finalPrice
+
+        default_final_price = default_base_price
+        if discount_percent:
+            default_final_price = int(default_base_price * (100 - discount_percent) / 100)
     else:
+        default_base_price = 0
         default_final_price = 0
 
-    # 7. محصولات مرتبط (از همان دسته‌بندی‌ها)
+    # 7. محصولات مرتبط (از همان دسته‌بندی‌ها) + تخفیف
+    now = timezone.now()
+    discount_subquery = DiscountBasket.objects.filter(
+        isActive=True,
+        startDate__lte=now,
+        endDate__gte=now,
+        discountOfBasket__product=OuterRef('pk')
+    ).order_by('-discount').values('discount')[:1]
+
     related_products = Product.objects.filter(
         isActive=True,
         category__in=product.category.all()
@@ -195,6 +241,11 @@ def product_detail(request, slug):
                 product=OuterRef('pk'),
                 isActive=True
             ).order_by('price').values('price')[:1]
+        ),
+        discount_percent=Subquery(discount_subquery),
+        final_price=ExpressionWrapper(
+            Floor(F('price') * (100 - Coalesce(Subquery(discount_subquery), Value(0))) / Value(100)),
+            output_field=PositiveIntegerField()
         )
     ).filter(price__isnull=False).distinct()[:8]
 
@@ -245,6 +296,8 @@ def product_detail(request, slug):
         'sale_types': sale_types,
         'default_sale_type': default_sale_type,
         'default_final_price': default_final_price,
+        'default_base_price': default_base_price,
+        'discount_percent': discount_percent,
         'has_multiple_prices': sale_types.count() > 1,
 
         # محصولات مرتبط
@@ -438,6 +491,25 @@ def show_by_filter(request, slug):
     products = products.annotate(
         price=Subquery(price_subquery)
     ).filter(price__isnull=False)
+
+    # ========================
+    # تخفیف فعال برای هر محصول
+    # ========================
+    now = timezone.now()
+    discount_subquery = DiscountBasket.objects.filter(
+        isActive=True,
+        startDate__lte=now,
+        endDate__gte=now,
+        discountOfBasket__product=OuterRef('pk')
+    ).order_by('-discount').values('discount')[:1]
+
+    products = products.annotate(
+        discount_percent=Subquery(discount_subquery),
+        final_price=ExpressionWrapper(
+            Floor(F('price') * (100 - Coalesce(Subquery(discount_subquery), Value(0))) / Value(100)),
+            output_field=PositiveIntegerField()
+        )
+    )
 
     # ========================
     # min / max قیمت واقعی
