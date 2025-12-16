@@ -1,7 +1,8 @@
 <!-- product/category/popular_categories.html -->
 <div class="flex items-center justify-evenly flex-wrap mt-12 child:mb-8 gap-x-8 child:items-center child:flex-col child:duration-300 child:cursor-pointer child:text-gray-800 child:dark:text-gray-300 child:relative">
-    {% for category in popular_categories %}
-        <a href=" " class="group flex" title="{{ category.title }}">
+    {% for category in categories %}
+        <!-- تغییر href به آدرس category/<slug:slug>/ -->
+        <a href="{% url 'product:show_by_filter' slug=category.slug %}" class="group flex" title="{{ category.title }}">
             {% if category.image %}
                 <img src="{{ category.image.url }}"
                      class="w-[100px] h-[100px] lg:w-[120px] lg:h-[120px] object-cover group-hover:grayscale group-hover:opacity-90 duration-300 rounded-lg shadow-sm hover:shadow-md"

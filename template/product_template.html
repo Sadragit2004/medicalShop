@@ -1,0 +1,77 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="fa-IR" xmlns="http://www.w3.org/1999/xhtml" xmlns:og="https://ogp.me/ns#" dir='rtl'>
+
+   <head>
+      <meta charset="UTF-8">
+      <meta name="enamad" content="9992550" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="apple-mobile-web-app-title" content=" ">
+      <meta name="application-name" content=" ">
+      <link rel="alternate" href="{{ request.build_absolute_uri }}" hreflang="fa-IR" />
+      <meta name="msapplication-TileColor" content="#358597">
+      <link rel="apple-touch-icon" sizes="512x512" href="/media/img/logo-new.png">
+
+<!-- آیکون‌های Favicon برای مرورگرها -->
+      <link rel="icon" type="image/png" sizes="32x32" href="/media/img/logo-new.png">
+      <link rel="icon" type="image/png" sizes="16x16" href="/media/img/logo-new.png">
+
+          <!-- آیکون پیش‌فرض -->
+        <link rel="shortcut icon" href="/media/img/logo-new.png">
+        <meta name="theme-color" content="#ffffff">
+          {% if request.GET.utmsource or request.GET.utm_medium or request.GET.utm_campaign %}
+        <link rel="canonical" href="{{ request.build_absolute_uri }}" />
+        {% else %}
+        <link rel="canonical" href="{{ request.build_absolute_uri }}" />
+        {% endif %}
+
+        <meta property="og:locale" content="fa_IR" />
+        <meta property="og:type" content="website" />
+        <link rel="stylesheet" href="{% static '/styles/app.css' %}">
+    <!-- link -->
+        <link rel="stylesheet" href="{% static '/swiper/swiper.css' %}">
+        <!-- ==========================  DARK MODE SCRIPT ============================= -->
+        <script type="text/javascript">
+            if (
+                localStorage.theme === "dark" ||
+                (!("theme" in localStorage) &&
+                    window.matchMedia("(prefers-color-scheme: dark)").matches)
+            ) {
+                document.documentElement.classList.add("dark");
+            } else {
+                document.documentElement.classList.remove("dark");
+            }
+        </script>
+
+          {% block meta1 %}
+          {% endblock meta1 %}
+
+
+      <style>
+         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap');
+      </style>
+
+
+    <!-- پشتیبانی از RTL -->
+
+  </head>
+
+<body>
+
+  {% include "partials/svg.html" %}
+  {% include "partials/header.html" %}
+
+
+    {% block content %}
+
+
+    {% endblock content %}
+
+
+  {% include "partials/footer.html" %}
+  {% include "./product_app/product/script.html" %}
+
+
+</body>
+<script>

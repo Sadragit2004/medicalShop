@@ -1,2 +1,0 @@
-from .attribute_repository import AttributeRepository
-from .product_repository import ProductRepository

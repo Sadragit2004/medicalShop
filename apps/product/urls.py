@@ -1,20 +1,22 @@
 from django.urls import path
-from .views import product_views
-from .views import category_views
-from .views import brand_views
+from . import views
+
 
 app_name = 'product'
 
 urlpatterns = [
 
-    path('PopularCategories/',category_views.PopularCategoriesView.as_view(),name='popularGroup'),
-    path('newsproduct/',product_views.NewArrivalsView.as_view(),name='newsproduct'),
-    path('Popularbrand/',brand_views.PopularBrandsView.as_view(),name='PopularBrandsView'),
-    path('<slug:slug>/', product_views.ProductDetailView.as_view(), name='detail'),
+    path('lasted-product/',views.latest_products,name='lastedProduct'),
+    path('popularBrand/',views.popular_brands,name='brand'),
+    path('popularCategories/',views.rich_categories,name='rich_categories'),
+    path('<slug:slug>/', views.product_detail, name='product_detail'),
 
-    # API نظرات محصول
-    path('product/<int:product_id>/comment/add/', product_views.AddCommentView.as_view(), name='add_comment'),
-    path('product/<int:product_id>/comments/', product_views.CommentListView.as_view(), name='comment_list'),
+    # اضافه کردن کامنت
+    path('<slug:product_slug>/comment/add/', views.add_comment, name='add_comment'),
+    path('<slug:product_slug>/comments/load-more/', views.load_more_comments, name='load_more_comments'),
+    # ============================ shop
 
-
+    path('category/<slug:slug>/', views.show_by_filter, name='show_by_filter'),
+    path('category/<slug:slug>/features/', views.get_feature_filter, name='get_feature_filter'),
 ]
+

@@ -1,477 +1,371 @@
 # admin.py
 from django.contrib import admin
 from django.utils.html import format_html
-from django.urls import reverse
+from .models import (
+    Category, Brand, Feature, FeatureValue, Product,
+    ProductGallery, ProductFeature, ProductSaleType,
+    Rating, Comment
+)
+
+# ========================
+# فیلترهای سفارشی
+# ========================
+class IsActiveFilter(admin.SimpleListFilter):
+    title = 'وضعیت فعال'
+    parameter_name = 'is_active'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('active', 'فعال'),
+            ('inactive', 'غیرفعال'),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'active':
+            return queryset.filter(isActive=True)
+        if self.value() == 'inactive':
+            return queryset.filter(isActive=False)
 
 
-from .models.product import Product
-from .models.category import ProductCategory
-from .models.attribute import Attribute,AttributeGroup,ProductAttributeValue
-from .models.brand import Brand
-from decimal import Decimal
+class HasParentFilter(admin.SimpleListFilter):
+    title = 'دارای والد'
+    parameter_name = 'has_parent'
 
-# ========== INLINE MODELS ==========
+    def lookups(self, request, model_admin):
+        return (
+            ('yes', 'دارای والد'),
+            ('no', 'بدون والد'),
+        )
 
-class ProductAttributeValueInline(admin.TabularInline):
-    """
-    Inline برای مدیریت مقادیر ویژگی‌های محصول
-    """
-    model = ProductAttributeValue
+    def queryset(self, request, queryset):
+        if self.value() == 'yes':
+            return queryset.filter(parent__isnull=False)
+        if self.value() == 'no':
+            return queryset.filter(parent__isnull=True)
+
+
+# ========================
+# اینلاین‌ها (Inlines)
+# ========================
+class ProductFeatureInline(admin.TabularInline):
+    model = ProductFeature
     extra = 1
-    fields = ['attribute', 'display_value']
-    readonly_fields = ['display_value']
-    autocomplete_fields = ['attribute']
-
-    def display_value(self, obj):
-        """نمایش مقدار ویژگی"""
-        return obj.get_value() if obj.id else "تعریف نشده"
-    display_value.short_description = "مقدار"
+    fields = ('feature', 'value', 'filterValue')
 
 
-# ========== MODEL ADMINS ==========
+class ProductGalleryInline(admin.TabularInline):
+    model = ProductGallery
+    extra = 1
+    fields = ('image', 'altText', 'isActive')
+    readonly_fields = ('image_preview',)
 
-@admin.register(ProductCategory)
-class ProductCategoryAdmin(admin.ModelAdmin):
-    """
-    پنل ادمین دسته‌بندی‌های محصولات
-    """
-    list_display = [
-        'title', 'parent_info', 'display_order',
-        'product_count', 'is_active', 'created_at'
-    ]
-    list_filter = ['is_active', 'parent', 'created_at']
-    search_fields = ['title', 'slug', 'description']
-    prepopulated_fields = {'slug': ['title']}
-    list_editable = ['display_order', 'is_active']
-    list_per_page = 25
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="60" height="60" style="object-fit:cover;border-radius:8px;" />', obj.image.url)
+        return "بدون تصویر"
+    image_preview.short_description = 'پیش‌نمایش'
 
-    # فیلدهای قابل نمایش در فرم
+
+class ProductSaleTypeInline(admin.TabularInline):
+    model = ProductSaleType
+    extra = 1
+    fields = ('typeSale', 'price', 'memberCarton', 'limitedSale', 'finalPrice', 'isActive')
+
+
+class CommentInline(admin.TabularInline):
+    model = Comment
+    extra = 0
+    readonly_fields = ('user', 'product', 'createdAt')
+    fields = ('user', 'text', 'typeComment', 'isActive', 'createdAt')
+    can_delete = False
+    max_num = 10
+
+    def has_add_permission(self, request, obj):
+        return False
+
+
+class RatingInline(admin.TabularInline):
+    model = Rating
+    extra = 0
+    readonly_fields = ('user', 'product', 'createdAt')
+    fields = ('user', 'rating', 'createdAt')
+    can_delete = False
+    max_num = 10
+
+    def has_add_permission(self, request, obj):
+        return False
+
+
+# ========================
+# ادمین کلاس‌ها
+# ========================
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('title', 'parent', 'image_preview', 'isActive', 'createdAt')
+    list_filter = (IsActiveFilter, HasParentFilter)
+    search_fields = ('title', 'slug')
+    prepopulated_fields = {'slug': ('title',)}
+    list_per_page = 20
+    actions = ['make_active', 'make_inactive']
+
     fieldsets = (
         ('اطلاعات اصلی', {
-            'fields': ('title', 'slug', 'parent', 'description', 'image')
+            'fields': ('title', 'slug', 'parent', 'isActive')
         }),
-        ('تنظیمات نمایش', {
-            'fields': ('display_order', 'is_active')
-        }),
-        ('تنظیمات SEO', {
-            'fields': ('meta_title', 'meta_description'),
+        ('تصویر', {
+            'fields': ('image', 'image_preview'),
             'classes': ('collapse',)
         }),
     )
 
-    def parent_info(self, obj):
-        """نمایش اطلاعات والد"""
-        if obj.parent:
-            return f"← {obj.parent.title}"
-        return "ریشه"
-    parent_info.short_description = "والد"
-    parent_info.admin_order_field = 'parent__title'
+    readonly_fields = ('image_preview',)
 
-    def product_count(self, obj):
-        """تعداد محصولات این دسته‌بندی"""
-        return obj.get_products_count()
-    product_count.short_description = "تعداد محصولات"
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="60" height="60" style="object-fit:cover;border-radius:8px;" />', obj.image.url)
+        return "بدون تصویر"
+    image_preview.short_description = 'پیش‌نمایش'
+
+    def make_active(self, request, queryset):
+        updated = queryset.update(isActive=True)
+        self.message_user(request, f'{updated} دسته‌بندی فعال شدند.')
+    make_active.short_description = 'فعال کردن دسته‌بندی‌های انتخاب شده'
+
+    def make_inactive(self, request, queryset):
+        updated = queryset.update(isActive=False)
+        self.message_user(request, f'{updated} دسته‌بندی غیرفعال شدند.')
+    make_inactive.short_description = 'غیرفعال کردن دسته‌بندی‌های انتخاب شده'
 
 
 @admin.register(Brand)
 class BrandAdmin(admin.ModelAdmin):
-    """
-    پنل ادمین برندها
-    """
-    list_display = [
-        'title', 'logo_preview', 'product_count',
-        'is_active', 'created_at'
-    ]
-    list_filter = ['is_active', 'created_at']
-    search_fields = ['title', 'slug', 'description']
-    prepopulated_fields = {'slug': ['title']}
-    list_per_page = 25
+    list_display = ('title', 'logo_preview', 'product_count', 'isActive', 'createdAt')
+    list_filter = (IsActiveFilter,)
+    search_fields = ('title', 'slug', 'description')
+    prepopulated_fields = {'slug': ('title',)}
+    list_per_page = 20
+    actions = ['make_active', 'make_inactive']
 
     fieldsets = (
         ('اطلاعات اصلی', {
-            'fields': ('title', 'slug', 'description', 'image', 'website')
+            'fields': ('title', 'slug', 'description', 'isActive')
         }),
-        ('تنظیمات', {
-            'fields': ('is_active',)
+        ('لوگو', {
+            'fields': ('logo', 'logo_preview'),
+            'classes': ('collapse',)
         }),
     )
+
+    readonly_fields = ('logo_preview',)
 
     def logo_preview(self, obj):
-        """پیش‌نمایش لوگو"""
-        if obj.image:
-            return format_html(
-                '<img src="{}" width="50" height="50" style="object-fit: contain;" />',
-                obj.image.url
-            )
-        return "بدون تصویر"
-    logo_preview.short_description = "لوگو"
+        if obj.logo:
+            return format_html('<img src="{}" width="60" height="60" style="object-fit:contain;border-radius:8px;" />', obj.logo.url)
+        return "بدون لوگو"
+    logo_preview.short_description = 'پیش‌نمایش'
 
     def product_count(self, obj):
-        """تعداد محصولات این برند"""
-        return obj.get_products_count()
-    product_count.short_description = "تعداد محصولات"
+        return obj.products.count()
+    product_count.short_description = 'تعداد محصولات'
+
+    def make_active(self, request, queryset):
+        updated = queryset.update(isActive=True)
+        self.message_user(request, f'{updated} برند فعال شدند.')
+
+    def make_inactive(self, request, queryset):
+        updated = queryset.update(isActive=False)
+        self.message_user(request, f'{updated} برند غیرفعال شدند.')
 
 
-@admin.register(AttributeGroup)
-class AttributeGroupAdmin(admin.ModelAdmin):
-    """
-    پنل ادمین گروه‌های ویژگی
-    """
-    list_display = ['title', 'sort_order', 'attribute_count', 'is_active']
-    list_filter = ['is_active']
-    search_fields = ['title', 'slug']
-    prepopulated_fields = {'slug': ['title']}
-    list_editable = ['sort_order', 'is_active']
+@admin.register(Feature)
+class FeatureAdmin(admin.ModelAdmin):
+    list_display = ('title', 'categories_count', 'isActive', 'createdAt')
+    list_filter = (IsActiveFilter, 'categories')
+    search_fields = ('title', 'slug')
+    prepopulated_fields = {'slug': ('title',)}
+    filter_horizontal = ('categories',)
+    list_per_page = 20
 
-    fieldsets = (
-        ('اطلاعات اصلی', {
-            'fields': ('title', 'slug', 'sort_order', 'is_active')
-        }),
-    )
-
-    def attribute_count(self, obj):
-        """تعداد ویژگی‌های این گروه"""
-        return obj.attributes.count()
-    attribute_count.short_description = "تعداد ویژگی‌ها"
+    def categories_count(self, obj):
+        return obj.categories.count()
+    categories_count.short_description = 'تعداد دسته‌بندی‌ها'
 
 
-@admin.register(Attribute)
-class AttributeAdmin(admin.ModelAdmin):
-    """
-    پنل ادمین ویژگی‌های محصول
-    """
-    list_display = [
-        'title', 'group', 'data_type', 'is_filterable',
-        'is_visible', 'sort_order', 'is_active'
-    ]
-    list_filter = [
-        'is_active', 'group', 'data_type',
-        'is_filterable', 'is_visible'
-    ]
-    search_fields = ['title', 'slug', 'description']
-    prepopulated_fields = {'slug': ['title']}
-    list_editable = ['sort_order', 'is_filterable', 'is_visible', 'is_active']
-    list_per_page = 30
+@admin.register(FeatureValue)
+class FeatureValueAdmin(admin.ModelAdmin):
+    list_display = ('feature', 'value', 'created_at')
+    list_filter = ('feature',)
+    search_fields = ('value', 'feature__title')
+    list_per_page = 20
 
-    fieldsets = (
-        ('اطلاعات اصلی', {
-            'fields': ('title', 'slug', 'group', 'description')
-        }),
-        ('تنظیمات داده', {
-            'fields': ('data_type', 'options', 'unit')
-        }),
-        ('محدودیت‌ها', {
-            'fields': ('min_value', 'max_value', 'max_length'),
-            'classes': ('collapse',)
-        }),
-        ('تنظیمات نمایش', {
-            'fields': (
-                'is_required', 'is_filterable',
-                'is_visible', 'sort_order'
-            )
-        }),
-        ('ساختار سلسله‌مراتبی', {
-            'fields': ('parent',),
-            'classes': ('collapse',)
-        }),
-        ('وضعیت', {
-            'fields': ('is_active',)
-        }),
-    )
-
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        """فیلتر کردن ویژگی والد (برای جلوگیری از حلقه)"""
-        if db_field.name == "parent":
-            # فقط ویژگی‌های فعال را نشان بده
-            kwargs["queryset"] = Attribute.objects.filter(is_active=True)
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    def created_at(self, obj):
+        return obj.feature.createdAt if obj.feature else '-'
+    created_at.short_description = 'تاریخ ایجاد'
 
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    """
-    پنل ادمین محصولات
-    """
-    list_display = [
-        'main_image_preview', 'title', 'price_display',
-        'stock_status', 'category_list', 'is_active',
-        'created_at'
-    ]
-    list_filter = [
-        'is_active', 'categories', 'brand',
-        'created_at', 'is_wholesale_enabled'
-    ]
-    search_fields = ['title', 'slug', 'description', 'sku']
-    prepopulated_fields = {'slug': ['title']}
-    list_editable = ['is_active']
-    list_per_page = 25
-
-    # Inline برای ویژگی‌ها
-    inlines = [ProductAttributeValueInline]
-
-    # فیلتر کردن دسته‌بندی‌ها
-    filter_horizontal = ['categories']
-
-    # فیلدهای قابل نمایش در فرم
-    fieldsets = (
-        ('اطلاعات اصلی', {
-            'fields': (
-                'title', 'slug', 'description',
-                'categories', 'brand', 'main_image'
-            )
-        }),
-        ('قیمت‌گذاری', {
-            'fields': (
-                'price', 'sale_price',
-                ('is_wholesale_enabled', 'wholesale_min_quantity', 'wholesale_discount_percent')
-            )
-        }),
-        ('موجودی و فروش', {
-            'fields': (
-                'stock_quantity',
-                ('min_quantity', 'max_quantity'),
-                ('is_packaged', 'items_per_package')
-            )
-        }),
-        ('وزن و ابعاد', {
-            'fields': ('weight_grams', 'dimensions'),
-            'classes': ('collapse',)
-        }),
-        ('تنظیمات SEO', {
-            'fields': ('meta_title', 'meta_description'),
-            'classes': ('collapse',)
-        }),
-        ('وضعیت', {
-            'fields': ('is_active',)
-        }),
-    )
-
-    # متدهای کمکی برای نمایش بهتر
-    def main_image_preview(self, obj):
-        """پیش‌نمایش عکس اصلی"""
-        if obj.main_image:
-            return format_html(
-                '<img src="{}" width="60" height="60" style="object-fit: cover; border-radius: 4px;" />',
-                obj.main_image.url
-            )
-        return "بدون تصویر"
-    main_image_preview.short_description = "تصویر"
-
-    def price_display(self, obj):
-        """نمایش قیمت با فرمت مناسب"""
-        print(f"DEBUG: obj.price = {obj.price}, type = {type(obj.price)}")
-        print(f"DEBUG: obj.sale_price = {obj.sale_price}, type = {type(obj.sale_price)}")
-
-        # دیباگ بیشتر
-        if obj.price is None:
-            print("DEBUG: obj.price is None")
-        elif isinstance(obj.price, str):
-            print(f"DEBUG: obj.price is string: '{obj.price}'")
-        elif isinstance(obj.price, Decimal):
-            print(f"DEBUG: obj.price is Decimal: {obj.price}")
-
-        try:
-            # تبدیل به عدد
-            if obj.price is None:
-                price_value = 0
-            elif isinstance(obj.price, str):
-                # حذف کاماها و فضاها اگر وجود دارد
-                cleaned = obj.price.replace(',', '').replace(' ', '').strip()
-                price_value = int(float(cleaned)) if cleaned else 0
-            elif isinstance(obj.price, (Decimal, int, float)):
-                price_value = int(obj.price)
-            else:
-                price_value = 0
-
-            if obj.sale_price is None:
-                sale_price_value = 0
-            elif isinstance(obj.sale_price, str):
-                cleaned = obj.sale_price.replace(',', '').replace(' ', '').strip()
-                sale_price_value = int(float(cleaned)) if cleaned else 0
-            elif isinstance(obj.sale_price, (Decimal, int, float)):
-                sale_price_value = int(obj.sale_price)
-            else:
-                sale_price_value = 0
-
-            print(f"DEBUG: price_value = {price_value}, sale_price_value = {sale_price_value}")
-
-            if obj.sale_price and sale_price_value > 0:
-                return format_html(
-                    '<span style="text-decoration: line-through; color: #999;">{:,} تومان</span><br>'
-                    '<span style="color: #e53935; font-weight: bold;">{:,} تومان</span>',
-                    price_value, sale_price_value
-                )
-            return format_html('<span>{:,} تومان</span>', price_value)
-
-        except Exception as e:
-            print(f"DEBUG: Error in price_display: {e}")
-            # نمایش ساده بدون فرمت
-            return str(obj.price) if obj.price else "۰ تومان"
-
-    price_display.short_description = "قیمت (تومان)"
-
-    def stock_status(self, obj):
-        """وضعیت موجودی"""
-        if obj.stock_quantity == 0:
-            return format_html(
-                '<span style="color: #f44336; font-weight: bold;">ناموجود</span>'
-            )
-        elif obj.stock_quantity < 10:
-            return format_html(
-                '<span style="color: #ff9800; font-weight: bold;">کم موجود ({})</span>',
-                obj.stock_quantity
-            )
-        else:
-            return format_html(
-                '<span style="color: #4caf50; font-weight: bold;">موجود ({})</span>',
-                obj.stock_quantity
-            )
-    stock_status.short_description = "وضعیت موجودی"
-
-    def category_list(self, obj):
-        """لیست دسته‌بندی‌ها"""
-        categories = obj.categories.filter(is_active=True)
-        if categories:
-            links = []
-            for cat in categories[:3]:  # فقط ۳ دسته‌بندی اول
-                url = reverse('admin:product_productcategory_change', args=[cat.id])
-                links.append(f'<a href="{url}">{cat.title}</a>')
-            result = ', '.join(links)
-            if categories.count() > 3:
-                result += f' و {categories.count() - 3} مورد دیگر'
-            return format_html(result)
-        return "بدون دسته‌بندی"
-    category_list.short_description = "دسته‌بندی‌ها"
-
-    # اکشن‌های سفارشی
-    actions = ['activate_products', 'deactivate_products', 'clear_stock']
-
-    def activate_products(self, request, queryset):
-        """فعال کردن محصولات انتخاب شده"""
-        updated = queryset.update(is_active=True)
-        self.message_user(
-            request,
-            f'{updated} محصول با موفقیت فعال شد.'
-        )
-    activate_products.short_description = "فعال کردن محصولات انتخاب شده"
-
-    def deactivate_products(self, request, queryset):
-        """غیرفعال کردن محصولات انتخاب شده"""
-        updated = queryset.update(is_active=False)
-        self.message_user(
-            request,
-            f'{updated} محصول با موفقیت غیرفعال شد.'
-        )
-    deactivate_products.short_description = "غیرفعال کردن محصولات انتخاب شده"
-
-    def clear_stock(self, request, queryset):
-        """خالی کردن موجودی محصولات انتخاب شده"""
-        updated = queryset.update(stock_quantity=0)
-        self.message_user(
-            request,
-            f'موجودی {updated} محصول صفر شد.'
-        )
-    clear_stock.short_description = "صفر کردن موجودی"
-
-
-@admin.register(ProductAttributeValue)
-class ProductAttributeValueAdmin(admin.ModelAdmin):
-    """
-    پنل ادمین مقادیر ویژگی‌های محصول (اختیاری)
-    """
-    list_display = ['product', 'attribute', 'value_display', 'created_at']
-    list_filter = ['attribute', 'created_at']
-    search_fields = ['product__title', 'attribute__title']
-    autocomplete_fields = ['product', 'attribute']
-    list_per_page = 50
-
-    def value_display(self, obj):
-        """نمایش مقدار ویژگی"""
-        value = obj.get_value()
-        if isinstance(value, list):
-            return ', '.join(str(v) for v in value)
-        return str(value) if value is not None else "تعریف نشده"
-    value_display.short_description = "مقدار"
-
-
-# ========== CUSTOM ADMIN SITE ==========
-
-class CustomAdminSite(admin.AdminSite):
-    """
-    پنل ادمین سفارشی
-    """
-    site_header = "پنل مدیریت فروشگاه"
-    site_title = "مدیریت فروشگاه"
-    index_title = "خوش آمدید به پنل مدیریت"
-
-    def get_app_list(self, request):
-        """
-        سفارشی‌سازی ترتیب اپ‌ها
-        """
-        app_list = super().get_app_list(request)
-
-        # تغییر ترتیب اپ‌ها
-        app_ordering = {
-            'product': 1,
-            'auth': 2,
-        }
-
-        # مرتب‌سازی اپ‌ها بر اساس ترتیب تعریف شده
-        app_list.sort(key=lambda x: app_ordering.get(x['app_label'], 999))
-
-        return app_list
-
-
-
-
-# product_app/admin.py
-from django.contrib import admin
-from django.utils.html import format_html
-from .models.gallery import ProductGallery
-
-class ProductGalleryAdmin(admin.ModelAdmin):
-    """
-    ادمین برای گالری تصاویر محصولات
-    """
-    list_display = ['id', 'product', 'display_image', 'title', 'is_main', 'sort_order', 'is_active']
-    list_filter = ['is_main', 'is_active', 'product__title']
-    search_fields = ['product__title', 'title']
-    list_editable = ['is_main', 'sort_order', 'is_active']
+    list_display = ('title', 'brand', 'main_image_preview', 'price_range', 'average_rating_display', 'isActive', 'createdAt')
+    list_filter = (IsActiveFilter, 'brand', 'category')
+    search_fields = ('title', 'slug', 'description', 'shortDescription')
+    prepopulated_fields = {'slug': ('title',)}
+    filter_horizontal = ('category',)
     list_per_page = 20
-    ordering = ['product', 'sort_order']
+    inlines = [ProductFeatureInline, ProductGalleryInline, ProductSaleTypeInline]
+    actions = ['make_active', 'make_inactive']
 
     fieldsets = (
         ('اطلاعات اصلی', {
-            'fields': ('product', 'title', 'image')
+            'fields': ('title', 'slug', 'brand', 'category', 'isActive')
         }),
-        ('تنظیمات نمایش', {
-            'fields': ('is_main', 'sort_order')
+        ('تصاویر', {
+            'fields': ('mainImage', 'main_image_preview'),
+            'classes': ('collapse',)
         }),
-        ('تنظیمات فعال بودن', {
-            'fields': ('is_active',)
+        ('توضیحات', {
+            'fields': ('shortDescription', 'description')
         }),
     )
 
-    def display_image(self, obj):
-        if obj.image:
-            return format_html('<img src="{}" width="50" height="50" style="object-fit: cover; border-radius: 5px;" />', obj.image.url)
+    readonly_fields = ('main_image_preview',)
+
+    def main_image_preview(self, obj):
+        if obj.mainImage:
+            return format_html('<img src="{}" width="80" height="80" style="object-fit:cover;border-radius:8px;" />', obj.mainImage.url)
         return "بدون تصویر"
-    display_image.short_description = 'تصویر'
+    main_image_preview.short_description = 'پیش‌نمایش'
 
-admin.site.register(ProductGallery, ProductGalleryAdmin)
+    def price_range(self, obj):
+        sale_types = obj.saleTypes.filter(isActive=True)
+        if sale_types.exists():
+            prices = [st.price for st in sale_types]
+            min_price = min(prices)
+            max_price = max(prices)
+            if min_price == max_price:
+                return f"{min_price:,}"
+            return f"{min_price:,} - {max_price:,}"
+        return "بدون قیمت"
+    price_range.short_description = 'محدوده قیمت'
+
+    def average_rating_display(self, obj):
+        avg = obj.average_rating
+        stars = "★" * int(avg) + "☆" * (5 - int(avg))
+        return f"{avg} {stars}"
+    average_rating_display.short_description = 'امتیاز'
+
+    def make_active(self, request, queryset):
+        updated = queryset.update(isActive=True)
+        self.message_user(request, f'{updated} محصول فعال شدند.')
+
+    def make_inactive(self, request, queryset):
+        updated = queryset.update(isActive=False)
+        self.message_user(request, f'{updated} محصول غیرفعال شدند.')
 
 
+@admin.register(ProductSaleType)
+class ProductSaleTypeAdmin(admin.ModelAdmin):
+    list_display = ('product', 'typeSale_display', 'price', 'finalPrice', 'isActive')
+    list_filter = ('typeSale', IsActiveFilter, 'product__brand')
+    search_fields = ('product__title', 'product__slug')
+    list_per_page = 20
+    actions = ['make_active', 'make_inactive']
 
-# ثبت در پنل ادمین پیش‌فرض
-admin.site.site_header = "پنل مدیریت فروشگاه"
-admin.site.site_title = "مدیریت فروشگاه"
-admin.site.index_title = "خوش آمدید به پنل مدیریت"
+    def typeSale_display(self, obj):
+        return dict(SaleType.CHOICES).get(obj.typeSale, 'نامشخص')
+    typeSale_display.short_description = 'نوع فروش'
 
-# یا اگر می‌خواهید از پنل سفارشی استفاده کنید:
-# custom_admin_site = CustomAdminSite(name='custom_admin')
-# custom_admin_site.register(Product, ProductAdmin)
-# custom_admin_site.register(ProductCategory, ProductCategoryAdmin)
-# custom_admin_site.register(Brand, BrandAdmin)
-# custom_admin_site.register(AttributeGroup, AttributeGroupAdmin)
-# custom_admin_site.register(Attribute, AttributeAdmin)
-# custom_admin_site.register(ProductAttributeValue, ProductAttributeValueAdmin)
+    def make_active(self, request, queryset):
+        updated = queryset.update(isActive=True)
+        self.message_user(request, f'{updated} نوع فروش فعال شدند.')
+
+    def make_inactive(self, request, queryset):
+        updated = queryset.update(isActive=False)
+        self.message_user(request, f'{updated} نوع فروش غیرفعال شدند.')
+
+
+@admin.register(ProductFeature)
+class ProductFeatureAdmin(admin.ModelAdmin):
+    list_display = ('product', 'feature', 'value', 'filterValue')
+    list_filter = ('feature', 'product__brand')
+    search_fields = ('product__title', 'feature__title', 'value')
+    list_per_page = 20
+
+
+@admin.register(ProductGallery)
+class ProductGalleryAdmin(admin.ModelAdmin):
+    list_display = ('product', 'image_preview', 'altText', 'isActive')
+    list_filter = (IsActiveFilter, 'product__brand')
+    search_fields = ('product__title', 'altText')
+    list_per_page = 20
+    readonly_fields = ('image_preview',)
+
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="80" height="80" style="object-fit:cover;border-radius:8px;" />', obj.image.url)
+        return "بدون تصویر"
+    image_preview.short_description = 'پیش‌نمایش'
+
+
+@admin.register(Rating)
+class RatingAdmin(admin.ModelAdmin):
+    list_display = ('user', 'product', 'rating_stars', 'createdAt')
+    list_filter = ('rating', 'createdAt')
+    search_fields = ('user__username', 'user__email', 'product__title')
+    list_per_page = 20
+    readonly_fields = ('user', 'product', 'createdAt')
+
+    def rating_stars(self, obj):
+        stars = "★" * obj.rating + "☆" * (5 - obj.rating)
+        return stars
+    rating_stars.short_description = 'امتیاز'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('user', 'product', 'typeComment_display', 'text_preview', 'isActive', 'createdAt')
+    list_filter = ('typeComment', 'isActive', 'createdAt')
+    search_fields = ('user__username', 'user__email', 'product__title', 'text')
+    list_per_page = 20
+    actions = ['make_active', 'make_inactive', 'mark_as_recommend', 'mark_as_not_recommend']
+    readonly_fields = ('user', 'product', 'createdAt')
+
+    fieldsets = (
+        ('اطلاعات اصلی', {
+            'fields': ('user', 'product', 'typeComment', 'isActive', 'createdAt')
+        }),
+        ('متن کامنت', {
+            'fields': ('text',)
+        }),
+    )
+
+    def typeComment_display(self, obj):
+        return dict(Comment.COMMENT_TYPES).get(obj.typeComment, 'نامشخص')
+    typeComment_display.short_description = 'نوع کامنت'
+
+    def text_preview(self, obj):
+        if len(obj.text) > 50:
+            return f"{obj.text[:50]}..."
+        return obj.text
+    text_preview.short_description = 'متن'
+
+    def make_active(self, request, queryset):
+        updated = queryset.update(isActive=True)
+        self.message_user(request, f'{updated} کامنت فعال شدند.')
+
+    def make_inactive(self, request, queryset):
+        updated = queryset.update(isActive=False)
+        self.message_user(request, f'{updated} کامنت غیرفعال شدند.')
+
+    def mark_as_recommend(self, request, queryset):
+        updated = queryset.update(typeComment='recommend')
+        self.message_user(request, f'{updated} کامنت به "پیشنهاد می‌کنم" تغییر یافت.')
+
+    def mark_as_not_recommend(self, request, queryset):
+        updated = queryset.update(typeComment='not_recommend')
+        self.message_user(request, f'{updated} کامنت به "پیشنهاد نمی‌کنم" تغییر یافت.')

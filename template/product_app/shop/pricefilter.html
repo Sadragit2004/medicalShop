@@ -1,0 +1,127 @@
+<form method="get" class="price-filter" data-price-filter>
+    <div class="price-slider">
+
+        <div class="slider-bar">
+            <div class="progress price-range-progress"></div>
+        </div>
+
+        <div class="range-input">
+            <input
+                type="range"
+                name="price_min"
+                min="{{ price_min }}"
+                max="{{ price_max }}"
+                value="{{ selected_min|default:price_min }}"
+                step="1"
+                class="price-range-min"
+            >
+
+            <input
+                type="range"
+                name="price_max"
+                min="{{ price_min }}"
+                max="{{ price_max }}"
+                value="{{ selected_max|default:price_max }}"
+                step="1"
+                class="price-range-max"
+            >
+        </div>
+
+        <div class="price-input">
+            <span class="min-price-display"></span>
+            <span class="max-price-display"></span>
+        </div>
+
+        <button type="submit" class="apply-btn">
+            اعمال قیمت
+        </button>
+    </div>
+</form>
+
+<style>
+.price-filter {
+    width: 100%;
+}
+
+.price-slider {
+    width: 100%;
+}
+
+.range-input {
+    position: relative;
+}
+
+.range-input input {
+    position: absolute;
+    width: 100%;
+    pointer-events: none;
+    -webkit-appearance: none;
+    background: none;
+}
+
+.range-input input::-webkit-slider-thumb {
+    pointer-events: auto;
+    appearance: none;
+    height: 16px;
+    width: 16px;
+    background: #000;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.slider-bar {
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 999px;
+    position: relative;
+}
+
+.slider-bar .progress {
+    height: 100%;
+    background: #000;
+    border-radius: 999px;
+    position: absolute;
+    left: 0;
+    right: 0;
+}
+
+.price-input {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    font-size: 14px;
+}
+
+.apply-btn {
+    margin-top: 16px;
+    width: 100%;
+    padding: 10px;
+    background: #000;
+    color: #fff;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* Mobile tweaks */
+@media (max-width: 1024px) {
+    .price-filter {
+        padding: 0.5rem 0;
+    }
+    .range-input input::-webkit-slider-thumb {
+        height: 20px;
+        width: 20px;
+    }
+    .slider-bar {
+        height: 5px;
+    }
+    .apply-btn {
+        font-size: 14px;
+        padding: 12px;
+        border-radius: 12px;
+    }
+    .price-input {
+        font-size: 13px;
+        margin-top: 10px;
+    }
+}
+</style>

@@ -1,2 +1,0 @@
-from .implementations.attribute_repository import AttributeRepository
-from .implementations.product_repository import ProductRepository

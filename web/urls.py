@@ -12,6 +12,8 @@ urlpatterns = [
     path('ckeditor',include('ckeditor_uploader.urls')),
     path('account/',include('apps.user.urls',namespace='user')),
     path('product/',include('apps.product.urls',namespace='product')),
+    
+
 
 
 ]+static(sett.MEDIA_URL,document_root = sett.MEDIA_ROOT)

@@ -1,0 +1,1136 @@
+{% extends "main_template.html" %}
+{% load humanize %}
+
+{% block content %}
+{% load render_partial %}
+
+<main class="container">
+    <!-- Breadcrumb -->
+    <nav class="flex mt-8" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
+            <li class="inline-flex items-center">
+                <a href="/"
+                    class="inline-flex items-center text-sm gap-x-1 text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+                    <svg class="size-4 mb-0.5">
+                        <use href="#home" />
+                    </svg>
+                    صفحه اصلی
+                </a>
+            </li>
+            <li aria-current="page">
+                <div class="flex items-center">
+                    <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m1 9 4-4-4-4" />
+                    </svg>
+                    <span class="ms-1 text-sm text-gray-500 md:ms-2 dark:text-gray-400">{{ group.title }}</span>
+                </div>
+            </li>
+        </ol>
+    </nav>
+
+    <div class="flex flex-col lg:flex-row gap-4 mt-5">
+        <!-- SIDE FILTER BOX (Desktop) -->
+        <div
+            class="lg:sticky top-1 h-fit lg:w-1/4 hidden lg:flex flex-col gap-y-4 items-center shadow rounded-lg py-4 dark:bg-gray-800 bg-white">
+            <!-- TITLE -->
+            <div class="flex items-center justify-between w-full px-2 xl:px-4">
+                <span class="flex items-center gap-x-1">
+                    <p class="font-DanaMedium text-gray-700 dark:text-gray-200 text-lg">فیلترها
+                    </p>
+                </span>
+                <a href="?page=1" class="text-blue-500 dark:text-blue-400 text-sm cursor-pointer hover:text-blue-700">
+                    حذف فیلتر‌ها
+                </a>
+            </div>
+            <!-- FILTERS -->
+            <div class="w-full divide-y divide-slate-200 dark:divide-gray-700/20">
+                <!-- ویژگی‌های فیلتر -->
+                {% render_partial 'product:get_feature_filter' slug=slug %}
+
+                <!-- TOGGLE SWITCH -->
+                <div class="w-full justify-between flex items-center gap-x-3 px-2 xl:px-4 py-4" dir="ltr">
+                    <label for="hs-valid-toggle-switch" class="relative inline-block w-11 h-6 cursor-pointer">
+                        <input type="checkbox" id="hs-valid-toggle-switch" class="peer sr-only" {% if request.GET.available %}checked{% endif %}>
+                        <span
+                            class="absolute inset-0 bg-gray-200 rounded-full transition-colors duration-200 ease-in-out peer-checked:bg-blue-500 dark:bg-neutral-700 dark:peer-checked:bg-blue-500 peer-disabled:opacity-50 peer-disabled:pointer-events-none"></span>
+                        <span
+                            class="absolute top-1/2 start-0.5 -translate-y-1/2 size-5 bg-white rounded-full shadow-xs transition-transform duration-200 ease-in-out peer-checked:translate-x-full dark:bg-neutral-400 dark:peer-checked:bg-white"></span>
+                    </label>
+                    <label for="hs-valid-toggle-switch" class="text-gray-800 dark:text-gray-100">
+                        فقط کالا های موجود
+                    </label>
+                </div>
+                <!-- TOGGLE SWITCH -->
+                <div class="w-full justify-between flex items-center gap-x-3 py-4 px-2 xl:px-4" dir="ltr">
+                    <label for="hs-valid-toggle-switch2" class="relative inline-block w-11 h-6 cursor-pointer">
+                        <input type="checkbox" id="hs-valid-toggle-switch2" class="peer sr-only" {% if request.GET.fast_delivery %}checked{% endif %}>
+                        <span
+                            class="absolute inset-0 bg-gray-200 rounded-full transition-colors duration-200 ease-in-out peer-checked:bg-blue-500 dark:bg-neutral-700 dark:peer-checked:bg-blue-500 peer-disabled:opacity-50 peer-disabled:pointer-events-none"></span>
+                        <span
+                            class="absolute top-1/2 start-0.5 -translate-y-1/2 size-5 bg-white rounded-full shadow-xs transition-transform duration-200 ease-in-out peer-checked:translate-x-full dark:bg-neutral-400 dark:peer-checked:bg-white"></span>
+                    </label>
+                    <label for="hs-valid-toggle-switch2"
+                        class="text-gray-800 dark:text-gray-100 flex items-center gap-x-2">
+                        <img class="size-5" src="{{media_url}}/images/svg/time.png" alt="">
+                        ارسال امروز
+                    </label>
+                </div>
+                <!-- Accordion -->
+                <div class="">
+                    <button onclick="toggleAccordion(2)"
+                        class="w-full flex justify-between items-center px-2 xl:px-4 py-4 text-gray-800 dark:text-gray-100">
+                        <span>محدوده قیمت</span>
+                        <span id="icon-1" class="text-gray-800 dark:text-gray-100">
+                            <svg class="size-4 transition-transform duration-300">
+                                <use href="#chevron-left"></use>
+                            </svg>
+                        </span>
+                    </button>
+                  {% include "./pricefilter.html" %}
+
+                </div>
+                <!-- TOGGLE SWITCH -->
+                <div class="w-full justify-between flex items-center gap-x-3 px-2 xl:px-4 py-4" dir="ltr">
+                    <label for="hs-valid-toggle-switch3" class="relative inline-block w-11 h-6 cursor-pointer">
+                        <input type="checkbox" id="hs-valid-toggle-switch3" class="peer sr-only" {% if request.GET.seller_delivery %}checked{% endif %}>
+                        <span
+                            class="absolute inset-0 bg-gray-200 rounded-full transition-colors duration-200 ease-in-out peer-checked:bg-blue-500 dark:bg-neutral-700 dark:peer-checked:bg-blue-500 peer-disabled:opacity-50 peer-disabled:pointer-events-none"></span>
+                        <span
+                            class="absolute top-1/2 start-0.5 -translate-y-1/2 size-5 bg-white rounded-full shadow-xs transition-transform duration-200 ease-in-out peer-checked:translate-x-full dark:bg-neutral-400 dark:peer-checked:bg-white"></span>
+                    </label>
+                    <label for="hs-valid-toggle-switch3"
+                        class="text-gray-800 dark:text-gray-100 flex items-center gap-x-2">
+                        <img class="size-5" src="{{media_url}}/images/svg/Seller.svg" alt="">
+                        ارسال فروشنده
+                    </label>
+                </div>
+                <!-- TOGGLE SWITCH -->
+                <div class="w-full justify-between flex items-center gap-x-3 px-2 xl:px-4 py-4" dir="ltr">
+                    <label for="hs-valid-toggle-switch4" class="relative inline-block w-11 h-6 cursor-pointer">
+                        <input type="checkbox" id="hs-valid-toggle-switch4" class="peer sr-only" {% if request.GET.local_pickup %}checked{% endif %}>
+                        <span
+                            class="absolute inset-0 bg-gray-200 rounded-full transition-colors duration-200 ease-in-out peer-checked:bg-blue-500 dark:bg-neutral-700 dark:peer-checked:bg-blue-500 peer-disabled:opacity-50 peer-disabled:pointer-events-none"></span>
+                        <span
+                            class="absolute top-1/2 start-0.5 -translate-y-1/2 size-5 bg-white rounded-full shadow-xs transition-transform duration-200 ease-in-out peer-checked:translate-x-full dark:bg-neutral-400 dark:peer-checked:bg-white"></span>
+                    </label>
+                    <label for="hs-valid-toggle-switch4"
+                        class="text-gray-800 dark:text-gray-100 flex items-center gap-x-1">
+                        <img class="size-5" src="{{media_url}}/images/svg/shop.png" alt="">
+                        خرید حضوری در تهران
+                    </label>
+                </div>
+
+                <!-- APPLY FILTERS BUTTON (Desktop) -->
+                <div class="w-full px-2 xl:px-4 py-4">
+                    <button type="button"
+                            onclick="applyDesktopFilters()"
+                            class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+                        اعمال فیلترها
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOP FILTER BOX & PRODUCT & PAGINATION -->
+        <div class="lg:w-3/4">
+            <!-- MOBILE FILTERS HEADER -->
+            <div class="flex lg:hidden items-center justify-between mb-4 bg-white p-3 rounded-lg shadow-sm">
+                <!-- تعداد کالاها -->
+                <div class="flex items-center gap-2">
+                    <span class="text-gray-500 text-sm">
+                        <span class="font-medium text-gray-700">{{ total_products|intcomma }}</span> کالا
+                    </span>
+                </div>
+
+                <!-- دکمه‌های فیلتر و مرتب‌سازی -->
+                <div class="flex items-center gap-2">
+                    <!-- دکمه مرتب‌سازی -->
+                    <button id="mobile-sort-btn" class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 active:bg-gray-100 transition-colors">
+                        <svg class="size-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
+                        </svg>
+                        <span class="text-sm text-gray-700">
+                            {% if sort_option == '1' %}جدیدترین
+                            {% elif sort_option == '2' %}گران‌ترین
+                            {% elif sort_option == '3' %}ارزان‌ترین
+                            {% else %}مرتب‌سازی
+                            {% endif %}
+                        </span>
+                    </button>
+
+                    <!-- دکمه فیلتر -->
+                    <button id="mobile-filter-btn" class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 active:bg-gray-100 transition-colors">
+                        <svg class="size-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                        </svg>
+                        <span class="text-sm text-gray-700">فیلتر</span>
+                        {% if has_active_filters %}
+                        <span class="size-2 bg-red-500 rounded-full"></span>
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+
+            <!-- MOBILE SORT MODAL (Bottom Sheet) -->
+            <div id="mobile-sort-modal" class="lg:hidden fixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 ease-out translate-y-full">
+                <div class="absolute inset-0 bg-black/50" onclick="closeSortModal()"></div>
+                <div class="absolute bottom-0 w-full bg-white rounded-t-2xl shadow-xl">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">مرتب‌سازی</h3>
+                        <button onclick="closeSortModal()" class="p-2 rounded-lg hover:bg-gray-100">
+                            <svg class="size-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Options -->
+                    <div class="p-4 space-y-1 max-h-[60vh] overflow-y-auto">
+                        <button onclick="applySort('1')" class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 {% if sort_option == '1' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
+                            <span class="text-right">جدیدترین</span>
+                            {% if sort_option == '1' %}
+                            <svg class="size-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            {% endif %}
+                        </button>
+
+                        <button onclick="applySort('2')" class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 {% if sort_option == '2' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
+                            <span class="text-right">گران‌ترین</span>
+                            {% if sort_option == '2' %}
+                            <svg class="size-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            {% endif %}
+                        </button>
+
+                        <button onclick="applySort('3')" class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 {% if sort_option == '3' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
+                            <span class="text-right">ارزان‌ترین</span>
+                            {% if sort_option == '3' %}
+                            <svg class="size-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            {% endif %}
+                        </button>
+
+                        <button onclick="applySort('4')" class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 {% if sort_option == '4' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
+                            <span class="text-right">محبوب‌ترین</span>
+                            {% if sort_option == '4' %}
+                            <svg class="size-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            {% endif %}
+                        </button>
+
+                        <button onclick="applySort('5')" class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 {% if sort_option == '5' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
+                            <span class="text-right">پرفروش‌ترین</span>
+                            {% if sort_option == '5' %}
+                            <svg class="size-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            {% endif %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MOBILE FILTER MODAL (Bottom Sheet) -->
+            <div id="mobile-filter-modal" class="lg:hidden fixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 ease-out translate-y-full">
+                <div class="absolute inset-0 bg-black/50" onclick="closeFilterModal()"></div>
+                <div class="absolute bottom-0 w-full bg-white rounded-t-2xl shadow-xl" style="height: 85vh;">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                        <div class="flex items-center gap-3">
+                            <h3 class="text-lg font-medium text-gray-900">فیلترها</h3>
+                            {% if has_active_filters %}
+                            <span class="px-2 py-1 text-xs bg-red-100 text-red-600 rounded-full">فعال</span>
+                            {% endif %}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="resetAllFilters()" class="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg">
+                                حذف همه
+                            </button>
+                            <button onclick="closeFilterModal()" class="p-2 rounded-lg hover:bg-gray-100">
+                                <svg class="size-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter Content -->
+                    <div class="h-[calc(85vh-140px)] overflow-y-auto pb-4">
+                        <!-- ویژگی‌های فیلتر -->
+                        <div class="p-4">
+                            {% render_partial 'product:get_feature_filter' slug=slug %}
+                        </div>
+
+                        <!-- قیمت -->
+                        {% include "./pricefilter.html" %}
+
+
+                        <!-- وضعیت موجودی -->
+                        <div class="p-4 border-t border-gray-200">
+                            <h4 class="font-medium text-gray-900 mb-3">وضعیت موجودی</h4>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 cursor-pointer">
+                                    <input type="checkbox" id="mobile-available" class="rounded text-blue-600 focus:ring-blue-500" {% if request.GET.available %}checked{% endif %}>
+                                    <span class="text-gray-700">فقط کالاهای موجود</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 cursor-pointer">
+                                    <input type="checkbox" id="mobile-fast-delivery" class="rounded text-blue-600 focus:ring-blue-500" {% if request.GET.fast_delivery %}checked{% endif %}>
+                                    <span class="text-gray-700 flex items-center gap-2">
+                                        <svg class="size-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                        </svg>
+                                        ارسال امروز
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- نوع فروشنده -->
+                        <div class="p-4 border-t border-gray-200">
+                            <h4 class="font-medium text-gray-900 mb-3">نوع فروشنده</h4>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 cursor-pointer">
+                                    <input type="checkbox" id="mobile-seller-delivery" class="rounded text-blue-600 focus:ring-blue-500" {% if request.GET.seller_delivery %}checked{% endif %}>
+                                    <span class="text-gray-700 flex items-center gap-2">
+                                        <svg class="size-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                                        </svg>
+                                        ارسال فروشنده
+                                    </span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 cursor-pointer">
+                                    <input type="checkbox" id="mobile-local-pickup" class="rounded text-blue-600 focus:ring-blue-500" {% if request.GET.local_pickup %}checked{% endif %}>
+                                    <span class="text-gray-700 flex items-center gap-2">
+                                        <svg class="size-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        خرید حضوری در تهران
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Actions -->
+                    <div class="absolute bottom-0 w-full p-4 bg-white border-t border-gray-200">
+                        <div class="flex items-center gap-3">
+                            <button onclick="applyMobileFilters()" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 active:bg-blue-800 transition-colors">
+                                نمایش نتایج
+                                <span class="text-sm font-normal">({{ total_products|intcomma }} کالا)</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TOP FILTER BOX (Desktop) -->
+            <div class="hidden lg:flex items-center justify-between mb-6">
+               <div class="flex items-center gap-x-5">
+                    <div class="flex items-center gap-x-2">
+                        <svg class="size-6 text-gray-400">
+                            <use href="#sort-list"></use>
+                        </svg>
+                        <h2 class="font-DanaDemiBold text-gray-400">مرتب سازی :</h2>
+                    </div>
+                    <ul class="flex items-center gap-x-1 lg:gap-x-4 child:transition-all child:cursor-pointer child:rounded-lg child:px-1 child:py-1 child:text-sm child:lg:text-base">
+                        <li class="{% if sort_option == '1' %}text-blue-500{% else %}text-gray-400 hover:text-blue-500{% endif %}"
+                            onclick="applySort('1')">جدیدترین</li>
+                        <li class="{% if sort_option == '2' %}text-blue-500{% else %}text-gray-400 hover:text-blue-500{% endif %}"
+                            onclick="applySort('2')">گران‌ترین</li>
+                        <li class="{% if sort_option == '3' %}text-blue-500{% else %}text-gray-400 hover:text-blue-500{% endif %}"
+                            onclick="applySort('3')">ارزان‌ترین</li>
+                    </ul>
+               </div>
+               <div class="flex items-center gap-x-3">
+                   <div class="hidden xl:flex items-center gap-x-2">
+                       <span class="text-sm text-gray-400">تاریخچه فیلتر:</span>
+                       <select id="filter-history-select"
+                               class="border border-gray-300 rounded-lg px-2 py-1 text-sm text-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100">
+                           <option value="">انتخاب...</option>
+                       </select>
+                   </div>
+                   <button type="button"
+                           onclick="applySelectedHistory()"
+                           class="hidden xl:inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700">
+                       اعمال
+                   </button>
+                   <span class="text-sm text-gray-400 end">{{ total_products|intcomma }} کالا</span>
+               </div>
+            </div>
+
+            <!-- PRODUCTS -->
+            <div class="grid grid-cols-1 xxs:grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 xs:gap-2 sm:gap-4" id="products-container">
+                {% for product in products %}
+                <div class="product-card group">
+                    <!-- product header -->
+                    <div class="product-card_header">
+                        <div class="flex items-center gap-x-2">
+                            <div class="tooltip">
+                                <button class="rounded-full p-1.5 app-border app-hover add-to-cart"
+                                        data-product-id="{{ product.id }}">
+                                    <svg class="size-4">
+                                        <use href="#shopping-cart"></use>
+                                    </svg>
+                                </button>
+                                <div class="tooltiptext">سبد خرید</div>
+                            </div>
+                            <div class="tooltip">
+                                <button class="rounded-full p-1.5 app-border app-hover add-to-wishlist"
+                                        data-product-id="{{ product.id }}">
+                                    <svg class="size-4">
+                                        <use href="#heart"></use>
+                                    </svg>
+                                </button>
+                                <div class="tooltiptext">علاقه‌مندی</div>
+                            </div>
+                            <div class="tooltip">
+                                <button class="rounded-full p-1.5 app-border app-hover add-to-compare"
+                                        data-product-id="{{ product.id }}">
+                                    <svg class="size-4">
+                                        <use href="#arrows-up-down"></use>
+                                    </svg>
+                                </button>
+                                <div class="tooltiptext">مقایسه</div>
+                            </div>
+                        </div>
+
+                        <!-- badge offer -->
+                        {% if product.discount_percent > 0 %}
+                        <span class="product-card_badge">{{ product.discount_percent }}% تخفیف</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- product img -->
+                    <a href="{{ product.get_absolute_url }}">
+                        <img class="product-card_img group-hover:opacity-0 absolute"
+                             src="{{ product.mainImage.url }}"
+                             alt="{{ product.title }}"
+                             onerror="this.src='{{ media_url }}/images/default-product.jpg'">
+                        <!-- تصویر دوم برای hover (می‌توانید گالری تصاویر اضافه کنید) -->
+                        <img class="product-card_img opacity-0 group-hover:opacity-100"
+                             src="{{ product.mainImage.url }}"
+                             alt="{{ product.title }}"
+                             onerror="this.src='{{ media_url }}/images/default-product.jpg'">
+                    </a>
+
+                    <!--  product footer -->
+                    <div class="space-y-2">
+                        <a href="{{ product.get_absolute_url }}" class="product-card_link">
+                            {{ product.title|truncatechars:70 }}
+                        </a>
+
+                        <!-- Rate and Price -->
+                        <div class="product-card_price-wrapper">
+                            <!-- RATE -->
+                            <div class="product-card_rate">
+                                <span class="flex items-center gap-x-0.5">
+                                    <svg class="size-4 text-blue-500 mb-0.5">
+                                        <use href="#rocket"></use>
+                                    </svg>
+                                    <p class="text-xs">ارسال امروز</p>
+                                </span>
+                                <span class="text-gray-400 flex items-center text-sm gap-x-0.5">
+                                    <p>{{ product.average_rating|floatformat:1 }}</p>
+                                    <svg class="size-4 mb-1">
+                                        <use href="#star"></use>
+                                    </svg>
+                                </span>
+                            </div>
+
+                            <!-- Price -->
+                            <div class="product-card_price">
+                                {% if product.discount_percent > 0 %}
+                                <del>
+                                    <p>{{ product.price|intcomma }}</p>
+                                    <h6 class="inline">تومان</h6>
+                                </del>
+                                {% endif %}
+
+                                <p>{{ product.price|intcomma }}</p>
+                                <span>تومان</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-span-full text-center py-12">
+                    <svg class="w-24 h-24 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                              d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">محصولی یافت نشد</h3>
+                    <p class="mt-1 text-gray-500 dark:text-gray-400">هیچ محصولی با فیلترهای انتخابی شما مطابقت ندارد.</p>
+                    <a href="?page=1" class="mt-4 inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                        حذف فیلترها
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- PAGINATION -->
+            {% if products.has_other_pages %}
+            <div class="mt-10 w-full flex items-center justify-center">
+                <ul class="flex items-center gap-x-3 child:flex child:items-center child:justify-center child:w-8 child:h-8 child:cursor-pointer child:shadow child:rounded-lg child:transition-all child:duration-300">
+                    <!-- Previous Page -->
+                    {% if products.has_previous %}
+                    <li class="bg-white dark:bg-gray-800 hover:bg-gray-800 dark:hover:bg-blue-500 hover:text-white">
+                        <a href="?page={{ products.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <svg class="size-5 rotate-180">
+                                <use href="#chevron-left"></use>
+                            </svg>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Page Numbers -->
+                    {% for i in products.paginator.page_range %}
+                        {% if products.number == i %}
+                        <li class="text-white bg-blue-500">
+                            <span>{{ i }}</span>
+                        </li>
+                        {% elif i > products.number|add:'-3' and i < products.number|add:'3' %}
+                        <li class="bg-white dark:bg-gray-800 hover:bg-blue-500 dark:hover:bg-blue-500 hover:text-white">
+                            <a href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                {{ i }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- Next Page -->
+                    {% if products.has_next %}
+                    <li class="bg-white dark:bg-gray-800 hover:bg-blue-500 dark:hover:bg-blue-500 hover:text-white">
+                        <a href="?page={{ products.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <svg class="size-5">
+                                <use href="#chevron-left"></use>
+                            </svg>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</main>
+
+<!-- CSS برای موبایل -->
+<style>
+/* استایل‌های Bottom Sheet */
+#mobile-sort-modal,
+#mobile-filter-modal {
+    display: none;
+}
+
+#mobile-sort-modal.show,
+#mobile-filter-modal.show {
+    display: block;
+    transform: translateY(0);
+}
+
+/* استایل اسلایدر قیمت */
+.wrapper {
+    width: 100%;
+    padding: 0 10px;
+}
+
+.slider-bar {
+    height: 4px;
+    background: #ddd;
+    border-radius: 5px;
+    position: relative;
+}
+
+.slider-bar .progress {
+    height: 100%;
+    left: 0;
+    right: 0;
+    position: absolute;
+    border-radius: 5px;
+    background: #3b82f6;
+}
+
+.range-input {
+    position: relative;
+}
+
+.range-input input {
+    position: absolute;
+    width: 100%;
+    height: 4px;
+    top: -4px;
+    background: none;
+    pointer-events: none;
+    -webkit-appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #3b82f6;
+    pointer-events: auto;
+    -webkit-appearance: none;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+input[type="range"]::-moz-range-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #3b82f6;
+    pointer-events: auto;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* استایل برای آیتم‌های فیلتر فعال */
+.filter-item-active {
+    background-color: #eff6ff;
+    border-color: #3b82f6;
+    color: #1d4ed8;
+}
+
+/* انیمیشن‌ها */
+@keyframes slideInUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* استایل برای موبایل */
+@media (max-width: 1024px) {
+    .product-card {
+        min-height: 320px;
+    }
+
+    .product-card_img {
+        height: 180px;
+        object-fit: contain;
+    }
+}
+
+/* استایل برای دکمه‌های موبایل */
+@media (max-width: 640px) {
+    #mobile-sort-btn,
+    #mobile-filter-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+}
+</style>
+
+<!-- JavaScript بهبود یافته -->
+<script>
+// متغیرهای global
+let currentMinPrice = {{ price_min|default:'0' }};
+let currentMaxPrice = {{ price_max|default:'35000' }};
+const FILTER_HISTORY_KEY = 'shopFilterHistory';
+
+function saveFilterToHistory(queryString) {
+    try {
+        const url = new URL(window.location.origin + window.location.pathname + '?' + queryString);
+        const params = new URLSearchParams(url.search);
+        params.delete('page');
+        const cleanQuery = params.toString();
+
+        if (!cleanQuery) return;
+
+        let history = [];
+        try {
+            history = JSON.parse(localStorage.getItem(FILTER_HISTORY_KEY) || '[]');
+        } catch (e) {
+            history = [];
+        }
+
+        history = history.filter(item => item.query !== cleanQuery);
+        history.unshift({
+            query: cleanQuery,
+            label: new Date().toLocaleString('fa-IR')
+        });
+        history = history.slice(0, 5);
+
+        localStorage.setItem(FILTER_HISTORY_KEY, JSON.stringify(history));
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+function populateHistorySelect() {
+    const select = document.getElementById('filter-history-select');
+    if (!select) return;
+
+    let history = [];
+    try {
+        history = JSON.parse(localStorage.getItem(FILTER_HISTORY_KEY) || '[]');
+    } catch (e) {
+        history = [];
+    }
+
+    select.innerHTML = '';
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'انتخاب...';
+    select.appendChild(defaultOption);
+
+    history.forEach((item, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = item.label;
+        select.appendChild(option);
+    });
+}
+
+function applySelectedHistory() {
+    const select = document.getElementById('filter-history-select');
+    if (!select) return;
+
+    const index = select.value;
+    if (index === '') return;
+
+    let history = [];
+    try {
+        history = JSON.parse(localStorage.getItem(FILTER_HISTORY_KEY) || '[]');
+    } catch (e) {
+        history = [];
+    }
+
+    const item = history[index];
+    if (!item) return;
+
+    const params = new URLSearchParams(item.query);
+    params.set('page', 1);
+    window.location.search = params.toString();
+}
+
+// مدیریت Modal‌های موبایل
+function openSortModal() {
+    const modal = document.getElementById('mobile-sort-modal');
+    modal.style.display = 'block';
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeSortModal() {
+    const modal = document.getElementById('mobile-sort-modal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
+    document.body.style.overflow = 'auto';
+}
+
+function openFilterModal() {
+    const modal = document.getElementById('mobile-filter-modal');
+    modal.style.display = 'block';
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+    document.body.style.overflow = 'hidden';
+    initPriceSlider();
+}
+
+function closeFilterModal() {
+    const modal = document.getElementById('mobile-filter-modal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
+    document.body.style.overflow = 'auto';
+}
+
+// اعمال مرتب‌سازی
+function applySort(sortValue) {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('sort', sortValue);
+    urlParams.set('page', 1);
+
+    const newQuery = urlParams.toString();
+    saveFilterToHistory(newQuery);
+    window.location.search = newQuery;
+}
+
+// مدیریت اسلایدر قیمت
+function initPriceSlider() {
+    const containers = document.querySelectorAll('[data-price-filter]');
+
+    containers.forEach(container => {
+        const min = container.querySelector('.price-range-min');
+        const max = container.querySelector('.price-range-max');
+        const progress = container.querySelector('.price-range-progress');
+        const minDisplay = container.querySelector('.min-price-display');
+        const maxDisplay = container.querySelector('.max-price-display');
+        const numericMin = container.querySelector('.price-number-min');
+        const numericMax = container.querySelector('.price-number-max');
+
+        if (!min || !max || !progress) return;
+
+        function updateSlider() {
+            let minVal = parseInt(min.value);
+            let maxVal = parseInt(max.value);
+
+            // محدودیت فاصله قیمت
+            if (maxVal - minVal < 10000) {
+                if (min === document.activeElement) {
+                    min.value = maxVal - 10000;
+                } else {
+                    max.value = minVal + 10000;
+                }
+                minVal = parseInt(min.value);
+                maxVal = parseInt(max.value);
+            }
+
+            const sliderMax = parseInt(max.getAttribute('max')) || 100000;
+            const sliderMin = parseInt(min.getAttribute('min')) || 0;
+            const range = sliderMax - sliderMin || 1;
+
+            const minPercent = ((minVal - sliderMin) / range) * 100;
+            const maxPercent = ((maxVal - sliderMin) / range) * 100;
+
+            progress.style.left = minPercent + "%";
+            progress.style.right = (100 - maxPercent) + "%";
+
+            if (minDisplay) minDisplay.textContent = minVal.toLocaleString() + ' تومان';
+            if (maxDisplay) maxDisplay.textContent = maxVal.toLocaleString() + ' تومان';
+            if (numericMin) numericMin.value = minVal;
+            if (numericMax) numericMax.value = maxVal;
+
+            currentMinPrice = minVal;
+            currentMaxPrice = maxVal;
+        }
+
+        min.addEventListener('input', updateSlider);
+        max.addEventListener('input', updateSlider);
+        updateSlider();
+
+        if (numericMin) {
+            numericMin.addEventListener('input', function() {
+                const value = Math.min(parseInt(this.value) || 0, currentMaxPrice - 10000);
+                min.value = value;
+                updateSlider();
+            });
+        }
+
+        if (numericMax) {
+            numericMax.addEventListener('input', function() {
+                const value = Math.max(parseInt(this.value) || 100000, currentMinPrice + 10000);
+                max.value = value;
+                updateSlider();
+            });
+        }
+    });
+}
+
+// اعمال فیلترهای دسکتاپ
+function applyDesktopFilters() {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // قیمت از اسلایدر دسکتاپ
+    const minRange = document.getElementById('minRange');
+    const maxRange = document.getElementById('maxRange');
+    if (minRange && maxRange) {
+        const minVal = minRange.value;
+        const maxVal = maxRange.value;
+        if (minVal && maxVal) {
+            urlParams.set('price_min', minVal);
+            urlParams.set('price_max', maxVal);
+        }
+    }
+
+    // فیلترهای ویژگی
+    urlParams.delete('feature');
+    document.querySelectorAll('.feature-checkbox:checked').forEach(cb => {
+        urlParams.append('feature', cb.value);
+    });
+
+    // سوئیچ‌های وضعیت
+    const desktopAvailable = document.getElementById('hs-valid-toggle-switch')?.checked;
+    const desktopFastDelivery = document.getElementById('hs-valid-toggle-switch2')?.checked;
+    const desktopSellerDelivery = document.getElementById('hs-valid-toggle-switch3')?.checked;
+    const desktopLocalPickup = document.getElementById('hs-valid-toggle-switch4')?.checked;
+
+    if (desktopAvailable) {
+        urlParams.set('available', 'true');
+    } else {
+        urlParams.delete('available');
+    }
+
+    if (desktopFastDelivery) {
+        urlParams.set('fast_delivery', 'true');
+    } else {
+        urlParams.delete('fast_delivery');
+    }
+
+    if (desktopSellerDelivery) {
+        urlParams.set('seller_delivery', 'true');
+    } else {
+        urlParams.delete('seller_delivery');
+    }
+
+    if (desktopLocalPickup) {
+        urlParams.set('local_pickup', 'true');
+    } else {
+        urlParams.delete('local_pickup');
+    }
+
+    urlParams.set('page', 1);
+
+    const newQuery = urlParams.toString();
+    saveFilterToHistory(newQuery);
+    window.location.search = newQuery;
+}
+
+// اعمال فیلترهای موبایل
+function applyMobileFilters() {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // قیمت
+    const minPrice = document.getElementById('mobile-min-price').value;
+    const maxPrice = document.getElementById('mobile-max-price').value;
+    if (minPrice && maxPrice && (minPrice > 0 || maxPrice < 100000)) {
+        urlParams.set('price_min', minPrice);
+        urlParams.set('price_max', maxPrice);
+    } else {
+        urlParams.delete('price_min');
+        urlParams.delete('price_max');
+    }
+
+    // موجودی
+    const available = document.getElementById('mobile-available').checked;
+    if (available) {
+        urlParams.set('available', 'true');
+    } else {
+        urlParams.delete('available');
+    }
+
+    // ارسال سریع
+    const fastDelivery = document.getElementById('mobile-fast-delivery').checked;
+    if (fastDelivery) {
+        urlParams.set('fast_delivery', 'true');
+    } else {
+        urlParams.delete('fast_delivery');
+    }
+
+    // ارسال فروشنده
+    const sellerDelivery = document.getElementById('mobile-seller-delivery').checked;
+    if (sellerDelivery) {
+        urlParams.set('seller_delivery', 'true');
+    } else {
+        urlParams.delete('seller_delivery');
+    }
+
+    // خرید حضوری
+    const localPickup = document.getElementById('mobile-local-pickup').checked;
+    if (localPickup) {
+        urlParams.set('local_pickup', 'true');
+    } else {
+        urlParams.delete('local_pickup');
+    }
+
+    urlParams.set('page', 1);
+
+    const newQuery = urlParams.toString();
+    saveFilterToHistory(newQuery);
+    window.location.search = newQuery;
+}
+
+// بازنشانی همه فیلترها
+function resetAllFilters() {
+    window.location.search = '?page=1';
+}
+
+// بازنشانی فیلتر قیمت
+function resetPriceFilter() {
+    const minRange = document.querySelector('.min-range');
+    const maxRange = document.querySelector('.max-range');
+    const mobileMinInput = document.getElementById('mobile-min-price');
+    const mobileMaxInput = document.getElementById('mobile-max-price');
+
+    if (minRange) minRange.value = 0;
+    if (maxRange) maxRange.value = 100000;
+    if (mobileMinInput) mobileMinInput.value = 0;
+    if (mobileMaxInput) mobileMaxInput.value = 100000;
+
+    initPriceSlider();
+}
+
+// مدیریت Accordion (محدوده قیمت - دسکتاپ)
+function toggleAccordion(id) {
+    const content = document.getElementById(`content-${id}`);
+    const icon = document.getElementById(`icon-${id}`);
+
+    if (!content) return;
+
+    if (content.classList.contains('max-h-0')) {
+        content.classList.remove('max-h-0');
+        content.classList.add('max-h-96');
+        if (icon) {
+            const svg = icon.querySelector('svg');
+            if (svg) svg.style.transform = 'rotate(-90deg)';
+        }
+    } else {
+        content.classList.remove('max-h-96');
+        content.classList.add('max-h-0');
+        if (icon) {
+            const svg = icon.querySelector('svg');
+            if (svg) svg.style.transform = 'rotate(0deg)';
+        }
+    }
+}
+
+// مدیریت Accordion ویژگی‌ها (دسکتاپ و موبایل)
+function toggleFeatureAccordion(button) {
+    const content = button.nextElementSibling;
+    if (!content) return;
+
+    const svg = button.querySelector('svg');
+    const isOpen = !content.classList.contains('max-h-0');
+
+    if (isOpen) {
+        content.classList.remove('max-h-96');
+        content.classList.add('max-h-0');
+        if (svg) svg.style.transform = 'rotate(0deg)';
+    } else {
+        content.classList.remove('max-h-0');
+        content.classList.add('max-h-96');
+        if (svg) svg.style.transform = 'rotate(-90deg)';
+    }
+}
+
+// مقداردهی اولیه
+document.addEventListener('DOMContentLoaded', function() {
+    // رویدادهای دکمه‌های موبایل
+    document.getElementById('mobile-sort-btn')?.addEventListener('click', openSortModal);
+    document.getElementById('mobile-filter-btn')?.addEventListener('click', openFilterModal);
+
+    // مقداردهی اولیه اسلایدر
+    initPriceSlider();
+
+    // رویداد برای چک‌باکس‌های دسکتاپ
+    document.querySelectorAll('#hs-valid-toggle-switch, #hs-valid-toggle-switch2, #hs-valid-toggle-switch3, #hs-valid-toggle-switch4').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const filterName = this.id.replace('hs-valid-toggle-switch', '').replace('2', '').replace('3', '').replace('4', '');
+            const filterMap = {
+                '': 'available',
+                '2': 'fast_delivery',
+                '3': 'seller_delivery',
+                '4': 'local_pickup'
+            };
+
+            if (this.checked) {
+                urlParams.set(filterMap[filterName], 'true');
+            } else {
+                urlParams.delete(filterMap[filterName]);
+            }
+
+            urlParams.set('page', 1);
+
+            const newQuery = urlParams.toString();
+            saveFilterToHistory(newQuery);
+            window.location.search = newQuery;
+        });
+    });
+
+    // باز کردن خودکار آکاردئون ویژگی‌هایی که مقدار انتخاب‌شده دارند (UX بهتر)
+    document.querySelectorAll('.feature-accordion-section').forEach(section => {
+        const anyChecked = section.querySelector('.feature-checkbox:checked');
+        if (anyChecked) {
+            const button = section.querySelector('button');
+            const content = section.querySelector('.feature-accordion-content');
+            const svg = section.querySelector('button svg');
+            if (content && content.classList.contains('max-h-0')) {
+                content.classList.remove('max-h-0');
+                content.classList.add('max-h-96');
+                if (svg) svg.style.transform = 'rotate(-90deg)';
+            }
+        }
+    });
+
+    // جلوگیری از اسکرول بدن هنگام باز بودن modal
+    document.querySelectorAll('#mobile-sort-modal, #mobile-filter-modal').forEach(modal => {
+        modal.addEventListener('touchmove', function(e) {
+            const content = this.querySelector('.overflow-y-auto');
+            if (content && content.scrollHeight > content.clientHeight) {
+                if (e.target.closest('.overflow-y-auto')) {
+                    e.stopPropagation();
+                } else {
+                    e.preventDefault();
+                }
+            } else {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    });
+
+    // بستن modal با کلیک روی overlay
+    document.querySelectorAll('#mobile-sort-modal .absolute.inset-0, #mobile-filter-modal .absolute.inset-0').forEach(overlay => {
+        overlay.addEventListener('click', function() {
+            if (this.closest('#mobile-sort-modal')) {
+                closeSortModal();
+            } else {
+                closeFilterModal();
+            }
+        });
+    });
+    populateHistorySelect();
+});
+
+// تابع برای چک کردن فیلترهای فعال
+function hasActiveFilters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeFilters = ['price_min', 'price_max', 'available', 'fast_delivery', 'seller_delivery', 'local_pickup', 'sort'];
+
+    for (const filter of activeFilters) {
+        if (urlParams.has(filter)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// به‌روزرسانی نشانگر فیلترهای فعال
+document.addEventListener('DOMContentLoaded', function() {
+    if (hasActiveFilters()) {
+        const filterBtn = document.getElementById('mobile-filter-btn');
+        if (filterBtn) {
+            let badge = filterBtn.querySelector('.bg-red-500');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'size-2 bg-red-500 rounded-full absolute -top-1 -right-1';
+                filterBtn.style.position = 'relative';
+                filterBtn.appendChild(badge);
+            }
+        }
+    }
+});
+</script>
+
+{% endblock %}
+

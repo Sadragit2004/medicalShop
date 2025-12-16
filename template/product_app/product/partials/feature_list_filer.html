@@ -1,0 +1,43 @@
+<!-- product_app/templates/product_app/shop/partials/feature_filter.html -->
+{% for feature, values in feature_dict.items %}
+<div class="feature-accordion-section">
+    <button onclick="toggleFeatureAccordion(this)"
+        class="w-full flex justify-between items-center px-2 xl:px-4 py-4 text-gray-800 dark:text-gray-100">
+        <span>{{ feature.title }}</span>
+        <span class="text-gray-800 dark:text-gray-100 feature-accordion-icon">
+            <svg class="size-4 transition-transform duration-300">
+                <use href="#chevron-left"></use>
+            </svg>
+        </span>
+    </button>
+    <div class="feature-accordion-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+        <div class="pb-3 text-gray-700 dark:text-gray-300 w-full flex flex-col gap-y-1.5">
+            {% for value in values %}
+            <!-- item -->
+            <div class="inline-flex items-center mr-2.5 mt-1">
+                <label class="relative flex cursor-pointer items-center rounded-full p-3"
+                    for="feature-{{ value.id }}" data-ripple-dark="true">
+                    <input id="feature-{{ value.id }}" type="checkbox"
+                        name="feature" value="{{ value.id }}"
+                        {% if selected_features and value.id|stringformat:"s" in selected_features %}checked{% endif %}
+                        class="feature-checkbox peer relative h-5 w-5 cursor-pointer appearance-none rounded border border-slate-300 shadow hover:shadow-md transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-slate-400 before:opacity-0 before:transition-opacity checked:border-blue-500 checked:bg-blue-500 checked:before:bg-slate-400 hover:before:opacity-10 dark:bg-gray-600 dark:checked:bg-blue-500 darKchecked:bg-blue-500" />
+                    <span
+                        class="pointer-events-none absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 text-white opacity-0 transition-opacity peer-checked:opacity-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5"
+                            viewBox="0 0 20 20" fill="currentColor" stroke="currentColor"
+                            stroke-width="1">
+                            <path fill-rule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clip-rule="evenodd"></path>
+                        </svg>
+                    </span>
+                </label>
+                <label class="cursor-pointer text-gray-800 dark:text-gray-400 mr-1" for="feature-{{ value.id }}">
+                    {{ value.value }}
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endfor %}
