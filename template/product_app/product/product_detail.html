@@ -315,7 +315,8 @@
             <!-- دکمه افزودن به سبد -->
             <button class="w-full flex items-center gap-x-1 justify-center bg-blue-500 text-white hover:bg-blue-600 transition-all rounded-lg shadow py-2 add-to-cart-btn"
                     data-product-id="{{ product.id }}"
-                    data-sale-type-id="{{ default_sale_type.id }}">
+                    data-quantity="1"
+                    data-detail="">
                 {% if default_sale_type.typeSale == 2 %}
                 افزودن کارتن به سبد
                 {% else %}
@@ -387,7 +388,7 @@
                     <div class="product-card_header">
                         <div class="flex items-center gap-x-2">
                             <div class="tooltip">
-                                <button class="rounded-full p-1.5 app-border app-hover add-to-cart-mini" data-product-id="{{ related.id }}">
+                                <button class="rounded-full p-1.5 app-border app-hover add-to-cart-mini" data-product-id="{{ related.id }}" data-quantity="1" data-detail="">
                                     <svg class="size-4">
                                         <use href="#shopping-cart"></use>
                                     </svg>
@@ -649,11 +650,11 @@
     </button>
 </div>
 
-<!-- JavaScript برای تعاملات -->
+<!-- JavaScript for interactions -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // ========================
-    // 1. مدیریت مودال گالری
+    // Modal management
     // ========================
     const openModalBtns = document.querySelectorAll('.open-sliderModal');
     const closeModalBtn = document.querySelector('.close-sliderModal');
@@ -676,7 +677,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ========================
-    // 2. مدیریت تب‌ها
+    // Tab management
     // ========================
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -697,7 +698,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ========================
-    // 3. مدیریت دکمه مشاهده بیشتر کامنت‌ها
+    // More comments button
     // ========================
     const moreCommentBtn = document.querySelector('.more-comment-btn');
     if (moreCommentBtn) {
@@ -711,389 +712,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ========================
-    // 4. سیستم قیمت‌گذاری و سبد خرید
-    // ========================
-
-    // تعریف متغیرهای اصلی
-    const saleTypeBtns = document.querySelectorAll('.sale-type-btn');
-    const quantityInput = document.getElementById('quantity');
-    const totalPriceElement = document.getElementById('total-price');
-    const currentPriceElement = document.getElementById('current-price');
-    const cartonInfoElement = document.getElementById('carton-info');
-    const cartonCountElement = document.getElementById('carton-count');
-    const cartonDetailElement = document.getElementById('carton-detail');
-    const cartonUnitInfoElement = document.getElementById('carton-unit-info');
-    const addToCartBtn = document.querySelector('.add-to-cart-btn');
-    const decrementBtn = document.getElementById('decrement-btn');
-    const incrementBtn = document.querySelector('.increment');
-    const cartonInfoSection = document.getElementById('carton-info');
-
-    // اطلاعات فعلی فروش
-    let currentSaleType = {{ default_sale_type.typeSale|default:1 }};
-    let currentPrice = {{ default_sale_type.price|default:0 }};
-    let currentMemberCarton = {{ default_sale_type.memberCarton|default:1 }};
-    let currentLimitedSale = {{ default_sale_type.limitedSale|default:0 }};
-    let currentSaleId = {{ default_sale_type.id|default:0 }};
-
-    // تابع به‌روزرسانی قیمت کل
-    function updateTotalPrice() {
-        const quantity = parseInt(quantityInput.value);
-        let total = 0;
-        let cartons = 1;
-
-        // اگر نوع فروش کارتن باشد
-        if (currentSaleType === 2) { // CARTON = 2
-            // quantity را به عنوان تعداد کارتن در نظر می‌گیریم
-            cartons = quantity;
-            total = currentPrice * currentMemberCarton * cartons; // قیمت نهایی × تعداد در کارتن × تعداد کارتن
-
-            // نمایش اطلاعات کارتن
-            if (cartonCountElement) {
-                cartonCountElement.textContent = cartons;
-            }
-            if (cartonInfoSection) {
-                cartonInfoSection.classList.remove('hidden');
-            }
-
-            // نمایش جزئیات محاسبه
-            if (cartonDetailElement) {
-                cartonDetailElement.textContent = `${cartons} کارتن × ${currentMemberCarton} عدد × ${currentPrice.toLocaleString('fa-IR')}`;
-                cartonDetailElement.parentElement.classList.remove('hidden');
-            }
-
-            // به‌روزرسانی متن دکمه
-            if (addToCartBtn) {
-                addToCartBtn.innerHTML = `افزودن ${cartons} کارتن به سبد <svg class="w-5 h-5"><use href="#shopping-bag"></use></svg>`;
-            }
-        } else {
-            // برای انواع دیگر فروش (تک فروشی)
-            total = currentPrice * quantity;
-
-            // مخفی کردن اطلاعات کارتن
-            if (cartonInfoSection) {
-                cartonInfoSection.classList.add('hidden');
-            }
-            if (cartonDetailElement) {
-                cartonDetailElement.parentElement.classList.add('hidden');
-            }
-
-            // به‌روزرسانی متن دکمه
-            if (addToCartBtn) {
-                addToCartBtn.innerHTML = `افزودن به سبد <svg class="w-5 h-5"><use href="#shopping-bag"></use></svg>`;
-            }
-        }
-
-        // نمایش قیمت کل
-        totalPriceElement.textContent = total.toLocaleString('fa-IR') + ' تومان';
-
-        // به‌روزرسانی نمایش قیمت واحد (بالای باکس)
-        const currentPriceEl = document.getElementById('current-price');
-        const currentPriceOriginalEl = document.getElementById('current-price-original');
-        if (currentPriceEl) {
-            currentPriceEl.textContent = currentPrice.toLocaleString('fa-IR');
-        }
-        if (currentPriceOriginalEl) {
-            if (currentBasePrice > currentPrice) {
-                currentPriceOriginalEl.classList.remove('hidden');
-                currentPriceOriginalEl.textContent = currentBasePrice.toLocaleString('fa-IR');
-            } else {
-                currentPriceOriginalEl.classList.add('hidden');
-            }
-        }
-
-        // نمایش قیمت پایه (خط خورده) در صورت وجود تخفیف
-        const totalPriceOriginal = document.getElementById('total-price-original');
-        if (totalPriceOriginal) {
-            let baseTotal;
-            if (currentSaleType === 2) {
-                baseTotal = currentBasePrice * currentMemberCarton * cartons;
-            } else {
-                baseTotal = currentBasePrice * quantity;
-            }
-
-            if (currentBasePrice > currentPrice) {
-                totalPriceOriginal.classList.remove('hidden');
-                totalPriceOriginal.textContent = baseTotal.toLocaleString('fa-IR') + ' تومان';
-            } else {
-                totalPriceOriginal.classList.add('hidden');
-            }
-        }
-
-        // مدیریت وضعیت دکمه کاهش
-        const minQuantity = currentLimitedSale > 0 ? currentLimitedSale :
-                           (currentSaleType === 2 ? 1 : 1);
-
-        if (quantity <= minQuantity) {
-            decrementBtn.classList.add('cursor-not-allowed', 'text-gray-400');
-            decrementBtn.classList.remove('text-red-500');
-        } else {
-            decrementBtn.classList.remove('cursor-not-allowed', 'text-gray-400');
-            decrementBtn.classList.add('text-red-500');
-        }
-    }
-
-    // مقداردهی اولیه
-    updateTotalPrice();
-
-    // ========================
-    // 5. مدیریت تغییر نوع فروش
-    // ========================
-    if (saleTypeBtns.length > 0) {
-        saleTypeBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // حذف active از همه دکمه‌ها
-                saleTypeBtns.forEach(b => {
-                    b.classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
-                    b.classList.add('border-gray-300');
-                });
-
-                // اضافه کردن active به دکمه انتخاب شده
-                btn.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
-                btn.classList.remove('border-gray-300');
-
-                // به‌روزرسانی متغیرها
-                currentSaleType = parseInt(btn.getAttribute('data-sale-type'));
-                currentPrice = parseInt(btn.getAttribute('data-final-price') || btn.getAttribute('data-price'));
-                currentBasePrice = parseInt(btn.getAttribute('data-price'));
-                currentMemberCarton = parseInt(btn.getAttribute('data-member-carton')) || 1;
-                currentLimitedSale = parseInt(btn.getAttribute('data-limited-sale')) || 0;
-                currentSaleId = parseInt(btn.getAttribute('data-sale-id'));
-
-                // به‌روزرسانی نمایش قیمت واحد
-                if (currentPriceElement) {
-                    currentPriceElement.textContent = currentPrice.toLocaleString('fa-IR');
-                }
-
-                // به‌روزرسانی اطلاعات کارتن
-                if (cartonUnitInfoElement) {
-                    if (currentSaleType === 2) {
-                        cartonUnitInfoElement.textContent = `هر کارتن ${currentMemberCarton} عددی`;
-                        cartonUnitInfoElement.classList.remove('hidden');
-                    } else {
-                        cartonUnitInfoElement.classList.add('hidden');
-                    }
-                }
-
-                // تنظیم حداقل و مقدار پیش‌فرض
-                let minQuantity;
-                if (currentSaleType === 2) {
-                    minQuantity = 1; // حداقل یک کارتن
-                } else if (currentLimitedSale > 0) {
-                    minQuantity = currentLimitedSale;
-                } else {
-                    minQuantity = 1;
-                }
-
-                // به‌روزرسانی input
-                quantityInput.min = minQuantity;
-                quantityInput.value = minQuantity;
-
-                // به‌روزرسانی آیدی نوع فروش در دکمه سبد
-                if (addToCartBtn) {
-                    addToCartBtn.setAttribute('data-sale-type-id', currentSaleId);
-                }
-
-                // به‌روزرسانی قیمت کل
-                updateTotalPrice();
-            });
-        });
-    }
-
-    // ========================
-    // 6. مدیریت تغییر تعداد
-    // ========================
-    quantityInput.addEventListener('input', function() {
-        const value = parseInt(this.value);
-        const min = parseInt(this.min);
-        const max = parseInt(this.max) || 1000;
-
-        // اعتبارسنجی
-        if (isNaN(value) || value < min) {
-            this.value = min;
-        } else if (value > max) {
-            this.value = max;
-        }
-
-        // به‌روزرسانی قیمت
-        updateTotalPrice();
-    });
-
-    // ========================
-    // 7. دکمه افزایش تعداد
-    // ========================
-    if (incrementBtn) {
-        incrementBtn.addEventListener('click', () => {
-            let value = parseInt(quantityInput.value);
-            const max = parseInt(quantityInput.max) || 1000;
-
-            // افزایش مقدار
-            value += 1;
-
-            if (value <= max) {
-                quantityInput.value = value;
-                updateTotalPrice();
-            }
-        });
-    }
-
-    // ========================
-    // 8. دکمه کاهش تعداد
-    // ========================
-    if (decrementBtn) {
-        decrementBtn.addEventListener('click', () => {
-            // اگر دکمه غیرفعال باشد، کاری نکن
-            if (decrementBtn.classList.contains('cursor-not-allowed')) {
-                return;
-            }
-
-            let value = parseInt(quantityInput.value);
-            const min = parseInt(quantityInput.min);
-
-            // کاهش مقدار
-            value -= 1;
-
-            if (value >= min) {
-                quantityInput.value = value;
-                updateTotalPrice();
-            }
-        });
-    }
-
-    // ========================
-    // 9. افزودن به سبد خرید
-    // ========================
-    if (addToCartBtn) {
-        addToCartBtn.addEventListener('click', function() {
-            const productId = this.getAttribute('data-product-id');
-            const saleTypeId = this.getAttribute('data-sale-type-id');
-            const quantity = parseInt(quantityInput.value);
-
-            // اعتبارسنجی برای فروش کارتن
-            if (currentSaleType === 2) {
-            // برای کارتن، quantity = تعداد کارتن؛ نیاز به مضرب نیست
-            }
-
-            // اعتبارسنجی برای محدودیت خرید
-            if (currentLimitedSale > 0 && quantity < currentLimitedSale) {
-                alert(`حداقل تعداد خرید ${currentLimitedSale} عدد می‌باشد.`);
-                quantityInput.value = currentLimitedSale;
-                updateTotalPrice();
-                return;
-            }
-
-            // آماده کردن داده‌ها برای ارسال
-            const formData = new FormData();
-            formData.append('product_id', productId);
-            formData.append('sale_type_id', saleTypeId);
-            formData.append('quantity', quantity);
-            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-
-            // نمایش لودینگ
-            const originalText = addToCartBtn.innerHTML;
-            addToCartBtn.innerHTML = `<span class="loader"></span> در حال افزودن...`;
-            addToCartBtn.disabled = true;
-
-            // ارسال درخواست
-            fetch('/cart/add/', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                // بازگردانی دکمه
-                addToCartBtn.innerHTML = originalText;
-                addToCartBtn.disabled = false;
-
-                if (data.success) {
-                    // نمایش پیام موفقیت
-                    alert('محصول با موفقیت به سبد خرید اضافه شد');
-
-                    // به‌روزرسانی تعداد سبد خرید
-                    if (data.cart_count !== undefined) {
-                        const cartCountElements = document.querySelectorAll('.cart-count');
-                        cartCountElements.forEach(el => {
-                            el.textContent = data.cart_count;
-                        });
-                    }
-
-                    // ریست مقدار به حداقل
-                    const minQuantity = currentLimitedSale > 0 ? currentLimitedSale :
-                                       (currentSaleType === 2 ? currentMemberCarton : 1);
-                    quantityInput.value = minQuantity;
-                    updateTotalPrice();
-
-                } else {
-                    alert('خطا: ' + data.error);
-                }
-            })
-            .catch(error => {
-                // بازگردانی دکمه
-                addToCartBtn.innerHTML = originalText;
-                addToCartBtn.disabled = false;
-
-                console.error('Error:', error);
-                alert('خطا در ارتباط با سرور');
-            });
-        });
-    }
-
-    // ========================
-    // 10. افزودن به سبد خرید از محصولات مرتبط
-    // ========================
-    const addToCartMiniBtns = document.querySelectorAll('.add-to-cart-mini');
-    addToCartMiniBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const productId = this.getAttribute('data-product-id');
-
-            // نمایش لودینگ
-            const originalHTML = this.innerHTML;
-            this.innerHTML = `<span class="loader small"></span>`;
-            this.disabled = true;
-
-            // آماده کردن داده‌ها
-            const formData = new FormData();
-            formData.append('product_id', productId);
-            formData.append('quantity', 1);
-            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-
-            // ارسال درخواست
-            fetch('/cart/add/', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                // بازگردانی دکمه
-                this.innerHTML = originalHTML;
-                this.disabled = false;
-
-                if (data.success) {
-                    alert('محصول با موفقیت به سبد خرید اضافه شد');
-
-                    // به‌روزرسانی تعداد سبد خرید
-                    if (data.cart_count !== undefined) {
-                        const cartCountElements = document.querySelectorAll('.cart-count');
-                        cartCountElements.forEach(el => {
-                            el.textContent = data.cart_count;
-                        });
-                    }
-                } else {
-                    alert('خطا: ' + data.error);
-                }
-            })
-            .catch(error => {
-                // بازگردانی دکمه
-                this.innerHTML = originalHTML;
-                this.disabled = false;
-
-                console.error('Error:', error);
-                alert('خطا در ارتباط با سرور');
-            });
-        });
-    });
-
-    // ========================
-    // 11. ارسال کامنت
+    // Comment submission
     // ========================
     const submitCommentBtn = document.querySelector('.submit-comment-btn');
     if (submitCommentBtn) {
@@ -1103,7 +722,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const typeBtn = document.querySelector('.comment-type-btn.text-green-600, .comment-type-btn.text-red-500');
             const type = typeBtn ? typeBtn.getAttribute('data-type') : 'recommend';
 
-            // اعتبارسنجی
+            // Validation
             if (!text) {
                 alert('لطفا متن دیدگاه را وارد کنید');
                 return;
@@ -1114,12 +733,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // نمایش لودینگ
+            // Show loading
             const originalText = this.textContent;
             this.textContent = 'در حال ارسال...';
             this.disabled = true;
 
-            // ارسال داده
+            // Send data
             const formData = new FormData();
             formData.append('text', text);
             formData.append('type', type);
@@ -1131,7 +750,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
-                // بازگردانی دکمه
+                // Restore button
                 this.textContent = originalText;
                 this.disabled = false;
 
@@ -1143,7 +762,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                // بازگردانی دکمه
+                // Restore button
                 this.textContent = originalText;
                 this.disabled = false;
 
@@ -1154,12 +773,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ========================
-    // 12. انتخاب نوع کامنت
+    // Comment type selection
     // ========================
     const commentTypeBtns = document.querySelectorAll('.comment-type-btn');
     commentTypeBtns.forEach(btn => {
         btn.addEventListener('click', function() {
-            // حذف انتخاب قبلی
+            // Remove previous selection
             commentTypeBtns.forEach(b => {
                 b.classList.remove('text-green-600', 'text-red-500',
                                   'ring-green-600', 'ring-[#EF4343]',
@@ -1167,7 +786,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 b.classList.add('ring-transparent', 'dark:ring-white/20');
             });
 
-            // انتخاب جدید
+            // New selection
             this.classList.remove('ring-transparent', 'dark:ring-white/20');
             if (this.getAttribute('data-type') === 'recommend') {
                 this.classList.add('text-green-600', 'ring-green-600', 'dark:focus:ring-green-600');
@@ -1176,36 +795,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-
-    // ========================
-    // 13. استایل‌های CSS برای لودر
-    // ========================
-    const style = document.createElement('style');
-    style.textContent = `
-        .loader {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 5px;
-        }
-
-        .loader.small {
-            width: 16px;
-            height: 16px;
-            border-width: 1.5px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    `;
-    document.head.appendChild(style);
 });
 </script>
 
@@ -1256,4 +845,6 @@ document.addEventListener('DOMContentLoaded', function() {
         opacity: 1;
     }
 </style>
+
+<script src='{% static "js/cart.js" %}' ></script>
 {% endblock %}

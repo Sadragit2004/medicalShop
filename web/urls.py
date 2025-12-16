@@ -13,6 +13,7 @@ urlpatterns = [
     path('account/',include('apps.user.urls',namespace='user')),
     path('product/',include('apps.product.urls',namespace='product')),
     path('discount/',include('apps.discount.urls',namespace='discount')),
+    path('order/',include('apps.order.urls',namespace='order')),
 
 
 

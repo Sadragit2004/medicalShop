@@ -1,0 +1,102 @@
+        <!-- AMAZING SLIDER -->
+        <section class="mx-4 lg:container mt-20">
+            <div class="w-full h-80 rounded-xl bg-blue-500 dark:bg-blue-700 p-4 relative">
+                <!-- AmazingSlider products Slider -->
+                <div class="swiper AmazingSlider w-full rounded-xl">
+                    <div class="swiper-wrapper">
+                        <!-- Amazing Timer Card -->
+                        <div class="swiper-slide amazing-card">
+                            <img class="w-28 h-28" src="{{media_url}}/images/slider/Amazings.svg" alt="">
+                            <!-- TIMER -->
+                            <div class="flex items-center gap-x-2">
+                                <span class="timer-box" id="seconds">00</span>
+                                <p class="text-white">:</p>
+                                <span class="timer-box" id="minutes">00</span>
+                                <p class="text-white">:</p>
+                                <span class="timer-box" id="hours">03</span>
+                            </div>
+
+                            <a href="{% url 'discount:amazing_products' %}" class="flex items-center gap-x-.5 text-gray-100 cursor-pointer">
+                                <p>مشاهده همه</p>
+                                <svg class="size-4 rotate-90">
+                                    <use href="#chevron"></use>
+                                </svg>
+                            </a>
+                        </div>
+
+                        {% for amazing_product in amazing_products %}
+                        <div class="swiper-slide small-card group">
+                            <!-- product header -->
+                            <div class="w-full flex items-center justify-between">
+                                <span class="flex items-center gap-x-0.5 text-blue-400">
+                                    <svg class="size-4 mb-1">
+                                        <use href="#rocket"></use>
+                                    </svg>
+                                    <p class="text-xs">ارسال امروز</p>
+                                </span>
+                                <span class="text-gray-400 flex items-center justify-end text-sm gap-x-0.5">
+                                    <p>{{ amazing_product.product.average_rating|default:0 }}</p>
+                                    <svg class="size-4 mb-1">
+                                        <use href="#star"></use>
+                                    </svg>
+                                </span>
+                            </div>
+                            <!-- product img -->
+                            <a href="{{ amazing_product.product.get_absolute_url }}">
+                                <img class="small-card_img" src="{{ amazing_product.product.mainImage.url }}" alt="{{ amazing_product.product.title }}">
+                            </a>
+                            <!-- product footer -->
+                            <div class="space-y-2">
+                                <a href="{{ amazing_product.product.get_absolute_url }}" class="small-card_link">
+                                    {{ amazing_product.product.title }}
+                                </a>
+                                <!-- Rate and Price -->
+                                <div class="product-card_price-wrapper">
+                                    <!-- Price -->
+                                    <div class="small-card_price justify-between">
+                                        <span class="pt-1">{{ amazing_product.discount }}%</span>
+                                        {% if amazing_product.product.saleTypes.exists %}
+                                            {% with sale_type=amazing_product.product.saleTypes.first %}
+                                            <h4 class="flex items-center gap-x-1 text-lg">
+                                                {% load humanize %}
+                                                {{ sale_type.finalPrice|intcomma }}
+                                                <p class="text-xs font-DanaMedium">تومان</p>
+                                            </h4>
+                                            {% endwith %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <!-- No amazing products found -->
+                        <div class="swiper-slide small-card group">
+                            <div class="w-full h-full flex items-center justify-center">
+                                <p class="text-white text-center">هیچ محصول شگفت انگیزی یافت نشد</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <!-- View All Card -->
+                        <a href="{% url 'discount:amazing_products' %}" class="swiper-slide amazing-card_last">
+                            <svg class="size-10">
+                                <use href="#arrow-left-circle"></use>
+                            </svg>
+                            <h2>مشاهده همه</h2>
+                        </a>
+                    </div>
+                </div>
+                <button
+                    class="slider-navigate_btn absolute right-1 top-36 border dark:border-gray-700 border-gray-200 AmazingSlider-prev-slide z-10">
+                    <svg class="size-6 -rotate-90">
+                        <use href="#chevron" />
+                    </svg>
+                </button>
+                <button
+                    class="slider-navigate_btn absolute left-1 top-36 border dark:border-gray-700 border-gray-200 AmazingSlider-next-slide z-10">
+                    <svg class="size-6 rotate-90">
+                        <use href="#chevron" />
+                    </svg>
+                </button>
+            </div>
+        </section>

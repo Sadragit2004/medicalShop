@@ -27,6 +27,7 @@ class DiscountBasket(models.Model):
     endDate = models.DateTimeField(verbose_name='تاریخ پایان', default=timezone.now())
     discount = models.IntegerField(verbose_name='درصد تخفیف', validators=[MinValueValidator(0), MaxValueValidator(100)])
     isActive = models.BooleanField(verbose_name='وضعیت', default=False)
+    isamzing = models.BooleanField(verbose_name='شگفت انگیز', default=False)
 
     class Meta:
         verbose_name = ' سبد تخفیف '
@@ -34,7 +35,7 @@ class DiscountBasket(models.Model):
 
 
 class DiscountDetail(models.Model):
-    
+
     discountBasket = models.ForeignKey(DiscountBasket, on_delete=models.CASCADE, verbose_name='سبد تخفیف', related_name='discountOfBasket')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='سایت', related_name='productOfDiscount')
 

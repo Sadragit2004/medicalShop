@@ -154,93 +154,49 @@
         <svg class="size-6">
             <use href="#shopping-bag" />
         </svg>
-        {% if request.user.is_authenticated %}
-            {% with cart_items=request.user.cart.items.count %}
-                {% if cart_items > 0 %}
-                    <span class="absolute -top-1 -right-1 flex h-4 w-4">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-600 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-xs pt-1 flex-center text-white">{{ cart_items }}</span>
-                    </span>
-                {% endif %}
-            {% endwith %}
-        {% endif %}
+        <span class="cart-counter absolute -top-1 -right-1 flex h-4 w-4" style="display: none;">
+            <span
+                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-600 opacity-75"></span>
+            <span
+                class="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-xs pt-1 flex-center text-white">0</span>
+        </span>
     </button>
-
     <!-- Cart -->
-    <div class="cart">
+    <div class="cart ">
         <!-- HEADER -->
-        <div class="flex items-center justify-between pb-2 border-b-2 border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-300">
-            <h2 class="font-DanaMedium text-lg">سبد خرید
-                <span class="text-sm text-gray-400 font-Dana">
-                    {% if request.user.is_authenticated %}
-                        ({{ request.user.cart.items.count }} مورد)
-                    {% else %}
-                        (0 مورد)
-                    {% endif %}
-                </span>
-            </h2>
+        <div
+            class="flex items-center justify-between pb-2 border-b-2 border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-300">
+            <h2 class="font-DanaMedium text-lg">سبد خرید <span class="text-sm text-gray-400 font-Dana">
+                    (0
+                    مورد)</span></h2>
             <svg class="size-5 cursor-pointer close-cart mb-.5">
                 <use href="#x-mark" />
             </svg>
         </div>
-
         <!-- MAIN -->
         <div class="flex flex-col divide-y-2 divide-gray-200 dark:divide-gray-600 my-4">
-            {% if request.user.is_authenticated and request.user.cart.items.exists %}
-                {% for item in request.user.cart.items.all %}
-                    <div class="grid grid-cols-12 gap-x-2 w-full py-4 cursor-pointer">
-                        <!-- img -->
-                        <div class="col-span-4 w-24 h-20">
-                            <img src="{{ item.product.image.url }}" class="rounded-lg" alt="{{ item.product.name }}">
-                        </div>
-                        <!-- detail -->
-                        <div class="col-span-8 flex flex-col justify-between">
-                            <h2 class="font-DanaMedium line-clamp-2">{{ item.product.name }}</h2>
-                            <div class="flex items-center justify-between gap-x-2 mt-2">
-                                <form method="post" action="{% url 'cart:update' item.id %}" class="w-20 flex items-center justify-between gap-x-1 rounded-lg border border-gray-200 dark:border-white/20 py-1 px-2">
-                                    {% csrf_token %}
-                                    <button type="submit" name="action" value="increment" class="increment text-green-600">
-                                        <svg class="size-4">
-                                            <use href="#plus"></use>
-                                        </svg>
-                                    </button>
-                                    <span class="custom-input w-4 mr-2 text-sm text-center">{{ item.quantity }}</span>
-                                    <button type="submit" name="action" value="decrement" class="decrement text-red-500">
-                                        <svg class="size-4">
-                                            <use href="#minus"></use>
-                                        </svg>
-                                    </button>
-                                </form>
-                                <p class="text-lg text-blue-500 dark:text-blue-400 font-DanaMedium">
-                                    {{ item.total_price }}
-                                    <span class="font-Dana text-sm">تومان</span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <div class="py-8 text-center text-gray-500">
-                    سبد خرید شما خالی است
-                </div>
-            {% endif %}
-        </div>
-
-        <!-- FOOTER -->
-        {% if request.user.is_authenticated and request.user.cart.items.exists %}
-            <div class="w-[90%] fixed bottom-2 flex items-center justify-between border-t-2 border-gray-200 dark:border-gray-600 pt-4">
-                <div>
-                    <p class="text-gray-500 dark:text-gray-300 text-sm">مبلغ قابل پرداخت :</p>
-                    <p class="text-lg text-blue-500 dark:text-blue-400 font-DanaDemiBold">
-                        {{ request.user.cart.total_price }}
-                        <span class="font-Dana text-sm">تومان</span>
-                    </p>
-                </div>
-                <a href="{% url 'cart:checkout' %}" class="py-2 px-4 bg-blue-600 flex-center hover:bg-blue-700 transition-all rounded-lg text-gray-200">
-                    ثبت سفارش
-                </a>
+            <!-- CART ITEMS WILL BE LOADED DYNAMICALLY -->
+            <div class="py-8 text-center text-gray-500">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300">
+                    <use href="#shopping-bag"></use>
+                </svg>
+                <p>سبد خرید شما خالی است</p>
             </div>
-        {% endif %}
+        </div>
+        <!-- FOOTER -->
+        <div
+            class="w-[90%] fixed bottom-2 flex items-center justify-between border-t-2 border-gray-200 dark:border-gray-600 pt-4">
+            <div>
+                <p class="text-gray-500 dark:text-gray-300 text-sm">مبلغ قابل پرداخت :</p>
+                <p class="text-lg text-blue-500 dark:text-blue-400 font-DanaDemiBold cart-total-price">0
+                    <span class="font-Dana text-sm">تومان</span>
+                </p>
+            </div>
+            <a href="{% url 'order:cart_page' %}"
+                class="py-2 px-4 bg-blue-600 flex-center hover:bg-blue-700 transition-all rounded-lg text-gray-200">
+                ثبت سفارش
+            </a>
+        </div>
     </div>
 </div>
             </div>
