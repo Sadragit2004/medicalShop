@@ -4,6 +4,10 @@ from django.urls import reverse
 from apps.user.models.user import CustomUser
 from django.db.models import Avg, Count, Q
 from django.utils import timezone
+from ckeditor_uploader.fields import RichTextUploadingField
+
+
+
 
 # ========================
 # مدل پایه (Base Model)
@@ -77,7 +81,9 @@ class Product(BaseModel):
     category = models.ManyToManyField(Category, verbose_name="دسته‌بندی‌ها",
                                      related_name='products')
     mainImage = models.ImageField(upload_to='products/main/', verbose_name="تصویر اصلی")
-    description = models.TextField(verbose_name="توضیحات")
+    description = RichTextUploadingField(
+        verbose_name="توضیحات محصول", config_name="special", blank=True, null=True
+    )
     shortDescription = models.TextField(verbose_name="توضیح کوتاه", max_length=500)
 
     class Meta:
@@ -243,13 +249,11 @@ class ProductSaleType(models.Model):
     def save(self, *args, **kwargs):
         """
         محاسبه خودکار finalPrice بر اساس typeSale:
-        1. اگر نوع فروش = کارتن (CARTON): finalPrice = price * memberCarton
-        2. در غیر این صورت: finalPrice = price
+        1. finalPrice همیشه برابر price است (قیمت پایه فروش)
+        2. برای فروش کارتن، price قیمت هر کارتن است
+        3. برای فروش تک، price قیمت هر عدد است
         """
-        if self.typeSale == SaleType.CARTON and self.memberCarton and self.price:
-            self.finalPrice = self.price * self.memberCarton
-        else:
-            self.finalPrice = self.price
+        self.finalPrice = self.price
 
         super().save(*args, **kwargs)
 

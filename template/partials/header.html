@@ -975,7 +975,12 @@
                     </svg>
                     <a href="shop.html">فروشگاه</a>
                 </li>
-                <li>
+                <li class="relative">
+                    <!-- Mobile Cart Counter -->
+                    <span class="mobile-cart-counter absolute -top-1 -right-1 flex h-4 w-4 z-10" style="display: none;">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-600 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-xs flex-center text-white font-bold">0</span>
+                    </span>
                     <svg class="size-5">
                         <use href="#shopping-bag" />
                     </svg>
@@ -992,3 +997,184 @@
         <!-- Slider -->
       {% include "./slider.html" %}
     </header>
+
+    <!-- Cart Counter Styles -->
+    <style>
+        .cart-counter, .mobile-cart-counter {
+            transition: all 0.3s ease;
+        }
+
+        .cart-counter span:last-child, .mobile-cart-counter span:last-child {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .cart-increment, .cart-decrement {
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+
+        .cart-increment:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .cart-decrement:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .cart-increment:active, .cart-decrement:active {
+            transform: scale(0.95);
+        }
+
+        /* Responsive design for mobile */
+        @media (max-width: 768px) {
+            .cart-counter {
+                gap-x-0.5;
+            }
+
+            .cart-count-display {
+                width: 20px;
+                height: 20px;
+                min-width: 20px;
+                font-size: 10px;
+            }
+
+            .cart-increment, .cart-decrement {
+                width: 18px;
+                height: 18px;
+                font-size: 10px;
+            }
+        }
+
+        /* Animation for cart count changes */
+        @keyframes cartPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .cart-count-changed {
+            animation: cartPulse 0.3s ease;
+        }
+    </style>
+
+    <!-- Cart Counter Script -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all cart counter elements
+        const desktopCartCounter = document.querySelector('.cart-counter');
+        const mobileHeaderCartCounter = document.querySelector('.mobile-cart-counter');
+        const bottomNavbarCartCounter = document.querySelector('.cart-count-display');
+
+        // Get cart control buttons from bottom navbar
+        const cartIncrementBtn = document.querySelector('.cart-increment');
+        const cartDecrementBtn = document.querySelector('.cart-decrement');
+
+        // Get cart count from localStorage or set default
+        let cartCount = parseInt(localStorage.getItem('cartCount')) || 0;
+        updateAllCartDisplays();
+
+        // Function to update all cart counters
+        function updateAllCartDisplays() {
+            const countText = cartCount.toString();
+
+            // Update desktop cart counter
+            if (desktopCartCounter) {
+                const desktopCounterSpan = desktopCartCounter.querySelector('span:last-child');
+                if (desktopCounterSpan) {
+                    desktopCounterSpan.textContent = countText;
+                }
+                desktopCartCounter.style.display = cartCount > 0 ? 'flex' : 'none';
+            }
+
+            // Update mobile header cart counter
+            if (mobileHeaderCartCounter) {
+                const mobileHeaderCounterSpan = mobileHeaderCartCounter.querySelector('span:last-child');
+                if (mobileHeaderCounterSpan) {
+                    mobileHeaderCounterSpan.textContent = countText;
+                }
+                mobileHeaderCartCounter.style.display = cartCount > 0 ? 'flex' : 'none';
+            }
+
+            // Update bottom navbar cart counter
+            if (bottomNavbarCartCounter) {
+                bottomNavbarCartCounter.textContent = countText;
+            }
+
+            // Update cart header text
+            const cartHeader = document.querySelector('.cart h2 span');
+            if (cartHeader) {
+                cartHeader.textContent = `(${countText} مورد)`;
+            }
+
+            // Save to localStorage
+            localStorage.setItem('cartCount', cartCount);
+
+            // Add animation when count changes
+            animateCartCounters();
+        }
+
+        // Animate cart counters
+        function animateCartCounters() {
+            [desktopCartCounter, mobileHeaderCartCounter].forEach(counter => {
+                if (counter && counter.style.display !== 'none') {
+                    counter.classList.add('cart-count-changed');
+                    setTimeout(() => {
+                        counter.classList.remove('cart-count-changed');
+                    }, 300);
+                }
+            });
+        }
+
+        // Increment cart count (from bottom navbar)
+        if (cartIncrementBtn) {
+            cartIncrementBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                cartCount++;
+                updateAllCartDisplays();
+                animateButton(this);
+            });
+        }
+
+        // Decrement cart count (from bottom navbar)
+        if (cartDecrementBtn) {
+            cartDecrementBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (cartCount > 0) {
+                    cartCount--;
+                    updateAllCartDisplays();
+                    animateButton(this);
+                }
+            });
+        }
+
+        // Button click animation
+        function animateButton(button) {
+            if (button) {
+                button.style.transform = 'scale(0.9)';
+                setTimeout(() => {
+                    button.style.transform = 'scale(1)';
+                }, 100);
+            }
+        }
+
+        // Add hover effects for better UX
+        const cartCounterElements = document.querySelectorAll('.cart-counter');
+        cartCounterElements.forEach(counter => {
+            counter.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.05)';
+            });
+
+            counter.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+
+        // Initialize cart display on page load
+        updateAllCartDisplays();
+    });
+    </script>

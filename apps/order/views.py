@@ -50,11 +50,12 @@ def add_to_cart(request):
         data = json.loads(request.body)
         product_id = data.get('product_id')
         quantity = int(data.get('quantity', 1))
+        sale_type_id = data.get('sale_type', 1)  # Get sale type from request
         detail = data.get('detail', '')
 
         product = get_object_or_404(Product, id=product_id)
         cart = ShopCart(request)
-        cart.add_to_shop_cart(product, quantity, detail)
+        cart.add_to_shop_cart(product, quantity, detail, sale_type_id)
 
         return JsonResponse({
             'success': True,
@@ -83,10 +84,18 @@ def remove_from_cart(request):
         data = json.loads(request.body)
         product_id = data.get('product_id')
         detail = data.get('detail', '')
+        sale_type_id = data.get('sale_type')
+
+        # Convert sale_type_id to int if it's not None
+        if sale_type_id is not None:
+            try:
+                sale_type_id = int(sale_type_id)
+            except (ValueError, TypeError):
+                sale_type_id = 1
 
         product = get_object_or_404(Product, id=product_id)
         cart = ShopCart(request)
-        cart.delete_from_shop_cart(product, detail)
+        cart.delete_from_shop_cart(product, detail, sale_type_id)
 
         return JsonResponse({
             'success': True,
@@ -111,16 +120,25 @@ def update_cart_quantity(request):
         product_id = data.get('product_id')
         quantity = int(data.get('quantity', 1))
         detail = data.get('detail', '')
+        sale_type_id = data.get('sale_type')
+
+        # Convert sale_type_id to int if it's not None
+        if sale_type_id is not None:
+            try:
+                sale_type_id = int(sale_type_id)
+            except (ValueError, TypeError):
+                sale_type_id = 1
 
         product = get_object_or_404(Product, id=product_id)
         cart = ShopCart(request)
 
-        # پیدا کردن کلید محصول در سبد خرید
-        key = f"{product_id}:{detail}" if detail else str(product_id)
+        # پیدا کردن کلید محصول در سبد خرید (با احتساب نوع فروش)
+        actual_sale_type = sale_type_id or 1
+        key = cart._get_key(product_id, detail, actual_sale_type)
 
         if key in cart.shop_cart:
             if quantity <= 0:
-                cart.delete_from_shop_cart(product, detail)
+                cart.delete_from_shop_cart(product, detail, actual_sale_type)
             else:
                 cart.shop_cart[key]['qty'] = quantity
                 cart.session.modified = True

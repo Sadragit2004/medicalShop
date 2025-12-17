@@ -177,6 +177,7 @@ def product_detail(request, slug):
         discountOfBasket__product=product
     ).order_by('-discount').values_list('discount', flat=True).first() or 0
 
+
     sale_types = ProductSaleType.objects.filter(
         product=product,
         isActive=True
@@ -186,6 +187,7 @@ def product_detail(request, slug):
     default_sale_type = sale_types.filter(typeSale=SaleType.SINGLE).first()
     if not default_sale_type and sale_types.exists():
         default_sale_type = sale_types.first()
+
 
     # محاسبه finalPrice برای هر نوع فروش
     for sale in sale_types:
@@ -219,6 +221,10 @@ def product_detail(request, slug):
         default_final_price = default_base_price
         if discount_percent:
             default_final_price = int(default_base_price * (100 - discount_percent) / 100)
+
+        # تخصیص قیمت نهایی به شی default_sale_type
+        default_sale_type.final_price = default_final_price
+        default_sale_type.base_price = default_base_price
     else:
         default_base_price = 0
         default_final_price = 0

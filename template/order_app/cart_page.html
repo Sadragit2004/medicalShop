@@ -1,0 +1,106 @@
+{% extends 'main_template.html' %}
+{% load static %}
+
+{% block title %}سبد خرید{% endblock %}
+
+{% block meta %}
+<meta name="description" content="سبد خرید شما در فروشگاه">
+<meta name="robots" content="noindex, nofollow">
+{% endblock %}
+
+{% block content %}
+<main class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl font-DanaDemiBold text-gray-800 dark:text-white mb-8">سبد خرید</h1>
+
+        {% if cart_items %}
+            <!-- Cart Items -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+                <div class="divide-y-2 divide-gray-100 dark:divide-gray-700">
+                    {% for item in cart_items %}
+                        <div class="grid grid-cols-12 gap-x-4 py-4 cart-item" data-product-id="{{ item.id }}" data-detail="{{ item.detail }}" data-sale-type="{{ item.sale_type }}">
+                            <!-- Product Image -->
+                            <div class="col-span-3">
+                                <img src="{{ item.image|default:'/static/images/placeholder.png' }}" alt="{{ item.name }}" class="w-20 h-20 object-cover rounded-lg">
+                            </div>
+
+                            <!-- Product Details -->
+                            <div class="col-span-6 flex flex-col justify-between">
+                                <div>
+                                    <h3 class="font-DanaMedium text-gray-800 dark:text-white text-sm">{{ item.name }}</h3>
+                                    {% if item.sale_type == 2 %}
+                                        <p class="text-blue-600 dark:text-blue-400 text-xs font-DanaMedium">{{ item.sale_type_title }} ({{ item.member_carton }} عددی)</p>
+                                    {% else %}
+                                        <p class="text-gray-600 dark:text-gray-400 text-xs">{{ item.sale_type_title }}</p>
+                                    {% endif %}
+                                </div>
+                                {% if item.sale_type == 2 %}
+                                    <p class="text-gray-600 dark:text-gray-400 text-xs">{{ item.price|floatformat:0|intcomma }} تومان هر کارتن</p>
+                                {% else %}
+                                    <p class="text-gray-600 dark:text-gray-400 text-xs">{{ item.price|floatformat:0|intcomma }} تومان هر عدد</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Quantity Controls -->
+                            <div class="col-span-2 flex items-center justify-center">
+                                <div class="flex items-center gap-x-2">
+                                    <button class="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                        <svg class="w-4 h-4 decrement text-red-500" data-product-id="{{ item.id }}" data-detail="{{ item.detail }}">
+                                            <use href="#minus"></use>
+                                        </svg>
+                                    </button>
+                                    <input type="number" class="w-12 text-center border border-gray-300 dark:border-gray-600 rounded px-2 py-1" value="{{ item.quantity }}" min="1" readonly data-product-id="{{ item.id }}" data-detail="{{ item.detail }}" data-sale-type="{{ item.sale_type }}">
+                                    <button class="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                        <svg class="w-4 h-4 increment text-green-600" data-product-id="{{ item.id }}" data-detail="{{ item.detail }}">
+                                            <use href="#plus"></use>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Price and Remove -->
+                            <div class="col-span-1 flex flex-col items-end justify-between">
+                                <p class="font-DanaDemiBold text-blue-600 dark:text-blue-400">{{ item.total_price|floatformat:0|intcomma }} تومان</p>
+                                <button class="remove-from-cart text-red-500 hover:text-red-700 text-xs" data-product-id="{{ item.id }}" data-detail="{{ item.detail }}" data-sale-type="{{ item.sale_type }}">
+                                    حذف
+                                </button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Cart Summary -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-lg font-DanaMedium text-gray-800 dark:text-white">مجموع سبد خرید:</span>
+                    <span class="text-xl font-DanaDemiBold text-blue-600 dark:text-blue-400">{{ total_price|floatformat:0|intcomma }} تومان</span>
+                </div>
+
+                <div class="flex gap-x-4">
+                    <a href="{% url 'product:shop' %}" class="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white py-3 px-6 rounded-lg text-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                        ادامه خرید
+                    </a>
+                    <a href="{% url 'order:createOrder' %}" class="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg text-center hover:bg-blue-700 transition-colors">
+                        تسویه حساب
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <!-- Empty Cart -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-12 text-center">
+                <svg class="w-24 h-24 mx-auto mb-6 text-gray-300 dark:text-gray-600">
+                    <use href="#shopping-bag"></use>
+                </svg>
+                <h2 class="text-xl font-DanaMedium text-gray-800 dark:text-white mb-4">سبد خرید شما خالی است</h2>
+                <p class="text-gray-600 dark:text-gray-400 mb-8">محصولی به سبد خرید اضافه نکرده‌اید.</p>
+                <a href="{% url 'main:index' %}" class="inline-block bg-blue-600 text-white py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors">
+                    شروع خرید
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</main>
+
+<script src="{% static 'js/cart.js' %}"></script>
+{% endblock %}
