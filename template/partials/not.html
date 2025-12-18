@@ -1,0 +1,449 @@
+<script>
+    // ============ کتابخانه مودال پیام ============
+    const MessageModal = {
+        // تنظیمات پیش‌فرض
+        config: {
+            autoClose: true,
+            autoCloseTime: 4000,
+            animationDuration: 300,
+            soundEnabled: true,
+            defaultType: 'info',
+            icons: {
+                success: 'bi-check-circle-fill',
+                error: 'bi-x-circle-fill',
+                warning: 'bi-exclamation-triangle-fill',
+                info: 'bi-info-circle-fill',
+                question: 'bi-question-circle-fill'
+            }
+        },
+
+        // متغیرهای داخلی
+        elements: {},
+        isShowing: false,
+        currentTimeout: null,
+        currentAudio: null,
+
+        // مقداردهی اولیه
+        init() {
+            this.elements = {
+                modal: document.getElementById('messageModal'),
+                title: document.getElementById('messageModalTitle'),
+                text: document.getElementById('messageModalText'),
+                icon: document.getElementById('messageModalIcon'),
+                button: document.querySelector('.modal-button'),
+                progressFill: document.querySelector('.progress-fill'),
+                sound: document.getElementById('messageModalSound')
+            };
+
+            if (!this.elements.modal) {
+                console.error('عنصر مودال پیدا نشد!');
+                return;
+            }
+
+            this._setupEventListeners();
+            console.log('✅ MessageModal initialized successfully');
+        },
+
+        // راه‌اندازی event listeners
+        _setupEventListeners() {
+            // بستن با کلیک روی backdrop
+            this.elements.modal.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal-backdrop')) {
+                    this.hide();
+                }
+            });
+
+            // بستن با کلید ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && this.isShowing) {
+                    this.hide();
+                }
+            });
+
+            // توقف بسته شدن خودکار هنگام hover روی مودال
+            this.elements.modal.addEventListener('mouseenter', () => {
+                this._pauseAutoClose();
+            });
+
+            this.elements.modal.addEventListener('mouseleave', () => {
+                this._resumeAutoClose();
+            });
+        },
+
+        // نمایش مودال
+        show(options = {}) {
+            // جلوگیری از نمایش همزمان چند مودال
+            if (this.isShowing) {
+                this.hide(() => {
+                    setTimeout(() => this._showInternal(options), 100);
+                });
+                return;
+            }
+
+            this._showInternal(options);
+        },
+
+        // نمایش داخلی
+        _showInternal(options) {
+            // تنظیمات پیش‌فرض
+            const settings = {
+                title: options.title || 'پیام',
+                message: options.message || '',
+                type: options.type || this.config.defaultType,
+                autoClose: options.autoClose ?? this.config.autoClose,
+                autoCloseTime: options.autoCloseTime || this.config.autoCloseTime,
+                icon: options.icon,
+                sound: options.sound ?? this.config.soundEnabled,
+                onClose: options.onClose,
+                className: options.className || ''
+            };
+
+            // تنظیم متن و عنوان
+            this.elements.title.textContent = settings.title;
+            this.elements.text.textContent = settings.message;
+
+            // تنظیم نوع مودال
+            this._setModalType(settings.type, settings.icon);
+
+            // اضافه کردن کلاس‌های سفارشی
+            if (settings.className) {
+                this.elements.modal.className = 'message-modal active ' + settings.className;
+            } else {
+                this.elements.modal.className = 'message-modal active';
+            }
+
+            // حذف کلاس hidden
+            this.elements.modal.classList.remove('hidden');
+
+            // پخش صدا
+            if (settings.sound && this.elements.sound) {
+                this._playSound();
+            }
+
+            // شروع نوار پیشرفت
+            this._startProgressBar(settings.autoCloseTime);
+
+            // تنظیم flag
+            this.isShowing = true;
+
+            // بستن خودکار
+            if (settings.autoClose) {
+                this.currentTimeout = setTimeout(() => {
+                    this.hide(settings.onClose);
+                }, settings.autoCloseTime);
+            }
+
+            // dispatch event
+            this._dispatchEvent('show', settings);
+        },
+
+        // تنظیم نوع مودال
+        _setModalType(type, customIcon) {
+            // حذف کلاس‌های نوع قبلی
+            const types = ['success', 'error', 'warning', 'info'];
+            types.forEach(t => this.elements.modal.classList.remove(t));
+
+            // افزودن کلاس نوع جدید
+            this.elements.modal.classList.add(type);
+
+            // تنظیم آیکون
+            const iconClass = customIcon || this.config.icons[type] || this.config.icons.info;
+            this.elements.icon.className = 'bi ' + iconClass;
+        },
+
+        // شروع نوار پیشرفت
+        _startProgressBar(duration) {
+            if (!this.elements.progressFill) return;
+
+            // ریست کردن عرض
+            this.elements.progressFill.style.width = '0%';
+            this.elements.progressFill.style.transition = 'none';
+
+            // شروع انیمیشن با تأخیر
+            setTimeout(() => {
+                this.elements.progressFill.style.transition = `width ${duration}ms linear`;
+                this.elements.progressFill.style.width = '100%';
+            }, 10);
+        },
+
+        // پخش صدا
+        _playSound() {
+            if (!this.elements.sound) return;
+
+            try {
+                this.elements.sound.currentTime = 0;
+                this.elements.sound.play().catch(e => {
+                    console.log('🔇 پخش صدا با خطا مواجه شد:', e.message);
+                });
+            } catch (e) {
+                console.log('🔇 خطا در پخش صدا:', e.message);
+            }
+        },
+
+        // متوقف کردن بسته شدن خودکار
+        _pauseAutoClose() {
+            if (this.currentTimeout) {
+                clearTimeout(this.currentTimeout);
+                this.currentTimeout = null;
+
+                // متوقف کردن انیمیشن نوار پیشرفت
+                if (this.elements.progressFill) {
+                    const computedStyle = window.getComputedStyle(this.elements.progressFill);
+                    const currentWidth = computedStyle.getPropertyValue('width');
+                    this.elements.progressFill.style.width = currentWidth;
+                    this.elements.progressFill.style.transition = 'none';
+                }
+            }
+        },
+
+        // ادامه بسته شدن خودکار
+        _resumeAutoClose() {
+            if (this.config.autoClose && !this.currentTimeout) {
+                const remainingTime = this._calculateRemainingTime();
+
+                if (remainingTime > 0) {
+                    this.currentTimeout = setTimeout(() => {
+                        this.hide();
+                    }, remainingTime);
+
+                    // ادامه انیمیشن نوار پیشرفت
+                    if (this.elements.progressFill) {
+                        const currentWidth = parseFloat(this.elements.progressFill.style.width || '0');
+                        const remainingWidth = 100 - currentWidth;
+                        const duration = (remainingTime * remainingWidth) / 100;
+
+                        this.elements.progressFill.style.transition = `width ${duration}ms linear`;
+                        this.elements.progressFill.style.width = '100%';
+                    }
+                }
+            }
+        },
+
+        // محاسبه زمان باقی‌مانده
+        _calculateRemainingTime() {
+            if (!this.elements.progressFill) return 0;
+
+            const currentWidth = parseFloat(this.elements.progressFill.style.width || '0');
+            const totalTime = this.config.autoCloseTime;
+
+            return totalTime * (100 - currentWidth) / 100;
+        },
+
+        // مخفی کردن مودال
+        hide(callback) {
+            if (!this.isShowing) {
+                if (callback) callback();
+                return;
+            }
+
+            // پاک کردن timeout
+            if (this.currentTimeout) {
+                clearTimeout(this.currentTimeout);
+                this.currentTimeout = null;
+            }
+
+            // متوقف کردن صدا
+            if (this.currentAudio) {
+                this.currentAudio.pause();
+                this.currentAudio.currentTime = 0;
+            }
+
+            // افزودن کلاس hiding برای انیمیشن خروج
+            this.elements.modal.classList.add('hiding');
+
+            // مخفی کردن بعد از انیمیشن
+            setTimeout(() => {
+                this.elements.modal.classList.remove('active', 'hiding');
+                this.elements.modal.classList.add('hidden');
+
+                // ریست کردن عرض نوار پیشرفت
+                if (this.elements.progressFill) {
+                    this.elements.progressFill.style.width = '0%';
+                    this.elements.progressFill.style.transition = 'none';
+                }
+
+                this.isShowing = false;
+
+                // اجرای callback
+                if (callback && typeof callback === 'function') {
+                    callback();
+                }
+
+                // dispatch event
+                this._dispatchEvent('hide');
+            }, this.config.animationDuration);
+        },
+
+        // dispatch custom event
+        _dispatchEvent(eventName, detail = {}) {
+            const event = new CustomEvent(`messageModal:${eventName}`, {
+                detail,
+                bubbles: true
+            });
+            document.dispatchEvent(event);
+        },
+
+        // ============ متدهای کاربردی ============
+
+        // نمایش موفقیت
+        success(message, title = 'موفقیت', options = {}) {
+            this.show({
+                title,
+                message,
+                type: 'success',
+                ...options
+            });
+        },
+
+        // نمایش خطا
+        error(message, title = 'خطا', options = {}) {
+            this.show({
+                title,
+                message,
+                type: 'error',
+                ...options
+            });
+        },
+
+        // نمایش اخطار
+        warning(message, title = 'اخطار', options = {}) {
+            this.show({
+                title,
+                message,
+                type: 'warning',
+                ...options
+            });
+        },
+
+        // نمایش اطلاعات
+        info(message, title = 'اطلاعات', options = {}) {
+            this.show({
+                title,
+                message,
+                type: 'info',
+                ...options
+            });
+        },
+
+        // نمایش سؤال
+        question(message, title = 'سؤال', options = {}) {
+            this.show({
+                title,
+                message,
+                type: 'info',
+                icon: this.config.icons.question,
+                autoClose: false,
+                ...options
+            });
+        },
+
+        // نمایش لودینگ
+        loading(message = 'در حال پردازش...', title = 'لطفاً صبر کنید') {
+            this.show({
+                title,
+                message,
+                type: 'info',
+                icon: 'bi-arrow-repeat',
+                autoClose: false,
+                className: 'loading'
+            });
+        },
+
+        // بستن مودال لودینگ
+        hideLoading() {
+            if (this.isShowing && this.elements.modal.classList.contains('loading')) {
+                this.hide();
+            }
+        },
+
+        // تغییر تنظیمات
+        setConfig(newConfig) {
+            this.config = { ...this.config, ...newConfig };
+        },
+
+        // دریافت وضعیت فعلی
+        getStatus() {
+            return {
+                isShowing: this.isShowing,
+                config: { ...this.config }
+            };
+        }
+    };
+
+    // ============ تابع‌های سریع برای استفاده آسان ============
+
+    // تابع اصلی نمایش
+    function showMessageModal(title, message, type = 'info', options = {}) {
+        MessageModal.show({ title, message, type, ...options });
+    }
+
+    // توابع سریع برای انواع مختلف
+    function showSuccess(message, title = 'موفقیت', options = {}) {
+        MessageModal.success(message, title, options);
+    }
+
+    function showError(message, title = 'خطا', options = {}) {
+        MessageModal.error(message, title, options);
+    }
+
+    function showWarning(message, title = 'اخطار', options = {}) {
+        MessageModal.warning(message, title, options);
+    }
+
+    function showInfo(message, title = 'اطلاعات', options = {}) {
+        MessageModal.info(message, title, options);
+    }
+
+    function showQuestion(message, title = 'سؤال', options = {}) {
+        MessageModal.question(message, title, options);
+    }
+
+    function showLoading(message = 'در حال پردازش...', title = 'لطفاً صبر کنید') {
+        MessageModal.loading(message, title);
+    }
+
+    function hideMessageModal() {
+        MessageModal.hide();
+    }
+
+    function hideLoading() {
+        MessageModal.hideLoading();
+    }
+
+    // ============ مقداردهی اولیه هنگام لود صفحه ============
+    document.addEventListener('DOMContentLoaded', function() {
+        // مقداردهی اولیه مودال
+        MessageModal.init();
+
+        // تست سریع (در محیط توسعه)
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                setTimeout(() => {
+                showSuccess('مودال پیام با موفقیت بارگذاری شد!', 'آماده به کار', {
+                    autoClose: true,
+                    autoCloseTime: 3000
+                });
+            }, 1000);
+        }
+
+        // اضافه کردن event listener برای تست
+        document.addEventListener('messageModal:show', (e) => {
+            console.log('📢 مودال نمایش داده شد:', e.detail);
+        });
+
+        document.addEventListener('messageModal:hide', () => {
+            console.log('📢 مودال بسته شد');
+            });
+        });
+
+    // ============ اتصال به آبجکت گلوبال ============
+    window.MessageModal = MessageModal;
+    window.showMessageModal = showMessageModal;
+    window.showSuccess = showSuccess;
+    window.showError = showError;
+    window.showWarning = showWarning;
+    window.showInfo = showInfo;
+    window.showQuestion = showQuestion;
+    window.showLoading = showLoading;
+    window.hideMessageModal = hideMessageModal;
+    window.hideLoading = hideLoading;
+    </script>

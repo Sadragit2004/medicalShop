@@ -5,580 +5,549 @@
 <script src="{% static 'swiper/swiper.js' %}"></script>
 <script src="{% static 'scripts/productDetails.js' %}"></script>
 <script src="{% static 'scripts/app.js' %}"></script>
-<script  src="{% static 'scripts/slider.js' %}"></script>
+<script src="{% static 'scripts/slider.js' %}"></script>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-// ========================
-// ADD TO CART FUNCTIONALITY
-// ========================
-
-// Get current product details from template
-const productId = "{{ product.id }}";
-
-// Initialize global variables for current sale type (can be changed by sale type buttons)
-window.currentSaleType = {{ default_sale_type.typeSale|default:1 }};
-window.currentUnitPrice = {{ default_sale_type.final_price|default:default_sale_type.price|default:0 }}; // Use discounted price or fallback to base price
-window.currentBasePrice = {{ default_sale_type.price|default:0 }}; // Keep base price for reference
-window.currentMemberCarton = {{ default_sale_type.memberCarton|default:1 }};
-window.currentLimitedSale = {{ default_sale_type.limitedSale|default:1 }};
-
-
-// Use global variables for calculations
-const saleType = window.currentSaleType;
-const unitPrice = window.currentUnitPrice;
-const basePrice = window.currentBasePrice;
-const memberCarton = window.currentMemberCarton;
-const limitedSale = window.currentLimitedSale;
-
-// Initialize variables for limited sale tracking
-let remainingStock = limitedSale;
-let selectedQuantity = 1;
-
-// Quantity controls
-const quantityInput = document.getElementById('quantity');
-const incrementBtn = document.querySelector('.increment');
-const decrementBtn = document.querySelector('.decrement');
-
-// Update total price function
-function updateTotalPrice() {
-    if (!quantityInput) return;
-
-    const quantity = parseInt(quantityInput.value) || 1;
-    let totalPrice;
-
-    if (window.currentSaleType === 2) {
-        // For carton sales - quantity represents number of cartons
-        totalPrice = quantity * window.currentUnitPrice * window.currentMemberCarton;
-
-        // Update carton info
-        const cartonCount = document.getElementById('carton-count');
-        const cartonDetail = document.getElementById('carton-detail');
-
-        if (cartonCount) {
-            cartonCount.textContent = quantity;
-        }
-        if (cartonDetail) {
-            cartonDetail.textContent = `${quantity} کارتن × ${window.currentMemberCarton} عدد × ${window.currentUnitPrice.toLocaleString()} تومان`;
-        }
-
-    } else if (window.currentSaleType === 3) {
-        // For limited sales - quantity represents number of items
-        totalPrice = quantity * window.currentUnitPrice;
-
-        // Update limited sale counters
-        const remainingCount = document.getElementById('remaining-count');
-        const selectedCount = document.getElementById('selected-count');
-
-        if (remainingCount) {
-            remainingCount.textContent = Math.max(0, window.currentLimitedSale - quantity);
-        }
-        if (selectedCount) {
-            selectedCount.textContent = quantity;
-        }
-
-    } else {
-        // For normal sales - quantity represents number of items
-        totalPrice = quantity * window.currentUnitPrice;
-    }
-
-    // Update total price display
-    const totalPriceElement = document.getElementById('total-price');
-    if (totalPriceElement) {
-        totalPriceElement.textContent = totalPrice.toLocaleString() + ' تومان';
-    }
-
-    // Update add to cart button text
-    updateAddToCartButtonText(quantity);
-}
-
-// Update add to cart button text based on quantity and sale type
-function updateAddToCartButtonText(quantity) {
-    const addToCartText = document.querySelector('.add-to-cart-text');
-    if (addToCartText) {
-        if (window.currentSaleType === 2) {
-            // Carton sale - quantity represents cartons
-            if (quantity === 1) {
-                addToCartText.textContent = 'افزودن کارتن به سبد';
-            } else {
-                addToCartText.textContent = `افزودن ${quantity} کارتن به سبد`;
-            }
-        } else {
-            // Single and limited sales - quantity represents items
-            if (quantity === 1) {
-                addToCartText.textContent = 'افزودن به سبد';
-            } else {
-                addToCartText.textContent = `افزودن ${quantity} عدد به سبد`;
-            }
-        }
-    }
-}
-
-// Set up quantity controls based on sale type
-if (quantityInput && incrementBtn && decrementBtn) {
-    let minValue = 1;
-    let maxValue = 1000;
-
-    if (window.currentSaleType === 1) {
-        // Single sale - no minimum limit
-        minValue = 1;
-        quantityInput.value = 1;
-    } else {
-        // All other sale types have a minimum purchase limit
-        if (window.currentSaleType === 2) {
-            // Carton sale - limitedSale represents minimum number of cartons
-            minValue = window.currentLimitedSale;
-            quantityInput.value = minValue;
-        } else if (window.currentSaleType === 3) {
-            // Limited sale - quantity represents items, min is limitedSale
-            minValue = window.currentLimitedSale;
-            quantityInput.value = window.currentLimitedSale;
-        }
-    }
-
-    quantityInput.min = minValue;
-    quantityInput.max = maxValue;
-
-    // Update increment button click handler
-    incrementBtn.addEventListener('click', function() {
-        let currentValue = parseInt(quantityInput.value) || 1;
-
-        // Allow incrementing up to maxValue for all sale types
-        if (currentValue >= maxValue) {
-            return;
-        }
-
-        quantityInput.value = currentValue + 1;
-        updateTotalPrice();
-    });
-
-    // Update decrement button click handler
-    decrementBtn.addEventListener('click', function() {
-        let currentValue = parseInt(quantityInput.value) || 1;
-        let currentMin = parseInt(quantityInput.min) || 1;
-        if (currentValue > currentMin) {
-            quantityInput.value = currentValue - 1;
-            updateTotalPrice();
-        }
-    });
-
-    quantityInput.addEventListener('input', function() {
-        let value = parseInt(this.value) || 1;
-        let currentMin = parseInt(quantityInput.min) || 1;
-        let currentMax = parseInt(quantityInput.max) || 1000;
-
-        // Apply limits - enforce minimum strictly
-        if (value < currentMin) {
-            value = currentMin;
-        }
-        if (value > currentMax) {
-            value = currentMax;
-        }
-
-        this.value = value;
-        updateTotalPrice();
-    });
-}
-
-// Add to cart button functionality
-const addToCartBtn = document.querySelector('.add-to-cart-btn');
-
-if (addToCartBtn) {
-    addToCartBtn.addEventListener('click', function(event) {
-        event.preventDefault();
-
-        // Disable button to prevent multiple clicks
-        this.disabled = true;
-        const originalText = this.innerHTML;
-        this.innerHTML = '<span class="add-to-cart-text">در حال افزودن...</span>';
-
-        // Collect data
-        const quantity = parseInt(quantityInput.value) || window.currentLimitedSale;
-
-        const productData = {
-            product_id: productId,
-            quantity: quantity,
-            sale_type: window.currentSaleType,
-            detail: '', // Don't use sale type ID as detail to avoid duplicates
-        };
-
-        // Send AJAX request (no CSRF token needed since view has @csrf_exempt)
-        fetch('/order/cart/add/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(productData),
-            credentials: 'same-origin'
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Re-enable button
-            addToCartBtn.disabled = false;
-            addToCartBtn.innerHTML = originalText;
-
-                if (data.success) {
-                    // Show success message
-                    showNotification('محصول با موفقیت به سبد خرید اضافه شد', 'success');
-
-                    // Update cart display using global cart manager (includes badge update)
-                    if (window.cartManager) {
-                        window.cartManager.updateCartDisplay(data);
-                        // Also open the cart to show the new item
-                        const cartElement = document.querySelector('.cart');
-                        const overlay = document.querySelector('.overlay');
-                        if (cartElement && overlay) {
-                            cartElement.classList.add('active');
-                            overlay.classList.add('active');
-                        }
-                    }
-            } else {
-                // Show error message
-                showNotification(data.error || 'خطا در افزودن به سبد خرید', 'error');
-            }
-        })
-        .catch(error => {
-            // Re-enable button
-            addToCartBtn.disabled = false;
-            addToCartBtn.innerHTML = originalText;
-
-            showNotification('خطا در ارتباط با سرور', 'error');
-        });
-    });
-}
-
-// Helper function to show notifications
-function showNotification(message, type = 'success') {
-    // Remove existing notifications
-    const existingNotifications = document.querySelectorAll('.custom-notification');
-    existingNotifications.forEach(notification => {
-        if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
-        }
-    });
-
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `custom-notification fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg font-DanaMedium transition-all duration-300 transform translate-x-0 ${
-        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-    }`;
-    notification.textContent = message;
-    notification.style.opacity = '0';
-
-    // Add to page
-    document.body.appendChild(notification);
-
-    // Animate in
-    setTimeout(() => {
-        notification.style.opacity = '1';
-        notification.style.transform = 'translateX(0)';
-    }, 10);
-
-    // Auto remove after 3 seconds
-    setTimeout(() => {
-        notification.style.opacity = '0';
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }, 3000);
-}
-
-// Helper function to update cart badge
-function updateCartBadge(count) {
-    // Update desktop cart counter
-    const cartCounter = document.querySelector('.cart-counter');
-    if (cartCounter) {
-        const counterNumber = cartCounter.querySelector('.bg-red-500');
-        if (counterNumber) {
-            counterNumber.textContent = count;
-            cartCounter.style.display = count > 0 ? 'flex' : 'none';
-        }
-    }
-
-    // Update mobile cart counter
-    const mobileCartCounter = document.querySelector('.mobile-cart-counter');
-    if (mobileCartCounter) {
-        const mobileCounterNumber = mobileCartCounter.querySelector('.bg-red-500');
-        if (mobileCounterNumber) {
-            mobileCounterNumber.textContent = count;
-            mobileCartCounter.style.display = count > 0 ? 'flex' : 'none';
-        }
-    }
-
-    // Update cart item count in header
-    const cartItemCount = document.querySelector('.cart h2 span');
-    if (cartItemCount) {
-        cartItemCount.textContent = `(${count} مورد)`;
-    }
-
-    // Update any other cart badges
-    const allCartBadges = document.querySelectorAll('.cart-count-badge');
-    allCartBadges.forEach(badge => {
-        if (count > 0) {
-            badge.textContent = count;
-            badge.classList.remove('hidden');
-        } else {
-            badge.classList.add('hidden');
-        }
-    });
-}
-
-// Initialize based on sale type
-if (quantityInput) {
-    if (window.currentSaleType === 1) {
-        // Single sale
-        quantityInput.value = 1;
-    } else {
-        // All other sale types have minimum purchase limits
-        if (window.currentSaleType === 2) {
-            // Carton sale - limitedSale represents minimum number of cartons
-            quantityInput.value = window.currentLimitedSale;
-            quantityInput.min = window.currentLimitedSale;
-        } else if (window.currentSaleType === 3) {
-            // Limited sale - min is limitedSale, can buy more
-            quantityInput.value = window.currentLimitedSale;
-            quantityInput.min = window.currentLimitedSale;
-        }
-    }
-}
-
-// Initialize carton displays for carton sales
-if (window.currentSaleType === 2) {
-    const cartonPriceDisplay = document.getElementById('carton-price-display');
-    if (cartonPriceDisplay) {
-        cartonPriceDisplay.textContent = (window.currentUnitPrice * window.currentMemberCarton).toLocaleString();
-    }
-
-    // Display minimum cartons and items required (limitedSale represents minimum cartons)
-    const minCartonsDisplay = document.getElementById('min-cartons-display');
-    const minItemsDisplay = document.getElementById('min-items-display');
-    if (minCartonsDisplay) {
-        minCartonsDisplay.textContent = window.currentLimitedSale;
-    }
-    if (minItemsDisplay) {
-        minItemsDisplay.textContent = (window.currentLimitedSale * window.currentMemberCarton);
-    }
-
-    // Carton quantity initialization is handled above in the main initialization
-}
-
-// Sale type switching functionality
-const saleTypeBtns = document.querySelectorAll('.sale-type-btn');
-saleTypeBtns.forEach(btn => {
-    btn.addEventListener('click', function() {
-        // Update active state
-        saleTypeBtns.forEach(b => {
-            b.classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
-            b.classList.add('border-gray-300');
-        });
-        this.classList.remove('border-gray-300');
-        this.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
-
-        // Update current values
-        const newPrice = parseFloat(this.getAttribute('data-price')); // This is already the discounted price
-        const newBasePrice = parseFloat(this.getAttribute('data-base-price'));
-        const newSaleType = parseInt(this.getAttribute('data-sale-type'));
-        const newMemberCarton = parseInt(this.getAttribute('data-member-carton')) || 1;
-        const newLimitedSale = parseInt(this.getAttribute('data-limited-sale')) || 1;
-
-        // Update global variables
-        window.currentUnitPrice = newPrice;
-        window.currentBasePrice = newBasePrice;
-        window.currentSaleType = newSaleType;
-        window.currentMemberCarton = newMemberCarton;
-        window.currentLimitedSale = newLimitedSale;
-
-        // Update display
-        updateCurrentPriceDisplay(newPrice, newBasePrice, newSaleType);
-        updateTotalPrice();
-    });
-});
-
-// Function to update current price display
-function updateCurrentPriceDisplay(price, basePrice, saleType) {
-    const currentPriceElement = document.getElementById('current-price');
-    if (currentPriceElement) {
-        currentPriceElement.textContent = price.toLocaleString();
-    }
-
-    // Update carton unit info if applicable
-    const cartonUnitInfo = document.getElementById('carton-unit-info');
-    if (cartonUnitInfo) {
-        if (saleType === 2) {
-            cartonUnitInfo.textContent = `هر کارتن ${window.currentMemberCarton} عددی`;
-            cartonUnitInfo.classList.remove('hidden');
-        } else {
-            cartonUnitInfo.classList.add('hidden');
-        }
-    }
-}
-
-// Initialize total price on page load
-updateTotalPrice();
-});
-</script>
-
-<!-- Add CSS for notifications -->
 <style>
-.custom-notification {
-animation: slideIn 0.3s ease-out;
-box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+/* ============ استایل مودال ============ */
+.cart-success-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: none;
+    background: rgba(0, 0, 0, 0.5);
 }
 
-@keyframes slideIn {
-from {
-    transform: translateX(100%);
-    opacity: 0;
-}
-to {
-    transform: translateX(0);
-    opacity: 1;
-}
+.cart-success-modal.show {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.add-to-cart-btn:disabled {
-opacity: 0.7;
-cursor: not-allowed;
+/* حالت موبایل - مودال از پایین */
+@media (max-width: 768px) {
+    .cart-success-modal {
+        align-items: flex-end;
+        padding-bottom: 20px;
+        background: rgba(0, 0, 0, 0.5);
+    }
 }
 
-/* Professional Purchase Interface Styles */
-.purchase-interface {
-box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-transition: all 0.3s ease;
+.cart-modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    animation: modalFadeIn 0.3s ease-out;
 }
 
-.purchase-interface:hover {
-box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-transform: translateY(-2px);
+/* حالت موبایل - مودال از پایین */
+@media (max-width: 768px) {
+    .cart-modal-content {
+        width: calc(100% - 32px);
+        max-width: none;
+        margin: 0 auto;
+        border-radius: 16px 16px 0 0;
+        animation: slideUpMobile 0.3s ease-out;
+    }
+
+    @keyframes slideUpMobile {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
 }
 
-.quantity-controls {
-position: relative;
-overflow: hidden;
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.quantity-controls::before {
-content: '';
-position: absolute;
-top: 0;
-left: -100%;
-width: 100%;
-height: 100%;
-background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-transition: left 0.5s;
+/* اجزای مشترک مودال */
+.modal-header {
+    background: linear-gradient(135deg, #10b981, #059669);
+    padding: 1.5rem;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.quantity-controls:hover::before {
-left: 100%;
+.modal-header i {
+    font-size: 1.8rem;
+    animation: iconPop 0.3s ease-out 0.2s both;
 }
 
-.price-breakdown {
-background: linear-gradient(135deg, rgba(34, 197, 94, 0.05), rgba(16, 185, 129, 0.05));
-border: 1px solid rgba(34, 197, 94, 0.2);
+@keyframes iconPop {
+    0% { transform: scale(0); }
+    70% { transform: scale(1.2); }
+    100% { transform: scale(1); }
 }
 
-.discount-badge {
-background: linear-gradient(135deg, #ef4444, #dc2626);
-box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);
-animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    flex: 1;
 }
 
-@keyframes pulse {
-0%, 100% {
-    opacity: 1;
-}
-50% {
-    opacity: .8;
-}
+.modal-body {
+    padding: 2rem 1.5rem;
+    text-align: center;
 }
 
-.add-to-cart-btn {
-position: relative;
-overflow: hidden;
+.modal-body p {
+    font-size: 1.1rem;
+    color: #374151;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
 }
 
-.add-to-cart-btn::before {
-content: '';
-position: absolute;
-top: 0;
-left: -100%;
-width: 100%;
-height: 100%;
-background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-transition: left 0.5s;
+.modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
-.add-to-cart-btn:hover::before {
-left: 100%;
+.btn {
+    padding: 1rem;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
 }
 
-.recommendation-badge {
-background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(16, 185, 129, 0.1));
-border: 1px solid rgba(34, 197, 94, 0.3);
-animation: fadeInUp 0.6s ease-out;
+.btn-primary {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
 }
 
-@keyframes fadeInUp {
-from {
-    opacity: 0;
-    transform: translateY(10px);
-}
-to {
-    opacity: 1;
-    transform: translateY(0);
-}
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
 }
 
-/* Sale Type Specific Styles */
-.sale-type-single {
-border: 1px solid #e5e7eb;
+.btn-secondary {
+    background: #f3f4f6;
+    color: #374151;
+    border: 2px solid #e5e7eb;
 }
 
-.sale-type-limited {
-background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-border: 1px solid #f59e0b;
+.btn-secondary:hover {
+    background: #e5e7eb;
+    transform: translateY(-2px);
 }
 
-.sale-type-carton {
-background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-border: 1px solid #3b82f6;
+/* نوار پیشرفت زمانی */
+.progress-bar {
+    height: 4px;
+    background: #e5e7eb;
+    overflow: hidden;
 }
 
-/* Carton calculation cards */
-.carton-calc-card {
-transition: transform 0.2s ease;
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(to right, #10b981, #059669);
+    animation: progressFill 5s linear forwards;
 }
 
-.carton-calc-card:hover {
-transform: translateY(-2px);
-}
-
-/* Limited sale counter */
-.limited-counter {
-background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-color: white;
-border-radius: 8px;
-padding: 8px 12px;
-font-weight: bold;
-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Savings indicator */
-.savings-indicator {
-background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-color: #166534;
-border: 1px solid #bbf7d0;
-border-radius: 6px;
-padding: 4px 8px;
-font-size: 0.75rem;
-font-weight: 500;
+@keyframes progressFill {
+    from { width: 0%; }
+    to { width: 100%; }
 }
 </style>
+
+<!-- HTML مودال -->
+<div id="cartSuccessModal" class="cart-success-modal">
+    <div class="cart-modal-content">
+        <div class="modal-header">
+            <i class="bi bi-check-circle-fill"></i>
+            <h3>موفقیت آمیز</h3>
+        </div>
+        <div class="modal-body">
+            <p id="cartSuccessMessage">محصول با موفقیت به سبد خرید اضافه شد</p>
+            <div class="modal-actions">
+                <a href="/order/cart/" class="btn btn-primary">
+                    <i class="bi bi-cart-check"></i>
+                    مشاهده سبد خرید
+                </a>
+                <button type="button" class="btn btn-secondary" id="continueShoppingBtn">
+                    <i class="bi bi-arrow-left"></i>
+                    ادامه خرید
+                </button>
+            </div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ========================
+// توابع مدیریت مودال
+// ========================
+
+let modalTimeout = null;
+let isProcessing = false; // برای جلوگیری از کلیک‌های متوالی
+
+// نمایش مودال
+function showCartModal(message = 'محصول با موفقیت به سبد خرید اضافه شد') {
+    const modal = document.getElementById('cartSuccessModal');
+    const messageElement = document.getElementById('cartSuccessMessage');
+
+    // تنظیم پیام
+    if (messageElement) {
+        messageElement.textContent = message;
+    }
+
+    // پاک کردن timeout قبلی
+    if (modalTimeout) {
+        clearTimeout(modalTimeout);
+        modalTimeout = null;
+    }
+
+    // نمایش مودال
+    if (modal) {
+        modal.classList.add('show');
+
+        // بسته شدن خودکار بعد از 5 ثانیه
+        modalTimeout = setTimeout(() => {
+            hideCartModal();
+        }, 5000);
+    }
+}
+
+// مخفی کردن مودال
+function hideCartModal() {
+    const modal = document.getElementById('cartSuccessModal');
+
+    if (modalTimeout) {
+        clearTimeout(modalTimeout);
+        modalTimeout = null;
+    }
+
+    if (modal) {
+        modal.classList.remove('show');
+    }
+}
+
+// ========================
+// کد اصلی افزودن به سبد خرید
+// ========================
+
+// تابع اصلی برای مدیریت رویدادها
+function setupCartFunctionality() {
+    // Get current product details
+    const productId = "{{ product.id }}";
+
+    window.currentSaleType = {{ default_sale_type.typeSale|default:1 }};
+    window.currentUnitPrice = {{ default_sale_type.final_price|default:default_sale_type.price|default:0 }};
+    window.currentBasePrice = {{ default_sale_type.price|default:0 }};
+    window.currentMemberCarton = {{ default_sale_type.memberCarton|default:1 }};
+    window.currentLimitedSale = {{ default_sale_type.limitedSale|default:1 }};
+
+    // Elements
+    const quantityInput = document.getElementById('quantity');
+    const incrementBtn = document.querySelector('.increment');
+    const decrementBtn = document.querySelector('.decrement');
+    const addToCartBtn = document.querySelector('.add-to-cart-btn');
+    const continueBtn = document.getElementById('continueShoppingBtn');
+
+    // ========================
+    // Event Listeners
+    // ========================
+
+    // دکمه ادامه خرید
+    if (continueBtn) {
+        continueBtn.onclick = function() {
+            hideCartModal();
+        };
+    }
+
+    // بستن با کلیک خارج از مودال
+    document.addEventListener('click', function(event) {
+        const modal = document.getElementById('cartSuccessModal');
+        if (modal && modal.classList.contains('show') && event.target === modal) {
+            hideCartModal();
+        }
+    });
+
+    // Update total price
+    function updateTotalPrice() {
+        if (!quantityInput) return;
+
+        const quantity = parseInt(quantityInput.value) || 1;
+        let totalPrice;
+
+        if (window.currentSaleType === 2) {
+            totalPrice = quantity * window.currentUnitPrice * window.currentMemberCarton;
+        } else if (window.currentSaleType === 3) {
+            totalPrice = quantity * window.currentUnitPrice;
+        } else {
+            totalPrice = quantity * window.currentUnitPrice;
+        }
+
+        const totalPriceElement = document.getElementById('total-price');
+        if (totalPriceElement) {
+            totalPriceElement.textContent = totalPrice.toLocaleString() + ' تومان';
+        }
+    }
+
+    // Setup quantity controls
+    if (quantityInput && incrementBtn && decrementBtn) {
+        let minValue = 1;
+        let maxValue = 1000;
+
+        if (window.currentSaleType === 1) {
+            minValue = 1;
+            quantityInput.value = 1;
+        } else {
+            minValue = window.currentLimitedSale;
+            quantityInput.value = minValue;
+        }
+
+        quantityInput.min = minValue;
+        quantityInput.max = maxValue;
+
+        // حذف event listeners قبلی
+        const newIncrementBtn = incrementBtn.cloneNode(true);
+        const newDecrementBtn = decrementBtn.cloneNode(true);
+        incrementBtn.parentNode.replaceChild(newIncrementBtn, incrementBtn);
+        decrementBtn.parentNode.replaceChild(newDecrementBtn, decrementBtn);
+
+        // اضافه کردن event listeners جدید
+        newIncrementBtn.addEventListener('click', function() {
+            let currentValue = parseInt(quantityInput.value) || 1;
+            if (currentValue >= maxValue) return;
+            quantityInput.value = currentValue + 1;
+            updateTotalPrice();
+        });
+
+        newDecrementBtn.addEventListener('click', function() {
+            let currentValue = parseInt(quantityInput.value) || 1;
+            let currentMin = parseInt(quantityInput.min) || 1;
+            if (currentValue > currentMin) {
+                quantityInput.value = currentValue - 1;
+                updateTotalPrice();
+            }
+        });
+
+        quantityInput.addEventListener('input', function() {
+            let value = parseInt(this.value) || 1;
+            let currentMin = parseInt(quantityInput.min) || 1;
+            let currentMax = parseInt(quantityInput.max) || 1000;
+
+            if (value < currentMin) value = currentMin;
+            if (value > currentMax) value = currentMax;
+
+            this.value = value;
+            updateTotalPrice();
+        });
+    }
+
+    // Add to cart button - جلوگیری از کلیک‌های متوالی
+    if (addToCartBtn) {
+        // حذف event listeners قبلی
+        const newAddToCartBtn = addToCartBtn.cloneNode(true);
+        addToCartBtn.parentNode.replaceChild(newAddToCartBtn, addToCartBtn);
+
+        newAddToCartBtn.addEventListener('click', async function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            // اگر در حال پردازش است، از اجرای مجدد جلوگیری کن
+            if (isProcessing) {
+                return;
+            }
+
+            isProcessing = true;
+
+            // Disable button
+            this.disabled = true;
+            const originalText = this.innerHTML;
+            this.innerHTML = '<span class="add-to-cart-text">در حال افزودن...</span>';
+
+            // Collect data
+            const quantity = parseInt(quantityInput.value) || window.currentLimitedSale;
+            const productData = {
+                product_id: productId,
+                quantity: quantity,
+                sale_type: window.currentSaleType,
+                detail: '',
+            };
+
+            try {
+                console.log('ارسال درخواست افزودن به سبد...');
+
+                // Send request
+                const response = await fetch('/order/cart/add/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(productData),
+                    credentials: 'same-origin'
+                });
+
+                const data = await response.json();
+                console.log('پاسخ دریافت شد:', data);
+
+                // Re-enable button
+                this.disabled = false;
+                this.innerHTML = originalText;
+                isProcessing = false;
+
+                if (data.success) {
+                    console.log('نمایش مودال موفقیت...');
+                    // نمایش مودال موفقیت
+                    showCartModal('محصول با موفقیت به سبد خرید اضافه شد');
+
+                    // در دسکتاپ: سبد خرید را باز کن
+                    if (window.innerWidth >= 769) {
+                        // آپدیت سبد خرید
+                        if (window.cartManager) {
+                            window.cartManager.updateCartDisplay(data);
+
+                            // باز کردن سبد خرید از کنار
+                            const cartElement = document.querySelector('.cart');
+                            const overlay = document.querySelector('.overlay');
+                            if (cartElement && overlay) {
+                                setTimeout(() => {
+                                    cartElement.classList.add('active');
+                                    overlay.classList.add('active');
+                                }, 500);
+                            }
+                        }
+                    }
+
+                } else {
+                    console.log('خطا:', data.error);
+                    // نمایش خطا
+                    alert('خطا: ' + (data.error || 'خطا در افزودن به سبد خرید'));
+                }
+
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+
+                // Re-enable button
+                this.disabled = false;
+                this.innerHTML = originalText;
+                isProcessing = false;
+
+                // نمایش خطا
+                alert('خطا در ارتباط با سرور');
+            }
+        });
+    }
+
+    // Sale type switching
+    const saleTypeBtns = document.querySelectorAll('.sale-type-btn');
+    saleTypeBtns.forEach(btn => {
+        // حذف event listeners قبلی
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+
+        newBtn.addEventListener('click', function() {
+            saleTypeBtns.forEach(b => {
+                b.classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
+                b.classList.add('border-gray-300');
+            });
+            this.classList.remove('border-gray-300');
+            this.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
+
+            const newPrice = parseFloat(this.getAttribute('data-price'));
+            const newBasePrice = parseFloat(this.getAttribute('data-base-price'));
+            const newSaleType = parseInt(this.getAttribute('data-sale-type'));
+            const newMemberCarton = parseInt(this.getAttribute('data-member-carton')) || 1;
+            const newLimitedSale = parseInt(this.getAttribute('data-limited-sale')) || 1;
+
+            window.currentUnitPrice = newPrice;
+            window.currentBasePrice = newBasePrice;
+            window.currentSaleType = newSaleType;
+            window.currentMemberCarton = newMemberCarton;
+            window.currentLimitedSale = newLimitedSale;
+
+            const currentPriceElement = document.getElementById('current-price');
+            if (currentPriceElement) {
+                currentPriceElement.textContent = newPrice.toLocaleString();
+            }
+
+            if (quantityInput) {
+                if (newSaleType === 1) {
+                    quantityInput.value = 1;
+                    quantityInput.min = 1;
+                } else {
+                    quantityInput.value = newLimitedSale;
+                    quantityInput.min = newLimitedSale;
+                }
+            }
+
+            updateTotalPrice();
+        });
+    });
+
+    // Initialize
+    if (quantityInput) {
+        if (window.currentSaleType === 1) {
+            quantityInput.value = 1;
+        } else {
+            quantityInput.value = window.currentLimitedSale;
+            quantityInput.min = window.currentLimitedSale;
+        }
+    }
+
+    updateTotalPrice();
+}
+
+// ========================
+// اجرای کد با بررسی وضعیت
+// ========================
+
+// این تابع را فقط یکبار اجرا کن
+let isInitialized = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (!isInitialized) {
+        console.log('در حال راه‌اندازی cart functionality...');
+        setupCartFunctionality();
+        isInitialized = true;
+
+        // تابع showNotification برای backward compatibility
+        window.showNotification = function(message, type = 'success') {
+            if (type === 'success') {
+                showCartModal(message);
+            } else {
+                alert(message);
+            }
+        };
+
+        console.log('cart functionality راه‌اندازی شد.');
+    }
+});
+
+// تست دستی
+console.log('اسکریپت بارگذاری شد. برای تست: showCartModal("تست مودال")');
+</script>

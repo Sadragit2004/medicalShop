@@ -138,18 +138,29 @@ class ShopCart:
                 # Use the stored discounted price from cart, fallback to ProductSaleType if not available
                 current_price = float(item.get('final_price', item.get('price', 0)))
 
+                # Get sale type info for minimum purchase limits
+                sale_type_obj = None
+                limited_sale = 1
+                if 'sale_type' in item:
+                    sale_type_obj = product.saleTypes.filter(isActive=True, typeSale=item['sale_type']).first()
+                    if sale_type_obj:
+                        limited_sale = sale_type_obj.limitedSale or 1
+
                 items.append({
                     'id': item.get('product_id', key.split(':')[0]),
-                    'name': item.get('product_name', ''),
+                    'title': item.get('product_name', ''),
                     'image': product.mainImage.url if product.mainImage else '',
                     'price': current_price,
-                    'final_price': current_price,
                     'quantity': item['qty'],
                     'total_price': current_price * item['qty'],
                     'detail': item.get('detail', ''),
                     'sale_type': item.get('sale_type', 1),
                     'member_carton': item.get('member_carton', 1),
-                    'sale_type_title': item.get('sale_type_title', 'تک فروشی'),
+                    'limited_sale': limited_sale,
+                    'min_quantity': limited_sale if item.get('sale_type', 1) in [2, 3] else 1,
+                    'shipping_days': 1,  # Default shipping days
+                    'color': '',  # Default empty color
+                    'warranty': 'گارانتی ۱۸ ماهه',  # Default warranty
                     'key': key  # کلید یکتا برای مدیریت
                 })
             except Product.DoesNotExist:

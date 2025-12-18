@@ -14,6 +14,7 @@
                         <input placeholder="جستجو در سایا مد..." type="text">
                     </div>
                     <!-- Search Modal -->
+
                     <div class="search-modal space-y-4">
                         <!-- Result -->
                         <div>
@@ -436,82 +437,12 @@
                     </li>
                 </ul>
                 <!-- Addres -->
-                <div class="relative">
-                    <button class="flex items-center gap-x-1 citylist-open">
-                        <svg class="size-6">
-                            <use href="#map" />
-                        </svg>
-                        <p>آدرس خود را انتخاب کنید</p>
-                    </button>
-                    <div class="citylist-menu z-30">
-                        <!-- Search city -->
-                        <button class="flex bg-gray-200 dark:bg-gray-700 gap-x-1 w-full items-center p-2 rounded-lg">
-                            <svg class="size-6 text-gray-400">
-                                <use href="#search" />
-                            </svg>
-                            <input type="text" class="w-full placeholder:text-gray-400" placeholder="جستجوی شهر...">
-                        </button>
-                        <h2 class="my-3 pr-1.5 font-DanaMedium">شهرهای پرتکرار :</h2>
-                        <!-- City list -->
-                        <ul class="city-list">
-                            <li>
-                                <a href="#">
-                                    <svg class="size-5">
-                                        <use href="#map" />
-                                    </svg>
-                                    تهران
-                                </a>
-                                <svg class="size-4 rotate-90">
-                                    <use href="#chevron" />
-                                </svg>
-                            </li>
-                            <li>
-                                <a href="#">
-                                    <svg class="size-5">
-                                        <use href="#map" />
-                                    </svg>
-                                    اصفهان
-                                </a>
-                                <svg class="size-4 rotate-90">
-                                    <use href="#chevron" />
-                                </svg>
-                            </li>
-                            <li>
-                                <a href="#">
-                                    <svg class="size-5">
-                                        <use href="#map" />
-                                    </svg>
-                                    مشهد
-                                </a>
-                                <svg class="size-4 rotate-90">
-                                    <use href="#chevron" />
-                                </svg>
-                            </li>
-                            <li>
-                                <a href="#">
-                                    <svg class="size-5">
-                                        <use href="#map" />
-                                    </svg>
-                                    شیراز
-                                </a>
-                                <svg class="size-4 rotate-90">
-                                    <use href="#chevron" />
-                                </svg>
-                            </li>
-                            <li>
-                                <a href="#">
-                                    <svg class="size-5">
-                                        <use href="#map" />
-                                    </svg>
-                                    تبریز
-                                </a>
-                                <svg class="size-4 rotate-90">
-                                    <use href="#chevron" />
-                                </svg>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+                <button onclick="scrollToFooter()" class="flex items-center gap-x-1 text-white hover:text-gray-200 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-white/10">
+                    <svg class="size-6 text-white">
+                        <use href="#map" />
+                    </svg>
+                    <span class="text-sm text-white">موقعیت</span>
+                </button>
             </div>
         </div>
         <!-- Mobile -->
@@ -1177,4 +1108,21 @@
         // Initialize cart display on page load
         updateAllCartDisplays();
     });
+
+    // Smooth scroll to footer function
+    function scrollToFooter() {
+        const footer = document.querySelector('footer');
+        if (footer) {
+            footer.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        } else {
+            // Fallback: scroll to bottom of page
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+    }
     </script>

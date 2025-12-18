@@ -606,7 +606,7 @@
         <div class="tab-content tab1 block">
             <h2 class="font-DanaDemiBold border-b-2 border-blue-500 w-fit p-1 text-lg">معرفی</h2>
             <p class="mt-4 leading-8">
-                {{ product.description|linebreaks }}
+                {{ product.description|safe }}
                 {% if product.description|length > 500 %}
                 <a href="#" class="flex gap-x-1 items-center text-blue-400">
                     مشاهده بیشتر
@@ -867,7 +867,7 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('type', type);
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-            fetch(`/products/${productSlug}/comment/add/`, {
+            fetch(`/product/${productSlug}/comment/add/`, {
                 method: 'POST',
                 body: formData
             })
@@ -970,4 +970,5 @@ document.addEventListener('DOMContentLoaded', function() {
 </style>
 
 <script src='{% static "js/cart.js" %}' ></script>
+
 {% endblock %}
