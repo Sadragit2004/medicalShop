@@ -55,15 +55,12 @@
                                     <!-- Price -->
                                     <div class="small-card_price justify-between">
                                         <span class="pt-1">{{ amazing_product.discount }}%</span>
-                                        {% if amazing_product.product.saleTypes.exists %}
-                                            {% with sale_type=amazing_product.product.saleTypes.first %}
-                                            <h4 class="flex items-center gap-x-1 text-lg">
-                                                {% load humanize %}
-                                                {{ sale_type.finalPrice|intcomma }}
-                                                <p class="text-xs font-DanaMedium">تومان</p>
-                                            </h4>
-                                            {% endwith %}
-                                        {% endif %}
+                                        {% load humanize %}
+                                        <h4 class="flex items-center gap-x-1 text-lg">
+                                            <del class="text-sm text-gray-400">{{ amazing_product.original_price|intcomma }}</del>
+                                            {{ amazing_product.discounted_price|intcomma }}
+                                            <p class="text-xs font-DanaMedium">تومان</p>
+                                        </h4>
                                     </div>
                                 </div>
                             </div>

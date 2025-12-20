@@ -350,6 +350,9 @@ async function updateCartItem(productId, quantity, detail, container) {
         // دریافت CSRF token
         const csrfToken = getCSRFToken();
 
+        // دریافت sale_type از container
+        const saleType = container.getAttribute('data-sale-type') || '1';
+
         const response = await fetch('/order/cart/update/', {
             method: 'POST',
             headers: {
@@ -359,7 +362,8 @@ async function updateCartItem(productId, quantity, detail, container) {
             body: JSON.stringify({
                 product_id: productId,
                 quantity: quantity,
-                detail: detail
+                detail: detail,
+                sale_type: saleType
             })
         });
 
@@ -424,7 +428,7 @@ function getCookie(name) {
             if (cookie.substring(0, name.length + 1) === (name + '=')) {
                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                 break;
-            }
+        }
         }
     }
     return cookieValue;
@@ -448,7 +452,7 @@ function updateAllCartData(data) {
     const totalPrice = document.getElementById('total-price');
     if (totalPrice) {
         totalPrice.textContent = `${data.total_price.toLocaleString()} تومان`;
-    }
+        }
 
     // آپدیت شمارنده هدر
     updateHeaderCartCount(data.cart_count);
@@ -515,10 +519,10 @@ function removeFromCart(productId, detail) {
                 updateAllCartData(data);
 
                 // بررسی خالی بودن سبد
-                const remainingItems = document.querySelectorAll('.relative');
-                if (remainingItems.length === 0) {
+                    const remainingItems = document.querySelectorAll('.relative');
+                    if (remainingItems.length === 0) {
                     location.reload(); // بارگذاری مجدد صفحه
-                }
+                    }
 
                 showNotification('محصول از سبد خرید حذف شد', 'success');
             } else {

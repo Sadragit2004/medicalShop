@@ -11,11 +11,24 @@ def get_amazing_product(request):
     for discount in amazing_discounts:
         discount_details = DiscountDetail.objects.filter(discountBasket=discount)
         for detail in discount_details:
+            # Get the base price from the first sale type
+            base_price = 0
+            if detail.product.saleTypes.exists():
+                sale_type = detail.product.saleTypes.first()
+                base_price = sale_type.finalPrice
+
+            # Calculate discounted price
+            discount_percentage = discount.discount
+            discount_amount = (base_price * discount_percentage) // 100
+            discounted_price = base_price - discount_amount
+
             amazing_products.append({
                 'product': detail.product,
                 'discount': discount.discount,
                 'discount_title': discount.discountTitle,
                 'end_date': discount.endDate,
+                'original_price': base_price,
+                'discounted_price': discounted_price,
             })
 
     context = {

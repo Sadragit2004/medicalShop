@@ -2,11 +2,12 @@
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST, require_GET
 from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
 import json
 from apps.product.models import Product
 from django.shortcuts import get_object_or_404,redirect,render
 from .shop_cart import ShopCart
-from .models import Order,OrderDetail
+from .models import Order,OrderDetail, State, City
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
 from django.contrib import messages
@@ -257,10 +258,53 @@ class CreateOrderView(LoginRequiredMixin, View):
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 
+
+def render_checkout_page(request, order, checkout_data=None):
+    """Helper function to render checkout page"""
+
+    # Get user addresses
+    user_addresses = UserAddress.objects.filter(user=request.user)
+
+    # Calculate order totals
+    order_items = order.details.all()
+    total_items = order_items.count()
+    total_qty = sum(item.qty for item in order_items)
+
+    # Calculate subtotal (sum of all items without discount)
+    subtotal = sum(item.price * item.qty for item in order_items)
+
+    # Calculate discount amount
+    discount_amount = (subtotal * order.discount) // 100 if order.discount else 0
+
+    # Calculate final total
+    final_total = subtotal - discount_amount
+
+    # Prepare context
+    context = {
+        'order': order,
+        'order_items': order_items,
+        'user_addresses': user_addresses,
+        'checkout_data': checkout_data or {},
+
+        # Order summary
+        'total_items': total_items,
+        'total_qty': total_qty,
+        'subtotal': subtotal,
+        'discount_percent': order.discount,
+        'discount_amount': discount_amount,
+        'final_total': final_total,
+
+        # For template
+        'now': timezone.now(),
+        'states': State.objects.all().order_by('name'),
+    }
+
+    return render(request, 'order_app/checkout.html', context)
+
 @login_required
 def checkout(request, order_id):
-    order = get_object_or_404(Order, id=order_id, customer=request.user)
-    user_addresses = UserAddress.objects.filter(user=request.user)
+    """Checkout page for order confirmation"""
+    order = get_object_or_404(Order, id=order_id, customer=request.user, isFinally=False)
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -269,90 +313,184 @@ def checkout(request, order_id):
         first_name = request.POST.get('first_name', '').strip()
         last_name = request.POST.get('last_name', '').strip()
         phone = request.POST.get('phone', '').strip()
-        postal_code = request.POST.get('postal_code', '').strip()
-        address_detail = request.POST.get('address_detail', '').strip()
         description = request.POST.get('description', '').strip()
+        selected_address_id = request.POST.get('selected_address')
 
         # اعتبارسنجی فیلدهای ضروری
-        missing = []
-        if not first_name: missing.append('نام')
-        if not last_name:  missing.append('نام‌خانوادگی')
-        if not phone:      missing.append('تلفن')
-        if not postal_code:missing.append('کد پستی')
-        if not address_detail: missing.append('آدرس دقیق')
+        validation_errors = []
 
-        if missing:
-            messages.warning(request, "لطفاً موارد زیر را کامل کنید: " + "، ".join(missing), extra_tags='warning')
+        if not first_name:
+            validation_errors.append('نام')
+
+        if not last_name:
+            validation_errors.append('نام‌خانوادگی')
+
+        if not phone:
+            validation_errors.append('تلفن')
+
+        if not selected_address_id:
+            validation_errors.append('آدرس')
+
+        if validation_errors:
+            messages.error(
+                request,
+                f"لطفاً موارد زیر را کامل کنید: {', '.join(validation_errors)}",
+                extra_tags='error'
+            )
             return render_checkout_page(request, order, {
                 'first_name': first_name,
                 'last_name': last_name,
                 'phone': phone,
-                'postal_code': postal_code,
-                'address_detail': address_detail,
+                'selected_address_id': selected_address_id,
                 'description': description,
             })
 
-        # بررسی وجود آدرس کاربر
-        if not user_addresses.exists():
-            messages.warning(request, "شهر/آدرس برای تحویل ثبت نشده است. لطفاً ابتدا یک آدرس انتخاب یا ثبت کنید.", extra_tags='warning')
-            return render_checkout_page(request, order, {
-                'first_name': first_name,
-                'last_name': last_name,
-                'phone': phone,
-                'postal_code': postal_code,
-                'address_detail': address_detail,
-                'description': description,
-            })
-
-        # ذخیره اطلاعات در session
-        request.session['checkout_data'] = {
-            'first_name': first_name,
-            'last_name': last_name,
-            'phone': phone,
-            'postal_code': postal_code,
-            'address_detail': address_detail,
-            'description': description,
-        }
-
-        # ذخیره آدرس در مدل Order
+        # بررسی وجود آدرس انتخاب شده
         try:
-            order.addressDetail = f"{first_name} {last_name} - تلفن: {phone} - کدپستی: {postal_code} - آدرس: {address_detail}" + (f" - توضیحات: {description}" if description else "")
-            order.save()
-            messages.success(request, "اطلاعات آدرس با موفقیت ذخیره شد.", extra_tags='success')
-        except Exception as e:
-            messages.error(request, f"خطا در ذخیره اطلاعات آدرس: {str(e)}", extra_tags='error')
+            selected_address = UserAddress.objects.get(
+                id=selected_address_id,
+                user=request.user
+            )
+        except UserAddress.DoesNotExist:
+            messages.error(request, "آدرس انتخاب شده نامعتبر است.", extra_tags='error')
             return render_checkout_page(request, order, {
                 'first_name': first_name,
                 'last_name': last_name,
                 'phone': phone,
-                'postal_code': postal_code,
-                'address_detail': address_detail,
+                'selected_address_id': selected_address_id,
+                'description': description,
+            })
+
+        # ذخیره نام و نام‌خانوادگی در پروفایل کاربر
+        try:
+            if first_name:
+                request.user.name = first_name
+            if last_name:
+                request.user.family = last_name
+            request.user.save()
+            messages.success(request, "اطلاعات کاربری با موفقیت به‌روز شد.", extra_tags='success')
+        except Exception as e:
+            messages.error(request, f"خطا در ذخیره اطلاعات کاربر: {str(e)}", extra_tags='error')
+            return render_checkout_page(request, order, {
+                'first_name': first_name,
+                'last_name': last_name,
+                'phone': phone,
+                'selected_address_id': selected_address_id,
+                'description': description,
+            })
+
+        # ذخیره اطلاعات در سفارش
+        try:
+            order.address = selected_address
+            order.description = description
+            order.save()
+
+            # ذخیره اطلاعات در session برای نمایش مجدد
+            request.session['checkout_data'] = {
+                'first_name': first_name,
+                'last_name': last_name,
+                'phone': phone,
+                'selected_address_id': selected_address_id,
+                'description': description,
+            }
+
+            messages.success(request, "اطلاعات سفارش با موفقیت ذخیره شد.", extra_tags='success')
+
+        except Exception as e:
+            messages.error(request, f"خطا در ذخیره سفارش: {str(e)}", extra_tags='error')
+            return render_checkout_page(request, order, {
+                'first_name': first_name,
+                'last_name': last_name,
+                'phone': phone,
+                'selected_address_id': selected_address_id,
                 'description': description,
             })
 
         # اگر کاربر دکمه پرداخت را زده باشد
         if action == 'pay':
+            # نهایی کردن سفارش
+            order.isFinally = True
+            order.save()
             return redirect('peyment:request', order_id=order.id)
 
         # اگر فقط ذخیره اطلاعات بوده
         return redirect('order:checkout', order_id=order.id)
 
-    # GET Request
+    # GET Request - نمایش صفحه
     checkout_data = request.session.get('checkout_data', {})
     return render_checkout_page(request, order, checkout_data)
 
+# API endpoints for address management
+@require_GET
+@login_required
+def get_cities_by_state(request, state_id):
+    """دریافت شهرهای یک استان"""
+    try:
+        cities = City.objects.filter(state_id=state_id).order_by('name')
+        cities_data = [{'id': city.id, 'name': city.name} for city in cities]
 
-def render_checkout_page(request, order, checkout_data):
-    """تابع کمکی برای رندر کردن صفحه چک‌اوت"""
-    tax_rate = 9
-    tax_amount = (order.getFinalPrice() * tax_rate) // 100
-    final_price_with_tax = order.getFinalPrice() + tax_amount
+        return JsonResponse({
+            'success': True,
+            'cities': cities_data
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
 
-    context = {
-        'order': order,
-        'checkout_data': checkout_data,
-        'tax_rate': tax_rate,
-        'tax_amount': tax_amount,
-        'final_price_with_tax': final_price_with_tax,
-    }
-    return render(request, 'order_app/checkout.html', context)
+
+@require_POST
+@login_required
+@csrf_exempt
+def create_user_address(request):
+    """ایجاد آدرس جدید برای کاربر"""
+    try:
+        state_id = request.POST.get('state')
+        city_id = request.POST.get('city')
+        address_detail = request.POST.get('address_detail', '').strip()
+        postal_code = request.POST.get('postal_code', '').strip()
+
+        # Validation
+        if not all([state_id, city_id, address_detail]):
+            return JsonResponse({
+                'success': False,
+                'error': 'لطفاً تمام فیلدهای ضروری را پر کنید'
+            })
+
+        # Verify state and city exist and are related
+        try:
+            state = State.objects.get(id=state_id)
+            city = City.objects.get(id=city_id, state=state)
+        except (State.DoesNotExist, City.DoesNotExist):
+            return JsonResponse({
+                'success': False,
+                'error': 'استان یا شهر انتخاب شده نامعتبر است'
+            })
+
+        # Create address
+        address = UserAddress.objects.create(
+            user=request.user,
+            state=state,
+            city=city,
+            addressDetail=address_detail,
+            postalCode=postal_code if postal_code else None
+        )
+
+        return JsonResponse({
+            'success': True,
+            'address': {
+                'id': address.id,
+                'state': address.state.name,
+                'city': address.city.name,
+                'addressDetail': address.addressDetail,
+                'postalCode': address.postalCode
+            },
+            'message': 'آدرس با موفقیت اضافه شد'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })

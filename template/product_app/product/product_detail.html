@@ -235,7 +235,7 @@
                             <p class="text-2xl font-DanaDemiBold text-red-600" id="current-price">{{ default_sale_type.final_price|intcomma }}</p>
                         </div>
                     {% else %}
-                        <p class="text-2xl font-DanaDemiBold text-blue-600" id="current-price">{{ default_sale_type.final_price|default:default_sale_type.price|intcomma }}</p>
+                        <p class="text-2xl font-DanaDemiBold text-blue-600" id="current-price">{{ default_sale_type.price|intcomma }}</p>
                     {% endif %}
                     <p class="">تومان</p>
                 </div>

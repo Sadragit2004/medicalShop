@@ -191,40 +191,28 @@ def product_detail(request, slug):
 
     # محاسبه finalPrice برای هر نوع فروش
     for sale in sale_types:
-        # قیمت پایه هر نوع فروش
-        if sale.typeSale == SaleType.CARTON and sale.memberCarton and sale.price:
-            base_price = sale.price * sale.memberCarton
-        else:
-            base_price = sale.price
-
-        if sale.finalPrice:
-            base_price = sale.finalPrice
+        # قیمت پایه هر نوع فروش (همیشه قیمت واحد نمایش داده می‌شود)
+        base_price = sale.price
 
         # قیمت نهایی پس از تخفیف
         discounted_price = base_price
         if discount_percent:
             discounted_price = int(base_price * (100 - discount_percent) / 100)
 
-        sale.base_price = base_price
+        # تخصیص قیمت نهایی به شی فروش برای استفاده در تمپلیت
         sale.final_price = discounted_price
 
     # محاسبه finalPrice برای نوع پیش‌فرض
     if default_sale_type:
-        if default_sale_type.typeSale == SaleType.CARTON and default_sale_type.memberCarton:
-            default_base_price = default_sale_type.price * default_sale_type.memberCarton
-        else:
-            default_base_price = default_sale_type.price
-
-        if default_sale_type.finalPrice:
-            default_base_price = default_sale_type.finalPrice
+        # قیمت پایه همیشه قیمت واحد است (برای همه نوع فروش)
+        default_base_price = default_sale_type.price
 
         default_final_price = default_base_price
         if discount_percent:
             default_final_price = int(default_base_price * (100 - discount_percent) / 100)
 
-        # تخصیص قیمت نهایی به شی default_sale_type
+        # تخصیص قیمت نهایی به شی default_sale_type برای استفاده در تمپلیت
         default_sale_type.final_price = default_final_price
-        default_sale_type.base_price = default_base_price
     else:
         default_base_price = 0
         default_final_price = 0
