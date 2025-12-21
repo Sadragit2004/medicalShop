@@ -6,9 +6,6 @@ from django.db.models import Avg, Count, Q
 from django.utils import timezone
 from ckeditor_uploader.fields import RichTextUploadingField
 
-
-
-
 # ========================
 # مدل پایه (Base Model)
 # ========================

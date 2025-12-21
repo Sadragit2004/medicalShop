@@ -1,0 +1,872 @@
+<!-- templates/search/results.html -->
+{% extends "main_template.html" %}
+{% load humanize %}
+
+{% block content %}
+
+<main class="container">
+    <!-- Breadcrumb -->
+    <nav class="flex mt-8" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
+            <li class="inline-flex items-center">
+                <a href="/"
+                    class="inline-flex items-center text-sm gap-x-1 text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+                    <svg class="size-4 mb-0.5">
+                        <use href="#home" />
+                    </svg>
+                    صفحه اصلی
+                </a>
+            </li>
+            <li aria-current="page">
+                <div class="flex items-center">
+                    <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m1 9 4-4-4-4" />
+                    </svg>
+                    <span class="ms-1 text-sm text-gray-500 md:ms-2 dark:text-gray-400">نتایج جستجو</span>
+                </div>
+            </li>
+        </ol>
+    </nav>
+
+    <!-- جستجو باکس بزرگ -->
+    <div class="mt-6 mb-8">
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6">
+            <div class="flex flex-col lg:flex-row items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+                        نتایج جستجو برای: "{{ query }}"
+                    </h1>
+                    <p class="text-gray-600 dark:text-gray-300">
+                        <span class="font-medium">{{ total_results|intcomma }}</span> مورد یافت شد
+                        {% if product_count %} ({{ product_count }} محصول{% endif %}
+                        {% if category_count %}، {{ category_count }} دسته‌بندی{% endif %}
+                        {% if brand_count %}، {{ brand_count }} برند){% endif %}
+                    </p>
+                </div>
+
+                <!-- باکس جستجو -->
+                <div class="w-full lg:w-1/2">
+                    <form method="GET" action="{% url 'search:search_results' %}" class="relative">
+                        <div class="flex items-center bg-white dark:bg-gray-700 rounded-full px-4 py-3 shadow-lg">
+                            <button type="submit" class="flex-shrink-0">
+                                <svg class="size-6 text-blue-600">
+                                    <use href="#search" />
+                                </svg>
+                            </button>
+                            <input
+                                type="text"
+                                name="q"
+                                value="{{ query }}"
+                                placeholder="جستجوی محصولات، برندها و دسته‌بندی‌ها..."
+                                class="flex-grow bg-transparent outline-none px-3 text-gray-700 dark:text-gray-200 w-full"
+                                autocomplete="off"
+                            >
+                            {% if query %}
+                            <a href="{% url 'search:search_results' %}" class="flex-shrink-0 text-gray-400 hover:text-gray-600">
+                                <svg class="size-5">
+                                    <use href="#x-mark" />
+                                </svg>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-6">
+        <!-- SIDEBAR FILTERS (Desktop) -->
+        <div class="lg:w-1/4 hidden lg:block">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-5 sticky top-6">
+                <!-- فیلتر دسته‌بندی -->
+                {% if available_categories %}
+                <div class="mb-6">
+                    <h3 class="font-DanaMedium text-lg text-gray-800 dark:text-white mb-3">دسته‌بندی‌ها</h3>
+                    <ul class="space-y-2 max-h-60 overflow-y-auto">
+                        {% for category in available_categories %}
+                        <li>
+                            <a href="?q={{ query }}&category={{ category.slug }}{% if brand_filter %}&brand={{ brand_filter }}{% endif %}{% if available_filter %}&available=true{% endif %}{% if selected_min != min_price or selected_max != max_price %}&price_min={{ selected_min }}&price_max={{ selected_max }}{% endif %}"
+                               class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 {% if category_filter == category.slug %}bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                                <span>{{ category.title }}</span>
+                                <span class="text-sm bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded-full">
+                                    {% comment %} می‌توانی تعداد محصولات را اینجا بیاوری {% endcomment %}
+                                </span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- فیلتر برند -->
+                {% if available_brands %}
+                <div class="mb-6">
+                    <h3 class="font-DanaMedium text-lg text-gray-800 dark:text-white mb-3">برندها</h3>
+                    <ul class="space-y-2 max-h-60 overflow-y-auto">
+                        {% for brand in available_brands %}
+                        <li>
+                            <a href="?q={{ query }}&brand={{ brand.slug }}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if available_filter %}&available=true{% endif %}{% if selected_min != min_price or selected_max != max_price %}&price_min={{ selected_min }}&price_max={{ selected_max }}{% endif %}"
+                               class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 {% if brand_filter == brand.slug %}bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                                <span>{{ brand.title }}</span>
+                                <span class="text-sm bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded-full">
+                                    {% comment %} می‌توانی تعداد محصولات را اینجا بیاوری {% endcomment %}
+                                </span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- فیلتر قیمت -->
+                <div class="mb-6">
+                    <h3 class="font-DanaMedium text-lg text-gray-800 dark:text-white mb-3">محدوده قیمت</h3>
+                    <div class="wrapper" data-price-filter>
+                        <div class="slider-bar mb-4">
+                            <div class="price-range-progress progress"></div>
+                        </div>
+                        <div class="range-input mb-4">
+                            <input type="range"
+                                   class="min-range"
+                                   min="{{ min_price|default:0 }}"
+                                   max="{{ max_price|default:100000 }}"
+                                   value="{{ selected_min }}"
+                                   step="1000">
+                            <input type="range"
+                                   class="max-range"
+                                   min="{{ min_price|default:0 }}"
+                                   max="{{ max_price|default:100000 }}"
+                                   value="{{ selected_max }}"
+                                   step="1000">
+                        </div>
+
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex-1">
+                                <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">حداقل:</div>
+                                <div class="flex items-center gap-2">
+                                    <input type="number"
+                                           class="price-number-min w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                                           min="{{ min_price|default:0 }}"
+                                           max="{{ max_price|default:100000 }}"
+                                           value="{{ selected_min }}">
+                                    <span class="text-gray-500 dark:text-gray-400 text-sm">تومان</span>
+                                </div>
+                            </div>
+
+                            <div class="w-8 text-center text-gray-400">تا</div>
+
+                            <div class="flex-1">
+                                <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">حداکثر:</div>
+                                <div class="flex items-center gap-2">
+                                    <input type="number"
+                                           class="price-number-max w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                                           min="{{ min_price|default:0 }}"
+                                           max="{{ max_price|default:100000 }}"
+                                           value="{{ selected_max }}">
+                                    <span class="text-gray-500 dark:text-gray-400 text-sm">تومان</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- وضعیت موجودی -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-between p-3 rounded-lg bg-gray-100 dark:bg-gray-800">
+                        <label for="available-filter" class="text-gray-700 dark:text-gray-300 cursor-pointer">
+                            فقط کالاهای موجود
+                        </label>
+                        <input type="checkbox"
+                               id="available-filter"
+                               class="toggle-checkbox"
+                               {% if available_filter %}checked{% endif %}
+                               onchange="updateFilter('available', this.checked ? 'true' : '')">
+                    </div>
+                </div>
+
+                <!-- دکمه اعمال فیلترها -->
+                <button onclick="applyDesktopFilters()"
+                        class="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                    اعمال فیلترها
+                </button>
+
+                <!-- حذف فیلترها -->
+                {% if brand_filter or category_filter or available_filter or selected_min != min_price or selected_max != max_price %}
+                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <a href="?q={{ query }}" class="w-full block text-center py-2 text-red-600 hover:text-red-700 font-medium">
+                        حذف همه فیلترها
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="lg:w-3/4">
+            <!-- TOP FILTER BAR -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-6">
+                <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                    <!-- دکمه فیلتر موبایل -->
+                    <div class="lg:hidden w-full">
+                        <button onclick="toggleMobileFilters()"
+                                class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            <svg class="size-5">
+                                <use href="#filter" />
+                            </svg>
+                            فیلتر و مرتب‌سازی
+                        </button>
+                    </div>
+
+                    <!-- مرتب‌سازی -->
+                    <div class="w-full lg:w-auto">
+                        <div class="flex items-center gap-4">
+                            <span class="text-gray-600 dark:text-gray-300">مرتب‌سازی:</span>
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="applySort('1')"
+                                        class="px-4 py-2 rounded-lg {% if sort_option == '1' %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300{% endif %}">
+                                    جدیدترین
+                                </button>
+                                <button onclick="applySort('2')"
+                                        class="px-4 py-2 rounded-lg {% if sort_option == '2' %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300{% endif %}">
+                                    گران‌ترین
+                                </button>
+                                <button onclick="applySort('3')"
+                                        class="px-4 py-2 rounded-lg {% if sort_option == '3' %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300{% endif %}">
+                                    ارزان‌ترین
+                                </button>
+                                <button onclick="applySort('5')"
+                                        class="px-4 py-2 rounded-lg {% if sort_option == '5' %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300{% endif %}">
+                                    پرفروش‌ترین
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- تعداد نتایج -->
+                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                        نمایش {{ products.start_index }} تا {{ products.end_index }} از {{ product_count|intcomma }} نتیجه
+                    </div>
+                </div>
+
+                <!-- فیلترهای فعال -->
+                {% if brand_filter or category_filter or available_filter or selected_min != min_price or selected_max != max_price %}
+                <div class="mt-4 flex flex-wrap gap-2">
+                    {% if selected_category %}
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full">
+                        دسته: {{ selected_category.title }}
+                        <button onclick="removeFilter('category')" class="text-blue-800 dark:text-blue-400 hover:text-blue-900">
+                            <svg class="size-4">
+                                <use href="#x-mark" />
+                            </svg>
+                        </button>
+                    </span>
+                    {% endif %}
+
+                    {% if selected_brand %}
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full">
+                        برند: {{ selected_brand.title }}
+                        <button onclick="removeFilter('brand')" class="text-blue-800 dark:text-blue-400 hover:text-blue-900">
+                            <svg class="size-4">
+                                <use href="#x-mark" />
+                            </svg>
+                        </button>
+                    </span>
+                    {% endif %}
+
+                    {% if available_filter %}
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300 rounded-full">
+                        فقط موجود
+                        <button onclick="removeFilter('available')" class="text-green-800 dark:text-green-400 hover:text-green-900">
+                            <svg class="size-4">
+                                <use href="#x-mark" />
+                            </svg>
+                        </button>
+                    </span>
+                    {% endif %}
+
+                    {% if selected_min != min_price or selected_max != max_price %}
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300 rounded-full">
+                        قیمت: {{ selected_min|intcomma }} تا {{ selected_max|intcomma }} تومان
+                        <button onclick="removePriceFilter()" class="text-purple-800 dark:text-purple-400 hover:text-purple-900">
+                            <svg class="size-4">
+                                <use href="#x-mark" />
+                            </svg>
+                        </button>
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- نتایج دسته‌بندی‌ها -->
+            {% if categories %}
+            <div class="mb-8">
+                <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">دسته‌بندی‌ها</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% for category in categories %}
+                    <a href="{% url 'product:category_detail' category.slug %}"
+                       class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 flex items-center gap-4 hover:shadow-lg transition-shadow">
+                        {% if category.image %}
+                        <img src="{{ category.image.url }}"
+                             alt="{{ category.title }}"
+                             class="w-16 h-16 object-cover rounded-lg">
+                        {% else %}
+                        <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                            <svg class="w-8 h-8 text-blue-600 dark:text-blue-400">
+                                <use href="#folder" />
+                            </svg>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <h3 class="font-medium text-gray-800 dark:text-white">{{ category.title }}</h3>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- نتایج برندها -->
+            {% if brands %}
+            <div class="mb-8">
+                <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">برندها</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {% for brand in brands %}
+                    <a href="?q={{ query }}&brand={{ brand.slug }}"
+                       class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 flex flex-col items-center gap-2 hover:shadow-lg transition-shadow {% if brand_filter == brand.slug %}ring-2 ring-blue-500{% endif %}">
+                        {% if brand.logo %}
+                        <img src="{{ brand.logo.url }}"
+                             alt="{{ brand.title }}"
+                             class="w-20 h-20 object-contain p-2">
+                        {% else %}
+                        <div class="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                            <svg class="w-10 h-10 text-gray-400 dark:text-gray-500">
+                                <use href="#tag" />
+                            </svg>
+                        </div>
+                        {% endif %}
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300 text-center">
+                            {{ brand.title }}
+                        </span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- نتایج محصولات -->
+            {% if products %}
+            <div>
+                <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">محصولات</h2>
+                <div class="grid grid-cols-1 xxs:grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 xs:gap-2 sm:gap-4">
+                    {% for product in products %}
+                    <div class="product-card group">
+                        <!-- product header -->
+                        <div class="product-card_header">
+                            <div class="flex items-center gap-x-2">
+                                <div class="tooltip">
+                                    <button class="rounded-full p-1.5 app-border app-hover add-to-cart"
+                                            data-product-id="{{ product.id }}">
+                                        <svg class="size-4">
+                                            <use href="#shopping-cart"></use>
+                                        </svg>
+                                    </button>
+                                    <div class="tooltiptext">سبد خرید</div>
+                                </div>
+                                <div class="tooltip">
+                                    <button class="rounded-full p-1.5 app-border app-hover add-to-wishlist"
+                                            data-product-id="{{ product.id }}">
+                                        <svg class="size-4">
+                                            <use href="#heart"></use>
+                                        </svg>
+                                    </button>
+                                    <div class="tooltiptext">علاقه‌مندی</div>
+                                </div>
+                                <div class="tooltip">
+                                    <button class="rounded-full p-1.5 app-border app-hover add-to-compare"
+                                            data-product-id="{{ product.id }}">
+                                        <svg class="size-4">
+                                            <use href="#arrows-up-down"></use>
+                                        </svg>
+                                    </button>
+                                    <div class="tooltiptext">مقایسه</div>
+                                </div>
+                            </div>
+
+                            <!-- badge offer -->
+                            {% if product.discount_percent > 0 %}
+                            <span class="product-card_badge">{{ product.discount_percent }}% تخفیف</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- product img -->
+                        <a href="{{ product.get_absolute_url }}">
+                            <img class="product-card_img group-hover:opacity-0 absolute"
+                                 src="{{ product.mainImage.url }}"
+                                 alt="{{ product.title }}"
+                                 onerror="this.src='{{ media_url }}/images/default-product.jpg'">
+                            <img class="product-card_img opacity-0 group-hover:opacity-100"
+                                 src="{{ product.mainImage.url }}"
+                                 alt="{{ product.title }}"
+                                 onerror="this.src='{{ media_url }}/images/default-product.jpg'">
+                        </a>
+
+                        <!--  product footer -->
+                        <div class="space-y-2">
+                            <a href="{{ product.get_absolute_url }}" class="product-card_link">
+                                {{ product.title|truncatechars:70 }}
+                            </a>
+
+                            <div class="product-card_price-wrapper">
+                                <div class="product-card_rate">
+                                    <span class="flex items-center gap-x-0.5">
+                                        <svg class="size-4 text-blue-500 mb-0.5">
+                                            <use href="#rocket"></use>
+                                        </svg>
+                                        <p class="text-xs">ارسال امروز</p>
+                                    </span>
+                                    <span class="text-gray-400 flex items-center text-sm gap-x-0.5">
+                                        <p>{{ product.average_rating|floatformat:1 }}</p>
+                                        <svg class="size-4 mb-1">
+                                            <use href="#star"></use>
+                                        </svg>
+                                    </span>
+                                </div>
+
+                                <div class="product-card_price">
+                                    {% if product.discount_percent %}
+                                    <del>
+                                        <p>{{ product.price|intcomma }}</p>
+                                        <h6 class="inline">تومان</h6>
+                                    </del>
+                                    <p class="text-blue-600 font-DanaDemiBold">{{ product.final_price|intcomma }}</p>
+                                    {% else %}
+                                    <p>{{ product.price|intcomma }}</p>
+                                    {% endif %}
+                                    <span>تومان</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- PAGINATION -->
+            {% if products.has_other_pages %}
+            <div class="mt-10 w-full flex items-center justify-center">
+                <ul class="flex items-center gap-x-3 child:flex child:items-center child:justify-center child:w-8 child:h-8 child:cursor-pointer child:shadow child:rounded-lg child:transition-all child:duration-300">
+                    {% if products.has_previous %}
+                    <li class="bg-white dark:bg-gray-800 hover:bg-gray-800 dark:hover:bg-blue-500 hover:text-white">
+                        <a href="?q={{ query }}&page={{ products.previous_page_number }}{% if sort_option != '1' %}&sort={{ sort_option }}{% endif %}{% if brand_filter %}&brand={{ brand_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if available_filter %}&available=true{% endif %}{% if selected_min != min_price or selected_max != max_price %}&price_min={{ selected_min }}&price_max={{ selected_max }}{% endif %}">
+                            <svg class="size-5 rotate-180">
+                                <use href="#chevron-left"></use>
+                            </svg>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for i in products.paginator.page_range %}
+                        {% if products.number == i %}
+                        <li class="text-white bg-blue-500">
+                            <span>{{ i }}</span>
+                        </li>
+                        {% elif i > products.number|add:'-3' and i < products.number|add:'3' %}
+                        <li class="bg-white dark:bg-gray-800 hover:bg-blue-500 dark:hover:bg-blue-500 hover:text-white">
+                            <a href="?q={{ query }}&page={{ i }}{% if sort_option != '1' %}&sort={{ sort_option }}{% endif %}{% if brand_filter %}&brand={{ brand_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if available_filter %}&available=true{% endif %}{% if selected_min != min_price or selected_max != max_price %}&price_min={{ selected_min }}&price_max={{ selected_max }}{% endif %}">
+                                {{ i }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if products.has_next %}
+                    <li class="bg-white dark:bg-gray-800 hover:bg-blue-500 dark:hover:bg-blue-500 hover:text-white">
+                        <a href="?q={{ query }}&page={{ products.next_page_number }}{% if sort_option != '1' %}&sort={{ sort_option }}{% endif %}{% if brand_filter %}&brand={{ brand_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if available_filter %}&available=true{% endif %}{% if selected_min != min_price or selected_max != max_price %}&price_min={{ selected_min }}&price_max={{ selected_max }}{% endif %}">
+                            <svg class="size-5">
+                                <use href="#chevron-left"></use>
+                            </svg>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% elif query and not categories and not brands %}
+            <div class="text-center py-16">
+                <svg class="w-24 h-24 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <h3 class="mt-6 text-2xl font-bold text-gray-800 dark:text-white">
+                    هیچ نتیجه‌ای برای "{{ query }}" یافت نشد
+                </h3>
+                <div class="mt-8 flex flex-wrap gap-3 justify-center">
+                    <a href="/" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        بازگشت به خانه
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- MOBILE FILTER MODAL -->
+    <div id="mobile-filter-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/50" onclick="toggleMobileFilters()"></div>
+        <div class="absolute bottom-0 w-full bg-white dark:bg-gray-900 rounded-t-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+            <div class="p-4">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 dark:text-white">فیلتر و مرتب‌سازی</h3>
+                    <button onclick="toggleMobileFilters()" class="p-2">
+                        <svg class="size-6 text-gray-500">
+                            <use href="#x-mark" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- مرتب‌سازی -->
+                <div class="mb-6">
+                    <h4 class="font-medium text-gray-700 dark:text-gray-300 mb-3">مرتب‌سازی</h4>
+                    <div class="space-y-2">
+                        <button onclick="applySort('1')" class="w-full text-right p-3 rounded-lg {% if sort_option == '1' %}bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400{% else %}bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300{% endif %}">
+                            جدیدترین
+                        </button>
+                        <button onclick="applySort('2')" class="w-full text-right p-3 rounded-lg {% if sort_option == '2' %}bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400{% else %}bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300{% endif %}">
+                            گران‌ترین
+                        </button>
+                        <button onclick="applySort('3')" class="w-full text-right p-3 rounded-lg {% if sort_option == '3' %}bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400{% else %}bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300{% endif %}">
+                            ارزان‌ترین
+                        </button>
+                        <button onclick="applySort('5')" class="w-full text-right p-3 rounded-lg {% if sort_option == '5' %}bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400{% else %}bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300{% endif %}">
+                            پرفروش‌ترین
+                        </button>
+                    </div>
+                </div>
+
+                <!-- فیلترها -->
+                <div class="space-y-6">
+                    <!-- قیمت -->
+                    <div>
+                        <h4 class="font-medium text-gray-700 dark:text-gray-300 mb-3">محدوده قیمت</h4>
+                        <div class="wrapper" data-price-filter>
+                            <div class="slider-bar mb-4">
+                                <div class="price-range-progress progress"></div>
+                            </div>
+                            <div class="range-input mb-4">
+                                <input type="range"
+                                       class="min-range"
+                                       min="{{ min_price|default:0 }}"
+                                       max="{{ max_price|default:100000 }}"
+                                       value="{{ selected_min }}"
+                                       step="1000">
+                                <input type="range"
+                                       class="max-range"
+                                       min="{{ min_price|default:0 }}"
+                                       max="{{ max_price|default:100000 }}"
+                                       value="{{ selected_max }}"
+                                       step="1000">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- دسته‌بندی -->
+                    {% if available_categories %}
+                    <div>
+                        <h4 class="font-medium text-gray-700 dark:text-gray-300 mb-3">دسته‌بندی‌ها</h4>
+                        <div class="space-y-2">
+                            <label class="flex items-center p-3 rounded-lg bg-gray-100 dark:bg-gray-800 cursor-pointer {% if not category_filter %}bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400{% endif %}">
+                                <input type="radio"
+                                       name="mobile_category"
+                                       value=""
+                                       class="mr-2"
+                                       {% if not category_filter %}checked{% endif %}
+                                       onchange="updateMobileFilter('category', this.value)">
+                                <span>همه دسته‌بندی‌ها</span>
+                            </label>
+                            {% for category in available_categories %}
+                            <label class="flex items-center p-3 rounded-lg bg-gray-100 dark:bg-gray-800 cursor-pointer {% if category_filter == category.slug %}bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400{% endif %}">
+                                <input type="radio"
+                                       name="mobile_category"
+                                       value="{{ category.slug }}"
+                                       class="mr-2"
+                                       {% if category_filter == category.slug %}checked{% endif %}
+                                       onchange="updateMobileFilter('category', this.value)">
+                                <span>{{ category.title }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- برند -->
+                    {% if available_brands %}
+                    <div>
+                        <h4 class="font-medium text-gray-700 dark:text-gray-300 mb-3">برندها</h4>
+                        <div class="space-y-2">
+                            <label class="flex items-center p-3 rounded-lg bg-gray-100 dark:bg-gray-800 cursor-pointer {% if not brand_filter %}bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400{% endif %}">
+                                <input type="radio"
+                                       name="mobile_brand"
+                                       value=""
+                                       class="mr-2"
+                                       {% if not brand_filter %}checked{% endif %}
+                                       onchange="updateMobileFilter('brand', this.value)">
+                                <span>همه برندها</span>
+                            </label>
+                            {% for brand in available_brands %}
+                            <label class="flex items-center p-3 rounded-lg bg-gray-100 dark:bg-gray-800 cursor-pointer {% if brand_filter == brand.slug %}bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400{% endif %}">
+                                <input type="radio"
+                                       name="mobile_brand"
+                                       value="{{ brand.slug }}"
+                                       class="mr-2"
+                                       {% if brand_filter == brand.slug %}checked{% endif %}
+                                       onchange="updateMobileFilter('brand', this.value)">
+                                <span>{{ brand.title }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- موجودی -->
+                    <div>
+                        <label class="flex items-center justify-between p-3 rounded-lg bg-gray-100 dark:bg-gray-800 cursor-pointer">
+                            <span class="text-gray-700 dark:text-gray-300">فقط کالاهای موجود</span>
+                            <input type="checkbox"
+                                   id="mobile-available"
+                                   class="toggle-checkbox"
+                                   {% if available_filter %}checked{% endif %}
+                                   onchange="updateMobileFilter('available', this.checked ? 'true' : '')">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- دکمه‌ها -->
+                <div class="flex gap-3 mt-8">
+                    <button onclick="clearAllFilters()" class="flex-1 py-3 border border-red-600 text-red-600 rounded-lg hover:bg-red-50">
+                        حذف همه
+                    </button>
+                    <button onclick="applyMobileFilters()" class="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        اعمال فیلترها
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<style>
+.toggle-checkbox {
+    position: relative;
+    width: 48px;
+    height: 24px;
+    appearance: none;
+    background: #d1d5db;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.toggle-checkbox:checked {
+    background: #3b82f6;
+}
+
+.toggle-checkbox::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s;
+}
+
+.toggle-checkbox:checked::before {
+    transform: translateX(24px);
+}
+</style>
+
+<script>
+// متغیرهای global برای قیمت
+let minPrice = {{ min_price|default:0 }};
+let maxPrice = {{ max_price|default:100000 }};
+let selectedMin = {{ selected_min }};
+let selectedMax = {{ selected_max }};
+
+// توابع
+function toggleMobileFilters() {
+    const modal = document.getElementById('mobile-filter-modal');
+    modal.classList.toggle('hidden');
+    document.body.style.overflow = modal.classList.contains('hidden') ? 'auto' : 'hidden';
+}
+
+function applySort(sortValue) {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('sort', sortValue);
+    urlParams.set('page', '1');
+    window.location.search = urlParams.toString();
+}
+
+function updateFilter(filterName, value) {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    if (value) {
+        urlParams.set(filterName, value);
+    } else {
+        urlParams.delete(filterName);
+    }
+
+    urlParams.set('page', '1');
+    window.location.search = urlParams.toString();
+}
+
+function removeFilter(filterName) {
+    updateFilter(filterName, '');
+}
+
+function removePriceFilter() {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.delete('price_min');
+    urlParams.delete('price_max');
+    urlParams.set('page', '1');
+    window.location.search = urlParams.toString();
+}
+
+function clearAllFilters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const query = urlParams.get('q') || '';
+    window.location.search = `?q=${encodeURIComponent(query)}`;
+}
+
+function updateMobileFilter(filterName, value) {
+    // فقط مقدار را در دیتا ذخیره می‌کنیم
+    if (filterName === 'price_min') selectedMin = value;
+    else if (filterName === 'price_max') selectedMax = value;
+}
+
+function applyMobileFilters() {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // قیمت
+    urlParams.set('price_min', selectedMin);
+    urlParams.set('price_max', selectedMax);
+
+    // دسته‌بندی
+    const mobileCategory = document.querySelector('input[name="mobile_category"]:checked');
+    if (mobileCategory && mobileCategory.value) {
+        urlParams.set('category', mobileCategory.value);
+    } else {
+        urlParams.delete('category');
+    }
+
+    // برند
+    const mobileBrand = document.querySelector('input[name="mobile_brand"]:checked');
+    if (mobileBrand && mobileBrand.value) {
+        urlParams.set('brand', mobileBrand.value);
+    } else {
+        urlParams.delete('brand');
+    }
+
+    // موجودی
+    const mobileAvailable = document.getElementById('mobile-available');
+    if (mobileAvailable && mobileAvailable.checked) {
+        urlParams.set('available', 'true');
+    } else {
+        urlParams.delete('available');
+    }
+
+    urlParams.set('page', '1');
+    window.location.search = urlParams.toString();
+}
+
+function applyDesktopFilters() {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // قیمت از اسلایدر
+    const priceMin = document.querySelector('.price-number-min').value;
+    const priceMax = document.querySelector('.price-number-max').value;
+
+    if (priceMin && priceMax) {
+        urlParams.set('price_min', priceMin);
+        urlParams.set('price_max', priceMax);
+    }
+
+    urlParams.set('page', '1');
+    window.location.search = urlParams.toString();
+}
+
+// مقداردهی اولیه اسلایدر قیمت
+document.addEventListener('DOMContentLoaded', function() {
+    const sliderContainers = document.querySelectorAll('[data-price-filter]');
+
+    sliderContainers.forEach(container => {
+        const minRange = container.querySelector('.min-range');
+        const maxRange = container.querySelector('.max-range');
+        const progress = container.querySelector('.progress');
+        const minInput = container.querySelector('.price-number-min');
+        const maxInput = container.querySelector('.price-number-max');
+
+        if (!minRange || !maxRange || !progress) return;
+
+        function updateSlider() {
+            let minVal = parseInt(minRange.value);
+            let maxVal = parseInt(maxRange.value);
+
+            // محدودیت فاصله
+            if (maxVal - minVal < 10000) {
+                if (minRange === document.activeElement) {
+                    minRange.value = maxVal - 10000;
+                } else {
+                    maxRange.value = minVal + 10000;
+                }
+                minVal = parseInt(minRange.value);
+                maxVal = parseInt(maxRange.value);
+            }
+
+            const sliderMin = parseInt(minRange.getAttribute('min')) || 0;
+            const sliderMax = parseInt(maxRange.getAttribute('max')) || 100000;
+            const range = sliderMax - sliderMin || 1;
+
+            const minPercent = ((minVal - sliderMin) / range) * 100;
+            const maxPercent = ((maxVal - sliderMin) / range) * 100;
+
+            progress.style.left = minPercent + "%";
+            progress.style.right = (100 - maxPercent) + "%";
+
+            if (minInput) minInput.value = minVal;
+            if (maxInput) maxInput.value = maxVal;
+
+            selectedMin = minVal;
+            selectedMax = maxVal;
+        }
+
+        minRange.addEventListener('input', updateSlider);
+        maxRange.addEventListener('input', updateSlider);
+
+        if (minInput) {
+            minInput.addEventListener('input', function() {
+                const value = Math.min(parseInt(this.value) || 0, selectedMax - 10000);
+                minRange.value = value;
+                updateSlider();
+            });
+        }
+
+        if (maxInput) {
+            maxInput.addEventListener('input', function() {
+                const value = Math.max(parseInt(this.value) || 100000, selectedMin + 10000);
+                maxRange.value = value;
+                updateSlider();
+            });
+        }
+
+        updateSlider();
+    });
+});
+</script>
+{% endblock %}

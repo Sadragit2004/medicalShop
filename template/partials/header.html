@@ -3,86 +3,52 @@
         <div class="container mt-5 hidden flex-col gap-y-6 lg:flex">
             <!-- TOPBAR -->
             <div class="flex-between">
-                <!-- Search Box -->
-                <div class="relative z-20">
-                    <!-- INPUT -->
-                    <div
-                        class="search-btn-open flex gap-x-2 app-border bg-gray-50 dark:bg-gray-700 p-1 rounded-full cursor-pointer ring-blue-400 w-84 transition-all">
-                        <svg class="size-6 p-1.5 flex-center text-gray-100 bg-blue-600 rounded-full w-9 h-9">
-                            <use href="#search" />
-                        </svg>
-                        <input placeholder="جستجو در سایا مد..." type="text">
-                    </div>
-                    <!-- Search Modal -->
 
-                    <div class="search-modal space-y-4">
-                        <!-- Result -->
-                        <div>
-                            <span class="flex items-center text-sm gap-x-1 text-gray-600 dark:text-gray-200">
-                                <p>نتیجه جستجو : <span class="font-DanaMedium text-blue-400">iphone</span></p>
-                            </span>
-                            <ul
-                                class="pt-4 text-gray-500 dark:text-gray-300 flex flex-col gap-y-4 child:flex-between child:cursor-pointer">
-                                <li>
-                                    <a href="#" class="flex items-center gap-x-2">
-                                        <svg class="size-5">
-                                            <use href="#search" />
-                                        </svg>
-                                        آیفون 14
-                                    </a>
-                                    <svg class="size-4">
-                                        <use href="#arrow-up-right" />
-                                    </svg>
-                                </li>
-                                <li>
-                                    <a href="#" class="flex items-center gap-x-2">
-                                        <svg class="size-5">
-                                            <use href="#search" />
-                                        </svg>
-                                        قاب آیفون
-                                    </a>
-                                    <svg class="size-4">
-                                        <use href="#arrow-up-right" />
-                                    </svg>
-                                </li>
-                                <li>
-                                    <a href="#" class="flex items-center gap-x-2">
-                                        <svg class="size-5">
-                                            <use href="#search" />
-                                        </svg>
-                                        کاور ایفون 16
-                                    </a>
-                                    <svg class="size-4">
-                                        <use href="#arrow-up-right" />
-                                    </svg>
-                                </li>
-                            </ul>
-                        </div>
-                        <!-- Trend -->
-                        <div class="pt-4">
-                            <span class="flex items-center gap-x-1 text-sm text-gray-500 dark:text-gray-200">
-                                <svg class="size-4">
-                                    <use href="#fire" />
-                                </svg>
-                                <p>جستجو های پرطرفدار :</p>
-                            </span>
-                            <ul class="w-full flex items-center gap-1.5 mt-3 child:search-modal-list-item">
-                                <li>
-                                    <a href="#">#آیفون</a>
-                                </li>
-                                <li>
-                                    <a href="#">#لپ تاپ</a>
-                                </li>
-                                <li>
-                                    <a href="#">#هدفون</a>
-                                </li>
-                                <li>
-                                    <a href="#">#هلدر</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+<div class="relative z-20">
+    <!-- INPUT -->
+    <form method="GET" action="{% url 'search:search_results' %}" class="search-form">
+        <div class="search-btn-open flex gap-x-2 app-border bg-gray-50 dark:bg-gray-700 p-1 rounded-full cursor-pointer ring-blue-400 w-84 transition-all">
+            <button type="submit" class="size-6 p-1.5 flex-center text-gray-100 bg-blue-600 rounded-full w-9 h-9">
+                <svg class="size-6">
+                    <use href="#search" />
+                </svg>
+            </button>
+            <input
+                placeholder="جستجو در سایا مد..."
+                type="text"
+                name="q"
+                class="search-input bg-transparent outline-none w-full"
+                autocomplete="off"
+            >
+        </div>
+    </form>
+
+    <!-- Search Modal -->
+    <div class="search-modal hidden space-y-4">
+        <!-- Result -->
+        <div class="search-suggestions-container hidden">
+            <span class="flex items-center text-sm gap-x-1 text-gray-600 dark:text-gray-200">
+                <p>نتیجه جستجو : <span class="font-DanaMedium text-blue-400 search-query-display"></span></p>
+            </span>
+            <ul class="pt-4 text-gray-500 dark:text-gray-300 flex flex-col gap-y-4 child:flex-between child:cursor-pointer search-suggestions-list">
+                <!-- نتایج با AJAX پر می‌شوند -->
+            </ul>
+        </div>
+
+        <!-- Trend -->
+        <div class="pt-4 popular-searches-container">
+            <span class="flex items-center gap-x-1 text-sm text-gray-500 dark:text-gray-200">
+                <svg class="size-4">
+                    <use href="#fire" />
+                </svg>
+                <p>جستجو های پرطرفدار :</p>
+            </span>
+            <ul class="w-full flex items-center gap-1.5 mt-3 child:search-modal-list-item popular-searches-list">
+                <!-- با AJAX پر می‌شود -->
+            </ul>
+        </div>
+    </div>
+</div>
                 <!-- Logo -->
                 <a href="index.html" class="flex flex-col text-center ml-20">
                     <span class="font-MorabbaMedium text-4xl flex items-center">
@@ -810,84 +776,50 @@
                 <p>جستجو در <span class="font-MorabbaMedium">سایا مد شاپ</span></p>
             </button>
             <!-- Search Moadal -->
+            <!-- templates/includes/search_modal.html -->
             <div class="mobile_search-modal">
                 <!-- TOP -->
                 <div class="w-full flex items-center gap-x-2">
-                    <button
-                        class="w-full flex items-center gap-x-1 bg-gray-200 dark:bg-gray-800 text-gray-500 py-2 px-4 rounded-3xl">
-                        <svg class="size-6">
-                            <use href="#search" />
-                        </svg>
-                        <input type="text" placeholder="جستجو در همه کالاها">
-                    </button>
-                    <svg class="size-6 close-mobile_search-modal">
+                    <form method="GET" action="{% url 'search:search_results' %}" class="w-full">
+                        <div class="w-full flex items-center gap-x-1 bg-gray-200 dark:bg-gray-800 text-gray-500 py-2 px-4 rounded-3xl">
+                            <svg class="size-6">
+                                <use href="#search" />
+                            </svg>
+                            <input
+                                type="text"
+                                name="q"
+                                placeholder="جستجو در همه کالاها"
+                                class="bg-transparent w-full outline-none search-input"
+                                autocomplete="off"
+                            >
+                        </div>
+                    </form>
+                    <svg class="size-6 close-mobile_search-modal cursor-pointer">
                         <use href="#x-mark" />
                     </svg>
                 </div>
+
                 <div class="w-full space-y-4">
                     <!-- Result -->
-                    <div ">
-                        <span class=" flex items-center text-sm gap-x-1 text-gray-600 dark:text-gray-200">
-                        <p>نتیجه جستجو : <span class="font-DanaMedium text-blue-400">iphone</span></p>
+                    <div class="search-suggestions-container hidden">
+                        <span class="flex items-center text-sm gap-x-1 text-gray-600 dark:text-gray-200">
+                            <p>نتیجه جستجو : <span class="font-DanaMedium text-blue-400 search-query-display"></span></p>
                         </span>
-                        <ul
-                            class="pt-4 text-gray-500 dark:text-gray-300 flex flex-col gap-y-4 child:flex-between child:cursor-pointer">
-                            <li>
-                                <a href="#" class="flex items-center gap-x-2">
-                                    <svg class="size-5">
-                                        <use href="#search" />
-                                    </svg>
-                                    آیفون 14
-                                </a>
-                                <svg class="size-4">
-                                    <use href="#arrow-up-right" />
-                                </svg>
-                            </li>
-                            <li>
-                                <a href="#" class="flex items-center gap-x-2">
-                                    <svg class="size-5">
-                                        <use href="#search" />
-                                    </svg>
-                                    قاب آیفون
-                                </a>
-                                <svg class="size-4">
-                                    <use href="#arrow-up-right" />
-                                </svg>
-                            </li>
-                            <li>
-                                <a href="#" class="flex items-center gap-x-2">
-                                    <svg class="size-5">
-                                        <use href="#search" />
-                                    </svg>
-                                    کاور ایفون 16
-                                </a>
-                                <svg class="size-4">
-                                    <use href="#arrow-up-right" />
-                                </svg>
-                            </li>
+                        <ul class="pt-4 text-gray-500 dark:text-gray-300 flex flex-col gap-y-4 child:flex-between child:cursor-pointer search-suggestions-list">
+                            <!-- نتایج با AJAX پر می‌شوند -->
                         </ul>
                     </div>
+
                     <!-- Trend -->
-                    <div class="pt-4">
+                    <div class="pt-4 popular-searches-container">
                         <span class="flex items-center gap-x-1 text-sm text-gray-500 dark:text-gray-200">
                             <svg class="size-4">
                                 <use href="#fire" />
                             </svg>
                             <p>جستجو های پرطرفدار :</p>
                         </span>
-                        <ul class="w-full flex items-center gap-1.5 mt-3 child:search-modal-list-item">
-                            <li>
-                                <a href="#">#آیفون</a>
-                            </li>
-                            <li>
-                                <a href="#">#لپ تاپ</a>
-                            </li>
-                            <li>
-                                <a href="#">#هدفون</a>
-                            </li>
-                            <li>
-                                <a href="#">#هلدر</a>
-                            </li>
+                        <ul class="w-full flex items-center gap-1.5 mt-3 child:search-modal-list-item popular-searches-list">
+                            <!-- با AJAX پر می‌شود -->
                         </ul>
                     </div>
                 </div>
@@ -925,6 +857,9 @@
                 </li>
             </ul>
         </div>
+
+
+
         <!-- Slider -->
       {% include "./slider.html" %}
     </header>
@@ -1125,4 +1060,306 @@
             });
         }
     }
+
+
+
+
     </script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // دو تا search-input داریم: دسکتاپ و موبایل
+    const searchInputs = document.querySelectorAll('.search-input');
+    const suggestionsContainers = document.querySelectorAll('.search-suggestions-container');
+    const suggestionsLists = document.querySelectorAll('.search-suggestions-list');
+    const queryDisplays = document.querySelectorAll('.search-query-display');
+    const popularSearchesLists = document.querySelectorAll('.popular-searches-list');
+
+    // بارگیری جستجوهای پرطرفدار
+    function loadPopularSearches() {
+        fetch('/search/api/search/popular/')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                popularSearchesLists.forEach(popularList => {
+                    if (!popularList) return;
+                    popularList.innerHTML = '';
+                    data.popular_searches.forEach(item => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <a href="/search/?q=${encodeURIComponent(item.keyword)}">
+                                #${item.keyword}
+                            </a>
+                        `;
+                        popularList.appendChild(li);
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Error loading popular searches:', error);
+                // نمایش جستجوهای پیش‌فرض در صورت خطا
+                popularSearchesLists.forEach(popularList => {
+                    if (!popularList) return;
+                    popularList.innerHTML = `
+                        <li><a href="/search/?q=آیفون">#آیفون</a></li>
+                        <li><a href="/search/?q=لپ+تاپ">#لپ تاپ</a></li>
+                        <li><a href="/search/?q=هدفون">#هدفون</a></li>
+                        <li><a href="/search/?q=موبایل">#موبایل</a></li>
+                    `;
+                });
+            });
+    }
+
+    // پیشنهادات جستجو
+    function fetchSuggestions(query, index) {
+        if (query.length < 2) {
+            if (suggestionsContainers[index]) {
+                suggestionsContainers[index].classList.add('hidden');
+            }
+            return;
+        }
+
+        fetch(`/search/api/search/suggestions/?q=${encodeURIComponent(query)}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (suggestionsLists[index]) {
+                    suggestionsLists[index].innerHTML = '';
+                }
+                if (queryDisplays[index]) {
+                    queryDisplays[index].textContent = query;
+                }
+
+                if (data.suggestions.length === 0) {
+                    if (suggestionsContainers[index]) {
+                        suggestionsContainers[index].classList.add('hidden');
+                    }
+                    return;
+                }
+
+                if (suggestionsContainers[index]) {
+                    suggestionsContainers[index].classList.remove('hidden');
+                }
+
+                if (suggestionsLists[index]) {
+                    data.suggestions.forEach(item => {
+                        const li = document.createElement('li');
+
+                        let icon = '#search';
+                        if (item.type === 'category') icon = '#folder';
+                        if (item.type === 'brand') icon = '#tag';
+
+                        li.innerHTML = `
+                            <a href="${item.url}" class="flex items-center gap-x-2 suggestion-item">
+                                <svg class="size-5">
+                                    <use href="${icon}" />
+                                </svg>
+                                ${item.title}
+                            </a>
+                            <svg class="size-4">
+                                <use href="#arrow-up-right" />
+                            </svg>
+                        `;
+
+                        // ثبت کلیک
+                        li.querySelector('a').addEventListener('click', function() {
+                            fetch(`/search/api/search/click/?q=${encodeURIComponent(query)}`);
+                        });
+
+                        suggestionsLists[index].appendChild(li);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching suggestions:', error);
+                if (suggestionsContainers[index]) {
+                    suggestionsContainers[index].classList.add('hidden');
+                }
+            });
+    }
+
+    // debounce برای جلوگیری از درخواست‌های زیاد
+    let debounceTimers = [];
+
+    searchInputs.forEach((input, index) => {
+        if (input) {
+            debounceTimers[index] = null;
+
+            input.addEventListener('input', function(e) {
+                clearTimeout(debounceTimers[index]);
+                debounceTimers[index] = setTimeout(() => {
+                    fetchSuggestions(e.target.value, index);
+                }, 300);
+            });
+
+            // وقتی روی input کلیک شد، پیشنهادات قبلی رو نشون بده
+            input.addEventListener('focus', function(e) {
+                if (e.target.value.length >= 2) {
+                    fetchSuggestions(e.target.value, index);
+                }
+            });
+        }
+    });
+
+    // لود اولیه
+    loadPopularSearches();
+
+    // برای دسکتاپ: وقتی روی search-btn-open کلیک شد، مدال رو نشون بده
+    const searchBtnOpen = document.querySelector('.search-btn-open');
+    const searchModal = document.querySelector('.search-modal');
+
+    if (searchBtnOpen && searchModal) {
+        searchBtnOpen.addEventListener('click', function() {
+            searchModal.classList.toggle('hidden');
+        });
+
+        // بستن مدال وقتی کلیک خارج شد
+        document.addEventListener('click', function(event) {
+            if (!searchModal.contains(event.target) && !searchBtnOpen.contains(event.target)) {
+                searchModal.classList.add('hidden');
+            }
+        });
+    }
+});
+
+// تابع برای باز کردن مدال جستجوی موبایل
+function openMobileSearchModal() {
+    const mobileModal = document.querySelector('.mobile_search-modal');
+    if (mobileModal) {
+        mobileModal.classList.remove('hidden');
+        const input = mobileModal.querySelector('.search-input');
+        if (input) {
+            input.focus();
+        }
+    }
+}
+
+// تابع برای بستن مدال جستجوی موبایل
+function closeMobileSearchModal() {
+    const mobileModal = document.querySelector('.mobile_search-modal');
+    if (mobileModal) {
+        mobileModal.classList.add('hidden');
+    }
+}
+
+// اضافه کردن event listener برای دکمه‌های باز و بسته کردن مدال موبایل
+document.addEventListener('DOMContentLoaded', function() {
+    const openBtn = document.querySelector('.open-mobile_search-modal');
+    const closeBtn = document.querySelector('.close-mobile_search-modal');
+
+    if (openBtn) {
+        openBtn.addEventListener('click', openMobileSearchModal);
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeMobileSearchModal);
+    }
+});
+</script>
+
+
+<style>
+    /* استایل برای مدال جستجو */
+    .search-modal {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        padding: 20px;
+        margin-top: 10px;
+        z-index: 9999;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .dark .search-modal {
+        background: #1f2937;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    .search-modal.hidden {
+        display: none;
+    }
+
+    /* مدال موبایل */
+    .mobile_search-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: white;
+        z-index: 9999;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dark .mobile_search-modal {
+        background: #111827;
+    }
+
+    .mobile_search-modal.hidden {
+        display: none;
+    }
+
+    /* استایل برای پیشنهادات */
+    .suggestion-item {
+        padding: 8px 12px;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+
+    .suggestion-item:hover {
+        background: #f3f4f6;
+    }
+
+    .dark .suggestion-item:hover {
+        background: #374151;
+    }
+
+    /* استایل برای لیست جستجوهای پرطرفدار */
+    .search-modal-list-item {
+        background: #f3f4f6;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .search-modal-list-item:hover {
+        background: #e5e7eb;
+        transform: translateY(-2px);
+    }
+
+    .dark .search-modal-list-item {
+        background: #374151;
+        color: #d1d5db;
+    }
+
+    .dark .search-modal-list-item:hover {
+        background: #4b5563;
+    }
+
+    /* انیمیشن */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .search-suggestions-container {
+        animation: fadeIn 0.3s ease;
+    }
+    </style>
