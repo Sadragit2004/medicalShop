@@ -273,11 +273,15 @@ def render_checkout_page(request, order, checkout_data=None):
     # Calculate subtotal (sum of all items without discount)
     subtotal = sum(item.price * item.qty for item in order_items)
 
-    # Calculate discount amount
-    discount_amount = (subtotal * order.discount) // 100 if order.discount else 0
+    # Calculate tax (9%)
+    tax_amount = (subtotal * 9) // 100
+
+    # Calculate discount amount (applied to subtotal + tax)
+    subtotal_with_tax = subtotal + tax_amount
+    discount_amount = (subtotal_with_tax * order.discount) // 100 if order.discount else 0
 
     # Calculate final total
-    final_total = subtotal - discount_amount
+    final_total = subtotal_with_tax - discount_amount
 
     # Prepare context
     context = {
@@ -290,6 +294,7 @@ def render_checkout_page(request, order, checkout_data=None):
         'total_items': total_items,
         'total_qty': total_qty,
         'subtotal': subtotal,
+        'tax_amount': tax_amount,
         'discount_percent': order.discount,
         'discount_amount': discount_amount,
         'final_total': final_total,
@@ -300,6 +305,44 @@ def render_checkout_page(request, order, checkout_data=None):
     }
 
     return render(request, 'order_app/checkout.html', context)
+
+@login_required
+def order_invoice(request, order_id):
+    """View for displaying order invoice"""
+    order = get_object_or_404(Order, id=order_id, customer=request.user)
+
+    # Calculate order totals (same logic as checkout)
+    order_items = order.details.all()
+    total_items = order_items.count()
+    total_qty = sum(item.qty for item in order_items)
+
+    # Calculate subtotal (sum of all items without discount)
+    subtotal = sum(item.price * item.qty for item in order_items)
+
+    # Calculate tax (9%)
+    tax_amount = (subtotal * 9) // 100
+
+    # Calculate discount amount (applied to subtotal + tax)
+    subtotal_with_tax = subtotal + tax_amount
+    discount_amount = (subtotal_with_tax * order.discount) // 100 if order.discount else 0
+
+    # Calculate final total
+    final_total = subtotal_with_tax - discount_amount
+
+    context = {
+        'order': order,
+        'order_items': order_items,
+        'total_items': total_items,
+        'total_qty': total_qty,
+        'subtotal': subtotal,
+        'tax_amount': tax_amount,
+        'discount_percent': order.discount,
+        'discount_amount': discount_amount,
+        'final_total': final_total,
+    }
+
+    return render(request, 'order_app/invoice.html', context)
+
 
 @login_required
 def checkout(request, order_id):

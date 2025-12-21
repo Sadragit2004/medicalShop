@@ -18,5 +18,6 @@ urlpatterns = [
 
     path('category/<slug:slug>/', views.show_by_filter, name='show_by_filter'),
     path('category/<slug:slug>/features/', views.get_feature_filter, name='get_feature_filter'),
+    path('s/top-selling/',views.top_selling_products,name='top_selling')
 ]
 

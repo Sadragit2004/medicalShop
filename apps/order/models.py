@@ -105,7 +105,7 @@ class Order(models.Model):
     def get_order_total_price(self):
         sum = 0
         for item in self.details.all():
-            sum += item.product.get_price_by_discount() * item.qty
+            sum += item.price * item.qty
         finaly_total_price, tax = utils.price_by_delivery_tax(sum, self.discount)
         return int(finaly_total_price * 10)
 

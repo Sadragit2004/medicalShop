@@ -17,6 +17,7 @@ urlpatterns = [
     path('save-location/', core_view.save_user_location, name='save_location'),
     path('get-location/', core_view.get_user_location, name='get_location'),
     path('checkout/<int:order_id>/', views.checkout, name='checkout'),
+    path('invoice/<int:order_id>/', views.order_invoice, name='order_invoice'),
 
     # API endpoints for addresses
     path('api/cities/<int:state_id>/', views.get_cities_by_state, name='get_cities_by_state'),

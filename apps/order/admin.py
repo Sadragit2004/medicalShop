@@ -58,7 +58,8 @@ class OrderAdmin(admin.ModelAdmin):
         'registerDate',
         'updateDate',
         'get_total_price',
-        'get_final_price'
+        'get_final_price',
+        'get_address_details'
     ]
 
     fieldsets = (
@@ -74,7 +75,8 @@ class OrderAdmin(admin.ModelAdmin):
                 'status',
                 'isFinally',
                 'discount',
-                'addressDetail',
+                'address',
+                'get_address_details',
             )
         }),
         ('محاسبات مالی', {
@@ -102,6 +104,12 @@ class OrderAdmin(admin.ModelAdmin):
     def get_final_price(self, obj):
         return f"{obj.getFinalPrice():,} تومان"
     get_final_price.short_description = "مبلغ نهایی"
+
+    def get_address_details(self, obj):
+        if obj.address:
+            return obj.address.fullAddress()
+        return "آدرسی ثبت نشده"
+    get_address_details.short_description = "جزئیات آدرس"
 
 # ========================
 # ادمین جزئیات سفارش

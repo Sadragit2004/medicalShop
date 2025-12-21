@@ -10,7 +10,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
 from .models import Product,ProductFeature,ProductSaleType,ProductGallery,Comment,Rating,SaleType,Brand,Feature,FeatureValue
-from apps.discount.models import DiscountBasket
+from apps.discount.models import DiscountBasket, DiscountDetail
 
 
 # 1. محبوب‌ترین برندها
@@ -625,3 +625,64 @@ def get_feature_filter(request, slug):
         'slug': slug,
         'selected_features': selected_features,
     })
+
+from django.db.models import Sum
+
+def top_selling_products(request):
+    """
+    نمایش 10 محصول پرفروش با تخفیف
+    """
+    # دریافت محصولات پرفروش
+    products = Product.objects.filter(
+        orderItems__order__isFinally=True,
+        orderItems__order__status__in=['delivered', 'shipped'],
+        isActive=True
+    ).annotate(
+        total_sold=Sum('orderItems__qty')
+    ).order_by('-total_sold')[:10]
+
+    # تاریخ فعلی برای بررسی تخفیف
+    now = timezone.now()
+
+    products_list = []
+    for product in products:
+        # قیمت اصلی محصول
+        sale_type = product.saleTypes.filter(isActive=True).first()
+        original_price = sale_type.price if sale_type else 0
+
+        # بررسی تخفیف محصول
+        discount_detail = DiscountDetail.objects.filter(
+            product=product,
+            discountBasket__isActive=True,
+            discountBasket__startDate__lte=now,
+            discountBasket__endDate__gte=now
+        ).select_related('discountBasket').first()
+
+        # محاسبه قیمت نهایی
+        if discount_detail:
+            discount_percent = discount_detail.discountBasket.discount
+            final_price = original_price - (original_price * discount_percent // 100)
+            is_amazing = discount_detail.discountBasket.isamzing
+            discount_title = discount_detail.discountBasket.discountTitle
+        else:
+            discount_percent = 0
+            final_price = original_price
+            is_amazing = False
+            discount_title = ""
+
+        products_list.append({
+            'product': product,
+            'total_sold': product.total_sold or 0,
+            'original_price': original_price,
+            'final_price': final_price,
+            'discount_percent': discount_percent,
+            'is_discounted': discount_percent > 0,
+            'is_amazing': is_amazing,
+            'discount_title': discount_title
+        })
+
+    context = {
+        'products_list': products_list,
+    }
+
+    return render(request, 'product_app/product/top_selling.html', context)

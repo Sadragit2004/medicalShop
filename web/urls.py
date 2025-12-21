@@ -14,6 +14,8 @@ urlpatterns = [
     path('product/',include('apps.product.urls',namespace='product')),
     path('discount/',include('apps.discount.urls',namespace='discount')),
     path('order/',include('apps.order.urls',namespace='order')),
+    path('peyment/',include('apps.peyment.urls',namespace='peyment')),
+    path('search/',include('apps.search.urls',namespace='search'))
 
 
 

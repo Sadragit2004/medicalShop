@@ -46,7 +46,9 @@ INSTALLED_APPS = [
     'apps.user.apps.UserConfig',
     'apps.product.apps.ProductConfig',
     'apps.discount.apps.DiscountConfig',
-    'apps.order.apps.OrderConfig'
+    'apps.order.apps.OrderConfig',
+    'apps.peyment.apps.PeymentConfig',
+    'apps.search.apps.SearchConfig'
 
 ]
 
