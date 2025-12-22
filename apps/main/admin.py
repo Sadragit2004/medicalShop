@@ -1,39 +1,50 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import TextImageBlock
-
-
-@admin.register(TextImageBlock)
-class TextImageBlockAdmin(admin.ModelAdmin):
-    list_display = ("title", "image_position", "order")
-    search_fields = ("title", "text",)
+from .models import *
 
 
 
 
+@admin.register(SliderSite)
+class SliderSiteAdmin(admin.ModelAdmin):
+    list_display = ['textSlider', 'isActive', 'registerData', 'endData', 'image_preview']
+    list_filter = ['isActive', 'registerData', 'endData']
+    search_fields = ['textSlider', 'altSlide']
+    readonly_fields = ['registerData']
 
-from django.contrib import admin
-from .models import Content
+    def image_preview(self, obj):
+        if obj.imageName:
+            return format_html('<img src="{}" style="width: 100px; height: auto;" />', obj.imageName.url)
+        return "بدون تصویر"
 
-@admin.register(Content)
-class ContentAdmin(admin.ModelAdmin):
-    list_display = ['title', 'is_active', 'created_at', 'updated_at']
-    list_filter = ['is_active', 'created_at']
-    search_fields = ['title', 'description']
-    list_editable = ['is_active']
-    list_per_page = 20
+    image_preview.short_description = 'پیش‌نمایش تصویر'
 
-    fieldsets = (
-        ('اطلاعات اصلی', {
-            'fields': ('title', 'image', 'description', 'is_active')
-        }),
-        ('تاریخ‌ها', {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
-    )
 
-    readonly_fields = ['created_at', 'updated_at']
+@admin.register(SliderMain)
+class SliderMainAdmin(admin.ModelAdmin):
+    list_display = ['textSlider', 'isActive', 'registerData', 'endData', 'image_preview']
+    list_filter = ['isActive', 'registerData', 'endData']
+    search_fields = ['textSlider', 'altSlide']
+    readonly_fields = ['registerData']
 
-    def get_queryset(self, request):
-        return super().get_queryset(request).order_by('-created_at')
+    def image_preview(self, obj):
+        if obj.imageName:
+            return format_html('<img src="{}" style="width: 100px; height: auto;" />', obj.imageName.url)
+        return "بدون تصویر"
+
+    image_preview.short_description = 'پیش‌نمایش تصویر'
+
+
+@admin.register(Banner)
+class BannerAdmin(admin.ModelAdmin):
+    list_display = ['nameBanner', 'isActive', 'registerData', 'endData', 'image_preview']
+    list_filter = ['isActive', 'registerData', 'endData']
+    search_fields = ['nameBanner', 'textBanner', 'altSlide']
+    readonly_fields = ['registerData']
+
+    def image_preview(self, obj):
+        if obj.imageName:
+            return format_html('<img src="{}" style="width: 100px; height: auto;" />', obj.imageName.url)
+        return "بدون تصویر"
+
+    image_preview.short_description = 'پیش‌نمایش تصویر'

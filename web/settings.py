@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django_render_partial',
     'ckeditor',
     'ckeditor_uploader',
+    'apps.main.apps.MainConfig',
     'apps.user.apps.UserConfig',
     'apps.product.apps.ProductConfig',
     'apps.discount.apps.DiscountConfig',

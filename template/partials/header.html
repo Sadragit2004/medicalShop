@@ -1,3 +1,4 @@
+ {% load render_partial %}
  <header class="header">
         <!-- Desktop -->
         <div class="container mt-5 hidden flex-col gap-y-6 lg:flex">
@@ -177,176 +178,7 @@
                         </a>
                     </li>
                     <!-- MENU ITEM --- Mega Menu -->
-                    <li class="menu-item megamenu-link">
-                        <a href="" class="menu-item_link flex items-center justify-center gap-x-1">
-                            دسته بندی ها
-                            <svg class="size-4">
-                                <use href="#chevron" />
-                            </svg>
-                        </a>
-                        <div
-                            class="megamenu">
-                            <!-- RIGHT MENU -->
-                            <ul class="megamenu_category">
-                                <li class="megamenu_category-item active">
-                                    <svg class="w-5 h-5">
-                                        <use href="#mobile"></use>
-                                    </svg>
-                                    <a href="">موبایل</a>
-                                </li>
-                                <li class="megamenu_category-item ">
-                                    <svg class="w-5 h-5">
-                                        <use href="#tv"></use>
-                                    </svg>
-                                    <a href="">لپتاپ</a>
-                                </li>
-                                <li class="megamenu_category-item ">
-                                    <svg class="w-5 h-5">
-                                        <use href="#tablet"></use>
-                                    </svg>
-                                    <a href="">تبلت</a>
-                                </li>
-                                <li class="megamenu_category-item ">
-                                    <svg class="w-5 h-5">
-                                        <use href="#headphone"></use>
-                                    </svg>
-                                    <a href="">هدفون</a>
-                                </li>
-                                <li class="megamenu_category-item ">
-                                    <svg class="w-5 h-5">
-                                        <use href="#tag"></use>
-                                    </svg>
-                                    <a href="">تخفیف</a>
-                                </li>
-                                <li class="megamenu_category-item ">
-                                    <svg class="w-5 h-5">
-                                        <use href="#tv"></use>
-                                    </svg>
-                                    <a href="">کامپیوتر</a>
-                                </li>
-                            </ul>
-
-                            <div class="megamenu_left">
-                               <a href="shop.html" class="text-blue-400 flex items-center gap-x-0.5 text-sm mb-4">
-                                مشاهده همه
-                                <svg class="size-4 rotate-90">
-                                    <use href="#chevron" />
-                                </svg>
-                               </a>
-                                <ul class="megamenu_left-item active">
-                                   <div class="megamenu_left-menu">
-                                    <h2 class="megamenu_left-title">برندهای مختلف :</h2>
-                                    <li>
-                                        <a href="shop.html">گوشی آیفون</a>
-                                    </li>
-                                    <li>
-                                        <a href="shop.html">گوشی سامسونگ</a>
-                                    </li>
-                                    <li>
-                                        <a href="shop.html">گوشی هواووی</a>
-                                    </li>
-                                    <li>
-                                        <a href="shop.html">گوشی شیامی</a>
-                                    </li>
-                                    <li>
-                                        <a href="shop.html">گوشی نوکیا</a>
-                                    </li>
-                                    <li>
-                                        <a href="shop.html">گوشی آنر</a>
-                                    </li>
-                                    <li>
-                                        <a href="shop.html">گوشی آیفون</a>
-                                    </li>
-                                   </div>
-                                   <div class="megamenu_left-menu">
-                                    <h2 class="megamenu_left-title">گوشی بر اساس قیمت</h2>
-                                    <li><a href="shop.html">گوشی ارزان</a></li>
-                                    <li><a href="shop.html">گوشی موبایل قسطی</a></li>
-                                    <li><a href="shop.html">گوشی تا ۲ میلیون تومان</a></li>
-                                    <li><a href="shop.html">گوشی تا ۵ میلیون تومان</a></li>
-                                    <li><a href="shop.html">گوشی تا ۷ میلیون تومان</a></li>
-                                    <li><a href="shop.html">گوشی تا ۱۵ میلیون تومان</a></li>
-                                    <li><a href="shop.html">گوشی بالای ۱۵ میلیون تومان</a></li>
-                                   </div>
-                                   <div class="megamenu_left-menu">
-                                    <h2 class="megamenu_left-title">لوازم جانبی موبایل</h2>
-                                    <li><a href="shop.html">شارژر گوشی</a></li>
-                                    <li><a href="shop.html">شارژر وایرلس</a></li>
-                                    <li><a href="shop.html">قاب و کاور گوشی</a></li>
-                                    <li><a href="shop.html">گلس گوشی</a></li>
-                                    <li><a href="shop.html">هولدر گوشی موبایل</a></li>
-                                    <li><a href="shop.html">کابل شارژ و مبدل</a></li>
-                                    <li><a href="shop.html">پاوربانک (شارژر همراه)</a></li>
-                                   </div>
-
-                                </ul>
-                                <ul class="megamenu_left-item ">
-                                    <div class="megamenu_left-menu">
-                                        <h2 class="megamenu_left-title">برندهای مختلف :</h2>
-                                        <li><a href="shop.html">لپ‌تاپ اپل (MacBook)</a></li>
-                                        <li><a href="shop.html">لپ‌تاپ ایسوس</a></li>
-                                        <li><a href="shop.html">لپ‌تاپ لنوو</a></li>
-                                        <li><a href="shop.html">لپ‌تاپ اچ‌پی</a></li>
-                                        <li><a href="shop.html">لپ‌تاپ دل</a></li>
-                                        <li><a href="shop.html">لپ‌تاپ ام‌اس‌آی</a></li>
-                                        <li><a href="shop.html">لپ‌تاپ ایسر</a></li>
-                                    </div>
-
-                                    <div class="megamenu_left-menu">
-                                        <h2 class="megamenu_left-title">لپ‌تاپ بر اساس قیمت</h2>
-                                        <li><a href="shop.html">لپ‌تاپ اقتصادی</a></li>
-                                        <li><a href="shop.html">لپ‌تاپ تا ۱۰ میلیون تومان</a></li>
-                                        <li><a href="shop.html">لپ‌تاپ تا ۲۰ میلیون تومان</a></li>
-                                        <li><a href="shop.html">لپ‌تاپ تا ۳۰ میلیون تومان</a></li>
-                                        <li><a href="shop.html">لپ‌تاپ تا ۵۰ میلیون تومان</a></li>
-                                        <li><a href="shop.html">لپ‌تاپ بالای ۵۰ میلیون تومان</a></li>
-                                    </div>
-
-                                    <div class="megamenu_left-menu">
-                                        <h2 class="megamenu_left-title">لوازم جانبی لپ‌تاپ</h2>
-                                        <li><a href="shop.html">کیف و کوله لپ‌تاپ</a></li>
-                                        <li><a href="shop.html">کابل و آداپتور لپ‌تاپ</a></li>
-                                        <li><a href="shop.html">استند و پایه خنک‌کننده</a></li>
-                                        <li><a href="shop.html">ماوس و کیبورد</a></li>
-                                        <li><a href="shop.html">هارد اکسترنال و SSD</a></li>
-                                        <li><a href="shop.html">پد ماوس</a></li>
-                                    </div>
-
-                                </ul>
-                                <ul class="megamenu_left-item">
-                                    <div class="megamenu_left-menu">
-                                        <h2 class="megamenu_left-title">برندهای مختلف تبلت</h2>
-                                        <li><a href="shop.html">تبلت اپل (iPad)</a></li>
-                                        <li><a href="shop.html">تبلت سامسونگ</a></li>
-                                        <li><a href="shop.html">تبلت لنوو</a></li>
-                                        <li><a href="shop.html">تبلت مایکروسافت (Surface)</a></li>
-                                        <li><a href="shop.html">تبلت هواوی</a></li>
-                                        <li><a href="shop.html">تبلت شیائومی</a></li>
-                                    </div>
-
-                                    <div class="megamenu_left-menu">
-                                        <h2 class="megamenu_left-title">لوازم جانبی تبلت</h2>
-                                        <li><a href="shop.html">کیف و کاور تبلت</a></li>
-                                        <li><a href="shop.html">قلم لمسی</a></li>
-                                        <li><a href="shop.html">کیبورد و استند</a></li>
-                                        <li><a href="shop.html">گلس و محافظ صفحه</a></li>
-                                        <li><a href="shop.html">کابل و شارژر</a></li>
-                                        <li><a href="shop.html">پاوربانک</a></li>
-                                    </div>
-
-                                </ul>
-                                <ul class="megamenu_left-item">
-                                    <li>منوی4  </li>
-                                </ul>
-                                <ul class="megamenu_left-item">
-                                    <li>منوی5  </li>
-                                </ul>
-                                <ul class="megamenu_left-item">
-                                    <li>منوی6  </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </li>
+                   سسسسسسسسسسسسسسسسسسسسسسسس
 
                     <li class="menu-item">
                         <a href="shop.html" class="menu-item_link">
@@ -861,7 +693,48 @@
 
 
         <!-- Slider -->
-      {% include "./slider.html" %}
+        {% if head_sliders %}
+        <div class="px-3 lg:container group w-full mt-4 lg:mt-10">
+                  <div dir="rtl" class="swiper header-slider h-52 md:h-96 cursor-pointer">
+                      <div class="swiper-wrapper">
+                          {% for slider in head_sliders %}
+                          <a href="{% if slider.link %}{{ slider.link }}{% else %}#{% endif %}" class="swiper-slide">
+                              {% if slider.imageName %}
+                              <img src="{{ slider.imageName.url }}" class="rounded-xl" alt="{{ slider.altSlide }}">
+                              {% else %}
+                              <img src="{{ media_url }}/images/default-slider.jpg" class="rounded-xl" alt="{{ slider.altSlide }}">
+                              {% endif %}
+                          </a >
+                          {% empty %}
+                          <!-- اسلایدر پیش‌فرض اگر هیچ اسلایدی وجود ندارد -->
+                          <a href="shop.html" class="swiper-slide">
+                              <img src="{{ media_url }}/images/banner/default-slider.webp" class="rounded-xl" alt="فروشگاه">
+                          </a >
+                          {% endfor %}
+                      </div>
+                      <div class="swiper-pagination-wrapper">
+                          <div class="swiper-pagination"></div>
+                      </div>
+
+                      <!-- Swiper Navigation -->
+                      <div
+                          class="absolute z-10 bottom-5 opacity-0 invisible group-hover:opacity-100 transition-all duration-300 group-hover:visible right-6 hidden lg:flex items-center gap-x-2 child:flex-center child:w-9 child:h-9 child:cursor-pointer child:bg-white child:dark:bg-gray-800 child:text-gray-700 child:dark:text-gray-200 child:rounded-full child:shadow child-hover:text-blue-600 child-hover:dark:text-blue-500">
+                          <button class="button-prev">
+                              <svg class="size-5 -rotate-90">
+                                  <use href="#chevron" />
+                              </svg>
+                          </button>
+                          <button class="button-next">
+                              <svg class="size-5 rotate-90">
+                                  <use href="#chevron" />
+                              </svg>
+                          </button>
+                      </div>
+
+                  </div>
+              </div>
+        {% endif %}
+
     </header>
 
     <!-- Cart Counter Styles -->

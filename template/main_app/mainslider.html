@@ -1,0 +1,15 @@
+<section
+class="mx-4 lg:container mt-10 lg:mt-20 flex flex-col lg:flex-row items-center gap-5 child:rounded-xl child:overflow-hidden">
+{% for slider in sliders %}
+<a href="{% if slider.link %}{{ slider.link }}{% else %}#{% endif %}" class="group">
+    <img src="{{ slider.imageName.url }}" class="group-hover:scale-105 transition-transform duration-300"
+        alt="{{ slider.altSlide }}">
+</a>
+{% empty %}
+<!-- اسلایدر پیش‌فرض اگر هیچ اسلایدی وجود ندارد -->
+<a href="shop.html" class="group">
+    <img src="{{ media_url }}/images/banner/default-main-slider.webp" class="group-hover:scale-105 transition-transform duration-300"
+        alt="فروشگاه">
+</a>
+{% endfor %}
+</section>
