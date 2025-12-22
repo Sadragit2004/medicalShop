@@ -46,7 +46,7 @@
             {% for brand in brands %}
             <!-- BRAND ITEM -->
             <div class="swiper-slide brand-card group">
-                <a href=" " class="block">
+                <a href="{% url 'product:show_brand_products' brand.slug %}" class="block">
                     {% if brand.logo %}
                         <img src="{{ brand.logo.url }}"
                              alt="{{ brand.title }}"

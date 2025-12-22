@@ -47,7 +47,11 @@
             <!-- FILTERS -->
             <div class="w-full divide-y divide-slate-200 dark:divide-gray-700/20">
                 <!-- ویژگی‌های فیلتر -->
-                {% render_partial 'product:get_feature_filter' slug=slug %}
+                {% if is_brand_page %}
+                    {% render_partial 'product:get_brand_feature_filter' slug=slug %}
+                {% else %}
+                    {% render_partial 'product:get_feature_filter' slug=slug %}
+                {% endif %}
 
                 <!-- TOGGLE SWITCH -->
                 <div class="w-full justify-between flex items-center gap-x-3 px-2 xl:px-4 py-4" dir="ltr">
@@ -267,7 +271,11 @@
                     <div class="h-[calc(85vh-140px)] overflow-y-auto pb-4">
                         <!-- ویژگی‌های فیلتر -->
                         <div class="p-4">
-                            {% render_partial 'product:get_feature_filter' slug=slug %}
+                            {% if is_brand_page %}
+                                {% render_partial 'product:get_brand_feature_filter' slug=slug %}
+                            {% else %}
+                                {% render_partial 'product:get_feature_filter' slug=slug %}
+                            {% endif %}
                         </div>
 
                         <!-- قیمت -->

@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     'apps.discount.apps.DiscountConfig',
     'apps.order.apps.OrderConfig',
     'apps.peyment.apps.PeymentConfig',
-    'apps.search.apps.SearchConfig'
+    'apps.search.apps.SearchConfig',
+    'apps.blog.apps.BlogConfig'
 
 ]
 

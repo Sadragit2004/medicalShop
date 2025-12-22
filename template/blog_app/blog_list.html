@@ -1,0 +1,599 @@
+{% extends "main_template.html" %}
+
+
+
+{% block content %}
+
+
+<main class="container">
+    <!-- Breadcrumb -->
+    <nav class="flex mt-8" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
+            <li class="inline-flex items-center">
+                <a href="index.html"
+                    class="inline-flex items-center text-sm gap-x-1  text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+                    <svg class="size-4 mb-0.5">
+                        <use href="#home" />
+                    </svg>
+                    صفحه اصلی
+                </a>
+            </li>
+            <li aria-current="page">
+                <div class="flex items-center">
+                    <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m1 9 4-4-4-4" />
+                    </svg>
+                    <span class="ms-1 text-sm  text-gray-500 md:ms-2 dark:text-gray-400">مقالات</span>
+                </div>
+            </li>
+        </ol>
+    </nav>
+
+    <div class="flex flex-col lg:flex-row gap-4 mt-5">
+         <!-- SIDE FILTER BOX -->
+         <div
+         class="lg:sticky top-1 h-fit lg:w-1/4 hidden lg:flex flex-col gap-y-4 items-center shadow rounded-lg py-4 dark:bg-gray-800 bg-white">
+         <!-- TITLE -->
+         <div class="flex items-center justify-between w-full px-2 xl:px-4">
+             <span class="flex items-center gap-x-1">
+                 <p class="font-DanaMedium text-gray-700 dark:text-gray-200 text-lg">فیلترها
+                 </p>
+             </span>
+             <p class="text-blue-500 dark:text-blue-400 text-sm cursor-pointer"> حذف فیلتر‌ها</p>
+         </div>
+         <!-- FILTERS -->
+         <div class="w-full divide-y divide-slate-200 dark:divide-gray-700/20">
+             <!-- Accordion -->
+             <div class="">
+                 <button onclick="toggleAccordion(1)"
+                     class="w-full flex justify-between items-center px-2 xl:px-4 pt-4 mb-4 text-gray-800 dark:text-gray-100">
+                     <span>دسته بندی </span>
+                     <span id="icon-1" class="text-gray-800 dark:text-gray-100">
+                         <svg class="size-4 transition-transform duration-300">
+                             <use href="#chevron-left"></use>
+                         </svg>
+                     </span>
+                 </button>
+                 <div id="content-1" class="max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                     <div class="pb-3 text-gray-700 dark:text-gray-300 w-full flex flex-col gap-y-1.5">
+                         <!-- item -->
+                         <div class="inline-flex items-center mr-2.5 mt-1">
+                             <label class="relative flex cursor-pointer items-center rounded-full p-3"
+                                 for="ripple-on" data-ripple-dark="true">
+                                 <input id="ripple-on" type="checkbox"
+                                     class="peer relative h-5 w-5 cursor-pointer appearance-none rounded border border-slate-300 shadow hover:shadow-md transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-slate-400 before:opacity-0 before:transition-opacity checked:border-blue-500 checked:bg-blue-500 checked:before:bg-slate-400 hover:before:opacity-10 dark:bg-gray-600 dark:checked:bg-blue-500 darKchecked:bg-blue-500  " />
+                                 <span
+                                     class="pointer-events-none absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 text-white opacity-0 transition-opacity peer-checked:opacity-100">
+                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5"
+                                         viewBox="0 0 20 20" fill="currentColor" stroke="currentColor"
+                                         stroke-width="1">
+                                         <path fill-rule="evenodd"
+                                             d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                             clip-rule="evenodd"></path>
+                                     </svg>
+                                 </span>
+                             </label>
+                             <label class="cursor-pointer text-gray-800 dark:text-gray-400 mr-1" for="ripple-on">
+                                 همه
+                             </label>
+                         </div>
+                         <!-- item -->
+                         <div class="inline-flex items-center mr-2.5">
+                             <label class="relative flex cursor-pointer items-center rounded-full p-3"
+                                 for="ripple-2" data-ripple-dark="true">
+                                 <input id="ripple-2" type="checkbox"
+                                     class="peer relative h-5 w-5 cursor-pointer appearance-none rounded border border-slate-300 shadow hover:shadow-md transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-slate-400 before:opacity-0 before:transition-opacity checked:border-blue-500 checked:bg-blue-500 checked:before:bg-slate-400 hover:before:opacity-10 dark:bg-gray-600 dark:checked:bg-blue-500 darKchecked:bg-blue-500  " />
+                                 <span
+                                     class="pointer-events-none absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 text-white opacity-0 transition-opacity peer-checked:opacity-100">
+                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5"
+                                         viewBox="0 0 20 20" fill="currentColor" stroke="currentColor"
+                                         stroke-width="1">
+                                         <path fill-rule="evenodd"
+                                             d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                             clip-rule="evenodd"></path>
+                                     </svg>
+                                 </span>
+                             </label>
+                             <label class="cursor-pointer text-gray-800 dark:text-gray-400 mr-1" for="ripple-2">
+                                متن
+                             </label>
+                         </div>
+                         <!-- item -->
+                         <div class="inline-flex items-center mr-2.5">
+                             <label class="relative flex cursor-pointer items-center rounded-full p-3"
+                                 for="ripple-3" data-ripple-dark="true">
+                                 <input id="ripple-3" type="checkbox"
+                                     class="peer relative h-5 w-5 cursor-pointer appearance-none rounded border border-slate-300 shadow hover:shadow-md transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-slate-400 before:opacity-0 before:transition-opacity checked:border-blue-500 checked:bg-blue-500 checked:before:bg-slate-400 hover:before:opacity-10 dark:bg-gray-600 dark:checked:bg-blue-500 darKchecked:bg-blue-500  " />
+                                 <span
+                                     class="pointer-events-none absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 text-white opacity-0 transition-opacity peer-checked:opacity-100">
+                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5"
+                                         viewBox="0 0 20 20" fill="currentColor" stroke="currentColor"
+                                         stroke-width="1">
+                                         <path fill-rule="evenodd"
+                                             d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                             clip-rule="evenodd"></path>
+                                     </svg>
+                                 </span>
+                             </label>
+                             <label class="cursor-pointer text-gray-800 dark:text-gray-400 mr-1" for="ripple-3">
+                                 آموزش
+                             </label>
+                         </div>
+                         <!-- item -->
+                         <div class="inline-flex items-center mr-2.5">
+                             <label class="relative flex cursor-pointer items-center rounded-full p-3"
+                                 for="ripple-4" data-ripple-dark="true">
+                                 <input id="ripple-4" type="checkbox"
+                                     class="peer relative h-5 w-5 cursor-pointer appearance-none rounded border border-slate-300 shadow hover:shadow-md transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-slate-400 before:opacity-0 before:transition-opacity checked:border-blue-500 checked:bg-blue-500 checked:before:bg-slate-400 hover:before:opacity-10 dark:bg-gray-600 dark:checked:bg-blue-500 darKchecked:bg-blue-500  " />
+                                 <span
+                                     class="pointer-events-none absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 text-white opacity-0 transition-opacity peer-checked:opacity-100">
+                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5"
+                                         viewBox="0 0 20 20" fill="currentColor" stroke="currentColor"
+                                         stroke-width="1">
+                                         <path fill-rule="evenodd"
+                                             d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                             clip-rule="evenodd"></path>
+                                     </svg>
+                                 </span>
+                             </label>
+                             <label class="cursor-pointer text-gray-800 dark:text-gray-400 mr-1" for="ripple-4">
+                                پادکست
+                             </label>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+             <!-- TOGGLE SWITCH -->
+             <div class="w-full justify-between flex items-center gap-x-3 px-2 xl:px-4 py-4" dir="ltr">
+                 <label for="hs-valid-toggle-switch" class="relative inline-block w-11 h-6 cursor-pointer">
+                     <input type="checkbox" id="hs-valid-toggle-switch" class="peer sr-only">
+                     <span
+                         class="absolute inset-0 bg-gray-200 rounded-full transition-colors duration-200 ease-in-out peer-checked:bg-blue-500 dark:bg-neutral-700 dark:peer-checked:bg-blue-500 peer-disabled:opacity-50 peer-disabled:pointer-events-none"></span>
+                     <span
+                         class="absolute top-1/2 start-0.5 -translate-y-1/2 size-5 bg-white rounded-full shadow-xs transition-transform duration-200 ease-in-out peer-checked:translate-x-full dark:bg-neutral-400 dark:peer-checked:bg-white"></span>
+                 </label>
+                 <label for="hs-valid-toggle-switch" class="text-gray-800 dark:text-gray-100">
+                     بروز‌ترین ها
+                 </label>
+             </div>
+             <!-- TOGGLE SWITCH -->
+             <div class="w-full justify-between flex items-center gap-x-3 px-2 xl:px-4 pt-4" dir="ltr">
+                 <label for="hs-valid-toggle-switch3" class="relative inline-block w-11 h-6 cursor-pointer">
+                     <input type="checkbox" id="hs-valid-toggle-switch3" class="peer sr-only">
+                     <span
+                         class="absolute inset-0 bg-gray-200 rounded-full transition-colors duration-200 ease-in-out peer-checked:bg-blue-500 dark:bg-neutral-700 dark:peer-checked:bg-blue-500 peer-disabled:opacity-50 peer-disabled:pointer-events-none"></span>
+                     <span
+                         class="absolute top-1/2 start-0.5 -translate-y-1/2 size-5 bg-white rounded-full shadow-xs transition-transform duration-200 ease-in-out peer-checked:translate-x-full dark:bg-neutral-400 dark:peer-checked:bg-white"></span>
+                 </label>
+                 <label for="hs-valid-toggle-switch3"
+                     class="text-gray-800 dark:text-gray-100 flex items-center gap-x-2">
+                     اخبار
+                 </label>
+             </div>
+
+         </div>
+     </div>
+    <!-- FILTER BOXES & articles -->
+    <div class="lg:w-3/4">
+            <div class="flex lg:hidden items-center gap-x-2">
+                <!-- SORT BTN -->
+                <button class="sort-modal-open text-sm mb-4 py-1.5 px-3 app-border rounded-full flex items-center gap-x-1">
+                    <svg class="size-4 text-gray-400">
+                        <use href="#sort-list"></use>
+                    </svg>
+                    <p>مرتبط ترین</p>
+                </button>
+                <!-- SORT MODAL -->
+                <div class="sort-modal">
+                    <div class="flex justify-between sort-modal-close">
+                        <p>مرتب سازی بر اساس </p>
+                        <svg class="size-5 text-gray-800 dark:text-gray-300">
+                            <use href="#x-mark"></use>
+                        </svg>
+                    </div>
+                    <ul class="flex w-full child:w-full child:text-center flex-col items-center justify-center divide-y divide-gray-300 dark:divide-gray-200/20 child:py-3">
+                        <li>بروزترین</li>
+                        <li>جدیدترین</li>
+                        <li>گران‌ترین</li>
+                        <li>
+                            منتخب</li>
+                        <li>پیشنهاد خریداران</li>
+                    </ul>
+                </div>
+                <!-- FILTER BTN -->
+                <button class="filter-modal-open text-sm mb-4 py-1.5 px-3 app-border rounded-full flex items-center gap-x-1">
+                    <svg class="size-4 text-gray-400">
+                        <use href="#filter"></use>
+                    </svg>
+                    <p>فیلتر</p>
+                </button>
+                <!-- Filter MODAL -->
+                <div class="filter-modal">
+                    <div class="flex justify-between filter-modal-close">
+                        <p>فیلتر</p>
+                        <svg class="size-5 text-gray-800 dark:text-gray-300">
+                            <use href="#x-mark"></use>
+                        </svg>
+                    </div>
+                    <!-- FILTERS -->
+         <div class="w-full divide-y divide-slate-200 dark:divide-gray-700/20">
+            <!-- Accordion -->
+            <div class="">
+                <button onclick="toggleAccordion(1)"
+                    class="w-full flex justify-between items-center px-2 xl:px-4 pt-4 mb-4 text-gray-800 dark:text-gray-100">
+                    <span>دسته بندی </span>
+                    <span id="icon-1" class="text-gray-800 dark:text-gray-100">
+                        <svg class="size-4 transition-transform duration-300">
+                            <use href="#chevron-left"></use>
+                        </svg>
+                    </span>
+                </button>
+                <div id="content-1" class="max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                    <div class="pb-3 text-gray-700 dark:text-gray-300 w-full flex flex-col gap-y-1.5">
+                        <!-- item -->
+                        <div class="inline-flex items-center mr-2.5 mt-1">
+                            <label class="relative flex cursor-pointer items-center rounded-full p-3"
+                                for="ripple-on" data-ripple-dark="true">
+                                <input id="ripple-on" type="checkbox"
+                                    class="peer relative h-5 w-5 cursor-pointer appearance-none rounded border border-slate-300 shadow hover:shadow-md transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-slate-400 before:opacity-0 before:transition-opacity checked:border-blue-500 checked:bg-blue-500 checked:before:bg-slate-400 hover:before:opacity-10 dark:bg-gray-600 dark:checked:bg-blue-500 darKchecked:bg-blue-500  " />
+                                <span
+                                    class="pointer-events-none absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 text-white opacity-0 transition-opacity peer-checked:opacity-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5"
+                                        viewBox="0 0 20 20" fill="currentColor" stroke="currentColor"
+                                        stroke-width="1">
+                                        <path fill-rule="evenodd"
+                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                            clip-rule="evenodd"></path>
+                                    </svg>
+                                </span>
+                            </label>
+                            <label class="cursor-pointer text-gray-800 dark:text-gray-400 mr-1" for="ripple-on">
+                                همه
+                            </label>
+                        </div>
+                        <!-- item -->
+                        <div class="inline-flex items-center mr-2.5">
+                            <label class="relative flex cursor-pointer items-center rounded-full p-3"
+                                for="ripple-2" data-ripple-dark="true">
+                                <input id="ripple-2" type="checkbox"
+                                    class="peer relative h-5 w-5 cursor-pointer appearance-none rounded border border-slate-300 shadow hover:shadow-md transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-slate-400 before:opacity-0 before:transition-opacity checked:border-blue-500 checked:bg-blue-500 checked:before:bg-slate-400 hover:before:opacity-10 dark:bg-gray-600 dark:checked:bg-blue-500 darKchecked:bg-blue-500  " />
+                                <span
+                                    class="pointer-events-none absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 text-white opacity-0 transition-opacity peer-checked:opacity-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5"
+                                        viewBox="0 0 20 20" fill="currentColor" stroke="currentColor"
+                                        stroke-width="1">
+                                        <path fill-rule="evenodd"
+                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                            clip-rule="evenodd"></path>
+                                    </svg>
+                                </span>
+                            </label>
+                            <label class="cursor-pointer text-gray-800 dark:text-gray-400 mr-1" for="ripple-2">
+                               متن
+                            </label>
+                        </div>
+                        <!-- item -->
+                        <div class="inline-flex items-center mr-2.5">
+                            <label class="relative flex cursor-pointer items-center rounded-full p-3"
+                                for="ripple-3" data-ripple-dark="true">
+                                <input id="ripple-3" type="checkbox"
+                                    class="peer relative h-5 w-5 cursor-pointer appearance-none rounded border border-slate-300 shadow hover:shadow-md transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-slate-400 before:opacity-0 before:transition-opacity checked:border-blue-500 checked:bg-blue-500 checked:before:bg-slate-400 hover:before:opacity-10 dark:bg-gray-600 dark:checked:bg-blue-500 darKchecked:bg-blue-500  " />
+                                <span
+                                    class="pointer-events-none absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 text-white opacity-0 transition-opacity peer-checked:opacity-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5"
+                                        viewBox="0 0 20 20" fill="currentColor" stroke="currentColor"
+                                        stroke-width="1">
+                                        <path fill-rule="evenodd"
+                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                            clip-rule="evenodd"></path>
+                                    </svg>
+                                </span>
+                            </label>
+                            <label class="cursor-pointer text-gray-800 dark:text-gray-400 mr-1" for="ripple-3">
+                                آموزش
+                            </label>
+                        </div>
+                        <!-- item -->
+                        <div class="inline-flex items-center mr-2.5">
+                            <label class="relative flex cursor-pointer items-center rounded-full p-3"
+                                for="ripple-4" data-ripple-dark="true">
+                                <input id="ripple-4" type="checkbox"
+                                    class="peer relative h-5 w-5 cursor-pointer appearance-none rounded border border-slate-300 shadow hover:shadow-md transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-slate-400 before:opacity-0 before:transition-opacity checked:border-blue-500 checked:bg-blue-500 checked:before:bg-slate-400 hover:before:opacity-10 dark:bg-gray-600 dark:checked:bg-blue-500 darKchecked:bg-blue-500  " />
+                                <span
+                                    class="pointer-events-none absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 text-white opacity-0 transition-opacity peer-checked:opacity-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5"
+                                        viewBox="0 0 20 20" fill="currentColor" stroke="currentColor"
+                                        stroke-width="1">
+                                        <path fill-rule="evenodd"
+                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                            clip-rule="evenodd"></path>
+                                    </svg>
+                                </span>
+                            </label>
+                            <label class="cursor-pointer text-gray-800 dark:text-gray-400 mr-1" for="ripple-4">
+                               پادکست
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- TOGGLE SWITCH -->
+            <div class="w-full justify-between flex items-center gap-x-3 px-2 xl:px-4 py-4" dir="ltr">
+                <label for="hs-valid-toggle-switch" class="relative inline-block w-11 h-6 cursor-pointer">
+                    <input type="checkbox" id="hs-valid-toggle-switch" class="peer sr-only">
+                    <span
+                        class="absolute inset-0 bg-gray-200 rounded-full transition-colors duration-200 ease-in-out peer-checked:bg-blue-500 dark:bg-neutral-700 dark:peer-checked:bg-blue-500 peer-disabled:opacity-50 peer-disabled:pointer-events-none"></span>
+                    <span
+                        class="absolute top-1/2 start-0.5 -translate-y-1/2 size-5 bg-white rounded-full shadow-xs transition-transform duration-200 ease-in-out peer-checked:translate-x-full dark:bg-neutral-400 dark:peer-checked:bg-white"></span>
+                </label>
+                <label for="hs-valid-toggle-switch" class="text-gray-800 dark:text-gray-100">
+                    بروز‌ترین ها
+                </label>
+            </div>
+            <!-- TOGGLE SWITCH -->
+            <div class="w-full justify-between flex items-center gap-x-3 px-2 xl:px-4 pt-4" dir="ltr">
+                <label for="hs-valid-toggle-switch3" class="relative inline-block w-11 h-6 cursor-pointer">
+                    <input type="checkbox" id="hs-valid-toggle-switch3" class="peer sr-only">
+                    <span
+                        class="absolute inset-0 bg-gray-200 rounded-full transition-colors duration-200 ease-in-out peer-checked:bg-blue-500 dark:bg-neutral-700 dark:peer-checked:bg-blue-500 peer-disabled:opacity-50 peer-disabled:pointer-events-none"></span>
+                    <span
+                        class="absolute top-1/2 start-0.5 -translate-y-1/2 size-5 bg-white rounded-full shadow-xs transition-transform duration-200 ease-in-out peer-checked:translate-x-full dark:bg-neutral-400 dark:peer-checked:bg-white"></span>
+                </label>
+                <label for="hs-valid-toggle-switch3"
+                    class="text-gray-800 dark:text-gray-100 flex items-center gap-x-2">
+                    اخبار
+                </label>
+            </div>
+
+        </div>
+                </div>
+                <span class="text-sm text-gray-400 ms-auto py-1.5 px-4">۱3,۰۴۰ مقاله </span>
+            </div>
+            <!-- TOP FILTER BOX -->
+            <div class="hidden lg:flex items-center justify-between  mb-6">
+                <div class="flex items-center gap-x-5">
+                 <div class="flex items-center gap-x-2">
+                     <svg class="size-6 text-gray-400">
+                         <use href="#sort-list"></use>
+                     </svg>
+                     <h2 class="font-DanaDemiBold text-gray-400">مرتب سازی :</h2>
+                 </div>
+                 <ul
+                     class="flex items-center gap-x-1 lg:gap-x-4 child:transition-all child:cursor-pointer child:rounded-lg child:px-1 child:py-1 child:text-sm child:lg:text-base">
+                     <li class="text-blue-500">محبوب ترین</li>
+                     <li class="text-gray-400">جدید ترین</li>
+                     <li class="text-gray-400">بروز ترین</li>
+                 </ul>
+                </div>
+                 <span class="text-sm text-gray-400 end">۱۳2, مقاله </span>
+            </div>
+            <!-- articles -->
+            <div class="grid grid-cols-1 xxs:grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 xl:grid-cols-3 gap-6">
+                {% for blog in blogs %}
+                <!-- ITEM -->
+                <div class="group article-box">
+                    <div class="relative overflow-hidden rounded-lg">
+                        {% if blog.mainImage %}
+                            <img src="{{ blog.mainImage.url }}" class="article-box_img" alt="{{ blog.title }}" />
+                        {% else %}
+                            <img src="{{ media_url }}/images/default-article.jpg" class="article-box_img" alt="{{ blog.title }}" />
+                        {% endif %}
+                        <div
+                            class="absolute opacity-0 left-0 top-0 bottom-0 right-0 bg-black/60 flex items-center justify-center group-hover:opacity-100 duration-300 transition-all rounded-bl-3xl rounded-tr-3xl">
+                            <a href="{% url 'blog:blog_detail' blog.slug %}"
+                                class="flex items-center px-2 py-1 gap-x-1 font-DanaMedium rounded-lg border-2 border-white text-white">
+                                <p>ادامه مطالب</p>
+                                <svg class="w-4 h-4 rotate-90">
+                                    <use href="#chevron"></use>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-y-1 py-5 px-1">
+                        <h2 class="font-DanaDemiBold">{{ blog.title }}</h2>
+                        {% if blog.excerpt %}
+                        <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{{ blog.excerpt }}</p>
+                        {% endif %}
+                    </div>
+                    <span class="flex w-full h-1 py-1 border-t border-gray-100 dark:border-white/10"></span>
+                    <div class="flex items-center justify-between text-sm px-1">
+                        <span class="flex items-center gap-x-1 text-blue-500 dark:text-sky-400">
+                            <svg class="w-4 h-4">
+                                <use href="#calendar"></use>
+                            </svg>
+                            <p class="mt-1">{{ blog.publishedAt|date:"Y/m/d" }}</p>
+                        </span>
+                        <span class="flex items-start gap-x-1 text-gray-300">
+                            <p class="font-DanaDemiBold">{{ blog.view_count }}</p>
+                            <svg class="w-4 h-4">
+                                <use href="#eye"></use>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+                {% empty %}
+                <!-- اگر مقاله‌ای وجود نداشت -->
+                <div class="col-span-full text-center py-12">
+                    <svg class="w-24 h-24 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                              d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">مقاله‌ای یافت نشد</h3>
+                    <p class="mt-1 text-gray-500 dark:text-gray-400">هیچ مقاله‌ای با فیلترهای انتخابی شما مطابقت ندارد.</p>
+                </div>
+                {% endfor %}
+            </div>
+                <div class="group article-box">
+                    <div class="relative overflow-hidden rounded-lg">
+                        <img src="./images/articles/2.webp" class="article-box_img" alt="" />
+                        <div
+                            class="absolute opacity-0 left-0 top-0 bottom-0 right-0 bg-black/60 flex items-center justify-center group-hover:opacity-100 duration-300 transition-all rounded-bl-3xl rounded-tr-3xl">
+                            <a href="./article-details.html"
+                                class="flex items-center px-2 py-1 gap-x-1 font-DanaMedium rounded-lg border-2 border-white text-white">
+                                <p>ادامه مطالب</p>
+                                <svg class="w-4 h-4 rotate-90">
+                                    <use href="#chevron"></use>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-y-1 py-5 px-1">
+                        <h2 class="font-DanaDemiBold">بهترین لپ تاپ های بازار ایران [دی ۱۴۰۳] </h2>
+                    </div>
+                    <span class="flex w-full h-1 py-1 border-t border-gray-100 dark:border-white/10"></span>
+                    <div class="flex items-center justify-between text-sm px-1">
+                        <span class="flex items-center gap-x-1 text-blue-500 dark:text-sky-400">
+                            <svg class="w-4 h-4">
+                                <use href="#calendar"></use>
+                            </svg>
+                            <p class="mt-1">1403/5/1</p>
+                        </span>
+                        <span class="flex items-start gap-x-1 text-gray-300">
+                            <p class="font-DanaDemiBold">120</p>
+                            <svg class="w-4 h-4">
+                                <use href="#eye"></use>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+                <!-- ITEM -->
+                <div class="group article-box">
+                    <div class="relative overflow-hidden rounded-lg">
+                        <img src="./images/articles/3.webp" class="article-box_img" alt="" />
+                        <div
+                            class="absolute opacity-0 left-0 top-0 bottom-0 right-0 bg-black/60 flex items-center justify-center group-hover:opacity-100 duration-300 transition-all rounded-bl-3xl rounded-tr-3xl">
+                            <a href="./article-details.html"
+                                class="flex items-center px-2 py-1 gap-x-1 font-DanaMedium rounded-lg border-2 border-white text-white">
+                                <p>ادامه مطالب</p>
+                                <svg class="w-4 h-4 rotate-90">
+                                    <use href="#chevron"></use>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-y-1 py-5 px-1">
+                        <h2 class="font-DanaDemiBold">بهترین لپ تاپ های بازار ایران [دی ۱۴۰۳] </h2>
+                    </div>
+                    <span class="flex w-full h-1 py-1 border-t border-gray-100 dark:border-white/10"></span>
+                    <div class="flex items-center justify-between text-sm px-1">
+                        <span class="flex items-center gap-x-1 text-blue-500 dark:text-sky-400">
+                            <svg class="w-4 h-4">
+                                <use href="#calendar"></use>
+                            </svg>
+                            <p class="mt-1">1403/5/1</p>
+                        </span>
+                        <span class="flex items-start gap-x-1 text-gray-300">
+                            <p class="font-DanaDemiBold">120</p>
+                            <svg class="w-4 h-4">
+                                <use href="#eye"></use>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+                <!-- ITEM -->
+                <div class="group article-box">
+                    <div class="relative overflow-hidden rounded-lg">
+                        <img src="./images/articles/4.webp" class="article-box_img" alt="" />
+                        <div
+                            class="absolute opacity-0 left-0 top-0 bottom-0 right-0 bg-black/60 flex items-center justify-center group-hover:opacity-100 duration-300 transition-all rounded-bl-3xl rounded-tr-3xl">
+                            <a href="./article-details.html"
+                                class="flex items-center px-2 py-1 gap-x-1 font-DanaMedium rounded-lg border-2 border-white text-white">
+                                <p>ادامه مطالب</p>
+                                <svg class="w-4 h-4 rotate-90">
+                                    <use href="#chevron"></use>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-y-1 py-5 px-1">
+                        <h2 class="font-DanaDemiBold">بهترین لپ تاپ های بازار ایران [دی ۱۴۰۳] </h2>
+                    </div>
+                    <span class="flex w-full h-1 py-1 border-t border-gray-100 dark:border-white/10"></span>
+                    <div class="flex items-center justify-between text-sm px-1">
+                        <span class="flex items-center gap-x-1 text-blue-500 dark:text-sky-400">
+                            <svg class="w-4 h-4">
+                                <use href="#calendar"></use>
+                            </svg>
+                            <p class="mt-1">1403/5/1</p>
+                        </span>
+                        <span class="flex items-start gap-x-1 text-gray-300">
+                            <p class="font-DanaDemiBold">120</p>
+                            <svg class="w-4 h-4">
+                                <use href="#eye"></use>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+                <!-- ITEM -->
+                <div class="group article-box">
+                    <div class="relative overflow-hidden rounded-lg">
+                        <img src="./images/articles/1.webp" class="article-box_img" alt="" />
+                        <div
+                            class="absolute opacity-0 left-0 top-0 bottom-0 right-0 bg-black/60 flex items-center justify-center group-hover:opacity-100 duration-300 transition-all rounded-bl-3xl rounded-tr-3xl">
+                            <a href="./article-details.html"
+                                class="flex items-center px-2 py-1 gap-x-1 font-DanaMedium rounded-lg border-2 border-white text-white">
+                                <p>ادامه مطالب</p>
+                                <svg class="w-4 h-4 rotate-90">
+                                    <use href="#chevron"></use>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-y-1 py-5 px-1">
+                        <h2 class="font-DanaDemiBold">بهترین لپ تاپ های بازار ایران [دی ۱۴۰۳] </h2>
+                    </div>
+                    <span class="flex w-full h-1 py-1 border-t border-gray-100 dark:border-white/10"></span>
+                    <div class="flex items-center justify-between text-sm px-1">
+                        <span class="flex items-center gap-x-1 text-blue-500 dark:text-sky-400">
+                            <svg class="w-4 h-4">
+                                <use href="#calendar"></use>
+                            </svg>
+                            <p class="mt-1">1403/5/1</p>
+                        </span>
+                        <span class="flex items-start gap-x-1 text-gray-300">
+                            <p class="font-DanaDemiBold">120</p>
+                            <svg class="w-4 h-4">
+                                <use href="#eye"></use>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            </div>
+           <!-- PAGINATION -->
+           <div class="mt-10 w-full flex items-center justify-center">
+            <ul
+                class="flex items-center gap-x-3 child:flex child:items-center child:justify-center child:w-8 child:h-8 child:cursor-pointer child:shadow child:rounded-lg child:transition-all child:duration-300">
+                <li class="bg-white dark:bg-gray-800 hover:bg-gray-800 dark:hover:bg-blue-500 hover:text-white">
+                    <svg class="size-5 rotate-180">
+                        <use href="#chevron-left"></use>
+                    </svg>
+                </li>
+                <li class="text-white bg-blue-500">
+                    <a href="#">
+                        1
+                    </a>
+                </li>
+                <li class="bg-white dark:bg-gray-800 hover:bg-blue-500 dark:hover:bg-blue-500 hover:text-white">
+                    <a href="#">
+                        2
+                    </a>
+                </li>
+                <li class="bg-white dark:bg-gray-800 hover:bg-blue-500 dark:hover:bg-blue-500 hover:text-white">
+                    <a href="#">
+                        ...
+                    </a>
+                </li>
+                <li class="bg-white dark:bg-gray-800 hover:bg-blue-500 dark:hover:bg-blue-500 hover:text-white">
+                    <svg class="size-5">
+                        <use href="#chevron-left"></use>
+                    </svg>
+                </li>
+            </ul>
+        </div>
+        </div>
+    </div>
+</main>
+
+{% endblock content %}

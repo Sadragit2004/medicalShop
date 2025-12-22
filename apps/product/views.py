@@ -10,6 +10,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
 from .models import Product,ProductFeature,ProductSaleType,ProductGallery,Comment,Rating,SaleType,Brand,Feature,FeatureValue
+from .filters import ProductFilter
 from apps.discount.models import DiscountBasket, DiscountDetail
 
 
@@ -590,6 +591,182 @@ def show_by_filter(request, slug):
     return render(request, 'product_app/shop/shop.html', context)
 
 
+def show_brand_products(request, slug):
+    """
+    نمایش محصولات یک برند خاص
+    مشابه صفحه shop اما فیلتر شده بر اساس برند
+    """
+    brand = get_object_or_404(Brand, slug=slug)
+
+    # ========================
+    # محصولات فعال این برند
+    # ========================
+    products = Product.objects.filter(
+        isActive=True,
+        brand=brand
+    ).select_related('brand').prefetch_related(
+        'saleTypes',
+        'featuresValue'
+    ).distinct()
+
+    # ========================
+    # زیرکوئری قیمت (price فقط)
+    # ========================
+    price_subquery = ProductSaleType.objects.filter(
+        product=OuterRef('pk'),
+        isActive=True
+    ).order_by('price').values('price')[:1]
+
+    # 🔥 این خط کلیدی است
+    products = products.annotate(
+        price=Subquery(price_subquery)
+    ).filter(price__isnull=False)
+
+    # ========================
+    # تخفیف فعال برای هر محصول
+    # ========================
+    now = timezone.now()
+    discount_subquery = DiscountBasket.objects.filter(
+        isActive=True,
+        startDate__lte=now,
+        endDate__gte=now,
+        discountOfBasket__product=OuterRef('pk')
+    ).order_by('-discount').values('discount')[:1]
+
+    products = products.annotate(
+        discount_percent=Subquery(discount_subquery),
+        final_price=ExpressionWrapper(
+            Floor(F('price') * (100 - Coalesce(Subquery(discount_subquery), Value(0))) / Value(100)),
+            output_field=PositiveIntegerField()
+        )
+    )
+
+    # ========================
+    # min / max قیمت واقعی
+    # ========================
+    price_stats = ProductSaleType.objects.filter(
+        product__in=products,
+        isActive=True
+    ).aggregate(
+        min_price=Min('price'),
+        max_price=Max('price')
+    )
+
+    price_min = price_stats['min_price'] or 0
+    price_max = price_stats['max_price'] or 0
+
+    # ========================
+    # فیلترهای django-filter (دسته‌بندی و ...)
+    # ========================
+    filter_obj = ProductFilter(request.GET, queryset=products)
+    filtered_products = filter_obj.qs
+
+    # ========================
+    # فیلتر ویژگی‌ها (feature checkboxes)
+    # ========================
+    feature_values = request.GET.getlist('feature')
+    if feature_values:
+        # هر مقدار در URL یک FeatureValue.id است
+        filtered_products = filtered_products.filter(
+            featuresValue__filterValue_id__in=feature_values
+        ).distinct()
+
+    # ========================
+    # فیلتر قیمت
+    # ========================
+    req_min = request.GET.get('price_min')
+    req_max = request.GET.get('price_max')
+
+    if req_min:
+        filtered_products = filtered_products.filter(price__gte=req_min)
+
+    if req_max:
+        filtered_products = filtered_products.filter(price__lte=req_max)
+
+    # ========================
+    # مرتب‌سازی
+    # ========================
+    sort = request.GET.get('sort', '1')
+
+    # پشتیبانی از هر دو حالت: مقادیر عددی (1,2,3) و متنی (cheap, expensive, new)
+    if sort in ['3', 'cheap']:
+        filtered_products = filtered_products.order_by('price')
+    elif sort in ['2', 'expensive']:
+        filtered_products = filtered_products.order_by('-price')
+    else:  # '1' یا 'new' و هر مقدار نامعتبر دیگر
+        filtered_products = filtered_products.order_by('-createdAt')
+
+    # ========================
+    # صفحه‌بندی
+    # ========================
+    paginator = Paginator(filtered_products, 12)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    # ========================
+    # دسته‌بندی‌ها (برای فیلتر)
+    # ========================
+    categories = Category.objects.filter(
+        products__in=filtered_products
+    ).distinct()
+
+    context = {
+        'products': page_obj,
+        'group': brand,  # استفاده از برند به جای دسته‌بندی
+        'filter': filter_obj,
+        'categories': categories,  # دسته‌بندی‌ها برای فیلتر
+        'price_min': price_min,
+        'price_max': price_max,
+        'selected_min': req_min or price_min,
+        'selected_max': req_max or price_max,
+        'sort_option': sort,
+        'total_products': paginator.count,
+        'slug': slug,
+        'is_brand_page': True,  # نشان‌دهنده صفحه برند
+    }
+
+    return render(request, 'product_app/shop/shop.html', context)
+
+
+
+
+# View جدید برای فیلتر ویژگی‌های برند
+def get_brand_feature_filter(request, slug):
+    brand = get_object_or_404(Brand, slug=slug)
+
+    # دریافت محصولات فیلتر شده برند
+    products = Product.objects.filter(
+        isActive=True,
+        brand=brand
+    )
+
+    # ساخت feature_dict برای نمایش در فیلترها
+    # برای برندها، تمام ویژگی‌های محصولات برند را نمایش می‌دهیم
+    feature_dict = {}
+
+    # دریافت تمام ویژگی‌های منحصر به فرد از محصولات این برند
+    all_features = Feature.objects.filter(
+        featureValues__productfeature__product__in=products
+    ).distinct()
+
+    for feature in all_features:
+        values = FeatureValue.objects.filter(
+            feature=feature,
+            productfeature__product__in=products
+        ).annotate(
+            product_count=Count('productfeature__product')
+        ).filter(product_count__gt=0).distinct()
+
+        if values.exists():
+            feature_dict[feature] = values
+
+    # شناسه ویژگی‌های انتخاب‌شده برای علامت زدن چک‌باکس‌ها
+    selected_features = request.GET.getlist('feature')
+
+    return render(request, 'product_app/product/partials/feature_list_filer.html', {
+        'feature_dict': feature_dict,
+        'slug': slug,
+        'selected_features': selected_features,
+    })
 
 
 # View جدید برای فیلتر ویژگی‌ها

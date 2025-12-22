@@ -1,0 +1,230 @@
+{% extends "main_template.html" %}
+
+{% load humanize %}
+
+{% block content %}
+
+<main class="container">
+    <!-- Breadcrumb -->
+    <nav class="flex mt-8" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
+            <li class="inline-flex items-center">
+                <a href="index.html"
+                    class="inline-flex items-center text-sm gap-x-1  text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+                    <svg class="size-4 mb-0.5">
+                        <use href="#home" />
+                    </svg>
+                    صفحه اصلی
+                </a>
+            </li>
+            <li class="inline-flex items-center">
+                <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="m1 9 4-4-4-4" />
+            </svg>
+                    <a href="{% url 'blog:blog_list' %}"
+                        class="inline-flex items-center text-sm gap-x-1  text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+                        مقالات
+                    </a>
+            </li>
+            <li aria-current="page">
+                <div class="flex items-center">
+                    <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m1 9 4-4-4-4" />
+                    </svg>
+                    <span class="ms-1 text-sm  text-gray-500 md:ms-2 dark:text-gray-400">{{ blog.title|truncatechars:30 }}</span>
+                </div>
+            </li>
+        </ol>
+    </nav>
+    <!-- Article Details -->
+    <section class="flex flex-col lg:flex-row items-start gap-4 mt-8 ">
+        <!-- ARTICLE -->
+        <div
+        class="w-full lg:w-3/4 flex flex-col gap-y-8 px-4 lg:px-8 py-4 rounded-lg bg-white dark:bg-gray-800 shadow">
+        <!-- ARTICLE HEADER -->
+        <div class="w-full flex flex-col gap-y-6 ">
+            <div class="flex flex-col lg:flex-row gap-y-3 lg:items-center lg:justify-between">
+                <h2 class="font-DanaDemiBold text-lg lg:text-2xl">{{ blog.title }}</h2>
+                <span class="flex items-center gap-x-1 text-blue-500 cursor-pointer">
+                    <svg class="w-4 h-4">
+                        <use href="#share"></use>
+                    </svg>
+                    <p class="font-DanaMedium">اشتراک گذاری</p>
+                </span>
+            </div>
+            <div class="flex flex-wrap  items-center gap-y-3 gap-x-8 text-sm">
+                {% if blog.category %}
+                <span class="flex items-center gap-x-1 text-gray-400 ">
+                    <svg class="w-4 h-4">
+                        <use href="#list-bullet"></use>
+                    </svg>
+                    <p>دسته‌بندی : {{ blog.category.title }}</p>
+                </span>
+                {% endif %}
+                <span class="flex items-center gap-x-1 text-gray-400 ">
+                    <svg class="w-4 h-4">
+                        <use href="#user"></use>
+                    </svg>
+                    <p>توسط : {{ blog.author.full_name|default:blog.author.name }}</p>
+                </span>
+                <span class="flex items-center gap-x-1 text-gray-400 ">
+                    <svg class="w-4 h-4">
+                        <use href="#calendar"></use>
+                    </svg>
+                    <p> تاریخ انتشار : {{ blog.publishedAt|date:"Y/m/d" }}</p>
+                </span>
+                <span class="flex items-center gap-x-1 text-gray-400 ">
+                    <svg class="w-4 h-4">
+                        <use href="#eye"></use>
+                    </svg>
+                    <p> بازدید : {{ blog.view_count }}</p>
+                </span>
+            </div>
+        </div>
+        <!-- ARTICLE MAIN -->
+        <div>
+            {% if blog.mainImage %}
+            <img class="rounded-lg" src="{{ blog.mainImage.url }}" alt="{{ blog.title }}">
+            {% endif %}
+            {% if blog.description %}
+            <p class="mt-3 leading-10 text-gray-600 dark:text-gray-300">
+                {{ blog.description|safe }}
+            </p>
+            {% endif %}
+            {% if blog.content %}
+            <div class="mt-3 leading-10 text-gray-600 dark:text-gray-300">
+                {{ blog.content|safe }}
+            </div>
+            {% endif %}
+        </div>
+        </div>
+        <!-- SIDE BAR -->
+        <div
+            class="top-2 lg:sticky w-full lg:w-1/4 child:rounded-lg child:bg-white child:dark:bg-gray-800 child:shadow child:p-4 space-y-5 child:flex child:flex-col child:gap-y-4">
+            <div>
+                <h4 class="font-DanaMedium">جدیدترین مقالات : </h4>
+                <ul class="w-full child:flex child:items-center child:gap-x-2 child:cursor-pointer space-y-4 ">
+                    {% for related_blog in related_blogs %}
+                    <li>
+                        {% if related_blog.mainImage %}
+                        <img class="w-24 h-16 object-cover rounded-lg" src="{{ related_blog.mainImage.url }}" alt="{{ related_blog.title }}">
+                        {% else %}
+                        <img class="w-24 h-16 object-cover rounded-lg bg-gray-200" src="{{ media_url }}/images/default-article.jpg" alt="{{ related_blog.title }}">
+                        {% endif %}
+                        <a class="flex flex-col gap-y-2 " href="{% url 'blog:blog_detail' related_blog.slug %}">
+                            <p class="line-clamp-1">{{ related_blog.title }}</p>
+                            <span class="flex items-center gap-x-1 text-sm text-gray-400">
+                                <svg class="w-4 h-4 mb-1">
+                                    <use href="#calendar"></use>
+                                </svg>
+                                {{ related_blog.publishedAt|date:"Y/m/d" }}
+                            </span>
+                        </a>
+                    </li>
+                    {% empty %}
+                    <li class="text-sm text-gray-500">مقاله مرتبطی یافت نشد.</li>
+                    {% endfor %}
+                </ul>
+                <a href="{% url 'blog:blog_list' %}" class="py-1.5 gap-x-1 bg-blue-500 hover:bg-blue-600 flex items-center justify-center text-white rounded-lg transition-all">مشاهده بیشتر
+                    <svg class="w-4 h-4">
+                        <use href="#chevron-left"></use>
+                    </svg>
+                </a>
+            </div>
+            <div>
+                <h4 class="font-DanaMedium"> دسته بندی : </h4>
+                <ul class="child:flex child:items-center child:justify-between child:cursor-pointer space-y-3 ">
+                    {% for category in categories %}
+                    <li class="group">
+                        <span
+                            class="flex items-center justify-center gap-x-1 group-hover:pr-2 duration-300 transition-all group-hover:text-blue-500">
+                            <p>{{ category.title }}</p>
+                            <svg class="w-4 h-4">
+                                <use href="#chevron-left"></use>
+                            </svg>
+                        </span>
+                        <span
+                            class="w-5 h-5 flex items-center justify-center rounded-lg text-white bg-blue-500 text-xs">{{ category.posts.count }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- COMMENTS SECTION -->
+            {% if comments %}
+            <div>
+                <h4 class="font-DanaMedium">نظرات کاربران ({{ comments|length }})</h4>
+                <div class="space-y-4 mt-4">
+                    {% for comment in comments %}
+                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-medium text-sm">
+                                {{ comment.author.username|first|upper }}
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="font-medium text-sm">{{ comment.author.get_full_name|default:comment.author.username }}</span>
+                                    <span class="text-xs text-gray-500">{{ comment.createdAt|date:"Y/m/d H:i" }}</span>
+                                </div>
+                                <p class="text-gray-700 dark:text-gray-300 text-sm">{{ comment.content }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- COMMENT FORM -->
+            {% if user.is_authenticated %}
+            <div>
+                <h4 class="font-DanaMedium">نظر خود را بنویسید</h4>
+                <form class="mt-4" method="post" action="{% url 'blog:add_blog_comment' blog.slug %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <textarea name="content" rows="3"
+                            class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                            placeholder="نظر خود را اینجا بنویسید..."></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg text-sm transition-colors">
+                        ارسال نظر
+                    </button>
+                </form>
+            </div>
+            {% else %}
+            <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+                <p class="text-yellow-800 dark:text-yellow-200 text-sm">برای ارسال نظر باید <a href="{% url 'user:send_mobile' %}" class="underline">وارد شوید</a>.</p>
+            </div>
+            {% endif %}
+
+            <!-- RELATED PRODUCTS -->
+            {% if related_products %}
+            <div>
+                <h4 class="font-DanaMedium">محصولات مرتبط</h4>
+                <div class="space-y-3 mt-4">
+                    {% for product in related_products %}
+                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                        <a href="{{ product.get_absolute_url }}" class="flex items-center gap-3">
+                            {% if product.mainImage %}
+                            <img src="{{ product.mainImage.url }}" alt="{{ product.title }}" class="w-16 h-16 object-cover rounded-lg">
+                            {% endif %}
+                            <div class="flex-1">
+                                <h5 class="font-medium text-sm text-gray-900 dark:text-white mb-1">{{ product.title }}</h5>
+                                <p class="text-blue-600 dark:text-blue-400 text-sm font-medium">{{ product.price|intcomma }} تومان</p>
+                            </div>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+    </section>
+</main>
+
+{% endblock %}
