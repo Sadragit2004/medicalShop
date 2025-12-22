@@ -5,166 +5,143 @@
             <use href="#chevron" />
         </svg>
     </a>
-    <div
-        class="megamenu">
-        <!-- RIGHT MENU -->
+    <div class="megamenu">
+        <!-- ستون سمت راست -->
         <ul class="megamenu_category">
-            <li class="megamenu_category-item active">
-                <svg class="w-5 h-5">
-                    <use href="#mobile"></use>
-                </svg>
-                <a href="">موبایل</a>
-            </li>
-            <li class="megamenu_category-item ">
-                <svg class="w-5 h-5">
-                    <use href="#tv"></use>
-                </svg>
-                <a href="">لپتاپ</a>
-            </li>
-            <li class="megamenu_category-item ">
-                <svg class="w-5 h-5">
-                    <use href="#tablet"></use>
-                </svg>
-                <a href="">تبلت</a>
-            </li>
-            <li class="megamenu_category-item ">
-                <svg class="w-5 h-5">
-                    <use href="#headphone"></use>
-                </svg>
-                <a href="">هدفون</a>
-            </li>
-            <li class="megamenu_category-item ">
-                <svg class="w-5 h-5">
-                    <use href="#tag"></use>
-                </svg>
-                <a href="">تخفیف</a>
-            </li>
-            <li class="megamenu_category-item ">
-                <svg class="w-5 h-5">
-                    <use href="#tv"></use>
-                </svg>
-                <a href="">کامپیوتر</a>
-            </li>
+            {% if tree_data %}
+                {% for data in tree_data %}
+                <li class="megamenu_category-item {% if forloop.first %}active{% endif %}"
+                    onclick="showCategory('{{ data.main.id }}')">
+                    <a href="/product/category/{{ data.main.slug }}/">
+                        {{ data.main.title }}
+                    </a>
+                </li>
+                {% endfor %}
+            {% else %}
+                <li class="megamenu_category-item active">
+                    <a href="#">دسته‌بندی‌ای یافت نشد</a>
+                </li>
+            {% endif %}
         </ul>
 
         <div class="megamenu_left">
-           <a href="shop.html" class="text-blue-400 flex items-center gap-x-0.5 text-sm mb-4">
-            مشاهده همه
-            <svg class="size-4 rotate-90">
-                <use href="#chevron" />
-            </svg>
-           </a>
-            <ul class="megamenu_left-item active">
-               <div class="megamenu_left-menu">
-                <h2 class="megamenu_left-title">برندهای مختلف :</h2>
-                <li>
-                    <a href="shop.html">گوشی آیفون</a>
-                </li>
-                <li>
-                    <a href="shop.html">گوشی سامسونگ</a>
-                </li>
-                <li>
-                    <a href="shop.html">گوشی هواووی</a>
-                </li>
-                <li>
-                    <a href="shop.html">گوشی شیامی</a>
-                </li>
-                <li>
-                    <a href="shop.html">گوشی نوکیا</a>
-                </li>
-                <li>
-                    <a href="shop.html">گوشی آنر</a>
-                </li>
-                <li>
-                    <a href="shop.html">گوشی آیفون</a>
-                </li>
-               </div>
-               <div class="megamenu_left-menu">
-                <h2 class="megamenu_left-title">گوشی بر اساس قیمت</h2>
-                <li><a href="shop.html">گوشی ارزان</a></li>
-                <li><a href="shop.html">گوشی موبایل قسطی</a></li>
-                <li><a href="shop.html">گوشی تا ۲ میلیون تومان</a></li>
-                <li><a href="shop.html">گوشی تا ۵ میلیون تومان</a></li>
-                <li><a href="shop.html">گوشی تا ۷ میلیون تومان</a></li>
-                <li><a href="shop.html">گوشی تا ۱۵ میلیون تومان</a></li>
-                <li><a href="shop.html">گوشی بالای ۱۵ میلیون تومان</a></li>
-               </div>
-               <div class="megamenu_left-menu">
-                <h2 class="megamenu_left-title">لوازم جانبی موبایل</h2>
-                <li><a href="shop.html">شارژر گوشی</a></li>
-                <li><a href="shop.html">شارژر وایرلس</a></li>
-                <li><a href="shop.html">قاب و کاور گوشی</a></li>
-                <li><a href="shop.html">گلس گوشی</a></li>
-                <li><a href="shop.html">هولدر گوشی موبایل</a></li>
-                <li><a href="shop.html">کابل شارژ و مبدل</a></li>
-                <li><a href="shop.html">پاوربانک (شارژر همراه)</a></li>
-               </div>
+            {% if tree_data %}
+                {% for data in tree_data %}
+                <ul class="megamenu_left-item {% if forloop.first %}active{% endif %}"
+                    id="content-{{ data.main.id }}">
+                    <a href="/product/category/{{ data.main.slug }}/"
+                       class="text-blue-400 flex items-center gap-x-0.5 text-sm mb-4">
+                        مشاهده همه {{ data.main.title }}
+                        <svg class="size-4 rotate-90">
+                            <use href="#chevron" />
+                        </svg>
+                    </a>
 
-            </ul>
-            <ul class="megamenu_left-item ">
-                <div class="megamenu_left-menu">
-                    <h2 class="megamenu_left-title">برندهای مختلف :</h2>
-                    <li><a href="shop.html">لپ‌تاپ اپل (MacBook)</a></li>
-                    <li><a href="shop.html">لپ‌تاپ ایسوس</a></li>
-                    <li><a href="shop.html">لپ‌تاپ لنوو</a></li>
-                    <li><a href="shop.html">لپ‌تاپ اچ‌پی</a></li>
-                    <li><a href="shop.html">لپ‌تاپ دل</a></li>
-                    <li><a href="shop.html">لپ‌تاپ ام‌اس‌آی</a></li>
-                    <li><a href="shop.html">لپ‌تاپ ایسر</a></li>
-                </div>
+                    {% if data.children %}
+                        {% for child_data in data.children %}
+                        <div class="megamenu_left-menu">
+                            <h2 class="megamenu_left-title">
+                                <a href="/product/category/{{ child_data.child.slug }}/">
+                                    {{ child_data.child.title }}
+                                </a>
+                            </h2>
 
-                <div class="megamenu_left-menu">
-                    <h2 class="megamenu_left-title">لپ‌تاپ بر اساس قیمت</h2>
-                    <li><a href="shop.html">لپ‌تاپ اقتصادی</a></li>
-                    <li><a href="shop.html">لپ‌تاپ تا ۱۰ میلیون تومان</a></li>
-                    <li><a href="shop.html">لپ‌تاپ تا ۲۰ میلیون تومان</a></li>
-                    <li><a href="shop.html">لپ‌تاپ تا ۳۰ میلیون تومان</a></li>
-                    <li><a href="shop.html">لپ‌تاپ تا ۵۰ میلیون تومان</a></li>
-                    <li><a href="shop.html">لپ‌تاپ بالای ۵۰ میلیون تومان</a></li>
-                </div>
-
-                <div class="megamenu_left-menu">
-                    <h2 class="megamenu_left-title">لوازم جانبی لپ‌تاپ</h2>
-                    <li><a href="shop.html">کیف و کوله لپ‌تاپ</a></li>
-                    <li><a href="shop.html">کابل و آداپتور لپ‌تاپ</a></li>
-                    <li><a href="shop.html">استند و پایه خنک‌کننده</a></li>
-                    <li><a href="shop.html">ماوس و کیبورد</a></li>
-                    <li><a href="shop.html">هارد اکسترنال و SSD</a></li>
-                    <li><a href="shop.html">پد ماوس</a></li>
-                </div>
-
-            </ul>
-            <ul class="megamenu_left-item">
-                <div class="megamenu_left-menu">
-                    <h2 class="megamenu_left-title">برندهای مختلف تبلت</h2>
-                    <li><a href="shop.html">تبلت اپل (iPad)</a></li>
-                    <li><a href="shop.html">تبلت سامسونگ</a></li>
-                    <li><a href="shop.html">تبلت لنوو</a></li>
-                    <li><a href="shop.html">تبلت مایکروسافت (Surface)</a></li>
-                    <li><a href="shop.html">تبلت هواوی</a></li>
-                    <li><a href="shop.html">تبلت شیائومی</a></li>
-                </div>
-
-                <div class="megamenu_left-menu">
-                    <h2 class="megamenu_left-title">لوازم جانبی تبلت</h2>
-                    <li><a href="shop.html">کیف و کاور تبلت</a></li>
-                    <li><a href="shop.html">قلم لمسی</a></li>
-                    <li><a href="shop.html">کیبورد و استند</a></li>
-                    <li><a href="shop.html">گلس و محافظ صفحه</a></li>
-                    <li><a href="shop.html">کابل و شارژر</a></li>
-                    <li><a href="shop.html">پاوربانک</a></li>
-                </div>
-
-            </ul>
-            <ul class="megamenu_left-item">
-                <li>منوی4  </li>
-            </ul>
-            <ul class="megamenu_left-item">
-                <li>منوی5  </li>
-            </ul>
-            <ul class="megamenu_left-item">
-                <li>منوی6  </li>
-            </ul>
+                            {% if child_data.grandchildren %}
+                                {% for grandchild in child_data.grandchildren %}
+                                <li>
+                                    <a href="/product/category/{{ grandchild.slug }}/">
+                                        {{ grandchild.title }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            {% else %}
+                                <li>
+                                    <a href="/product/category/{{ child_data.child.slug }}/">
+                                        مشاهده همه {{ child_data.child.title }}
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="megamenu_left-menu">
+                            <h2 class="megamenu_left-title">زیردسته‌ای وجود ندارد</h2>
+                            <li>
+                                <a href="/product/category/{{ data.main.slug }}/">
+                                    مشاهده محصولات {{ data.main.title }}
+                                </a>
+                            </li>
+                        </div>
+                    {% endif %}
+                </ul>
+                {% endfor %}
+            {% else %}
+                <ul class="megamenu_left-item active">
+                    <div class="megamenu_left-menu">
+                        <h2 class="megamenu_left-title">هیچ دسته‌بندی‌ای یافت نشد</h2>
+                        <li>
+                            <a href="/admin/product_app/product/category/add/">
+                                ایجاد دسته‌بندی جدید
+                            </a>
+                        </li>
+                    </div>
+                </ul>
+            {% endif %}
         </div>
     </div>
 </li>
+
+<!-- نمایش اطلاعات دیباگ -->
+<div style="display: none;">
+    <p>Total Categories: {{ debug.total_categories }}</p>
+    <p>Active Categories: {{ debug.active_categories }}</p>
+    <p>Main Categories: {{ debug.main_categories|join:", " }}</p>
+</div>
+
+<script>
+function showCategory(categoryId) {
+    // مخفی کردن همه محتواها
+    document.querySelectorAll('.megamenu_left-item').forEach(item => {
+        item.classList.remove('active');
+    });
+
+    // غیرفعال کردن همه تب‌ها
+    document.querySelectorAll('.megamenu_category-item').forEach(item => {
+        item.classList.remove('active');
+    });
+
+    // نمایش محتوای انتخاب شده
+    const content = document.getElementById('content-' + categoryId);
+    if (content) {
+        content.classList.add('active');
+    }
+
+    // فعال کردن تب انتخاب شده
+    const selectedTab = document.querySelector('[onclick="showCategory(\'' + categoryId + '\')"]');
+    if (selectedTab) {
+        selectedTab.classList.add('active');
+    }
+}
+
+// فعال کردن اولین دسته‌بندی
+document.addEventListener('DOMContentLoaded', function() {
+    const firstCategory = document.querySelector('.megamenu_category-item');
+    if (firstCategory) {
+        firstCategory.click();
+    }
+});
+</script>
+
+<style>
+.megamenu_left-item {
+    display: none;
+}
+
+.megamenu_left-item.active {
+    display: block;
+}
+
+.megamenu_category-item.active {
+    background-color: #f3f4f6;
+}
+</style>

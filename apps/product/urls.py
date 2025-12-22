@@ -20,6 +20,8 @@ urlpatterns = [
     path('category/<slug:slug>/features/', views.get_feature_filter, name='get_feature_filter'),
     path('brand/<slug:slug>/', views.show_brand_products, name='show_brand_products'),
     path('brand/<slug:slug>/features/', views.get_brand_feature_filter, name='get_brand_feature_filter'),
-    path('s/top-selling/',views.top_selling_products,name='top_selling')
+    path('s/top-selling/',views.top_selling_products,name='top_selling'),
+    path('s/get-category-tree/',views.get_category_tree,name='get_category_tree'),
+
 ]
 

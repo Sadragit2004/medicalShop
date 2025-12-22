@@ -863,3 +863,71 @@ def top_selling_products(request):
     }
 
     return render(request, 'product_app/product/top_selling.html', context)
+
+
+from django.shortcuts import render
+from .models import Category
+import json
+
+def get_category_tree(request):
+    """نمایش درختی دسته‌بندی‌ها با لاگ برای دیباگ"""
+
+    # دیباگ: تعداد دسته‌بندی‌های موجود
+    total_categories = Category.objects.count()
+    active_categories = Category.objects.filter(isActive=True).count()
+    main_categories_count = Category.objects.filter(parent=None, isActive=True).count()
+
+    print(f"Total Categories: {total_categories}")
+    print(f"Active Categories: {active_categories}")
+    print(f"Main Categories (parent=None): {main_categories_count}")
+
+    # دریافت دسته‌بندی‌های اصلی
+    main_categories = Category.objects.filter(
+        parent=None,
+        isActive=True
+    ).order_by('title')[:6]
+
+    # دیباگ: نام دسته‌بندی‌های اصلی
+    for cat in main_categories:
+        print(f"Main Category: {cat.title} (ID: {cat.id})")
+        children_count = cat.children.filter(isActive=True).count()
+        print(f"  Children: {children_count}")
+
+        for child in cat.children.filter(isActive=True)[:3]:
+            grandchildren_count = child.children.filter(isActive=True).count()
+            print(f"    Child: {child.title} - Grandchildren: {grandchildren_count}")
+
+    # ساختار درختی
+    tree_data = []
+
+    for main_cat in main_categories:
+        # فرزندان سطح دوم
+        children_l2 = main_cat.children.filter(isActive=True).order_by('title')[:3]
+
+        children_data = []
+        for child_l2 in children_l2:
+            # فرزندان سطح سوم
+            children_l3 = child_l2.children.filter(isActive=True).order_by('title')[:7]
+            children_data.append({
+                'child': child_l2,
+                'grandchildren': children_l3
+            })
+
+        tree_data.append({
+            'main': main_cat,
+            'children': children_data
+        })
+
+    # دیباگ: ساختار نهایی
+    print(f"Tree Data Length: {len(tree_data)}")
+
+    context = {
+        'tree_data': tree_data,
+        'debug': {
+            'total_categories': total_categories,
+            'active_categories': active_categories,
+            'main_categories': list(main_categories.values_list('title', flat=True))
+        }
+    }
+
+    return render(request, 'product_app/category/category_tree_pc.html', context)
