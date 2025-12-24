@@ -173,7 +173,7 @@
                 <!-- MENU -->
                 <ul class="flex items-center gap-x-8">
                     <li class="menu-item">
-                        <a href="index.html" class="menu-item_link">
+                        <a href="{% url 'main:index' %}" class="menu-item_link">
                             صفحه اصلی
                         </a>
                     </li>
@@ -186,7 +186,7 @@
                         </a>
                     </li>
                     <li class="menu-item">
-                        <a href="articles.html" class="menu-item_link">
+                        <a href="{% url 'blog:blog_list' %}" class="menu-item_link">
                             وبلاگ
                         </a>
                     </li>
@@ -200,13 +200,13 @@
                         </a>
                         <ul class="solid-menu">
                             <li>
-                                <a href="aboute-us.html">درباره ما</a>
+                                <a href="{% url 'main:about' %}">درباره ما</a>
                             </li>
                             <li>
-                                <a href="questions.html">سوالات متداول</a>
+                                <a href="{% url 'main:faq' %}">سوالات متداول</a>
                             </li>
                             <li>
-                                <a href="contact-us.html">تماس با ما</a>
+                                <a href="{% url 'main:contact' %}">تماس با ما</a>
                             </li>
                             <li class="solid-submenu_link">
                                 <a href="#">صفحات</a>
@@ -371,6 +371,21 @@
                                             </ul>
                                         </div>
                                     </li>
+                    <li class="menu-item">
+                        <a href="{% url 'main:about' %}" class="menu-item_link">
+                            درباره ما
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'main:contact' %}" class="menu-item_link">
+                            تماس با ما
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'main:faq' %}" class="menu-item_link">
+                            سوالات متداول
+                        </a>
+                    </li>
                                     <li>
                                         <div class="relative open-detail-category">
                                             <span class="mobile-menu-category-badge">

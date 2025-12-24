@@ -1,0 +1,171 @@
+{% extends "dashboard_template.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block dashboard_content %}
+
+<div class="flex items-center justify-between flex-wrap gap-3 mt-5">
+  <h1 class="text-xl font-DanaDemiBold">سفارش‌ها</h1>
+  <a href="{% url 'dashboard:home' %}" class="text-sm text-blue-500 hover:text-blue-600">بازگشت به داشبورد</a>
+</div>
+
+<!-- Filters -->
+<form method="get" class="mt-4 grid grid-cols-12 gap-3 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+  <div class="col-span-12 md:col-span-3">
+    <label class="text-sm text-gray-600 dark:text-gray-300 mb-1 block">از تاریخ (میلادی)</label>
+    <input type="date" name="date_from" value="{{ date_from }}" class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2">
+  </div>
+  <div class="col-span-12 md:col-span-3">
+    <label class="text-sm text-gray-600 dark:text-gray-300 mb-1 block">تا تاریخ (میلادی)</label>
+    <input type="date" name="date_to" value="{{ date_to }}" class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2">
+  </div>
+  <div class="col-span-12 md:col-span-2">
+    <label class="text-sm text-gray-600 dark:text-gray-300 mb-1 block">حداقل مبلغ</label>
+    <input type="number" name="price_min" value="{{ price_min }}" class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2" placeholder="تومان">
+  </div>
+  <div class="col-span-12 md:col-span-2">
+    <label class="text-sm text-gray-600 dark:text-gray-300 mb-1 block">حداکثر مبلغ</label>
+    <input type="number" name="price_max" value="{{ price_max }}" class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2" placeholder="تومان">
+  </div>
+  <div class="col-span-12 md:col-span-2">
+    <label class="text-sm text-gray-600 dark:text-gray-300 mb-1 block">وضعیت</label>
+    <select name="status" class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2">
+      <option value="">همه</option>
+      <option value="pending" {% if status_filter == "pending" %}selected{% endif %}>در انتظار</option>
+      <option value="processing" {% if status_filter == "processing" %}selected{% endif %}>در حال پردازش</option>
+      <option value="shipped" {% if status_filter == "shipped" %}selected{% endif %}>ارسال شده</option>
+      <option value="delivered" {% if status_filter == "delivered" %}selected{% endif %}>تحویل داده شده</option>
+      <option value="canceled" {% if status_filter == "canceled" %}selected{% endif %}>لغو شده</option>
+    </select>
+  </div>
+  <div class="col-span-12 flex items-center gap-2">
+    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all">اعمال فیلتر</button>
+    <a href="{% url 'dashboard:orders' %}" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">حذف فیلتر</a>
+  </div>
+</form>
+
+<!-- Orders table -->
+<div class="flex flex-col shadow rounded-lg p-4 dark:bg-gray-800 bg-white mt-5">
+    <div class="flex items-center justify-between">
+        <span class="flex items-center gap-x-2">
+            <img src="{% static 'images/svg/status-delivered.svg' %}" class="w-10" alt="">
+            <h2 class="font-DanaMedium text-lg">سفارش ها :</h2>
+        </span>
+    </div>
+    <div class="relative mt-5 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+        <table class="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+            <thead class="text-xs text-gray-700  bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
+                  <tr>
+                        <th scope="col" class="px-6 py-3.5">کد سفارش</th>
+                        <th scope="col" class="px-6 py-3.5">تاریخ</th>
+                        <th scope="col" class="px-6 py-3.5">مبلغ</th>
+                        <th scope="col" class="px-6 py-3.5">وضعیت</th>
+                        <th scope="col" class="px-6 py-3.5 text-center">جزئیات</th>
+                  </tr>
+            </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr class="bg-white border-b cursor-pointer dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+                        <th scope="row" class="px-6 py-5 font-medium text-gray-900 whitespace-nowrap dark:text-white flex items-center gap-x-2">
+                               {{ order.orderCode }}
+                        </th>
+                        <td class="px-6 py-5">
+                            {{ order.registerDate|date:"Y/m/d" }}
+                        </td>
+                        <td class="px-6 py-5">
+                            {{ order.get_order_total_price|default:0|intcomma }} تومان
+                        </td>
+                        <td class="px-6 py-5">
+                            {% if order.status == "delivered" %}
+                                <span class="text-green-500 font-DanaDemiBold">تحویل داده شده</span>
+                            {% elif order.status == "shipped" %}
+                                <span class="text-blue-500 font-DanaDemiBold">ارسال شده</span>
+                            {% elif order.status == "processing" %}
+                                <span class="text-amber-500 font-DanaDemiBold">در حال پردازش</span>
+                            {% elif order.status == "pending" %}
+                                <span class="text-yellow-500 font-DanaDemiBold">در انتظار</span>
+                            {% else %}
+                                <span class="text-red-500 font-DanaDemiBold">لغو شده</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-5 text-center">
+                            <button
+                              class="view-order-details px-3 py-1 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 border border-blue-200 dark:border-blue-500 rounded-md text-xs font-DanaMedium transition-all"
+                              data-target="order-details-{{ order.id }}">
+                              مشاهده
+                            </button>
+                        </td>
+                    </tr>
+                    <template id="order-details-{{ order.id }}">
+                        <div class="space-y-3">
+                            {% for item in order.details.all %}
+                            <div class="flex items-start gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                <img src="{{ item.product.mainImage.url }}" class="w-16 h-16 object-cover rounded" alt="{{ item.product.title }}">
+                                <div class="flex-1 space-y-1">
+                                    <p class="font-DanaMedium text-gray-900 dark:text-gray-100">{{ item.product.title }}</p>
+                                    {% if item.selectedOptions %}
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ item.selectedOptions }}</p>
+                                    {% endif %}
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">تعداد: {{ item.qty }}</p>
+                                    <p class="text-sm text-gray-800 dark:text-gray-100 font-DanaMedium">
+                                        مبلغ: {{ item.price|intcomma }} تومان
+                                    </p>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <p class="text-center text-gray-500 dark:text-gray-400">آیتمی ثبت نشده است</p>
+                            {% endfor %}
+                        </div>
+                    </template>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-5 text-center text-gray-500 dark:text-gray-300">سفارشی ثبت نشده است</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Details modal reused -->
+<div id="orderDetailsModal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+      <h3 class="text-lg font-DanaDemiBold text-gray-900 dark:text-gray-100">جزئیات سفارش</h3>
+      <button id="closeDetailsModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+        <svg class="size-6"><use href="#x-mark"></use></svg>
+      </button>
+    </div>
+    <div id="detailsBody" class="p-4 space-y-3"></div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const detailsModal = document.getElementById('orderDetailsModal');
+  const detailsBody = document.getElementById('detailsBody');
+  const closeDetailsModal = document.getElementById('closeDetailsModal');
+
+  function openDetails(tplId) {
+    const tpl = document.getElementById(tplId);
+    if (tpl && detailsBody) {
+      detailsBody.innerHTML = tpl.innerHTML;
+      detailsModal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+  function closeDetails() {
+    detailsModal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+  }
+  closeDetailsModal?.addEventListener('click', closeDetails);
+  detailsModal.addEventListener('click', (e) => { if (e.target === detailsModal) closeDetails(); });
+
+  document.querySelectorAll('.view-order-details').forEach(btn => {
+    btn.addEventListener('click', () => openDetails(btn.dataset.target));
+  });
+});
+</script>
+
+{% endblock dashboard_content %}
+

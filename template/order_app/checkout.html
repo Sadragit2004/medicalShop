@@ -247,7 +247,7 @@
               </a>
 
               <!-- دکمه پرداخت نهایی -->
-              <form method="post" action="{% url 'order:checkout' order.id %}">
+              <form method="post" action="{% url 'peyment:request' order.id %}">
                   {% csrf_token %}
                   <input type="hidden" name="selected_address" value="{{ checkout_data.selected_address_id }}">
                   <input type="hidden" name="first_name" value="{{ checkout_data.first_name|default:request.user.name }}">

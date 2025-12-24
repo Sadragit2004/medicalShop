@@ -1,0 +1,216 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="fa-IR" xmlns="http://www.w3.org/1999/xhtml" xmlns:og="https://ogp.me/ns#" dir='rtl'>
+
+   <head>
+      <meta charset="UTF-8">
+      <meta name="enamad" content="9992550" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="apple-mobile-web-app-title" content=" ">
+      <meta name="application-name" content=" ">
+      <link rel="alternate" href="{{ request.build_absolute_uri }}" hreflang="fa-IR" />
+      <meta name="msapplication-TileColor" content="#358597">
+      <!-- Favicon references removed - logo-new.png not found -->
+        <meta name="theme-color" content="#ffffff">
+          {% if request.GET.utmsource or request.GET.utm_medium or request.GET.utm_campaign %}
+        <link rel="canonical" href="{{ request.build_absolute_uri }}" />
+        {% else %}
+        <link rel="canonical" href="{{ request.build_absolute_uri }}" />
+        {% endif %}
+
+        <meta property="og:locale" content="fa_IR" />
+        <meta property="og:type" content="website" />
+        <link rel="stylesheet" href="{% static '/styles/app.css' %}">
+    <!-- link -->
+        <link rel="stylesheet" href="{% static '/swiper/swiper.css' %}">
+        <!-- ==========================  DARK MODE SCRIPT ============================= -->
+        <script type="text/javascript">
+            if (
+                localStorage.theme === "dark" ||
+                (!("theme" in localStorage) &&
+                    window.matchMedia("(prefers-color-scheme: dark)").matches)
+            ) {
+                document.documentElement.classList.add("dark");
+            } else {
+                document.documentElement.classList.remove("dark");
+            }
+        </script>
+
+          {% block meta1 %}
+          {% endblock meta1 %}
+
+
+      <style>
+         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap');
+      </style>
+
+
+    <!-- پشتیبانی از RTL -->
+
+  </head>
+
+<body>
+
+  {% include "partials/svg.html" %}
+
+  <main class="container relative">
+    <div class="flex flex-col lg:flex-row gap-x-8 mt-10">
+
+      <!-- SIDE MENU -->
+      <aside class="lg:sticky mb-8 top-1 h-fit lg:w-1/4 hidden lg:flex flex-col gap-y-4 items-center shadow rounded-lg p-4 dark:bg-gray-800 bg-white">
+        <!-- NAME AND AVATAR  -->
+        <div class="w-full flex items-center justify-between border-b border-gray-200 dark:border-white/20 py-3">
+          <div class="flex items-center gap-x-3">
+            <img src="{% static 'images/svg/user.png' %}" class="size-10 ring-2 ring-gray-400/20 rounded-full" alt="AVATAR">
+            <span class="felx flex-col gap-y-2">
+              <p class="font-DanaMedium text-lg">{{ request.user.name|default:"کاربر" }}</p>
+              <p class="text-gray-400">{{ request.user.mobileNumber|default:"-" }}</p>
+            </span>
+          </div>
+          <span>
+            <svg class="w-6 h-6 cursor-pointer text-blue-500">
+              <use href="#edit"></use>
+            </svg>
+          </span>
+        </div>
+
+        <ul class="w-full relative space-y-2 child:duration-300 child:transition-all child:py-3 child:px-2 child:flex child:gap-x-2 text-lg child:cursor-pointer child:rounded-lg">
+          <li class="bg-blue-500/10 text-blue-500">
+            <svg class="w-6 h-6 ">
+              <use href="#squares"></use>
+            </svg>
+            <a href="">داشبورد</a>
+          </li>
+          <li class="hover:text-blue-500">
+            <svg class="w-6 h-6 ">
+              <use href="#shopping-bag"></use>
+            </svg>
+            <a href="{% url 'dashboard:orders' %}">سفارش ها</a>
+          </li>
+          <li class="hover:text-blue-500">
+            <svg class="w-6 h-6 ">
+              <use href="#heart"></use>
+            </svg>
+            <a href="">علاقه‌مندی ها</a>
+          </li>
+          <li class="hover:text-blue-500">
+            <svg class="w-6 h-6 ">
+              <use href="#map"></use>
+            </svg>
+            <a href="">آدرس ها</a>
+          </li>
+          <li class="hover:text-blue-500">
+            <svg class="w-6 h-6 ">
+              <use href="#bell"></use>
+            </svg>
+            <a href="">پیام ها</a>
+          </li>
+          <li class="hover:text-blue-500">
+            <svg class="w-6 h-6 ">
+              <use href="#cog"></use>
+            </svg>
+            <a href="">اطلاعات حساب </a>
+          </li>
+          <li class="text-red-400">
+            <svg class="w-6 h-6 ">
+              <use href="#arrow-left-end"></use>
+            </svg>
+            <a href="">خروج</a>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- MOBILE SIDEBAR -->
+      <div class="lg:w-3/4">
+        <div class="flex lg:hidden">
+          <button class="open-user-menu bg-blue-500 flex items-center gap-x-1 font-DanaMedium text-white p-2 rounded-lg text-sm mr-2">
+            <svg class="size-5">
+              <use href="#bars-3" />
+            </svg>
+            منوی کاربری
+          </button>
+          <div class="user-menu">
+            <button class="close-user-menu">
+              <svg class="size-6">
+                <use href="#x-mark" />
+              </svg>
+            </button>
+            <!-- NAME AND AVATAR  -->
+            <div class="w-full flex items-center justify-between border-b border-gray-200 dark:border-white/20 py-3">
+              <div class="flex items-center gap-x-3">
+                <img src="{% static 'images/svg/user.png' %}" class="size-10 ring-2 ring-gray-400/20 rounded-full" alt="AVATAR">
+                <span class="felx flex-col gap-y-2">
+                  <p class="font-DanaMedium text-lg">{{ request.user.name|default:"کاربر" }}</p>
+                  <p class="text-gray-400">{{ request.user.mobileNumber|default:"-" }}</p>
+                </span>
+              </div>
+              <span>
+                <svg class="w-6 h-6 cursor-pointer text-blue-500">
+                  <use href="#edit"></use>
+                </svg>
+              </span>
+            </div>
+            <ul class="w-full relative space-y-2 child:duration-300 child:transition-all child:py-3 child:px-2 child:flex child:gap-x-2 text-lg child:cursor-pointer child:rounded-lg">
+              <li class="bg-blue-500/10 text-blue-500">
+                <svg class="w-6 h-6 ">
+                  <use href="#squares"></use>
+                </svg>
+                <a href="">داشبورد</a>
+              </li>
+              <li class="hover:text-blue-500">
+                <svg class="w-6 h-6 ">
+                  <use href="#shopping-bag"></use>
+                </svg>
+                <a href="">سفارش ها</a>
+              </li>
+              <li class="hover:text-blue-500">
+                <svg class="w-6 h-6 ">
+                  <use href="#heart"></use>
+                </svg>
+                <a href="">علاقه‌مندی ها</a>
+              </li>
+              <li class="hover:text-blue-500">
+                <svg class="w-6 h-6 ">
+                  <use href="#map"></use>
+                </svg>
+                <a href="">آدرس ها</a>
+              </li>
+              <li class="hover:text-blue-500">
+                <svg class="w-6 h-6 ">
+                  <use href="#bell"></use>
+                </svg>
+                <a href="">پیام ها</a>
+              </li>
+              <li class="hover:text-blue-500">
+                <svg class="w-6 h-6 ">
+                  <use href="#cog"></use>
+                </svg>
+                <a href="">اطلاعات حساب </a>
+              </li>
+              <li class="text-red-400">
+                <svg class="w-6 h-6 ">
+                  <use href="#arrow-left-end"></use>
+                </svg>
+                <a href="">خروج</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {% block dashboard_content %}
+        <!-- Dashboard main content goes here -->
+        {% endblock dashboard_content %}
+      </div>
+
+    </div>
+  </main>
+
+
+  <script src='{% static "scripts/app.js" %}' ></script>
+
+  <script src='{% static "scripts/dashboard.js" %}' ></script>
+
+
+</body>
+<script>

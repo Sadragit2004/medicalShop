@@ -50,7 +50,8 @@ INSTALLED_APPS = [
     'apps.order.apps.OrderConfig',
     'apps.peyment.apps.PeymentConfig',
     'apps.search.apps.SearchConfig',
-    'apps.blog.apps.BlogConfig'
+    'apps.blog.apps.BlogConfig',
+    'apps.dashboard.apps.DashboardConfig'
 
 ]
 

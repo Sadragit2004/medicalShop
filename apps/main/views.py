@@ -55,3 +55,16 @@ def mainSlider(request):
     }
 
     return render(request,'main_app/mainslider.html', context)
+
+
+# --- Static pages ---
+def about(request):
+    return render(request, "main_app/about.html")
+
+
+def contact(request):
+    return render(request, "main_app/contact.html")
+
+
+def faq(request):
+    return render(request, "main_app/faq.html")
