@@ -9,122 +9,155 @@
   <a href="{% url 'dashboard:home' %}" class="text-sm text-blue-500 hover:text-blue-600">بازگشت به داشبورد</a>
 </div>
 
-<!-- Filters -->
-<form method="get" class="mt-4 grid grid-cols-12 gap-3 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-  <div class="col-span-12 md:col-span-3">
-    <label class="text-sm text-gray-600 dark:text-gray-300 mb-1 block">از تاریخ (میلادی)</label>
-    <input type="date" name="date_from" value="{{ date_from }}" class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2">
-  </div>
-  <div class="col-span-12 md:col-span-3">
-    <label class="text-sm text-gray-600 dark:text-gray-300 mb-1 block">تا تاریخ (میلادی)</label>
-    <input type="date" name="date_to" value="{{ date_to }}" class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2">
-  </div>
-  <div class="col-span-12 md:col-span-2">
-    <label class="text-sm text-gray-600 dark:text-gray-300 mb-1 block">حداقل مبلغ</label>
-    <input type="number" name="price_min" value="{{ price_min }}" class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2" placeholder="تومان">
-  </div>
-  <div class="col-span-12 md:col-span-2">
-    <label class="text-sm text-gray-600 dark:text-gray-300 mb-1 block">حداکثر مبلغ</label>
-    <input type="number" name="price_max" value="{{ price_max }}" class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2" placeholder="تومان">
-  </div>
-  <div class="col-span-12 md:col-span-2">
-    <label class="text-sm text-gray-600 dark:text-gray-300 mb-1 block">وضعیت</label>
-    <select name="status" class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2">
-      <option value="">همه</option>
-      <option value="pending" {% if status_filter == "pending" %}selected{% endif %}>در انتظار</option>
-      <option value="processing" {% if status_filter == "processing" %}selected{% endif %}>در حال پردازش</option>
-      <option value="shipped" {% if status_filter == "shipped" %}selected{% endif %}>ارسال شده</option>
-      <option value="delivered" {% if status_filter == "delivered" %}selected{% endif %}>تحویل داده شده</option>
-      <option value="canceled" {% if status_filter == "canceled" %}selected{% endif %}>لغو شده</option>
-    </select>
-  </div>
-  <div class="col-span-12 flex items-center gap-2">
-    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all">اعمال فیلتر</button>
-    <a href="{% url 'dashboard:orders' %}" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">حذف فیلتر</a>
-  </div>
-</form>
+<!-- فیلترهای جمع‌شونده -->
+<div class="mt-4">
+  <button id="filterToggle" class="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-all text-sm">
+    <svg class="w-5 h-5"><use href="#funnel"></use></svg>
+    فیلترها
+    <svg id="filterIcon" class="w-4 h-4 transition-transform"><use href="#chevron-down"></use></svg>
+  </button>
+
+  <form method="get" id="filterForm" class="hidden mt-3 grid grid-cols-12 gap-3 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+    <div class="col-span-12 md:col-span-4">
+      <label class="text-sm text-gray-600 dark:text-gray-300 mb-1 block">بازه زمانی</label>
+      <div class="flex gap-2">
+        <input type="date" name="date_from" value="{{ date_from }}" class="flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm">
+        <span class="flex items-center">تا</span>
+        <input type="date" name="date_to" value="{{ date_to }}" class="flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm">
+      </div>
+    </div>
+
+    <div class="col-span-12 md:col-span-3">
+      <label class="text-sm text-gray-600 dark:text-gray-300 mb-1 block">محدوده قیمت</label>
+      <div class="flex gap-2">
+        <input type="number" name="price_min" value="{{ price_min }}" class="flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm" placeholder="حداقل">
+        <input type="number" name="price_max" value="{{ price_max }}" class="flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm" placeholder="حداکثر">
+      </div>
+    </div>
+
+    <div class="col-span-12 md:col-span-3">
+      <label class="text-sm text-gray-600 dark:text-gray-300 mb-1 block">وضعیت</label>
+      <select name="status" class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm">
+        <option value="">همه</option>
+        <option value="pending" {% if status_filter == "pending" %}selected{% endif %}>در انتظار</option>
+        <option value="processing" {% if status_filter == "processing" %}selected{% endif %}>در حال پردازش</option>
+        <option value="shipped" {% if status_filter == "shipped" %}selected{% endif %}>ارسال شده</option>
+        <option value="delivered" {% if status_filter == "delivered" %}selected{% endif %}>تحویل داده شده</option>
+        <option value="canceled" {% if status_filter == "canceled" %}selected{% endif %}>لغو شده</option>
+      </select>
+    </div>
+
+    <div class="col-span-12 md:col-span-2 flex items-end">
+      <div class="flex gap-2 w-full">
+        <button type="submit" class="flex-1 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm">اعمال</button>
+        <a href="{% url 'dashboard:orders' %}" class="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-all text-sm text-center">حذف</a>
+      </div>
+    </div>
+  </form>
+</div>
 
 <!-- Orders table -->
 <div class="flex flex-col shadow rounded-lg p-4 dark:bg-gray-800 bg-white mt-5">
     <div class="flex items-center justify-between">
         <span class="flex items-center gap-x-2">
             <img src="{% static 'images/svg/status-delivered.svg' %}" class="w-10" alt="">
-            <h2 class="font-DanaMedium text-lg">سفارش ها :</h2>
+            <h2 class="font-DanaMedium text-lg">سفارش ها ({{ orders.paginator.count }})</h2>
         </span>
     </div>
     <div class="relative mt-5 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
         <table class="w-full text-sm text-right text-gray-500 dark:text-gray-400">
-            <thead class="text-xs text-gray-700  bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
+            <thead class="text-xs text-gray-700 bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
                   <tr>
-                        <th scope="col" class="px-6 py-3.5">کد سفارش</th>
-                        <th scope="col" class="px-6 py-3.5">تاریخ</th>
-                        <th scope="col" class="px-6 py-3.5">مبلغ</th>
-                        <th scope="col" class="px-6 py-3.5">وضعیت</th>
-                        <th scope="col" class="px-6 py-3.5 text-center">جزئیات</th>
+                        <th scope="col" class="px-4 py-3">کد سفارش</th>
+                        <th scope="col" class="px-4 py-3">تاریخ</th>
+                        <th scope="col" class="px-4 py-3">مبلغ</th>
+                        <th scope="col" class="px-4 py-3">وضعیت</th>
+                        <th scope="col" class="px-4 py-3 text-center">جزئیات</th>
                   </tr>
             </thead>
-                <tbody>
-                    {% for order in orders %}
-                    <tr class="bg-white border-b cursor-pointer dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
-                        <th scope="row" class="px-6 py-5 font-medium text-gray-900 whitespace-nowrap dark:text-white flex items-center gap-x-2">
-                               {{ order.orderCode }}
-                        </th>
-                        <td class="px-6 py-5">
-                            {{ order.registerDate|date:"Y/m/d" }}
-                        </td>
-                        <td class="px-6 py-5">
-                            {{ order.get_order_total_price|default:0|intcomma }} تومان
-                        </td>
-                        <td class="px-6 py-5">
-                            {% if order.status == "delivered" %}
-                                <span class="text-green-500 font-DanaDemiBold">تحویل داده شده</span>
-                            {% elif order.status == "shipped" %}
-                                <span class="text-blue-500 font-DanaDemiBold">ارسال شده</span>
-                            {% elif order.status == "processing" %}
-                                <span class="text-amber-500 font-DanaDemiBold">در حال پردازش</span>
-                            {% elif order.status == "pending" %}
-                                <span class="text-yellow-500 font-DanaDemiBold">در انتظار</span>
-                            {% else %}
-                                <span class="text-red-500 font-DanaDemiBold">لغو شده</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-5 text-center">
-                            <button
-                              class="view-order-details px-3 py-1 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 border border-blue-200 dark:border-blue-500 rounded-md text-xs font-DanaMedium transition-all"
-                              data-target="order-details-{{ order.id }}">
-                              مشاهده
-                            </button>
-                        </td>
-                    </tr>
-                    <template id="order-details-{{ order.id }}">
-                        <div class="space-y-3">
-                            {% for item in order.details.all %}
-                            <div class="flex items-start gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                                <img src="{{ item.product.mainImage.url }}" class="w-16 h-16 object-cover rounded" alt="{{ item.product.title }}">
-                                <div class="flex-1 space-y-1">
-                                    <p class="font-DanaMedium text-gray-900 dark:text-gray-100">{{ item.product.title }}</p>
-                                    {% if item.selectedOptions %}
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ item.selectedOptions }}</p>
-                                    {% endif %}
-                                    <p class="text-sm text-gray-600 dark:text-gray-300">تعداد: {{ item.qty }}</p>
-                                    <p class="text-sm text-gray-800 dark:text-gray-100 font-DanaMedium">
-                                        مبلغ: {{ item.price|intcomma }} تومان
-                                    </p>
-                                </div>
+            <tbody>
+                {% for order in orders %}
+                <tr class="bg-white border-b cursor-pointer dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+                    <th scope="row" class="px-4 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                        {{ order.orderCode }}
+                    </th>
+                    <td class="px-4 py-4">
+                        {{ order.registerDate|date:"Y/m/d" }}
+                    </td>
+                    <td class="px-4 py-4">
+                        {{ order.get_order_total_price|default:0|intcomma }} تومان
+                    </td>
+                    <td class="px-4 py-4">
+                        {% if order.status == "delivered" %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                                تحویل داده شده
+                            </span>
+                        {% elif order.status == "shipped" %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                                ارسال شده
+                            </span>
+                        {% elif order.status == "processing" %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300">
+                                در حال پردازش
+                            </span>
+                        {% elif order.status == "pending" %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
+                                در انتظار
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                                لغو شده
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-4 text-center">
+                        <button
+                          class="view-order-details px-3 py-1 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 border border-blue-200 dark:border-blue-500 rounded-md text-xs font-DanaMedium transition-all"
+                          data-target="order-details-{{ order.id }}">
+                          مشاهده
+                        </button>
+                    </td>
+                </tr>
+                <template id="order-details-{{ order.id }}">
+                    <div class="space-y-3">
+                        {% for item in order.details.all %}
+                        <div class="flex items-start gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <img src="{{ item.product.mainImage.url }}" class="w-16 h-16 object-cover rounded" alt="{{ item.product.title }}">
+                            <div class="flex-1 space-y-1">
+                                <p class="font-DanaMedium text-gray-900 dark:text-gray-100">{{ item.product.title }}</p>
+                                {% if item.selectedOptions %}
+                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ item.selectedOptions }}</p>
+                                {% endif %}
+                                <p class="text-sm text-gray-600 dark:text-gray-300">تعداد: {{ item.qty }}</p>
+                                <p class="text-sm text-gray-800 dark:text-gray-100 font-DanaMedium">
+                                    مبلغ: {{ item.price|intcomma }} تومان
+                                </p>
                             </div>
-                            {% empty %}
-                            <p class="text-center text-gray-500 dark:text-gray-400">آیتمی ثبت نشده است</p>
-                            {% endfor %}
                         </div>
-                    </template>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="px-6 py-5 text-center text-gray-500 dark:text-gray-300">سفارشی ثبت نشده است</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+                        {% empty %}
+                        <p class="text-center text-gray-500 dark:text-gray-400">آیتمی ثبت نشده است</p>
+                        {% endfor %}
+                    </div>
+                </template>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-5 text-center text-gray-500 dark:text-gray-300">سفارشی ثبت نشده است</td>
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
     </div>
+
+    <!-- Load More -->
+    {% if orders.has_next %}
+    <div class="mt-4 text-center" id="loadMoreContainer">
+        <button id="loadMoreBtn"
+                data-next-page="{{ orders.next_page_number }}"
+                class="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all text-sm font-DanaMedium">
+            بارگذاری بیشتر
+        </button>
+    </div>
+    {% endif %}
 </div>
 
 <!-- Details modal reused -->
@@ -140,8 +173,32 @@
   </div>
 </div>
 
+<!-- SVG Icons -->
+<svg xmlns="http://www.w3.org/2000/svg" class="hidden">
+  <symbol id="funnel" viewBox="0 0 20 20">
+    <path fill="currentColor" d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z"/>
+  </symbol>
+  <symbol id="chevron-down" viewBox="0 0 20 20">
+    <path fill="currentColor" fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
+  </symbol>
+  <symbol id="x-mark" viewBox="0 0 20 20">
+    <path fill="currentColor" d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+  </symbol>
+</svg>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // فیلترهای جمع‌شونده
+  const filterToggle = document.getElementById('filterToggle');
+  const filterForm = document.getElementById('filterForm');
+  const filterIcon = document.getElementById('filterIcon');
+
+  filterToggle?.addEventListener('click', () => {
+    filterForm.classList.toggle('hidden');
+    filterIcon.classList.toggle('rotate-180');
+  });
+
+  // Modal جزئیات
   const detailsModal = document.getElementById('orderDetailsModal');
   const detailsBody = document.getElementById('detailsBody');
   const closeDetailsModal = document.getElementById('closeDetailsModal');
@@ -154,18 +211,110 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.style.overflow = 'hidden';
     }
   }
+
   function closeDetails() {
     detailsModal.classList.add('hidden');
     document.body.style.overflow = 'auto';
   }
+
   closeDetailsModal?.addEventListener('click', closeDetails);
-  detailsModal.addEventListener('click', (e) => { if (e.target === detailsModal) closeDetails(); });
+  detailsModal.addEventListener('click', (e) => {
+    if (e.target === detailsModal) closeDetails();
+  });
 
   document.querySelectorAll('.view-order-details').forEach(btn => {
     btn.addEventListener('click', () => openDetails(btn.dataset.target));
   });
+
+  // Load More با AJAX
+  const loadMoreBtn = document.getElementById('loadMoreBtn');
+  const tableBody = document.querySelector('tbody');
+
+  if (loadMoreBtn) {
+    let isLoading = false;
+
+    loadMoreBtn.addEventListener('click', async () => {
+      if (isLoading) return;
+
+      isLoading = true;
+      const nextPage = loadMoreBtn.dataset.nextPage;
+      const originalText = loadMoreBtn.textContent;
+      loadMoreBtn.textContent = 'در حال بارگذاری...';
+      loadMoreBtn.disabled = true;
+
+      try {
+        // ساخت URL با پارامترهای فعلی
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', nextPage);
+
+        const response = await fetch(url, {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        if (!response.ok) throw new Error('خطا در بارگذاری');
+
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        // اضافه کردن ردیف‌های جدید
+        const newRows = doc.querySelectorAll('tbody tr');
+        newRows.forEach(row => {
+          tableBody.appendChild(row.cloneNode(true));
+        });
+
+        // اضافه کردن templates جدید
+        const newTemplates = doc.querySelectorAll('template');
+        newTemplates.forEach(template => {
+          document.body.appendChild(template.cloneNode(true));
+        });
+
+        // به‌روزرسانی دکمه لود بیشتر
+        const newLoadMoreContainer = doc.getElementById('loadMoreContainer');
+        if (newLoadMoreContainer) {
+          loadMoreBtn.dataset.nextPage = doc.getElementById('loadMoreBtn')?.dataset.nextPage || '';
+          loadMoreBtn.textContent = originalText;
+          loadMoreBtn.disabled = false;
+        } else {
+          loadMoreBtn.remove();
+        }
+
+        // افزودن event listeners جدید برای دکمه‌های مشاهده
+        document.querySelectorAll('.view-order-details').forEach(btn => {
+          btn.addEventListener('click', () => openDetails(btn.dataset.target));
+        });
+
+      } catch (error) {
+        console.error('خطا:', error);
+        loadMoreBtn.textContent = 'خطا! دوباره امتحان کنید';
+        setTimeout(() => {
+          loadMoreBtn.textContent = originalText;
+          loadMoreBtn.disabled = false;
+        }, 2000);
+      } finally {
+        isLoading = false;
+      }
+    });
+
+    // Load More با اسکرول
+    window.addEventListener('scroll', () => {
+      if (isLoading || !loadMoreBtn) return;
+
+      const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+      if (scrollTop + clientHeight >= scrollHeight - 100) {
+        loadMoreBtn.click();
+      }
+    });
+  }
 });
 </script>
 
-{% endblock dashboard_content %}
+<style>
+.rotate-180 {
+  transform: rotate(180deg);
+}
+</style>
 
+{% endblock dashboard_content %}
