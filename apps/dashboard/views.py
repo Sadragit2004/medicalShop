@@ -75,6 +75,8 @@ def orders_page(request):
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
+from apps.product.models import Product
+from apps.dashboard.models import Favorite
 
 @login_required
 @require_POST
