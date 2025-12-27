@@ -1,0 +1,253 @@
+{% extends "dashboard_template.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block dashboard_content %}
+<div class="flex flex-col rounded-lg p-4 mt-5 lg:mt-0">
+    <span class="flex items-center justify-between">
+        <span class="flex items-center gap-x-2">
+            <svg class="size-7">
+                <use href="#heart"></use>
+            </svg>
+            <h2 class="font-DanaMedium text-lg">محصولات مورد علاقه من:</h2>
+        </span>
+        <span class="text-gray-500 text-sm" id="favorites-count">
+            {{ favorites.count }} محصول
+        </span>
+    </span>
+
+    <!-- PRODUCTS -->
+    <div class="grid grid-cols-1 xxs:grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 xs:gap-2 sm:gap-4 mt-5" id="favorites-container">
+        {% for favorite in favorites %}
+        <!-- PRODUCT ITEM -->
+        <div class="product-card group favorite-item" data-favorite-id="{{ favorite.id }}">
+            <!-- product header -->
+            <div class="product-card_header">
+                <div class="flex items-center gap-x-2">
+                    <div class="tooltip">
+                        <button class="add-to-cart rounded-full p-1.5 app-border app-hover">
+                            <svg class="size-4">
+                                <use href="#shopping-cart"></use>
+                            </svg>
+                        </button>
+                        <div class="tooltiptext">
+                            سبد خرید
+                        </div>
+                    </div>
+                    <div class="tooltip">
+                        <button class="remove-favorite-btn rounded-full p-1.5 app-border app-hover text-red-500 bg-red-50"
+                                data-favorite-id="{{ favorite.id }}"
+                                data-product-name="{{ favorite.product.title }}">
+                            <svg class="size-4">
+                                <use href="#heart"></use>
+                            </svg>
+                        </button>
+                        <div class="tooltiptext">
+                            حذف از علاقه‌مندی
+                        </div>
+                    </div>
+                    <div class="tooltip">
+                        <button class="compare-btn rounded-full p-1.5 app-border app-hover">
+                            <svg class="size-4">
+                                <use href="#arrows-up-down"></use>
+                            </svg>
+                        </button>
+                        <div class="tooltiptext">
+                            مقایسه
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- product img -->
+            <a href="{{ favorite.product.get_absolute_url }}">
+                <img class="product-card_img group-hover:opacity-0 absolute"
+                     src="{{ favorite.product.primary_image.url }}"
+                     alt="{{ favorite.product.title }}">
+                <img class="product-card_img opacity-0 group-hover:opacity-100"
+                     src="{{ favorite.product.secondary_image.url }}"
+                     alt="{{ favorite.product.title }}">
+            </a>
+
+            <!-- product footer -->
+            <div class="space-y-2">
+                <a href="{{ favorite.product.get_absolute_url }}" class="product-card_link">
+                    {{ favorite.product.title }}
+                </a>
+
+                <!-- Rate and Price -->
+                <div class="product-card_price-wrapper">
+                    <!-- RATE -->
+                    <div class="product-card_rate">
+                        <span class="flex items-center gap-x-0.5">
+                            <svg class="size-4 text-blue-500 mb-0.5">
+                                <use href="#rocket"></use>
+                            </svg>
+                            <p class="text-xs">ارسال امروز</p>
+                        </span>
+                        <span class="text-gray-400 flex items-center text-sm gap-x-0.5">
+                            <p>{{ favorite.product.average_rating }}</p>
+                            <svg class="size-4 mb-1">
+                                <use href="#star"></use>
+                            </svg>
+                        </span>
+                    </div>
+
+                    <!-- Price -->
+                    <div class="product-card_price">
+                        {% if favorite.product.discount_price %}
+                        <del>{{ favorite.product.current_price|intcomma }} <h6>تومان</h6></del>
+                        <p>{{ favorite.product.discount_price|intcomma }}</p>
+                        {% else %}
+                        <p>{{ favorite.product.current_price|intcomma }}</p>
+                        {% endif %}
+                        <span>تومان</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <!-- وقتی لیست خالیه -->
+        <div class="col-span-full flex flex-col items-center justify-center py-12">
+            <svg class="w-24 h-24 text-gray-300 mb-4">
+                <use href="#heart"></use>
+            </svg>
+            <h3 class="text-xl font-DanaMedium text-gray-500 mb-2">لیست علاقه‌مندی‌های شما خالی است</h3>
+            <p class="text-gray-400 mb-6">می‌توانید محصولات مورد علاقه خود را با کلیک بر روی آیکون قلب ذخیره کنید</p>
+            <a href="{% url 'main:index' %}" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors">
+                مشاهده محصولات
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // مدیریت کلیک روی دکمه‌های حذف
+    document.querySelectorAll('.remove-favorite-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const favoriteId = this.dataset.favoriteId;
+            const productName = this.dataset.productName;
+
+            if (confirm(`آیا مطمئن هستید که می‌خواهید "${productName}" را از لیست علاقه‌مندی‌ها حذف کنید؟`)) {
+                // گرفتن CSRF Token
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+
+                // درخواست AJAX برای حذف
+                fetch(`/dashboard/remove_favorit/${favoriteId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // حذف محصول از صفحه با انیمیشن
+                        const productCard = this.closest('.favorite-item');
+                        productCard.style.opacity = '0';
+                        productCard.style.transform = 'scale(0.95)';
+                        productCard.style.transition = 'opacity 0.3s, transform 0.3s';
+
+                        setTimeout(() => {
+                            productCard.remove();
+
+                            // به روز رسانی تعداد محصولات
+                            const countElement = document.getElementById('favorites-count');
+                            if (countElement) {
+                                const currentCount = parseInt(countElement.textContent);
+                                countElement.textContent = (currentCount - 1) + ' محصول';
+                            }
+
+                            // نمایش پیام موفقیت
+                            showNotification(data.message, 'success');
+
+                            // اگر محصولی باقی نماند، نمایش پیام خالی بودن
+                            checkEmptyState();
+                        }, 300);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('خطا در حذف محصول', 'error');
+                });
+            }
+        });
+    });
+
+    // تابع نمایش پیام
+    function showNotification(message, type = 'success') {
+        // حذف نوتیفیکیشن قبلی
+        const oldNotification = document.querySelector('.notification');
+        if (oldNotification) {
+            oldNotification.remove();
+        }
+
+        // ایجاد نوتیفیکیشن جدید
+        const notification = document.createElement('div');
+        notification.className = `notification fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
+            type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+        }`;
+        notification.style.transition = 'all 0.3s ease';
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateY(-20px)';
+
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <svg class="w-5 h-5 mr-2">
+                    <use href="#${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></use>
+                </svg>
+                <span>${message}</span>
+            </div>
+        `;
+
+        document.body.appendChild(notification);
+
+        // نمایش انیمیشن
+        setTimeout(() => {
+            notification.style.opacity = '1';
+            notification.style.transform = 'translateY(0)';
+        }, 10);
+
+        // حذف خودکار بعد از 3 ثانیه
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateY(-20px)';
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }, 3000);
+    }
+
+    // تابع بررسی حالت خالی
+    function checkEmptyState() {
+        const container = document.getElementById('favorites-container');
+        const items = container.querySelectorAll('.favorite-item');
+
+        if (items.length === 0) {
+            container.innerHTML = `
+                <div class="col-span-full flex flex-col items-center justify-center py-12">
+                    <svg class="w-24 h-24 text-gray-300 mb-4">
+                        <use href="#heart"></use>
+                    </svg>
+                    <h3 class="text-xl font-DanaMedium text-gray-500 mb-2">لیست علاقه‌مندی‌های شما خالی است</h3>
+                    <p class="text-gray-400 mb-6">می‌توانید محصولات مورد علاقه خود را با کلیک بر روی آیکون قلب ذخیره کنید</p>
+                    <a href="{% url 'main:index' %}" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors">
+                        مشاهده محصولات
+                    </a>
+                </div>
+            `;
+
+            // به روز رسانی تعداد به صفر
+            const countElement = document.getElementById('favorites-count');
+            if (countElement) {
+                countElement.textContent = '0 محصول';
+            }
+        }
+    }
+});
+</script>
+{% endblock dashboard_content %}

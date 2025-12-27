@@ -1,3 +1,4 @@
+# =======================
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
@@ -71,7 +72,7 @@ def orders_page(request):
     return render(request, "dashboard_app/orders.html", context)
 
 
-
+# =======================
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
@@ -141,3 +142,406 @@ def check_favorite(request, product_id):
         'success': True,
         'is_favorite': is_favorite
     })
+
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from apps.product.models import ProductSaleType
+from .models import Favorite
+
+@login_required
+def favorite_list(request):
+    # دریافت علاقه‌مندی‌های کاربر با اطلاعات کامل محصول
+    favorites = Favorite.objects.filter(user=request.user).select_related('product')
+
+    # برای هر محصول، اولین نوع فروش فعال را پیدا می‌کنیم
+    for favorite in favorites:
+        sale_type = ProductSaleType.objects.filter(
+            product=favorite.product,
+            isActive=True
+        ).first()
+
+        # اضافه کردن قیمت به context محصول
+        if sale_type:
+            favorite.product.current_price = sale_type.price
+            favorite.product.discount_price = sale_type.finalPrice if sale_type.finalPrice != sale_type.price else None
+        else:
+            favorite.product.current_price = 0
+            favorite.product.discount_price = None
+
+        # بررسی تصاویر محصول
+        favorite.product.primary_image = favorite.product.mainImage
+        galleries = favorite.product.galleries.filter(isActive=True)
+        favorite.product.secondary_image = galleries.first().image if galleries.exists() else favorite.product.mainImage
+
+    return render(request, 'dashboard_app/favorites/favorite_list.html', {'favorites': favorites})
+
+from django.views.decorators.csrf import csrf_exempt
+
+
+@login_required
+@csrf_exempt
+def remove_favorite(request, favorite_id):
+    # پیدا کردن و حذف علاقه‌مندی
+    favorite = Favorite.objects.get(id=favorite_id, user=request.user)
+    product_name = favorite.product.title
+    favorite.delete()
+
+    return JsonResponse({
+        'success': True,
+        'message': f'محصول "{product_name}" از لیست علاقه‌مندی‌ها حذف شد'
+    })
+
+# =======================
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
+from apps.order.models import UserAddress, State, City
+import json
+
+@login_required
+def address_list(request):
+    """نمایش صفحه آدرس‌های کاربر"""
+    addresses = UserAddress.objects.filter(user=request.user)
+    states = State.objects.all().order_by('name')
+
+    return render(request, 'dashboard_app/address/address_list.html', {
+        'addresses': addresses,
+        'states': states,
+    })
+
+@require_GET
+@login_required
+def get_cities(request):
+    """دریافت شهرهای یک استان"""
+    state_id = request.GET.get('state_id')
+    if not state_id:
+        return JsonResponse({'cities': []})
+
+    cities = City.objects.filter(state_id=state_id).order_by('name')
+    cities_data = [{'id': city.id, 'name': city.name} for city in cities]
+
+    return JsonResponse({'cities': cities_data})
+
+@require_POST
+@login_required
+@csrf_exempt
+def create_user_address(request):
+    """ایجاد آدرس جدید برای کاربر"""
+    try:
+        data = json.loads(request.body) if request.body else request.POST
+
+        state_id = data.get('state')
+        city_id = data.get('city')
+        address_detail = data.get('address_detail', '').strip()
+        postal_code = data.get('postal_code', '').strip()
+
+        # Validation - فقط فیلدهای ضروری
+        if not all([state_id, city_id, address_detail]):
+            return JsonResponse({
+                'success': False,
+                'error': 'لطفاً تمام فیلدهای ضروری (استان، شهر، آدرس دقیق) را پر کنید'
+            })
+
+        # Verify state and city exist and are related
+        try:
+            state = State.objects.get(id=state_id)
+            city = City.objects.get(id=city_id, state=state)
+        except (State.DoesNotExist, City.DoesNotExist):
+            return JsonResponse({
+                'success': False,
+                'error': 'استان یا شهر انتخاب شده نامعتبر است'
+            })
+
+        # Create address - بدون نام و نام گیرنده
+        address = UserAddress.objects.create(
+            user=request.user,
+            state=state,
+            city=city,
+            addressDetail=address_detail,
+            postalCode=postal_code if postal_code else None
+        )
+
+        return JsonResponse({
+            'success': True,
+            'address': {
+                'id': address.id,
+                'state': address.state.name,
+                'state_id': address.state.id,
+                'city': address.city.name,
+                'city_id': address.city.id,
+                'addressDetail': address.addressDetail,
+                'postalCode': address.postalCode,
+                'createdAt': address.createdAt.strftime('%Y/%m/%d')
+            },
+            'message': 'آدرس با موفقیت اضافه شد'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
+@require_GET
+@login_required
+def get_address_detail(request):
+    """دریافت جزئیات یک آدرس"""
+    address_id = request.GET.get('address_id')
+
+    if not address_id:
+        return JsonResponse({'success': False, 'error': 'آدرس مشخص نشده است'})
+
+    try:
+        address = UserAddress.objects.get(id=address_id, user=request.user)
+
+        return JsonResponse({
+            'success': True,
+            'address': {
+                'id': address.id,
+                'state': address.state.id,
+                'city': address.city.id,
+                'address_detail': address.addressDetail,
+                'postal_code': address.postalCode
+            }
+        })
+    except UserAddress.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'آدرس پیدا نشد'})
+
+@require_http_methods(["PUT"])
+@login_required
+@csrf_exempt
+def update_user_address(request):
+    """به‌روزرسانی آدرس کاربر"""
+    try:
+        data = json.loads(request.body)
+        address_id = data.get('id')
+
+        if not address_id:
+            return JsonResponse({'success': False, 'error': 'آدرس مشخص نشده است'})
+
+        address = UserAddress.objects.get(id=address_id, user=request.user)
+
+        # به‌روزرسانی فقط فیلدهای اصلی
+        if 'state' in data:
+            address.state = State.objects.get(id=data['state'])
+        if 'city' in data:
+            address.city = City.objects.get(id=data['city'])
+        if 'address_detail' in data:
+            address.addressDetail = data['address_detail'].strip()
+        if 'postal_code' in data:
+            address.postalCode = data['postal_code'].strip()
+
+        address.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'آدرس با موفقیت به‌روزرسانی شد',
+            'address': {
+                'id': address.id,
+                'state': address.state.name,
+                'city': address.city.name,
+                'addressDetail': address.addressDetail,
+                'postalCode': address.postalCode
+            }
+        })
+
+    except UserAddress.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'آدرس پیدا نشد'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@require_POST
+@login_required
+@csrf_exempt
+def delete_user_address(request):
+    """حذف آدرس کاربر"""
+    try:
+        data = json.loads(request.body) if request.body else request.POST
+        address_id = data.get('id')
+
+        if not address_id:
+            return JsonResponse({'success': False, 'error': 'آدرس مشخص نشده است'})
+
+        # حذف فیزیکی
+        address = UserAddress.objects.get(id=address_id, user=request.user)
+        address.delete()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'آدرس با موفقیت حذف شد'
+        })
+
+    except UserAddress.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'آدرس پیدا نشد'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+# =======================
+
+
+# views.py در اپ dashboard
+from django.shortcuts import render
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.csrf import csrf_exempt
+from .models import Notification
+import json
+from django.db import transaction
+
+@login_required
+def notifications_page(request):
+    """صفحه نمایش اعلان‌ها"""
+    # دریافت همه اعلان‌های کاربر
+    notifications = Notification.objects.filter(user=request.user)
+
+    # شمارش اعلان‌های خوانده نشده قبل از بروزرسانی
+    unread_count = notifications.filter(is_read=False).count()
+
+    # علامت‌گذاری همه اعلان‌ها به عنوان خوانده شده
+    if unread_count > 0:
+        # استفاده از تراکنش برای اطمینان از یکپارچگی داده‌ها
+        with transaction.atomic():
+            notifications.filter(is_read=False).update(is_read=True)
+
+        # ریفرش کوئری‌ست برای دریافت داده‌های به‌روز شده
+        notifications = Notification.objects.filter(user=request.user)
+
+    return render(request, 'dashboard_app/notifications/notifications.html', {
+        'notifications': notifications,
+        'unread_count': 0  # پس از بروزرسانی، همه خوانده شده‌اند
+    })
+
+@require_GET
+@login_required
+def get_unread_count(request):
+    """دریافت تعداد اعلان‌های خوانده نشده"""
+    unread_count = Notification.objects.filter(
+        user=request.user,
+        is_read=False
+    ).count()
+
+    return JsonResponse({
+        'unread_count': unread_count
+    })
+
+@require_GET
+@login_required
+def get_notifications(request):
+    """دریافت اعلان‌های کاربر"""
+    try:
+        limit = int(request.GET.get('limit', 10))
+        notifications = Notification.objects.filter(
+            user=request.user
+        ).order_by('-created_at')[:limit]
+
+        notifications_data = []
+        for notification in notifications:
+            notifications_data.append({
+                'id': notification.id,
+                'title': notification.title,
+                'message': notification.message,
+                'type': notification.notification_type,
+                'icon': notification.icon or 'bell',
+                'is_read': notification.is_read,
+                'created_at': notification.get_time_ago(),
+                'order_id': notification.order.id if notification.order else None,
+            })
+
+        unread_count = Notification.objects.filter(
+            user=request.user,
+            is_read=False
+        ).count()
+
+        return JsonResponse({
+            'success': True,
+            'notifications': notifications_data,
+            'unread_count': unread_count
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
+
+@require_POST
+@login_required
+@csrf_exempt
+def mark_as_read(request):
+    """علامت‌گذاری اعلان به عنوان خوانده شده"""
+    try:
+        data = json.loads(request.body) if request.body else request.POST
+        notification_id = data.get('notification_id')
+
+        if notification_id:
+            notification = Notification.objects.get(
+                id=notification_id,
+                user=request.user
+            )
+            notification.is_read = True
+            notification.save()
+        else:
+            # علامت‌گذاری همه
+            Notification.objects.filter(
+                user=request.user,
+                is_read=False
+            ).update(is_read=True)
+
+        unread_count = Notification.objects.filter(
+            user=request.user,
+            is_read=False
+        ).count()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'اعلان خوانده شد',
+            'unread_count': unread_count
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
+@require_POST
+@login_required
+@csrf_exempt
+def delete_notification(request):
+    """حذف اعلان"""
+    try:
+        data = json.loads(request.body) if request.body else request.POST
+        notification_id = data.get('notification_id')
+
+        notification = Notification.objects.get(
+            id=notification_id,
+            user=request.user
+        )
+        notification.delete()
+
+        unread_count = Notification.objects.filter(
+            user=request.user,
+            is_read=False
+        ).count()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'اعلان حذف شد',
+            'unread_count': unread_count
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
+
+# =======================

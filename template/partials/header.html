@@ -1,652 +1,30 @@
- {% load render_partial %}
- <header class="header">
-        <!-- Desktop -->
-        <div class="container mt-5 hidden flex-col gap-y-6 lg:flex">
-            <!-- TOPBAR -->
-            <div class="flex-between">
-
-<div class="relative z-20">
-    <!-- INPUT -->
-    <form method="GET" action="{% url 'search:search_results' %}" class="search-form">
-        <div class="search-btn-open flex gap-x-2 app-border bg-gray-50 dark:bg-gray-700 p-1 rounded-full cursor-pointer ring-blue-400 w-84 transition-all">
-            <button type="submit" class="size-6 p-1.5 flex-center text-gray-100 bg-blue-600 rounded-full w-9 h-9">
-                <svg class="size-6">
-                    <use href="#search" />
-                </svg>
-            </button>
-            <input
-                placeholder="جستجو در سایا مد..."
-                type="text"
-                name="q"
-                class="search-input bg-transparent outline-none w-full"
-                autocomplete="off"
-            >
-        </div>
-    </form>
-
-    <!-- Search Modal -->
-    <div class="search-modal hidden space-y-4">
-        <!-- Result -->
-        <div class="search-suggestions-container hidden">
-            <span class="flex items-center text-sm gap-x-1 text-gray-600 dark:text-gray-200">
-                <p>نتیجه جستجو : <span class="font-DanaMedium text-blue-400 search-query-display"></span></p>
-            </span>
-            <ul class="pt-4 text-gray-500 dark:text-gray-300 flex flex-col gap-y-4 child:flex-between child:cursor-pointer search-suggestions-list">
-                <!-- نتایج با AJAX پر می‌شوند -->
-            </ul>
-        </div>
-
-        <!-- Trend -->
-        <div class="pt-4 popular-searches-container">
-            <span class="flex items-center gap-x-1 text-sm text-gray-500 dark:text-gray-200">
-                <svg class="size-4">
-                    <use href="#fire" />
-                </svg>
-                <p>جستجو های پرطرفدار :</p>
-            </span>
-            <ul class="w-full flex items-center gap-1.5 mt-3 child:search-modal-list-item popular-searches-list">
-                <!-- با AJAX پر می‌شود -->
-            </ul>
-        </div>
-    </div>
-</div>
-                <!-- Logo -->
-                <a href="index.html" class="flex flex-col text-center ml-20">
-                    <span class="font-MorabbaMedium text-4xl flex items-center">
-                        <span class="text-blue-500">سایا مد</span> شاپ
-                    </span>
-                    <p class="font-DanaMedium text-gray-400">لوازم تجهیزات پزشکی و بهداشتی</p>
-                </a>
-                <!--  Action -->
-               <div class="flex items-center gap-x-3">
-    {% if request.user.is_authenticated %}
-        <!-- Account Btn (when user is logged in) -->
-        <button class="group relative flex-center py-2 px-4 app-border rounded-full app-hover delay-75">
-            <a href="" class="flex items-center gap-x-1">
-                <svg class="size-5">
-                    <use href="#user" />
-                </svg>
-                <p>{{ request.user.mobileNumber }}</p>
-            </a>
-            <div class="absolute dark:border-none border border-gray-100 w-52 p-2 bg-white text-gray-900 dark:text-gray-100 flex flex-col gap-y-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-hover:top-12 transition-all delay-100 dark:bg-gray-700 top-20 rounded-lg text-base shadow child:transition-all duration-300 child:py-1.5 child:px-2 z-30 child:rounded-lg child:w-full">
-                <a href=" " class="flex items-center gap-x-2 hover:bg-blue-500 hover:text-gray-100">
-                    <svg class="h-5 w-5">
-                        <use href="#user"></use>
-                    </svg>
-                    سفارشات من
-                </a>
-                <a href="" class="flex items-center gap-x-2 hover:bg-blue-500 hover:text-gray-100">
-                    <svg class="h-5 w-5">
-                        <use href="#envelope"></use>
-                    </svg>
-                    لیست پیام ها
-                </a>
-                <a href="" class="flex items-center gap-x-2 hover:bg-blue-500 hover:text-gray-100">
-                    <svg class="h-5 w-5">
-                        <use href="#cog"></use>
-                    </svg>
-                    اطلاعات کاربری
-                </a>
-                <a href="{% url 'user:logout' %}" class="flex items-center gap-x-2 hover:bg-red-500 dark:hover:bg-red-500 hover:text-gray-100">
-                    <svg class="h-5 w-5">
-                        <use href="#arrow-left-end"></use>
-                    </svg>
-                    خروج از حساب
-                </a>
-            </div>
-        </button>
-    {% else %}
-        <!-- LOGIN (when user is not logged in) -->
-        <button class="flex-center py-2 px-4 app-border rounded-full app-hover">
-            <a href="{% url 'user:send_mobile' %}" class="flex items-center gap-x-2">
-                <p>ورود | ثبت‌نام</p>
-                <svg class="size-5">
-                    <use href="#arrow-left-end" />
-                </svg>
-            </a>
-        </button>
-    {% endif %}
-
-    <!-- Toggle theme -->
-    <button class="toggle-theme flex-center p-2 app-border rounded-full app-hover">
-        <svg class="inline-block dark:hidden size-6">
-            <use href="#moon" />
-        </svg>
-        <svg class="hidden dark:inline size-6">
-            <use href="#sun" />
-        </svg>
-    </button>
-
-    <!-- Shoping cart -->
-    <button class="flex-center p-2 bg-blue-600 text-gray-100 rounded-full open-cart relative">
-        <svg class="size-6">
-            <use href="#shopping-bag" />
-        </svg>
-        <span class="cart-counter absolute -top-1 -right-1 flex h-4 w-4" style="display: none;">
-            <span
-                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-600 opacity-75"></span>
-            <span
-                class="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-xs pt-1 flex-center text-white">0</span>
-        </span>
-    </button>
-    <!-- Cart -->
-    <div class="cart ">
-        <!-- HEADER -->
-        <div
-            class="flex items-center justify-between pb-2 border-b-2 border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-300">
-            <h2 class="font-DanaMedium text-lg">سبد خرید <span class="text-sm text-gray-400 font-Dana">
-                    (0
-                    مورد)</span></h2>
-            <svg class="size-5 cursor-pointer close-cart mb-.5">
-                <use href="#x-mark" />
-            </svg>
-        </div>
-        <!-- MAIN -->
-        <div class="flex flex-col divide-y-2 divide-gray-200 dark:divide-gray-600 my-4">
-            <!-- CART ITEMS WILL BE LOADED DYNAMICALLY -->
-            <div class="py-8 text-center text-gray-500">
-                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300">
-                    <use href="#shopping-bag"></use>
-                </svg>
-                <p>سبد خرید شما خالی است</p>
-            </div>
-        </div>
-        <!-- FOOTER -->
-        <div
-            class="w-[90%] fixed bottom-2 flex items-center justify-between border-t-2 border-gray-200 dark:border-gray-600 pt-4">
-            <div>
-                <p class="text-gray-500 dark:text-gray-300 text-sm">مبلغ قابل پرداخت :</p>
-                <p class="text-lg text-blue-500 dark:text-blue-400 font-DanaDemiBold cart-total-price">0
-                    <span class="font-Dana text-sm">تومان</span>
-                </p>
-            </div>
-            <a href="{% url 'order:cart_page' %}"
-                class="py-2 px-4 bg-blue-600 flex-center hover:bg-blue-700 transition-all rounded-lg text-gray-200">
-                ثبت سفارش
-            </a>
-        </div>
-    </div>
-</div>
-            </div>
-            <!-- NAVBAR -->
-            <div class="relative flex-between h-16 bg-gray-900 dark:bg-gray-800 rounded-full text-gray-200 px-10">
-                <!-- MENU -->
-                <ul class="flex items-center gap-x-8">
-                    <li class="menu-item">
-                        <a href="{% url 'main:index' %}" class="menu-item_link">
-                            صفحه اصلی
-                        </a>
-                    </li>
-                    <!-- MENU ITEM --- Mega Menu -->
-                   {% render_partial 'product:get_category_tree' %}
-
-                    <li class="menu-item">
-                        <a href="shop.html" class="menu-item_link">
-                            فروشگاه
-                        </a>
-                    </li>
-                    <li class="menu-item">
-                        <a href="{% url 'blog:blog_list' %}" class="menu-item_link">
-                            وبلاگ
-                        </a>
-                    </li>
-                    <!-- MENU ITEM --- Solid submenu -->
-                    <li class="menu-item group">
-                        <a class="menu-item_link cursor-pointer">
-                            منوی ساده
-                            <svg class="size-4 group-hover:rotate-180 duration-300">
-                                <use href="#chevron" />
-                            </svg>
-                        </a>
-                        <ul class="solid-menu">
-                            <li>
-                                <a href="{% url 'main:about' %}">درباره ما</a>
-                            </li>
-                            <li>
-                                <a href="{% url 'main:faq' %}">سوالات متداول</a>
-                            </li>
-                            <li>
-                                <a href="{% url 'main:contact' %}">تماس با ما</a>
-                            </li>
-                            <li class="solid-submenu_link">
-                                <a href="#">صفحات</a>
-                                <svg class="size-4 rotate-90 duration-300">
-                                    <use href="#chevron" />
-                                </svg>
-                                <ul class="solid-submenu">
-                                    <li>
-                                        <a href="shop.html">فروشگاه</a>
-                                    </li>
-                                    <li>
-                                        <a href="product-details.html">جزئیات محصول</a>
-                                    </li>
-                                    <li>
-                                        <a href="dashboard.html">پنل کاربری</a>
-                                    </li>
-                                    <li>
-                                        <a href="shopping-cart.html">سبد خرید</a>
-                                    </li>
-                                    <li>
-                                        <a href="login.html">صفحه ورود</a>
-                                    </li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-                <!-- Addres -->
-                <button onclick="scrollToFooter()" class="flex items-center gap-x-1 text-white hover:text-gray-200 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-white/10">
-                    <svg class="size-6 text-white">
-                        <use href="#map" />
-                    </svg>
-                    <span class="text-sm text-white">موقعیت</span>
-                </button>
-            </div>
-        </div>
-        <!-- Mobile -->
-        <div class="flex justify-center lg:hidden">
-            <!-- Top Navbar -->
-            <nav
-                class="absolute top-0 inset-x-0 w-full h-16 px-4 shadow-sm dark:bg-gray-800 flex items-center justify-between">
-                <!-- Menu -->
-                <button class="open-menu-mobile flex-center p-2 app-border rounded-full">
-                    <svg class=" size-6">
-                        <use href="#bars" />
-                    </svg>
-                </button>
-                <div class="mobile-menu z-50 flex flex-col">
-                    <!--  MENU MOBILE header -->
-                    <div class="flex w-full items-center justify-between border-b-normal pb-4">
-                        <a href="index.html" class="text-xl font-MorabbaMedium">
-                            <span class="text-blue-500">سایا مد</span> شاپ
-                        </a>
-                        <button class="close-menu-mobile">
-                            <svg class="size-5 text-gray-500 dark:text-gray-200">
-                                <use href="#x-mark" />
-                            </svg>
-                        </button>
-                    </div>
-                    <!-- MENU MOBILE CATEGORY & ACTION  -->
-                    <ul class="flex flex-col gap-y-2 text-gray-800 dark:text-gray-100 mt-4">
-                        <li>
-                            <span class="open-category mobile-menu-item">
-                                <svg class="size-5">
-                                    <use href="#squares" />
-                                </svg>
-                                <a href="#">دسته بندی</a>
-                            </span>
-                            <!-- MENU CATEGORY SLIDE -->
-                            <div class="category-slide">
-                                <div class=" w-full border-b-normal pb-4">
-                                    <span class="close-category-slide flex items-center gap-x-1 cursor-pointer">
-                                        <svg class="size-4">
-                                            <use href="#arrow" />
-                                        </svg>
-                                        دسته بندی
-                                    </span>
-                                </div>
-                                <ul class="child:flex pt-4 child:cursor-pointer space-y-2">
-                                    <li>
-                                        <div class="relative open-detail-category">
-                                            <span class="mobile-menu-category-badge">
-                                                موبایل
-                                            </span>
-                                            <img src="{{media_url}}/images/category/1.webp" class="h-28 w-full object-cover rounded"
-                                                alt="">
-                                        </div>
-                                        <!-- Mobile SLIDE -->
-                                        <div class="detail-category">
-                                            <span
-                                                class="close-detail-category flex-center gap-x-1 mx-4 bg-gray-100 dark:bg-gray-900 rounded p-2 cursor-pointer">
-                                                موبایل
-                                                <svg class="size-4">
-                                                    <use href="#arrow" />
-                                                </svg>
-                                            </span>
-                                            <ul
-                                                class="mt-5 flex flex-col child:py-3 divide-y-2 dark:divide-gray-700 child:px-4">
-                                                <li>
-                                                    <span class="flex group items-center justify-between open-submenu">
-                                                        <a href="#">گوشی‌های هوشمند</a>
-                                                        <svg class="size-4 rotate-90">
-                                                            <use href="#chevron" />
-                                                        </svg>
-                                                    </span>
-                                                    <ul
-                                                        class="menu-category-submenu child:list-disc child-hover:mr-2 child:transition-all child:duration-300">
-                                                        <li href="">آیفون</li>
-                                                        <li href="">سامسونگ</li>
-                                                        <li href="">شیائومی</li>
-                                                        <li href="" class="text-red-500">پرفروش‌ها</li>
-                                                        <li href="">نوکیا</li>
-                                                    </ul>
-                                                </li>
-                                                <li>
-                                                    <span class="flex group items-center justify-between open-submenu">
-                                                        <a href="#">لوازم جانبی</a>
-                                                        <svg class="size-4 rotate-90">
-                                                            <use href="#chevron" />
-                                                        </svg>
-                                                    </span>
-                                                    <ul
-                                                        class="menu-category-submenu child:list-disc child-hover:mr-2 child:transition-all child:duration-300">
-                                                        <li href="">قاب موبایل</li>
-                                                        <li href="">محافظ صفحه</li>
-                                                        <li href="">پاوربانک</li>
-                                                        <li href="" class="text-red-500">تخفیف‌ها</li>
-                                                        <li href="">شارژر</li>
-                                                    </ul>
-                                                </li>
-                                                <li>
-                                                    <span class="flex group items-center justify-between open-submenu">
-                                                        <a href="#">گجت‌های پوشیدنی</a>
-                                                        <svg class="size-4 rotate-90">
-                                                            <use href="#chevron" />
-                                                        </svg>
-                                                    </span>
-                                                    <ul
-                                                        class="menu-category-submenu child:list-disc child-hover:mr-2 child:transition-all child:duration-300">
-                                                        <li href="">ساعت هوشمند</li>
-                                                        <li href="">دستبند هوشمند</li>
-                                                        <li href="">هدفون بی‌سیم</li>
-                                                        <li href="" class="text-red-500">جدیدترین‌ها</li>
-                                                        <li href="">هدست</li>
-                                                    </ul>
-                                                </li>
-                                                <li>
-                                                    <span class="flex group items-center justify-between open-submenu">
-                                                        <a href="#">لوازم مخصوص بازی</a>
-                                                        <svg class="size-4 rotate-90">
-                                                            <use href="#chevron" />
-                                                        </svg>
-                                                    </span>
-                                                    <ul
-                                                        class="menu-category-submenu child:list-disc child-hover:mr-2 child:transition-all child:duration-300">
-                                                        <li href="">کنترلر بازی</li>
-                                                        <li href="">دسته بازی موبایل</li>
-                                                        <li href="">لوازم جانبی گیمرها</li>
-                                                        <li href="" class="text-red-500">محصولات جدید</li>
-                                                    </ul>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </li>
-                    <li class="menu-item">
-                        <a href="{% url 'main:about' %}" class="menu-item_link">
-                            درباره ما
-                        </a>
-                    </li>
-                    <li class="menu-item">
-                        <a href="{% url 'main:contact' %}" class="menu-item_link">
-                            تماس با ما
-                        </a>
-                    </li>
-                    <li class="menu-item">
-                        <a href="{% url 'main:faq' %}" class="menu-item_link">
-                            سوالات متداول
-                        </a>
-                    </li>
-                                    <li>
-                                        <div class="relative open-detail-category">
-                                            <span class="mobile-menu-category-badge">
-                                                لپ تاپ
-                                            </span>
-                                            <img src="{{media_url}}/images/category/2.jpg" class="h-28 w-full object-cover rounded"
-                                                alt="">
-                                        </div>
-                                        <div class="detail-category">
-                                            <span
-                                                class="close-detail-category flex-center gap-x-1 mx-4 bg-gray-100 dark:bg-gray-900 rounded p-2 cursor-pointer">
-                                                لپ تاپ
-                                                <svg class="size-4">
-                                                    <use href="#arrow" />
-                                                </svg>
-                                            </span>
-                                            <ul
-                                                class="mt-5 flex flex-col child:py-3 divide-y-2 dark:divide-gray-700 child:px-4">
-                                                <li>
-                                                    <span class="flex group items-center justify-between open-submenu">
-                                                        <a href="#">لپ‌تاپ‌ها</a>
-                                                        <svg class="size-4 rotate-90">
-                                                            <use href="#chevron" />
-                                                        </svg>
-                                                    </span>
-                                                    <ul
-                                                        class="menu-category-submenu child:list-disc child-hover:mr-2 child:transition-all child:duration-300">
-                                                        <li href="">ایسر</li>
-                                                        <li href="">دل</li>
-                                                        <li href="">اچ‌پی</li>
-                                                        <li href="" class="text-red-500">پرفروش‌ها</li>
-                                                        <li href="">لنوو</li>
-                                                    </ul>
-                                                </li>
-                                                <li>
-                                                    <span class="flex group items-center justify-between open-submenu">
-                                                        <a href="#">لوازم جانبی</a>
-                                                        <svg class="size-4 rotate-90">
-                                                            <use href="#chevron" />
-                                                        </svg>
-                                                    </span>
-                                                    <ul
-                                                        class="menu-category-submenu child:list-disc child-hover:mr-2 child:transition-all child:duration-300">
-                                                        <li href="">کیبورد</li>
-                                                        <li href="">ماوس</li>
-                                                        <li href="">کوله لپ‌تاپ</li>
-                                                        <li href="" class="text-red-500">محصولات تخفیف‌دار</li>
-                                                        <li href="">پایه خنک‌کننده</li>
-                                                    </ul>
-                                                </li>
-                                                <li>
-                                                    <span class="flex group items-center justify-between open-submenu">
-                                                        <a href="#">قطعات و تجهیزات</a>
-                                                        <svg class="size-4 rotate-90">
-                                                            <use href="#chevron" />
-                                                        </svg>
-                                                    </span>
-                                                    <ul
-                                                        class="menu-category-submenu child:list-disc child-hover:mr-2 child:transition-all child:duration-300">
-                                                        <li href="">هارد اکسترنال</li>
-                                                        <li href="">رم لپ‌تاپ</li>
-                                                        <li href="">شارژر لپ‌تاپ</li>
-                                                        <li href="" class="text-red-500">قطعات ویژه</li>
-                                                        <li href="">کارت گرافیک</li>
-                                                    </ul>
-                                                </li>
-                                                <li>
-                                                    <span class="flex group items-center justify-between open-submenu">
-                                                        <a href="#">نرم‌افزارها</a>
-                                                        <svg class="size-4 rotate-90">
-                                                            <use href="#chevron" />
-                                                        </svg>
-                                                    </span>
-                                                    <ul
-                                                        class="menu-category-submenu child:list-disc child-hover:mr-2 child:transition-all child:duration-300">
-                                                        <li href="">آنتی‌ویروس</li>
-                                                        <li href="">نرم‌افزارهای اداری</li>
-                                                        <li href="">نرم‌افزارهای طراحی</li>
-                                                        <li href="" class="text-red-500">جدیدترین نرم‌افزارها</li>
-                                                    </ul>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </li>
-                                    <li>
-                                        <div class="relative open-detail-category">
-                                            <span class="mobile-menu-category-badge">
-                                                هدفون
-                                            </span>
-                                            <img src="{{media_url}}/images/category/4.webp" class="h-28 w-full object-cover rounded"
-                                                alt="">
-                                        </div>
-                                        <div class="detail-category">
-                                            <span
-                                                class="close-detail-category flex-center gap-x-1 mx-4 bg-gray-100 dark:bg-gray-900 rounded p-2 cursor-pointer">
-                                                هدفون
-                                                <svg class="size-4">
-                                                    <use href="#arrow" />
-                                                </svg>
-                                            </span>
-                                            <ul
-                                                class="mt-5 flex flex-col child:py-3 divide-y-2 dark:divide-gray-700 child:px-4">
-                                                <li>
-                                                    <span class="flex group items-center justify-between open-submenu">
-                                                        <a href="#">هدفون‌های بی‌سیم</a>
-                                                        <svg class="size-4 rotate-90">
-                                                            <use href="#chevron" />
-                                                        </svg>
-                                                    </span>
-                                                    <ul
-                                                        class="menu-category-submenu child:list-disc child-hover:mr-2 child:transition-all child:duration-300">
-                                                        <li href="">ایرپاد</li>
-                                                        <li href="">هدفون‌های بلوتوثی</li>
-                                                        <li href="">هدفون‌های ورزشی</li>
-                                                        <li href="" class="text-red-500">محصولات تخفیف‌دار</li>
-                                                        <li href="">هدفون‌های نویزگیر</li>
-                                                    </ul>
-                                                </li>
-                                                <li>
-                                                    <span class="flex group items-center justify-between open-submenu">
-                                                        <a href="#">هدفون‌های باسیم</a>
-                                                        <svg class="size-4 rotate-90">
-                                                            <use href="#chevron" />
-                                                        </svg>
-                                                    </span>
-                                                    <ul
-                                                        class="menu-category-submenu child:list-disc child-hover:mr-2 child:transition-all child:duration-300">
-                                                        <li href="">هدفون‌های استودیویی</li>
-                                                        <li href="">هدفون‌های گیمینگ</li>
-                                                        <li href="">هدفون‌های اقتصادی</li>
-                                                        <li href="" class="text-red-500">مدل‌های ویژه</li>
-                                                        <li href="">هدفون‌های حرفه‌ای</li>
-                                                    </ul>
-                                                </li>
-                                                <li>
-                                                    <span class="flex group items-center justify-between open-submenu">
-                                                        <a href="#">لوازم جانبی هدفون</a>
-                                                        <svg class="size-4 rotate-90">
-                                                            <use href="#chevron" />
-                                                        </svg>
-                                                    </span>
-                                                    <ul
-                                                        class="menu-category-submenu child:list-disc child-hover:mr-2 child:transition-all child:duration-300">
-                                                        <li href="">کیس شارژ</li>
-                                                        <li href="">پد گوش</li>
-                                                        <li href="">کابل و مبدل</li>
-                                                        <li href="" class="text-red-500">محصولات تخفیف‌دار</li>
-                                                        <li href="">هولدر هدفون</li>
-                                                    </ul>
-                                                </li>
-                                                <li>
-                                                    <span class="flex group items-center justify-between open-submenu">
-                                                        <a href="#">برندها</a>
-                                                        <svg class="size-4 rotate-90">
-                                                            <use href="#chevron" />
-                                                        </svg>
-                                                    </span>
-                                                    <ul
-                                                        class="menu-category-submenu child:list-disc child-hover:mr-2 child:transition-all child:duration-300">
-                                                        <li href="">سونی</li>
-                                                        <li href="">بوز</li>
-                                                        <li href="">جبرا</li>
-                                                        <li href="" class="text-red-500">برندهای تخفیف‌دار</li>
-                                                        <li href="">انکر</li>
-                                                    </ul>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </li>
-                                    <li>
-                                        <div class="relative open-detail-category">
-                                            <span class="mobile-menu-category-badge">
-                                                پرفروش ها
-                                            </span>
-                                            <img src="{{media_url}}/images/category/3.webp" class="h-28 w-full object-cover rounded"
-                                                alt="">
-                                        </div>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li class="mobile-menu-item">
-                            <svg class="size-5">
-                                <use href="#user" />
-                            </svg>
-                            <a href="dashboard.html">حساب کاربری</a>
-                        </li>
-                        <li class="mobile-menu-item">
-                            <svg class="size-5">
-                                <use href="#heart" />
-                            </svg>
-                            <a href="dashboard-favorite.html">علاقه مندی ها</a>
-                        </li>
-                        <li class="mobile-menu-item">
-                            <svg class="size-5">
-                                <use href="#shopping-cart" />
-                            </svg>
-                            <a href="shopping-cart.html">سبد خرید</a>
-                        </li>
-                        <li class="mobile-menu-item">
-                            <svg class="size-5">
-                                <use href="#check-badge" />
-                            </svg>
-                            <a href="#">دربـاره مـا</a>
-                        </li>
-                        <li class="mobile-menu-item">
-                            <svg class="size-5">
-                                <use href="#phone" />
-                            </svg>
-                            <a href="contact-us.html">تـماس بـا مـا</a>
-                        </li>
-                    </ul>
-                </div>
-                <!-- Logo -->
-                <a href="index.html" class="flex flex-col text-center">
-                    <span class="font-MorabbaMedium text-3xl flex items-center">
-                        <span class="text-blue-500">سایا مد</span> شاپ
-                    </span>
-                </a>
-                <!-- Toggle theme -->
-                <button class="toggle-theme flex-center p-2 app-border rounded-full ">
-                    <svg class="inline-block dark:hidden size-6">
-                        <use href="#moon" />
-                    </svg>
-                    <svg class="hidden dark:inline size-6">
-                        <use href="#sun" />
-                    </svg>
-                </button>
-            </nav>
-            <!-- Search baer -->
-            <button class="open-mobile_search-modal">
-                <svg class=" size-6">
-                    <use href="#search" />
-                </svg>
-                <p>جستجو در <span class="font-MorabbaMedium">سایا مد شاپ</span></p>
-            </button>
-            <!-- Search Moadal -->
-            <!-- templates/includes/search_modal.html -->
-            <div class="mobile_search-modal">
-                <!-- TOP -->
-                <div class="w-full flex items-center gap-x-2">
-                    <form method="GET" action="{% url 'search:search_results' %}" class="w-full">
-                        <div class="w-full flex items-center gap-x-1 bg-gray-200 dark:bg-gray-800 text-gray-500 py-2 px-4 rounded-3xl">
+{% load render_partial %}
+<header class="header">
+    <!-- Desktop -->
+    <div class="container mt-5 hidden flex-col gap-y-6 lg:flex">
+        <!-- TOPBAR -->
+        <div class="flex-between">
+            <div class="relative z-20">
+                <!-- INPUT -->
+                <form method="GET" action="{% url 'search:search_results' %}" class="search-form">
+                    <div class="search-btn-open flex gap-x-2 app-border bg-gray-50 dark:bg-gray-700 p-1 rounded-full cursor-pointer ring-blue-400 w-84 transition-all">
+                        <button type="submit" class="size-6 p-1.5 flex-center text-gray-100 bg-blue-600 rounded-full w-9 h-9">
                             <svg class="size-6">
                                 <use href="#search" />
                             </svg>
-                            <input
-                                type="text"
-                                name="q"
-                                placeholder="جستجو در همه کالاها"
-                                class="bg-transparent w-full outline-none search-input"
-                                autocomplete="off"
-                            >
-                        </div>
-                    </form>
-                    <svg class="size-6 close-mobile_search-modal cursor-pointer">
-                        <use href="#x-mark" />
-                    </svg>
-                </div>
+                        </button>
+                        <input
+                            placeholder="جستجو در سایا مد..."
+                            type="text"
+                            name="q"
+                            class="search-input bg-transparent outline-none w-full"
+                            autocomplete="off"
+                        >
+                    </div>
+                </form>
 
-                <div class="w-full space-y-4">
+                <!-- Search Modal -->
+                <div class="search-modal hidden space-y-4">
                     <!-- Result -->
                     <div class="search-suggestions-container hidden">
                         <span class="flex items-center text-sm gap-x-1 text-gray-600 dark:text-gray-200">
@@ -671,289 +49,741 @@
                     </div>
                 </div>
             </div>
-            <!-- bottom Navbar-->
-            <ul class="bottom-navbar">
-                <li class="dark:text-sky-400 text-blue-500 font-DanaMedium">
-                    <svg class="size-5">
-                        <use href="#home" />
+
+            <!-- Logo -->
+            <a href="index.html" class="flex flex-col text-center ml-20">
+                <span class="font-MorabbaMedium text-4xl flex items-center">
+                    <span class="text-blue-500">سایا مد</span> شاپ
+                </span>
+                <p class="font-DanaMedium text-gray-400">لوازم تجهیزات پزشکی و بهداشتی</p>
+            </a>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-x-3">
+                <!-- Notification Button -->
+                {% if request.user.is_authenticated %}
+                <div class="group relative">
+                    <button class="flex-center py-2 px-4 app-border rounded-full app-hover delay-75">
+                        <a href="{% url 'dashboard:notifications' %}" class="flex items-center gap-x-1 relative">
+                            <svg class="size-5">
+                                <use href="#bell" />
+                            </svg>
+                            <!-- Notification Badge -->
+                            <span id="notification-badge"
+                                  class="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center hidden">
+                                0
+                            </span>
+                            <span class="hidden md:inline">پیام‌ها</span>
+                        </a>
+                    </button>
+
+                    <!-- Notification Dropdown -->
+
+                </div>
+                {% endif %}
+
+                <!-- Account Button -->
+                {% if request.user.is_authenticated %}
+                <button class="group relative flex-center py-2 px-4 app-border rounded-full app-hover delay-75">
+                    <a href="{% url 'dashboard:home' %}" class="flex items-center gap-x-1">
+                        <svg class="size-5">
+                            <use href="#user" />
+                        </svg>
+                        <p>{{ request.user.mobileNumber }}</p>
+                    </a>
+                    <div class="absolute dark:border-none border border-gray-100 w-52 p-2 bg-white text-gray-900 dark:text-gray-100 flex flex-col gap-y-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-hover:top-12 transition-all delay-100 dark:bg-gray-700 top-20 rounded-lg text-base shadow child:transition-all duration-300 child:py-1.5 child:px-2 z-30 child:rounded-lg child:w-full">
+                        <a href="{% url 'dashboard:orders' %}" class="flex items-center gap-x-2 hover:bg-blue-500 hover:text-gray-100">
+                            <svg class="h-5 w-5">
+                                <use href="#user"></use>
+                            </svg>
+                            سفارشات من
+                        </a>
+                        <a href="{% url 'dashboard:notifications' %}" class="flex items-center gap-x-2 hover:bg-blue-500 hover:text-gray-100">
+                            <svg class="h-5 w-5">
+                                <use href="#envelope"></use>
+                            </svg>
+                            لیست پیام‌ها
+                            <span style='width: 20px;' id="header-notification-count" class="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full hidden">0</span>
+                        </a>
+
+                        <a href="{% url 'user:logout' %}" class="flex items-center gap-x-2 hover:bg-red-500 dark:hover:bg-red-500 hover:text-gray-100">
+                            <svg class="h-5 w-5">
+                                <use href="#arrow-left-end"></use>
+                            </svg>
+                            خروج از حساب
+                        </a>
+                    </div>
+                </button>
+                {% else %}
+                <!-- LOGIN (when user is not logged in) -->
+                <button class="flex-center py-2 px-4 app-border rounded-full app-hover">
+                    <a href="{% url 'user:send_mobile' %}" class="flex items-center gap-x-2">
+                        <p>ورود | ثبت‌نام</p>
+                        <svg class="size-5">
+                            <use href="#arrow-left-end" />
+                        </svg>
+                    </a>
+                </button>
+                {% endif %}
+
+                <!-- Toggle theme -->
+                <button class="toggle-theme flex-center p-2 app-border rounded-full app-hover">
+                    <svg class="inline-block dark:hidden size-6">
+                        <use href="#moon" />
                     </svg>
-                    <a href="index.html">خانه</a>
-                </li>
-                <li>
-                    <svg class="size-5">
-                        <use href="#squares" />
+                    <svg class="hidden dark:inline size-6">
+                        <use href="#sun" />
                     </svg>
-                    <a href="shop.html">فروشگاه</a>
-                </li>
-                <li class="relative">
-                    <!-- Mobile Cart Counter -->
-                    <span class="mobile-cart-counter absolute -top-1 -right-1 flex h-4 w-4 z-10" style="display: none;">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-600 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-xs flex-center text-white font-bold">0</span>
-                    </span>
-                    <svg class="size-5">
+                </button>
+
+                <!-- Shopping cart -->
+                <button class="flex-center p-2 bg-blue-600 text-gray-100 rounded-full open-cart relative">
+                    <svg class="size-6">
                         <use href="#shopping-bag" />
                     </svg>
-                    <a href="shopping-cart.html">سبد خرید</a>
-                </li>
-                <li>
-                    <svg class="size-5">
-                        <use href="#user" />
-                    </svg>
-                    <a href="dashboard.html">حساب من</a>
-                </li>
-            </ul>
+                    <span class="cart-counter absolute -top-1 -right-1 flex h-4 w-4" style="display: none;">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-600 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-xs pt-1 flex-center text-white">0</span>
+                    </span>
+                </button>
+
+                <!-- Cart -->
+                <div class="cart ">
+                    <!-- HEADER -->
+                    <div class="flex items-center justify-between pb-2 border-b-2 border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-300">
+                        <h2 class="font-DanaMedium text-lg">سبد خرید <span class="text-sm text-gray-400 font-Dana">(0 مورد)</span></h2>
+                        <svg class="size-5 cursor-pointer close-cart mb-.5">
+                            <use href="#x-mark" />
+                        </svg>
+                    </div>
+                    <!-- MAIN -->
+                    <div class="flex flex-col divide-y-2 divide-gray-200 dark:divide-gray-600 my-4">
+                        <!-- CART ITEMS WILL BE LOADED DYNAMICALLY -->
+                        <div class="py-8 text-center text-gray-500">
+                            <svg class="w-16 h-16 mx-auto mb-4 text-gray-300">
+                                <use href="#shopping-bag"></use>
+                            </svg>
+                            <p>سبد خرید شما خالی است</p>
+                        </div>
+                    </div>
+                    <!-- FOOTER -->
+                    <div class="w-[90%] fixed bottom-2 flex items-center justify-between border-t-2 border-gray-200 dark:border-gray-600 pt-4">
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-300 text-sm">مبلغ قابل پرداخت :</p>
+                            <p class="text-lg text-blue-500 dark:text-blue-400 font-DanaDemiBold cart-total-price">0
+                                <span class="font-Dana text-sm">تومان</span>
+                            </p>
+                        </div>
+                        <a href="{% url 'order:cart_page' %}"
+                            class="py-2 px-4 bg-blue-600 flex-center hover:bg-blue-700 transition-all rounded-lg text-gray-200">
+                            ثبت سفارش
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
 
+        <!-- NAVBAR -->
+        <div class="relative flex-between h-16 bg-gray-900 dark:bg-gray-800 rounded-full text-gray-200 px-10">
+            <!-- MENU -->
+            <ul class="flex items-center gap-x-8">
+                <li class="menu-item">
+                    <a href="{% url 'main:index' %}" class="menu-item_link">
+                        صفحه اصلی
+                    </a>
+                </li>
+                <!-- MENU ITEM --- Mega Menu -->
+                {% render_partial 'product:get_category_tree' %}
+                <li class="menu-item">
+                    <a href="shop.html" class="menu-item_link">
+                        فروشگاه
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="{% url 'blog:blog_list' %}" class="menu-item_link">
+                        وبلاگ
+                    </a>
+                </li>
+                <!-- MENU ITEM --- Solid submenu -->
+                <li class="menu-item group">
+                    <a class="menu-item_link cursor-pointer">
+                        منوی ساده
+                        <svg class="size-4 group-hover:rotate-180 duration-300">
+                            <use href="#chevron" />
+                        </svg>
+                    </a>
+                    <ul class="solid-menu">
+                        <li>
+                            <a href="{% url 'main:about' %}">درباره ما</a>
+                        </li>
+                        <li>
+                            <a href="{% url 'main:faq' %}">سوالات متداول</a>
+                        </li>
+                        <li>
+                            <a href="{% url 'main:contact' %}">تماس با ما</a>
+                        </li>
+                        <li class="solid-submenu_link">
+                            <a href="#">صفحات</a>
+                            <svg class="size-4 rotate-90 duration-300">
+                                <use href="#chevron" />
+                            </svg>
+                            <ul class="solid-submenu">
+                                <li>
+                                    <a href="shop.html">فروشگاه</a>
+                                </li>
+                                <li>
+                                    <a href="product-details.html">جزئیات محصول</a>
+                                </li>
+                                <li>
+                                    <a href="dashboard.html">پنل کاربری</a>
+                                </li>
+                                <li>
+                                    <a href="shopping-cart.html">سبد خرید</a>
+                                </li>
+                                <li>
+                                    <a href="login.html">صفحه ورود</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            <!-- Address -->
+            <button onclick="scrollToFooter()" class="flex items-center gap-x-1 text-white hover:text-gray-200 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-white/10">
+                <svg class="size-6 text-white">
+                    <use href="#map" />
+                </svg>
+                <span class="text-sm text-white">موقعیت</span>
+            </button>
+        </div>
+    </div>
 
+    <!-- Mobile -->
+    <div class="flex justify-center lg:hidden">
+        <!-- Top Navbar -->
+        <nav class="absolute top-0 inset-x-0 w-full h-16 px-4 shadow-sm dark:bg-gray-800 flex items-center justify-between">
+            <!-- Menu -->
+            <button class="open-menu-mobile flex-center p-2 app-border rounded-full">
+                <svg class="size-6">
+                    <use href="#bars" />
+                </svg>
+            </button>
+            <div class="mobile-menu z-50 flex flex-col">
+                <!-- MENU MOBILE header -->
+                <div class="flex w-full items-center justify-between border-b-normal pb-4">
+                    <a href="index.html" class="text-xl font-MorabbaMedium">
+                        <span class="text-blue-500">سایا مد</span> شاپ
+                    </a>
+                    <button class="close-menu-mobile">
+                        <svg class="size-5 text-gray-500 dark:text-gray-200">
+                            <use href="#x-mark" />
+                        </svg>
+                    </button>
+                </div>
 
-        <!-- Slider -->
-        {% if head_sliders %}
-        <div class="px-3 lg:container group w-full mt-4 lg:mt-10">
-                  <div dir="rtl" class="swiper header-slider h-52 md:h-96 cursor-pointer">
-                      <div class="swiper-wrapper">
-                          {% for slider in head_sliders %}
-                          <a href="{% if slider.link %}{{ slider.link }}{% else %}#{% endif %}" class="swiper-slide">
-                              {% if slider.imageName %}
-                              <img src="{{ slider.imageName.url }}" class="rounded-xl" alt="{{ slider.altSlide }}">
-                              {% else %}
-                              <img src="{{ media_url }}/images/default-slider.jpg" class="rounded-xl" alt="{{ slider.altSlide }}">
-                              {% endif %}
-                          </a >
-                          {% empty %}
-                          <!-- اسلایدر پیش‌فرض اگر هیچ اسلایدی وجود ندارد -->
-                          <a href="shop.html" class="swiper-slide">
-                              <img src="{{ media_url }}/images/banner/default-slider.webp" class="rounded-xl" alt="فروشگاه">
-                          </a >
-                          {% endfor %}
-                      </div>
-                      <div class="swiper-pagination-wrapper">
-                          <div class="swiper-pagination"></div>
-                      </div>
+                <!-- MENU MOBILE CATEGORY & ACTION -->
+                <ul class="flex flex-col gap-y-2 text-gray-800 dark:text-gray-100 mt-4">
+                    <li>
+                        <span class="open-category mobile-menu-item">
+                            <svg class="size-5">
+                                <use href="#squares" />
+                            </svg>
+                            <a href="#">دسته بندی</a>
+                        </span>
+                        <!-- MENU CATEGORY SLIDE -->
+                        <div class="category-slide">
+                            <!-- محتوای دسته‌بندی موبایل -->
+                        </div>
+                    </li>
+                    {% if request.user.is_authenticated %}
+                    <li class="mobile-menu-item">
+                        <svg class="size-5">
+                            <use href="#bell" />
+                        </svg>
+                        <a href="{% url 'dashboard:notifications' %}">پیام‌ها
+                            <span style='width: 20px;' id="mobile-notification-badge" class="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full hidden">0</span>
+                        </a>
+                    </li>
+                    <li class="mobile-menu-item">
+                        <svg class="size-5">
+                            <use href="#user" />
+                        </svg>
+                        <a href="dashboard.html">حساب کاربری</a>
+                    </li>
+                    {% else %}
+                    <li class="mobile-menu-item">
+                        <svg class="size-5">
+                            <use href="#user" />
+                        </svg>
+                        <a href="{% url 'user:send_mobile' %}">ورود | ثبت‌نام</a>
+                    </li>
+                    {% endif %}
+                    <li class="mobile-menu-item">
+                        <svg class="size-5">
+                            <use href="#heart" />
+                        </svg>
+                        <a href="dashboard-favorite.html">علاقه‌مندی‌ها</a>
+                    </li>
+                    <li class="mobile-menu-item">
+                        <svg class="size-5">
+                            <use href="#shopping-cart" />
+                        </svg>
+                        <a href="shopping-cart.html">سبد خرید</a>
+                    </li>
+                    <li class="mobile-menu-item">
+                        <svg class="size-5">
+                            <use href="#check-badge" />
+                        </svg>
+                        <a href="{% url 'main:about' %}">درباره ما</a>
+                    </li>
+                    <li class="mobile-menu-item">
+                        <svg class="size-5">
+                            <use href="#phone" />
+                        </svg>
+                        <a href="contact-us.html">تماس با ما</a>
+                    </li>
+                </ul>
+            </div>
 
-                      <!-- Swiper Navigation -->
-                      <div
-                          class="absolute z-10 bottom-5 opacity-0 invisible group-hover:opacity-100 transition-all duration-300 group-hover:visible right-6 hidden lg:flex items-center gap-x-2 child:flex-center child:w-9 child:h-9 child:cursor-pointer child:bg-white child:dark:bg-gray-800 child:text-gray-700 child:dark:text-gray-200 child:rounded-full child:shadow child-hover:text-blue-600 child-hover:dark:text-blue-500">
-                          <button class="button-prev">
-                              <svg class="size-5 -rotate-90">
-                                  <use href="#chevron" />
-                              </svg>
-                          </button>
-                          <button class="button-next">
-                              <svg class="size-5 rotate-90">
-                                  <use href="#chevron" />
-                              </svg>
-                          </button>
-                      </div>
+            <!-- Logo -->
+            <a href="index.html" class="flex flex-col text-center">
+                <span class="font-MorabbaMedium text-3xl flex items-center">
+                    <span class="text-blue-500">سایا مد</span> شاپ
+                </span>
+            </a>
 
-                  </div>
-              </div>
-        {% endif %}
+            <!-- Toggle theme & Notification for Mobile -->
+            <div class="flex items-center gap-x-2">
+                {% if request.user.is_authenticated %}
+                <a href="{% url 'dashboard:notifications' %}" class="relative p-2">
+                    <svg class="size-6">
+                        <use href="#bell" />
+                    </svg>
+                    <span id="mobile-header-notification-badge"
+                          class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center hidden">
+                        0
+                    </span>
+                </a>
+                {% endif %}
 
-    </header>
+                <button class="toggle-theme flex-center p-2 app-border rounded-full">
+                    <svg class="inline-block dark:hidden size-6">
+                        <use href="#moon" />
+                    </svg>
+                    <svg class="hidden dark:inline size-6">
+                        <use href="#sun" />
+                    </svg>
+                </button>
+            </div>
+        </nav>
 
-    <!-- Cart Counter Styles -->
-    <style>
-        .cart-counter, .mobile-cart-counter {
-            transition: all 0.3s ease;
-        }
+        <!-- Search bar -->
+        <button class="open-mobile_search-modal">
+            <svg class="size-6">
+                <use href="#search" />
+            </svg>
+            <p>جستجو در <span class="font-MorabbaMedium">سایا مد شاپ</span></p>
+        </button>
 
-        .cart-counter span:last-child, .mobile-cart-counter span:last-child {
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
+        <!-- Search Modal -->
+        <div class="mobile_search-modal">
+            <!-- TOP -->
+            <div class="w-full flex items-center gap-x-2">
+                <form method="GET" action="{% url 'search:search_results' %}" class="w-full">
+                    <div class="w-full flex items-center gap-x-1 bg-gray-200 dark:bg-gray-800 text-gray-500 py-2 px-4 rounded-3xl">
+                        <svg class="size-6">
+                            <use href="#search" />
+                        </svg>
+                        <input
+                            type="text"
+                            name="q"
+                            placeholder="جستجو در همه کالاها"
+                            class="bg-transparent w-full outline-none search-input"
+                            autocomplete="off"
+                        >
+                    </div>
+                </form>
+                <svg class="size-6 close-mobile_search-modal cursor-pointer">
+                    <use href="#x-mark" />
+                </svg>
+            </div>
 
-        .cart-increment, .cart-decrement {
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-            cursor: pointer;
-        }
+            <div class="w-full space-y-4">
+                <!-- Result -->
+                <div class="search-suggestions-container hidden">
+                    <span class="flex items-center text-sm gap-x-1 text-gray-600 dark:text-gray-200">
+                        <p>نتیجه جستجو : <span class="font-DanaMedium text-blue-400 search-query-display"></span></p>
+                    </span>
+                    <ul class="pt-4 text-gray-500 dark:text-gray-300 flex flex-col gap-y-4 child:flex-between child:cursor-pointer search-suggestions-list">
+                        <!-- نتایج با AJAX پر می‌شوند -->
+                    </ul>
+                </div>
 
-        .cart-increment:hover {
-            transform: scale(1.1);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        }
+                <!-- Trend -->
+                <div class="pt-4 popular-searches-container">
+                    <span class="flex items-center gap-x-1 text-sm text-gray-500 dark:text-gray-200">
+                        <svg class="size-4">
+                            <use href="#fire" />
+                        </svg>
+                        <p>جستجو های پرطرفدار :</p>
+                    </span>
+                    <ul class="w-full flex items-center gap-1.5 mt-3 child:search-modal-list-item popular-searches-list">
+                        <!-- با AJAX پر می‌شود -->
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-        .cart-decrement:hover {
-            transform: scale(1.1);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        }
+        <!-- Bottom Navbar -->
+        <ul class="bottom-navbar">
+            <li class="dark:text-sky-400 text-blue-500 font-DanaMedium">
+                <svg class="size-5">
+                    <use href="#home" />
+                </svg>
+                <a href="index.html">خانه</a>
+            </li>
+            <li>
+                <svg class="size-5">
+                    <use href="#squares" />
+                </svg>
+                <a href="shop.html">فروشگاه</a>
+            </li>
+            <li class="relative">
+                <!-- Mobile Cart Counter -->
+                <span class="mobile-cart-counter absolute -top-1 -right-1 flex h-4 w-4 z-10" style="display: none;">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-600 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-xs flex-center text-white font-bold">0</span>
+                </span>
+                <svg class="size-5">
+                    <use href="#shopping-bag" />
+                </svg>
+                <a href="shopping-cart.html">سبد خرید</a>
+            </li>
+            <li>
+                <svg class="size-5">
+                    <use href="#user" />
+                </svg>
+                <a href="dashboard.html">حساب من</a>
+            </li>
+        </ul>
+    </div>
 
-        .cart-increment:active, .cart-decrement:active {
-            transform: scale(0.95);
-        }
+    <!-- Slider -->
+    {% if head_sliders %}
+    <div class="px-3 lg:container group w-full mt-4 lg:mt-10">
+        <div dir="rtl" class="swiper header-slider h-52 md:h-96 cursor-pointer">
+            <div class="swiper-wrapper">
+                {% for slider in head_sliders %}
+                <a href="{% if slider.link %}{{ slider.link }}{% else %}#{% endif %}" class="swiper-slide">
+                    {% if slider.imageName %}
+                    <img src="{{ slider.imageName.url }}" class="rounded-xl" alt="{{ slider.altSlide }}">
+                    {% else %}
+                    <img src="{{ media_url }}/images/default-slider.jpg" class="rounded-xl" alt="{{ slider.altSlide }}">
+                    {% endif %}
+                </a >
+                {% empty %}
+                <!-- اسلایدر پیش‌فرض اگر هیچ اسلایدی وجود ندارد -->
+                <a href="shop.html" class="swiper-slide">
+                    <img src="{{ media_url }}/images/banner/default-slider.webp" class="rounded-xl" alt="فروشگاه">
+                </a >
+                {% endfor %}
+            </div>
+            <div class="swiper-pagination-wrapper">
+                <div class="swiper-pagination"></div>
+            </div>
 
-        /* Responsive design for mobile */
-        @media (max-width: 768px) {
-            .cart-counter {
-                gap-x-0.5;
+            <!-- Swiper Navigation -->
+            <div class="absolute z-10 bottom-5 opacity-0 invisible group-hover:opacity-100 transition-all duration-300 group-hover:visible right-6 hidden lg:flex items-center gap-x-2 child:flex-center child:w-9 child:h-9 child:cursor-pointer child:bg-white child:dark:bg-gray-800 child:text-gray-700 child:dark:text-gray-200 child:rounded-full child:shadow child-hover:text-blue-600 child-hover:dark:text-blue-500">
+                <button class="button-prev">
+                    <svg class="size-5 -rotate-90">
+                        <use href="#chevron" />
+                    </svg>
+                </button>
+                <button class="button-next">
+                    <svg class="size-5 rotate-90">
+                        <use href="#chevron" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</header>
+
+<!-- SVG Icons (آیکون بل اضافه شده) -->
+<svg style="display: none;">
+    <symbol id="bell" viewBox="0 0 24 24">
+        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+    </symbol>
+    <!-- سایر آیکون‌های موجود قبلی -->
+</svg>
+
+<!-- JavaScript برای سیستم نوتیفیکیشن -->
+<script>
+// بارگذاری تعداد نوتیفیکیشن‌های خوانده نشده
+function loadNotificationBadge() {
+    {% if request.user.is_authenticated %}
+    fetch('/dashboard/api/notifications/unread-count/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
             }
-
-            .cart-count-display {
-                width: 20px;
-                height: 20px;
-                min-width: 20px;
-                font-size: 10px;
-            }
-
-            .cart-increment, .cart-decrement {
-                width: 18px;
-                height: 18px;
-                font-size: 10px;
-            }
-        }
-
-        /* Animation for cart count changes */
-        @keyframes cartPulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-
-        .cart-count-changed {
-            animation: cartPulse 0.3s ease;
-        }
-    </style>
-
-    <!-- Cart Counter Script -->
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Get all cart counter elements
-        const desktopCartCounter = document.querySelector('.cart-counter');
-        const mobileHeaderCartCounter = document.querySelector('.mobile-cart-counter');
-        const bottomNavbarCartCounter = document.querySelector('.cart-count-display');
-
-        // Get cart control buttons from bottom navbar
-        const cartIncrementBtn = document.querySelector('.cart-increment');
-        const cartDecrementBtn = document.querySelector('.cart-decrement');
-
-        // Get cart count from localStorage or set default
-        let cartCount = parseInt(localStorage.getItem('cartCount')) || 0;
-        updateAllCartDisplays();
-
-        // Function to update all cart counters
-        function updateAllCartDisplays() {
-            const countText = cartCount.toString();
-
-            // Update desktop cart counter
-            if (desktopCartCounter) {
-                const desktopCounterSpan = desktopCartCounter.querySelector('span:last-child');
-                if (desktopCounterSpan) {
-                    desktopCounterSpan.textContent = countText;
+            return response.json();
+        })
+        .then(data => {
+            // بدج اصلی در هدر دسکتاپ
+            const mainBadge = document.getElementById('notification-badge');
+            if (mainBadge) {
+                if (data.unread_count > 0) {
+                    mainBadge.textContent = data.unread_count;
+                    mainBadge.style.display = 'flex';
+                    mainBadge.classList.add('animate-pulse');
+                } else {
+                    mainBadge.style.display = 'none';
+                    mainBadge.classList.remove('animate-pulse');
                 }
-                desktopCartCounter.style.display = cartCount > 0 ? 'flex' : 'none';
             }
 
-            // Update mobile header cart counter
-            if (mobileHeaderCartCounter) {
-                const mobileHeaderCounterSpan = mobileHeaderCartCounter.querySelector('span:last-child');
-                if (mobileHeaderCounterSpan) {
-                    mobileHeaderCounterSpan.textContent = countText;
+            // بدج در منوی کاربر دسکتاپ
+            const headerBadge = document.getElementById('header-notification-count');
+            if (headerBadge) {
+                if (data.unread_count > 0) {
+                    headerBadge.textContent = data.unread_count;
+                    headerBadge.style.display = 'inline-block';
+                } else {
+                    headerBadge.style.display = 'none';
                 }
-                mobileHeaderCartCounter.style.display = cartCount > 0 ? 'flex' : 'none';
             }
 
-            // Update bottom navbar cart counter
-            if (bottomNavbarCartCounter) {
-                bottomNavbarCartCounter.textContent = countText;
-            }
-
-            // Update cart header text
-            const cartHeader = document.querySelector('.cart h2 span');
-            if (cartHeader) {
-                cartHeader.textContent = `(${countText} مورد)`;
-            }
-
-            // Save to localStorage
-            localStorage.setItem('cartCount', cartCount);
-
-            // Add animation when count changes
-            animateCartCounters();
-        }
-
-        // Animate cart counters
-        function animateCartCounters() {
-            [desktopCartCounter, mobileHeaderCartCounter].forEach(counter => {
-                if (counter && counter.style.display !== 'none') {
-                    counter.classList.add('cart-count-changed');
-                    setTimeout(() => {
-                        counter.classList.remove('cart-count-changed');
-                    }, 300);
+            // بدج موبایل در هدر
+            const mobileHeaderBadge = document.getElementById('mobile-header-notification-badge');
+            if (mobileHeaderBadge) {
+                if (data.unread_count > 0) {
+                    mobileHeaderBadge.textContent = data.unread_count;
+                    mobileHeaderBadge.style.display = 'flex';
+                    mobileHeaderBadge.classList.add('animate-pulse');
+                } else {
+                    mobileHeaderBadge.style.display = 'none';
+                    mobileHeaderBadge.classList.remove('animate-pulse');
                 }
-            });
-        }
-
-        // Increment cart count (from bottom navbar)
-        if (cartIncrementBtn) {
-            cartIncrementBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                cartCount++;
-                updateAllCartDisplays();
-                animateButton(this);
-            });
-        }
-
-        // Decrement cart count (from bottom navbar)
-        if (cartDecrementBtn) {
-            cartDecrementBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (cartCount > 0) {
-                    cartCount--;
-                    updateAllCartDisplays();
-                    animateButton(this);
-                }
-            });
-        }
-
-        // Button click animation
-        function animateButton(button) {
-            if (button) {
-                button.style.transform = 'scale(0.9)';
-                setTimeout(() => {
-                    button.style.transform = 'scale(1)';
-                }, 100);
             }
-        }
 
-        // Add hover effects for better UX
-        const cartCounterElements = document.querySelectorAll('.cart-counter');
-        cartCounterElements.forEach(counter => {
-            counter.addEventListener('mouseenter', function() {
-                this.style.transform = 'scale(1.05)';
-            });
+            // بدج در منوی موبایل
+            const mobileMenuBadge = document.getElementById('mobile-notification-badge');
+            if (mobileMenuBadge) {
+                if (data.unread_count > 0) {
+                    mobileMenuBadge.textContent = data.unread_count;
+                    mobileMenuBadge.style.display = 'inline-block';
+                } else {
+                    mobileMenuBadge.style.display = 'none';
+                }
+            }
 
-            counter.addEventListener('mouseleave', function() {
-                this.style.transform = 'scale(1)';
-            });
+            // اگر دراپ‌داون باز است، نوتیفیکیشن‌ها را بارگذاری کن
+            const dropdown = document.getElementById('notification-dropdown');
+            if (dropdown && dropdown.classList.contains('group-hover:visible')) {
+                loadNotificationDropdown();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading notification count:', error);
         });
+    {% endif %}
+}
 
-        // Initialize cart display on page load
-        updateAllCartDisplays();
+// بارگذاری لیست نوتیفیکیشن‌ها در دراپ‌داون
+function loadNotificationDropdown() {
+    fetch('/dashboard/api/notifications/recent/')
+        .then(response => response.json())
+        .then(data => {
+            const notificationList = document.getElementById('notification-list');
+            if (!notificationList) return;
+
+            if (data.notifications.length === 0) {
+                notificationList.innerHTML = `
+                    <div class="text-center py-4 text-gray-500 text-sm">
+                        هیچ پیام خوانده‌نشده‌ای ندارید
+                    </div>
+                `;
+                return;
+            }
+
+            notificationList.innerHTML = '';
+            data.notifications.forEach(notification => {
+                const item = document.createElement('div');
+                item.className = 'notification-item mb-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer';
+                item.innerHTML = `
+                    <div class="flex items-start gap-x-2">
+                        <div class="mt-0.5">
+                            ${notification.is_read ?
+                                '<svg class="size-4 text-gray-400"><use href="#envelope-open"></use></svg>' :
+                                '<svg class="size-4 text-blue-500"><use href="#envelope"></use></svg>'
+                            }
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-DanaMedium ${notification.is_read ? 'text-gray-600' : 'text-gray-800 dark:text-gray-200'}">
+                                ${notification.title}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">${notification.message}</p>
+                            <p class="text-xs text-gray-400 mt-1">${notification.created_at}</p>
+                        </div>
+                    </div>
+                `;
+
+                item.addEventListener('click', function() {
+                    window.location.href = notification.url;
+                });
+
+                notificationList.appendChild(item);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading notification list:', error);
+            const notificationList = document.getElementById('notification-list');
+            if (notificationList) {
+                notificationList.innerHTML = `
+                    <div class="text-center py-4 text-gray-500 text-sm">
+                        خطا در بارگذاری پیام‌ها
+                    </div>
+                `;
+            }
+        });
+}
+
+// بارگذاری اولیه
+document.addEventListener('DOMContentLoaded', function() {
+    loadNotificationBadge();
+
+    // بارگذاری هر 30 ثانیه
+    setInterval(loadNotificationBadge, 30000);
+
+    // همچنین وقتی کاربر روی صفحه است و فعال است، هر 5 دقیقه چک کن
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            loadNotificationBadge();
+        }
     });
 
-    // Smooth scroll to footer function
-    function scrollToFooter() {
-        const footer = document.querySelector('footer');
-        if (footer) {
-            footer.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-        } else {
-            // Fallback: scroll to bottom of page
-            window.scrollTo({
-                top: document.body.scrollHeight,
-                behavior: 'smooth'
-            });
-        }
+    // بارگذاری دراپ‌داون هنگام hover
+    const notificationBtn = document.querySelector('.group');
+    if (notificationBtn) {
+        notificationBtn.addEventListener('mouseenter', function() {
+            loadNotificationDropdown();
+        });
+    }
+});
+
+// تابع اسکرول به فوتر
+function scrollToFooter() {
+    const footer = document.querySelector('footer');
+    if (footer) {
+        footer.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+    } else {
+        window.scrollTo({
+            top: document.body.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
+}
+</script>
+
+<!-- استایل‌های اضافی -->
+<style>
+/* استایل برای بدج نوتیفیکیشن */
+#notification-badge, #mobile-header-notification-badge {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    font-weight: bold;
+}
+
+#notification-badge.animate-pulse, #mobile-header-notification-badge.animate-pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+/* استایل برای دراپ‌داون نوتیفیکیشن */
+#notification-dropdown {
+    max-height: 400px;
+    overflow: hidden;
+}
+
+#notification-list {
+    max-height: 280px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+#notification-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+#notification-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+}
+
+#notification-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 2px;
+}
+
+#notification-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* استایل برای آیتم‌های نوتیفیکیشن */
+.notification-item {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-item:hover {
+    background-color: #f8fafc !important;
+}
+
+.dark .notification-item:hover {
+    background-color: #374151 !important;
+}
+
+/* استایل ریسپانسیو */
+@media (max-width: 768px) {
+    #notification-badge, #mobile-header-notification-badge {
+        width: 16px;
+        height: 16px;
+        font-size: 10px;
     }
 
+    #notification-dropdown {
+        width: 300px;
+        right: -50px;
+    }
+}
 
-
-
-    </script>
-
+@media (max-width: 480px) {
+    #notification-dropdown {
+        width: 280px;
+        right: -80px;
+    }
+}
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

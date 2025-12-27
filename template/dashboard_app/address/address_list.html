@@ -1,0 +1,614 @@
+{% extends "dashboard_template.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block dashboard_content %}
+<div class="flex flex-col shadow rounded-lg p-4 dark:bg-gray-800 bg-white mt-5 lg:mt-0">
+    <div class="flex items-center justify-between">
+        <span class="flex items-center gap-x-2">
+            <svg class="w-8 h-8 text-blue-500">
+                <path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/>
+            </svg>
+            <h2 class="font-DanaMedium text-lg">آدرس های من</h2>
+        </span>
+        <button onclick="openAddModal()" class="flex items-center gap-x-1 text-blue-500 hover:text-blue-700 transition-colors">
+            <svg class="size-5">
+                <use href="#plus"></use>
+            </svg>
+            <span class="font-DanaMedium">آدرس جدید</span>
+        </button>
+    </div>
+
+    <div class="mt-5 space-y-4" id="addresses-container">
+        {% for address in addresses %}
+        <div class="relative border border-blue-200 dark:border-blue-700 rounded-xl p-4 hover:border-blue-300 dark:hover:border-blue-600 transition-colors" data-address-id="{{ address.id }}">
+            <div class="flex items-start justify-between">
+                <div class="flex items-center gap-x-2 mb-3">
+                    <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                        <svg class="w-4 h-4 text-blue-600 dark:text-blue-300">
+                            <use href="#map"></use>
+                        </svg>
+                    </div>
+                    <h3 class="font-DanaMedium text-blue-600 dark:text-blue-300">آدرس {{ forloop.counter }}</h3>
+                </div>
+
+                <div class="flex items-center gap-x-3">
+                    <button onclick="editAddress({{ address.id }})" class="text-blue-500 hover:text-blue-700 p-1 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                        <svg class="w-5 h-5">
+                            <use href="#edit"></use>
+                        </svg>
+                    </button>
+                    <button onclick="deleteAddress({{ address.id }})" class="text-red-500 hover:text-red-700 p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
+                        <svg class="w-5 h-5">
+                            <use href="#trash"></use>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="space-y-2 text-gray-700 dark:text-gray-300 pr-2">
+                <div class="flex items-start gap-x-2">
+                    <svg class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0">
+                        <use href="#location"></use>
+                    </svg>
+                    <span>{{ address.fullAddress }}</span>
+                </div>
+
+                {% if address.postalCode %}
+                <div class="flex items-center gap-x-2">
+                    <svg class="w-5 h-5 text-gray-400">
+                        <use href="#postal"></use>
+                    </svg>
+                    <span>کد پستی: {{ address.postalCode }}</span>
+                </div>
+                {% endif %}
+
+                <div class="text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-700">
+                    ثبت شده در {{ address.createdAt|date:"Y/m/d" }}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-12">
+            <div class="w-24 h-24 mx-auto mb-4 text-gray-300 dark:text-gray-600">
+                <svg class="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-DanaMedium text-gray-500 dark:text-gray-400 mb-2">هنوز آدرسی ثبت نکرده‌اید</h3>
+            <p class="text-gray-400 dark:text-gray-500 mb-6">با افزودن آدرس جدید، مراحل خرید را ساده‌تر کنید</p>
+            <button onclick="openAddModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors font-DanaMedium">
+                افزودن اولین آدرس
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal اضافه کردن/ویرایش آدرس -->
+<div id="addressModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg transform transition-all">
+            <!-- Header -->
+            <div class="flex justify-between items-center p-6 border-b dark:border-gray-700">
+                <h3 class="text-xl font-DanaMedium text-gray-800 dark:text-white" id="modalTitle">افزودن آدرس جدید</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-white p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <svg class="w-5 h-5">
+                        <use href="#close"></use>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Form -->
+            <form id="addressForm" class="p-6 space-y-6">
+                {% csrf_token %}
+                <input type="hidden" id="addressId">
+
+                <!-- استان و شهر -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-DanaMedium text-gray-700 dark:text-gray-300 mb-2">
+                            استان <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <select id="state" required
+                                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white appearance-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 outline-none transition-all pr-10">
+                                <option value="">انتخاب استان</option>
+                                {% for state in states %}
+                                <option value="{{ state.id }}">{{ state.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                <svg class="w-5 h-5 text-gray-400">
+                                    <use href="#chevron-down"></use>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-DanaMedium text-gray-700 dark:text-gray-300 mb-2">
+                            شهر <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <select id="city" required disabled
+                                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white appearance-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 outline-none transition-all pr-10">
+                                <option value="">ابتدا استان را انتخاب کنید</option>
+                            </select>
+                            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                <svg class="w-5 h-5 text-gray-400">
+                                    <use href="#chevron-down"></use>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- آدرس دقیق -->
+                <div>
+                    <label class="block text-sm font-DanaMedium text-gray-700 dark:text-gray-300 mb-2">
+                        آدرس دقیق <span class="text-red-500">*</span>
+                    </label>
+                    <textarea id="address_detail" required rows="4"
+                              class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 outline-none transition-all resize-none"
+                              placeholder="خیابان، کوچه، پلاک، واحد، طبقه..."></textarea>
+                </div>
+
+                <!-- کد پستی -->
+                <div>
+                    <label class="block text-sm font-DanaMedium text-gray-700 dark:text-gray-300 mb-2">
+                        کد پستی
+                    </label>
+                    <input type="text" id="postal_code"
+                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 outline-none transition-all"
+                           placeholder="۱۰ رقمی">
+                </div>
+            </form>
+
+            <!-- Footer -->
+            <div class="p-6 border-t dark:border-gray-700 flex justify-end gap-3">
+                <button onclick="closeModal()"
+                        class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-DanaMedium">
+                    انصراف
+                </button>
+                <button onclick="submitAddressForm()" id="submitBtn"
+                        class="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors shadow-lg hover:shadow-xl font-DanaMedium">
+                    ذخیره آدرس
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SVG Icons -->
+<svg style="display: none;">
+    <symbol id="plus" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+    </symbol>
+    <symbol id="map" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/>
+    </symbol>
+    <symbol id="edit" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+    </symbol>
+    <symbol id="trash" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+    </symbol>
+    <symbol id="location" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/>
+    </symbol>
+    <symbol id="postal" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zm-8-7L4 6h16l-8 5z"/>
+    </symbol>
+    <symbol id="close" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+    </symbol>
+    <symbol id="chevron-down" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+    </symbol>
+</svg>
+
+<script>
+// حالت فعلی
+let currentMode = 'add';
+
+// باز کردن مودال برای اضافه کردن
+function openAddModal() {
+    currentMode = 'add';
+    document.getElementById('modalTitle').textContent = 'افزودن آدرس جدید';
+    document.getElementById('submitBtn').textContent = 'ذخیره آدرس';
+    document.getElementById('addressForm').reset();
+    document.getElementById('addressId').value = '';
+    document.getElementById('city').disabled = true;
+    document.getElementById('city').innerHTML = '<option value="">ابتدا استان را انتخاب کنید</option>';
+    document.getElementById('addressModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+// بستن مودال
+function closeModal() {
+    document.getElementById('addressModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+// تغییر استان - بارگذاری شهرها
+document.getElementById('state').addEventListener('change', function() {
+    const stateId = this.value;
+    const citySelect = document.getElementById('city');
+
+    if (stateId) {
+        citySelect.disabled = true;
+        citySelect.innerHTML = '<option value="">در حال بارگذاری...</option>';
+
+        // درخواست به API
+        fetch(`/dashboard/api/cities/get/?state_id=${stateId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.cities && data.cities.length > 0) {
+                    let options = '<option value="">انتخاب شهر</option>';
+                    data.cities.forEach(city => {
+                        options += `<option value="${city.id}">${city.name}</option>`;
+                    });
+                    citySelect.innerHTML = options;
+                    citySelect.disabled = false;
+
+                    // اگر در حالت ویرایش هستیم و قبلاً شهری انتخاب شده بود
+                    if (currentMode === 'edit' && window.pendingCityId) {
+                        setTimeout(() => {
+                            citySelect.value = window.pendingCityId;
+                            window.pendingCityId = null;
+                        }, 100);
+                    }
+                } else {
+                    citySelect.innerHTML = '<option value="">شهری یافت نشد</option>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching cities:', error);
+                citySelect.innerHTML = '<option value="">خطا در بارگذاری</option>';
+            });
+    } else {
+        citySelect.disabled = true;
+        citySelect.innerHTML = '<option value="">ابتدا استان را انتخاب کنید</option>';
+    }
+});
+
+// ارسال فرم آدرس
+function submitAddressForm() {
+    // جمع‌آوری داده‌ها
+    const formData = {
+        state: document.getElementById('state').value,
+        city: document.getElementById('city').value,
+        address_detail: document.getElementById('address_detail').value.trim(),
+        postal_code: document.getElementById('postal_code').value.trim()
+    };
+
+    // اعتبارسنجی
+    let errors = [];
+    if (!formData.state) errors.push('استان');
+    if (!formData.city) errors.push('شهر');
+    if (!formData.address_detail) errors.push('آدرس دقیق');
+
+    if (errors.length > 0) {
+        showNotification(`لطفاً ${errors.join('، ')} را وارد کنید`, 'error');
+        return;
+    }
+
+    // تعیین URL و متد
+    let url = '/dashboard/api/addresses/create/';
+    let method = 'POST';
+
+    if (currentMode === 'edit') {
+        formData.id = document.getElementById('addressId').value;
+        url = '/dashboard/api/addresses/update/';
+        method = 'PUT';
+    }
+
+    // نمایش لودینگ
+    const submitBtn = document.getElementById('submitBtn');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'در حال ذخیره...';
+    submitBtn.disabled = true;
+
+    // ارسال درخواست
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            showNotification(data.error || 'خطا در ذخیره آدرس', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('خطا در ارتباط با سرور', 'error');
+    })
+    .finally(() => {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// ویرایش آدرس
+function editAddress(addressId) {
+    fetch(`/dashboard/api/addresses/get/?address_id=${addressId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentMode = 'edit';
+                const address = data.address;
+
+                // تنظیم مقادیر فرم
+                document.getElementById('modalTitle').textContent = 'ویرایش آدرس';
+                document.getElementById('submitBtn').textContent = 'به‌روزرسانی آدرس';
+                document.getElementById('addressId').value = address.id;
+                document.getElementById('address_detail').value = address.address_detail || '';
+                document.getElementById('postal_code').value = address.postal_code || '';
+
+                // تنظیم استان و بارگذاری شهرها
+                const stateSelect = document.getElementById('state');
+                stateSelect.value = address.state;
+
+                // تریگر تغییر برای بارگذاری شهرها
+                const event = new Event('change');
+                stateSelect.dispatchEvent(event);
+
+                // ذخیره ID شهر
+                window.pendingCityId = address.city;
+
+                // باز کردن مودال
+                document.getElementById('addressModal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                showNotification(data.error || 'خطا در دریافت اطلاعات', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('خطا در دریافت اطلاعات آدرس', 'error');
+        });
+}
+
+// حذف آدرس
+function deleteAddress(addressId) {
+    if (confirm('آیا از حذف این آدرس اطمینان دارید؟ این عمل قابل بازگشت نیست.')) {
+        // نمایش انیمیشن حذف
+        const addressItem = document.querySelector(`[data-address-id="${addressId}"]`);
+        if (addressItem) {
+            addressItem.style.opacity = '0.5';
+            addressItem.style.pointerEvents = 'none';
+        }
+
+        // ارسال درخواست حذف
+        fetch('/dashboard/api/addresses/delete/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({id: addressId})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                // حذف با انیمیشن
+                if (addressItem) {
+                    addressItem.style.transform = 'scale(0.95)';
+                    addressItem.style.transition = 'all 0.3s ease';
+
+                    setTimeout(() => {
+                        addressItem.remove();
+                        checkEmptyState();
+                    }, 300);
+                }
+            } else {
+                showNotification(data.error || 'خطا در حذف آدرس', 'error');
+                if (addressItem) {
+                    addressItem.style.opacity = '1';
+                    addressItem.style.pointerEvents = 'auto';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('خطا در ارتباط با سرور', 'error');
+            if (addressItem) {
+                addressItem.style.opacity = '1';
+                addressItem.style.pointerEvents = 'auto';
+            }
+        });
+    }
+}
+
+// بررسی اگر لیست خالی شد
+function checkEmptyState() {
+    const container = document.getElementById('addresses-container');
+    const items = container.querySelectorAll('[data-address-id]');
+
+    if (items.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-12">
+                <div class="w-24 h-24 mx-auto mb-4 text-gray-300 dark:text-gray-600">
+                    <svg class="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-DanaMedium text-gray-500 dark:text-gray-400 mb-2">هنوز آدرسی ثبت نکرده‌اید</h3>
+                <p class="text-gray-400 dark:text-gray-500 mb-6">با افزودن آدرس جدید، مراحل خرید را ساده‌تر کنید</p>
+                <button onclick="openAddModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors font-DanaMedium">
+                    افزودن اولین آدرس
+                </button>
+            </div>
+        `;
+    }
+}
+
+// تابع نمایش نوتیفیکیشن
+function showNotification(message, type = 'success') {
+    // حذف نوتیفیکیشن قبلی
+    const oldNotification = document.querySelector('.notification');
+    if (oldNotification) {
+        oldNotification.remove();
+    }
+
+    // ایجاد نوتیفیکیشن جدید
+    const notification = document.createElement('div');
+    notification.className = `notification fixed top-6 left-6 z-[100] p-4 rounded-xl shadow-xl max-w-sm transform transition-all duration-300 ${
+        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`;
+    notification.style.opacity = '0';
+    notification.style.transform = 'translateX(-30px)';
+
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <svg class="w-6 h-6 ml-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="${type === 'success' ? 'M5 13l4 4L19 7' : 'M6 18L18 6M6 6l12 12'}">
+                </path>
+            </svg>
+            <span class="font-DanaMedium">${message}</span>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // نمایش انیمیشن
+    setTimeout(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateX(0)';
+    }, 10);
+
+    // حذف خودکار بعد از 4 ثانیه
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(-30px)';
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 4000);
+}
+
+// تابع کمکی برای دریافت کوکی CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// مدیریت کلیدها و کلیک‌های خارج از مودال
+document.addEventListener('DOMContentLoaded', function() {
+    // بستن مودال با کلید ESC
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeModal();
+        }
+    });
+
+    // بستن مودال با کلیک روی background
+    document.getElementById('addressModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+});
+</script>
+
+<style>
+/* استایل‌های سفارشی */
+select {
+    cursor: pointer;
+}
+
+select:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* انیمیشن برای مودال */
+#addressModal > div {
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* انیمیشن برای آیتم‌های آدرس */
+[data-address-id] {
+    animation: addressItemFadeIn 0.5s ease-out;
+}
+
+@keyframes addressItemFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* استایل برای فیلدهای required */
+input:required:invalid, select:required:invalid, textarea:required:invalid {
+    border-color: #ef4444;
+}
+
+input:required:valid, select:required:valid, textarea:required:valid {
+    border-color: #10b981;
+}
+
+/* استایل برای placeholder */
+::placeholder {
+    color: #9ca3af;
+}
+
+.dark ::placeholder {
+    color: #6b7280;
+}
+
+/* استایل برای focus */
+input:focus, select:focus, textarea:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dark input:focus, .dark select:focus, .dark textarea:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+</style>
+{% endblock dashboard_content %}
