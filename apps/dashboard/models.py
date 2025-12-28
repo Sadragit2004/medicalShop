@@ -27,12 +27,12 @@ class Favorite(models.Model):
         return f"{self.user} → {self.product}"
 
 
-
+# apps/dashboard/models.py
 from django.db import models
 from django.utils import timezone
-from apps.order.models import Order, OrderDetail
+from django.apps import apps  # اضافه کردن این خط
 from apps.user.models.user import CustomUser
-from apps.discount.models import Copon  # اگر مدل کوپن در اپ discount است
+from apps.discount.models import Copon
 
 class Notification(models.Model):
     """
@@ -52,8 +52,9 @@ class Notification(models.Model):
         verbose_name="کاربر"
     )
 
+    # استفاده از string reference برای جلوگیری از circular import
     order = models.ForeignKey(
-        Order,
+        'order.Order',  # <-- تغییر این خط
         on_delete=models.CASCADE,
         related_name="notifications",
         verbose_name="سفارش مرتبط",

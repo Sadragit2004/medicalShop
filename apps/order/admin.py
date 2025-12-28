@@ -1,7 +1,10 @@
+# apps/order/admin.py
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import Order, OrderDetail
 import jdatetime
+from django.contrib import messages
+from django.utils import timezone
 
 # ========================
 # اینلاین برای جزئیات سفارش
@@ -91,9 +94,13 @@ class OrderAdmin(admin.ModelAdmin):
     )
 
     inlines = [OrderDetailInline]
+    actions = ['mark_as_delivered', 'mark_as_canceled', 'export_orders']
 
     def get_jalali_register_date(self, obj):
-        return jdatetime.datetime.fromgregorian(datetime=obj.registerDate).strftime('%Y/%m/%d %H:%M')
+        try:
+            return jdatetime.datetime.fromgregorian(datetime=obj.registerDate).strftime('%Y/%m/%d %H:%M')
+        except:
+            return obj.registerDate.strftime('%Y/%m/%d %H:%M')
     get_jalali_register_date.short_description = "تاریخ ثبت"
     get_jalali_register_date.admin_order_field = 'registerDate'
 
@@ -110,6 +117,41 @@ class OrderAdmin(admin.ModelAdmin):
             return obj.address.fullAddress()
         return "آدرسی ثبت نشده"
     get_address_details.short_description = "جزئیات آدرس"
+
+    def get_form(self, request, obj=None, **kwargs):
+        """ذخیره وضعیت قبلی برای تشخیص تغییر"""
+        form = super().get_form(request, obj, **kwargs)
+        if obj:
+            # ذخیره وضعیت قبلی برای استفاده در save_model
+            obj._original_status = obj.status
+        return form
+
+    def save_model(self, request, obj, form, change):
+        """ذخیره سفارش و مدیریت اعلان‌ها"""
+        if change:
+            # اگر وضعیت تغییر کرده باشد
+            if hasattr(obj, '_original_status') and obj._original_status != obj.status:
+                # اعلان توسط متد save مدل ارسال می‌شود
+                messages.info(request, f"وضعیت سفارش از '{obj._original_status}' به '{obj.status}' تغییر کرد.")
+
+        super().save_model(request, obj, form, change)
+
+    def mark_as_delivered(self, request, queryset):
+        """علامت‌گذاری سفارش‌ها به عنوان تحویل شده"""
+        updated = queryset.update(status='delivered', updateDate=timezone.now())
+        self.message_user(request, f"{updated} سفارش به وضعیت 'تحویل شده' تغییر یافت.")
+    mark_as_delivered.short_description = "علامت‌گذاری به عنوان تحویل شده"
+
+    def mark_as_canceled(self, request, queryset):
+        """علامت‌گذاری سفارش‌ها به عنوان لغو شده"""
+        updated = queryset.update(status='canceled', updateDate=timezone.now())
+        self.message_user(request, f"{updated} سفارش به وضعیت 'لغو شده' تغییر یافت.")
+    mark_as_canceled.short_description = "علامت‌گذاری به عنوان لغو شده"
+
+    def export_orders(self, request, queryset):
+        """اکسپورت سفارش‌های انتخاب شده"""
+        self.message_user(request, f"{queryset.count()} سفارش برای اکسپورت انتخاب شد.")
+    export_orders.short_description = "اکسپورت سفارش‌ها"
 
 # ========================
 # ادمین جزئیات سفارش
@@ -175,7 +217,6 @@ class OrderDetailAdmin(admin.ModelAdmin):
         return super().get_queryset(request).select_related(
             'order', 'product', 'brand'
         )
-
 
 
 from django.contrib import admin

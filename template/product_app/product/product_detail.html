@@ -174,19 +174,141 @@
                     </div>
 
                     <!-- ویژگی‌های محصول -->
-                    {% if product_features %}
+                  {% if product_features %}
                     <div class="w-full flex flex-col gap-y-4">
                         <h1 class="font-DanaDemiBold text-lg dark:text-gray-200">ویژگی‌ها</h1>
                         <div class="grid grid-cols-12 gap-2 child:p-2 child:h-16 child:bg-gray-100 dark:child:bg-gray-900 child:rounded-lg child:flex child:flex-col child:gap-y-1.5">
-                            {% for pf in product_features|slice:":4" %}
-                            <div class="col-span-12 md:col-span-6 xl:col-span-4">
-                                <p class="text-sm text-gray-500">{{ pf.feature.title }}</p>
-                                <p class="line-clamp-1 font-DanaDemiBold text-sm text-slate-800 dark:text-slate-200">{{ pf.value }}</p>
-                            </div>
+                            {% for pf in product_features %}
+                                {% if not "سایز" in pf.feature.title %}
+                                    {% if forloop.counter <= 4 %}
+                                        <div class="col-span-12 md:col-span-6 xl:col-span-4">
+                                            <p class="text-sm text-gray-500">{{ pf.feature.title }}</p>
+                                            <p class="line-clamp-1 font-DanaDemiBold text-sm text-slate-800 dark:text-slate-200">{{ pf.value }}</p>
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
                             {% endfor %}
                         </div>
                     </div>
-                    {% endif %}
+                {% endif %}
+
+
+                 {% if product_features %}
+<div class="w-full flex flex-col gap-y-4">
+    <h1 class="font-DanaDemiBold text-base dark:text-gray-200">
+        انتخاب سایز
+    </h1>
+
+    <div class="mb-6">
+        <div class="flex flex-wrap gap-2" id="size-selector">
+            {% for pf in product_features %}
+                {% if "سایز" in pf.feature.title %}
+                <div class="size-option" data-size-id="{{ pf.id }}" data-size-value="{{ pf.value }}">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-full border-2
+                                border-gray-200 dark:border-gray-700
+                                bg-white dark:bg-gray-800
+                                text-xs font-DanaDemiBold
+                                text-slate-700 dark:text-slate-300
+                                transition-all duration-200
+                                hover:border-green-400 hover:scale-105">
+                        {{ pf.value }}
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- این input پنهان رو برای ارسال به سرور نگه دار -->
+        <input type="hidden" name="size-desktop" id="selected-size" value="">
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sizeOptions = document.querySelectorAll('.size-option');
+    const selectedSizeInput = document.getElementById('selected-size');
+    let selectedSizeId = null;
+
+    sizeOptions.forEach((option, index) => {
+        // انتخاب اولیه
+        if (index === 0) {
+            option.querySelector('div').classList.add(
+                'border-green-500',
+                'bg-green-50',
+                'text-green-600',
+                'dark:bg-green-900/20',
+                'dark:text-green-300',
+                'dark:border-green-400'
+            );
+            selectedSizeId = option.dataset.sizeId;
+            selectedSizeInput.value = selectedSizeId;
+        }
+
+        option.addEventListener('click', function() {
+            const sizeId = this.dataset.sizeId;
+            const sizeValue = this.dataset.sizeValue;
+
+            // حذف استایل از همه
+            sizeOptions.forEach(opt => {
+                opt.querySelector('div').classList.remove(
+                    'border-green-500',
+                    'bg-green-50',
+                    'text-green-600',
+                    'peer-checked:ring-1',
+                    'peer-checked:ring-green-300',
+                    'dark:bg-green-900/20',
+                    'dark:text-green-300',
+                    'dark:border-green-400',
+                    'dark:peer-checked:ring-green-800'
+                );
+                opt.querySelector('div').classList.add(
+                    'border-gray-200',
+                    'dark:border-gray-700',
+                    'bg-white',
+                    'dark:bg-gray-800',
+                    'text-slate-700',
+                    'dark:text-slate-300'
+                );
+            });
+
+            // اضافه کردن استایل به انتخاب شده
+            this.querySelector('div').classList.add(
+                'border-green-500',
+                'bg-green-50',
+                'text-green-600',
+                'dark:bg-green-900/20',
+                'dark:text-green-300',
+                'dark:border-green-400'
+            );
+            this.querySelector('div').classList.remove(
+                'border-gray-200',
+                'dark:border-gray-700',
+                'bg-white',
+                'dark:bg-gray-800',
+                'text-slate-700',
+                'dark:text-slate-300'
+            );
+
+            // ذخیره مقدار
+            selectedSizeId = sizeId;
+            selectedSizeInput.value = sizeId;
+
+            console.log('✅ سایز انتخاب شد:', sizeValue, '(ID:', sizeId + ')');
+
+            // میتونی اینجا یک event دیگه هم trigger کنی
+            const event = new CustomEvent('sizeSelected', {
+                detail: { sizeId: sizeId, sizeValue: sizeValue }
+            });
+            document.dispatchEvent(event);
+        });
+    });
+
+    // برای دیدن وضعیت
+    console.log('🎯 تعداد سایزها:', sizeOptions.length);
+});
+</script>
+{% endif %}
+
                 </div>
             </div>
 
@@ -1111,7 +1233,9 @@ document.addEventListener('DOMContentLoaded', function() {
             checkFavorite(productId);
         });
     });
+
+
     </script>
 
-    
+
 {% endblock %}

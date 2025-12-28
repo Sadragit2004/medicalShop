@@ -66,6 +66,13 @@ class UserAddress(models.Model):
             self.lng or self.city.lng,
         )
 
+from django.db import models
+from django.utils import timezone
+import uuid
+from apps.user.models.user import CustomUser
+from apps.order.models import UserAddress
+import utils
+
 
 class Order(models.Model):
     STATUS_CHOICES = (
@@ -77,37 +84,66 @@ class Order(models.Model):
     )
 
     customer = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE,
-        related_name="orders", verbose_name="مشتری"
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="orders",
+        verbose_name="مشتری"
     )
-    address = models.ForeignKey(
-        UserAddress, on_delete=models.PROTECT,null=True,blank=True,
-        related_name="orders", verbose_name="آدرس سفارش",
-    )
-    orderCode = models.UUIDField(
-        unique=True, default=uuid.uuid4,
-        verbose_name="کد سفارش", editable=False
-    )
-    registerDate = models.DateTimeField(default=timezone.now, verbose_name="تاریخ ثبت")
-    updateDate = models.DateTimeField(auto_now=True, verbose_name="تاریخ ویرایش")
-    status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES,
-        default="pending", verbose_name="وضعیت سفارش"
-    )
-    description = models.TextField(blank=True, null=True, verbose_name="توضیحات")
 
-    discount = models.PositiveIntegerField(default=0, verbose_name="تخفیف روی فاکتور")
-    isFinally = models.BooleanField(default=False, verbose_name="نهایی شده")
+    address = models.ForeignKey(
+        UserAddress,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="orders",
+        verbose_name="آدرس سفارش"
+    )
+
+    orderCode = models.UUIDField(
+        unique=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name="کد سفارش"
+    )
+
+    registerDate = models.DateTimeField(
+        default=timezone.now,
+        verbose_name="تاریخ ثبت"
+    )
+
+    updateDate = models.DateTimeField(
+        auto_now=True,
+        verbose_name="تاریخ ویرایش"
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending",
+        verbose_name="وضعیت سفارش"
+    )
+
+    description = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name="توضیحات"
+    )
+
+    discount = models.PositiveIntegerField(
+        default=0,
+        verbose_name="تخفیف (%)"
+    )
+
+    isFinally = models.BooleanField(
+        default=False,
+        verbose_name="نهایی شده"
+    )
+
+    # برای ذخیره وضعیت قبلی (سیگنال استفاده می‌کنه)
+    _original_status = None
 
     def __str__(self):
-        return f"سفارش {self.customer} - {self.orderCode}"
-
-    def get_order_total_price(self):
-        sum = 0
-        for item in self.details.all():
-            sum += item.price * item.qty
-        finaly_total_price, tax = utils.price_by_delivery_tax(sum, self.discount)
-        return int(finaly_total_price * 10)
+        return f"سفارش {self.orderCode}"
 
     def getTotalPrice(self):
         return sum(item.price * item.qty for item in self.details.all())
@@ -118,37 +154,58 @@ class Order(models.Model):
             total -= (total * self.discount) // 100
         return total
 
+    def get_order_total_price(self):
+        total = self.getTotalPrice()
+        final_price, tax = utils.price_by_delivery_tax(total, self.discount)
+        return int(final_price * 10)
+
     class Meta:
         verbose_name = "سفارش"
         verbose_name_plural = "سفارش‌ها"
+        ordering = ['-registerDate']
 
 
 class OrderDetail(models.Model):
     order = models.ForeignKey(
-        Order, on_delete=models.CASCADE,
-        related_name="details", verbose_name="سفارش"
-    )
-    product = models.ForeignKey(
-        Product, on_delete=models.CASCADE,
-        related_name="orderItems", verbose_name="محصول"
-    )
-    brand = models.ForeignKey(
-        Brand, on_delete=models.SET_NULL,
-        null=True, blank=True, verbose_name="برند"
+        Order,
+        on_delete=models.CASCADE,
+        related_name="details",
+        verbose_name="سفارش"
     )
 
-    qty = models.PositiveIntegerField(default=1, verbose_name="تعداد")
-    price = models.PositiveIntegerField(verbose_name="قیمت واحد در فاکتور")
+    product = models.ForeignKey(
+        "product.Product",
+        on_delete=models.CASCADE,
+        related_name="orderItems",
+        verbose_name="محصول"
+    )
+
+    brand = models.ForeignKey(
+        "product.Brand",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="برند"
+    )
+
+    qty = models.PositiveIntegerField(
+        default=1,
+        verbose_name="تعداد"
+    )
+
+    price = models.PositiveIntegerField(
+        verbose_name="قیمت واحد"
+    )
 
     selectedOptions = models.CharField(
         max_length=255,
-        blank=True,
         null=True,
+        blank=True,
         verbose_name="ویژگی‌های انتخابی"
     )
 
     def __str__(self):
-        return f"{self.order.orderCode} - {self.product.title} × {self.qty}"
+        return f"{self.order.orderCode} | {self.product} × {self.qty}"
 
     def getTotalPrice(self):
         return self.qty * self.price
