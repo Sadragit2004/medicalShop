@@ -1,0 +1,191 @@
+<!-- complete_profile.html -->
+{% extends 'dashboard_template.html' %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="max-w-6xl mx-auto p-4">
+    <!-- نمایش پیام‌ها -->
+    {% if messages %}
+    <div class="mb-6">
+        {% for message in messages %}
+        <div class="p-4 rounded-md {% if message.tags == 'success' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- فرم اصلی -->
+    <div class="flex flex-col shadow rounded-lg p-4 dark:bg-gray-800 bg-white mt-5 lg:mt-0">
+        <div class="flex items-center justify-between">
+            <h2 class="font-DanaMedium text-lg">اطلاعات حساب کاربری</h2>
+        </div>
+
+        <form class="mt-5 grid grid-cols-12 gap-5 child:col-span-12 child:lg:col-span-6" method="POST">
+            {% csrf_token %}
+
+            <!-- نام -->
+            <div>
+                <label for="name" class="block text-sm font-DanaMedium text-gray-500 dark:text-gray-300">
+                    نام
+                </label>
+                <div class="mt-3 relative">
+                    <input type="text"
+                           id="name"
+                           name="name"
+                           value="{{ user.name|default:'' }}"
+                           class="block w-full p-2.5 text-base outline dark:outline-none outline-1 -outline-offset-1 placeholder:text-gray-400 transition-all
+                           text-gray-800 dark:text-gray-100 dark:bg-gray-900 bg-slate-100 border border-transparent hover:border-slate-200 appearance-none rounded-md outline-none focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-blue-400">
+                    <div class="absolute left-3 top-3 z-10">
+                        <svg class="size-5 text-gray-500">
+                            <use href="#edit"></use>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- نام خانوادگی -->
+            <div>
+                <label for="family" class="block text-sm font-DanaMedium text-gray-500 dark:text-gray-300">
+                    نام خانوادگی
+                </label>
+                <div class="mt-3 relative">
+                    <input type="text"
+                           id="family"
+                           name="family"
+                           value="{{ user.family|default:'' }}"
+                           class="block w-full p-2.5 text-base outline dark:outline-none outline-1 -outline-offset-1 placeholder:text-gray-400 transition-all
+                           text-gray-800 dark:text-gray-100 dark:bg-gray-900 bg-slate-100 border border-transparent hover:border-slate-200 appearance-none rounded-md outline-none focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-blue-400">
+                    <div class="absolute left-3 top-3 z-10">
+                        <svg class="size-5 text-gray-500">
+                            <use href="#edit"></use>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- شماره موبایل (غیرقابل ویرایش) -->
+            <div>
+                <label class="block text-sm font-DanaMedium text-gray-500 dark:text-gray-300">
+                    شماره موبایل
+                </label>
+                <div class="mt-3 relative">
+                    <input type="text"
+                           value="{{ user.mobileNumber }}"
+                           readonly
+                           disabled
+                           class="block w-full p-2.5 text-base outline dark:outline-none outline-1 -outline-offset-1 placeholder:text-gray-400 transition-all
+                           text-gray-500 dark:text-gray-400 dark:bg-gray-900 bg-slate-100 border border-transparent hover:border-slate-200 appearance-none rounded-md outline-none focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-blue-400 cursor-not-allowed">
+                    <div class="absolute left-3 top-3 z-10">
+                        <svg class="size-5 text-gray-400">
+                            <use href="#edit"></use>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ایمیل -->
+            <div>
+                <label for="email" class="block text-sm font-DanaMedium text-gray-500 dark:text-gray-300">
+                    ایمیل
+                </label>
+                <div class="mt-3 relative">
+                    <input type="email"
+                           id="email"
+                           name="email"
+                           value="{{ user.email|default:'' }}"
+                           placeholder="ایمیل خود را وارد کنید"
+                           class="block w-full p-2.5 text-base outline dark:outline-none outline-1 -outline-offset-1 placeholder:text-gray-400 transition-all
+                           text-gray-800 dark:text-gray-100 dark:bg-gray-900 bg-slate-100 border border-transparent hover:border-slate-200 appearance-none rounded-md outline-none focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-blue-400">
+                    <div class="absolute left-3 top-3 z-10">
+                        <svg class="size-5 text-gray-500">
+                            <use href="#plus"></use>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- سن (محاسبه شده از تاریخ تولد) -->
+            <div>
+                <label class="block text-sm font-DanaMedium text-gray-500 dark:text-gray-300">
+                    سن
+                </label>
+                <div class="mt-3 relative">
+                    <input type="text"
+                           value="{% if user.age %}{{ user.age }} سال{% else %}تعیین نشده{% endif %}"
+                           readonly
+                           class="block w-full p-2.5 text-base outline dark:outline-none outline-1 -outline-offset-1 placeholder:text-gray-400 transition-all
+                           text-gray-800 dark:text-gray-100 dark:bg-gray-900 bg-slate-100 border border-transparent hover:border-slate-200 appearance-none rounded-md outline-none focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-blue-400 cursor-not-allowed">
+                </div>
+            </div>
+
+            <!-- تاریخ تولد -->
+            <div>
+                <label for="birth_date" class="block text-sm font-DanaMedium text-gray-500 dark:text-gray-300">
+                    تاریخ تولد
+                </label>
+                <div class="mt-3 relative">
+                    <input type="text"
+                           id="birth_date"
+                           name="birth_date"
+                           value="{{ birth_date_jalali|default:'' }}"
+                           placeholder="1400/1/1"
+                           class="block w-full p-2.5 text-base outline dark:outline-none outline-1 -outline-offset-1 placeholder:text-gray-400 transition-all
+                           text-gray-800 dark:text-gray-100 dark:bg-gray-900 bg-slate-100 border border-transparent hover:border-slate-200 appearance-none rounded-md outline-none focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-blue-400">
+                    <div class="absolute left-3 top-3 z-10">
+                        <svg class="size-5 text-gray-500">
+                            <use href="#edit"></use>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">فرمت: سال/ماه/روز (شمسی)</p>
+            </div>
+
+            <!-- جنسیت -->
+            <div>
+                <label class="block text-sm font-DanaMedium text-gray-500 dark:text-gray-300 mb-2">
+                    جنسیت
+                </label>
+                <div class="mt-3 flex space-x-4 space-x-reverse">
+                    <label class="inline-flex items-center">
+                        <input type="radio"
+                               name="gender"
+                               value="M"
+                               {% if user.gender == 'M' %}checked{% endif %}
+                               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                        <span class="mr-2 text-gray-700 dark:text-gray-300">مرد</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio"
+                               name="gender"
+                               value="F"
+                               {% if user.gender == 'F' %}checked{% endif %}
+                               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                        <span class="mr-2 text-gray-700 dark:text-gray-300">زن</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- دکمه ارسال -->
+            <div class="col-span-12 flex justify-end mt-6">
+                <button style='background:#333;' type="submit"
+                        class="px-6 py-2.5 bg-indigo-600 text-white rounded-lg
+                               hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-100
+                               transition-colors font-DanaMedium">
+                    ذخیره تغییرات
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- SVG Definitions -->
+<svg xmlns="http://www.w3.org/2000/svg" class="hidden">
+    <symbol id="edit" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+    </symbol>
+    <symbol id="plus" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+    </symbol>
+</svg>
+{% endblock dashboard_content %}

@@ -36,7 +36,7 @@
                 document.documentElement.classList.remove("dark");
             }
         </script>
-        
+
   {% include "partials/header.html" %}
           {% block meta1 %}
           {% endblock meta1 %}
@@ -77,47 +77,47 @@
         </div>
 
         <ul class="w-full relative space-y-2 child:duration-300 child:transition-all child:py-3 child:px-2 child:flex child:gap-x-2 text-lg child:cursor-pointer child:rounded-lg">
-          <li class="bg-blue-500/10 text-blue-500">
+          <li class="{% if request.resolver_match.url_name == 'dashboard' or request.path == '/dashboard/' %}bg-blue-500/10 text-blue-500{% else %}hover:text-blue-500{% endif %}">
             <svg class="w-6 h-6 ">
               <use href="#squares"></use>
             </svg>
-            <a href="">داشبورد</a>
+            <a href="{% url 'dashboard:home' %}">داشبورد</a>
           </li>
-          <li class="hover:text-blue-500">
+          <li class="{% if request.resolver_match.url_name == 'orders' %}bg-blue-500/10 text-blue-500{% else %}hover:text-blue-500{% endif %}">
             <svg class="w-6 h-6 ">
               <use href="#shopping-bag"></use>
             </svg>
             <a href="{% url 'dashboard:orders' %}">سفارش ها</a>
           </li>
-          <li class="hover:text-blue-500">
+          <li class="{% if request.resolver_match.url_name == 'list_favorit' %}bg-blue-500/10 text-blue-500{% else %}hover:text-blue-500{% endif %}">
             <svg class="w-6 h-6 ">
               <use href="#heart"></use>
             </svg>
             <a href="{% url 'dashboard:list_favorit' %}">علاقه‌مندی ها</a>
           </li>
-          <li class="hover:text-blue-500">
+          <li class="{% if request.resolver_match.url_name == 'address_list' %}bg-blue-500/10 text-blue-500{% else %}hover:text-blue-500{% endif %}">
             <svg class="w-6 h-6 ">
               <use href="#map"></use>
             </svg>
             <a href="{% url 'dashboard:address_list' %}">آدرس ها</a>
           </li>
-          <li class="hover:text-blue-500">
+          <li class="{% if request.resolver_match.url_name == 'notifications' %}bg-blue-500/10 text-blue-500{% else %}hover:text-blue-500{% endif %}">
             <svg class="w-6 h-6 ">
               <use href="#bell"></use>
             </svg>
-            <a href="">پیام ها</a>
+            <a href="{% url 'dashboard:notifications' %}">پیام ها</a>
           </li>
-          <li class="hover:text-blue-500">
+          <li class="{% if request.resolver_match.url_name == 'complete_profile' %}bg-blue-500/10 text-blue-500{% else %}hover:text-blue-500{% endif %}">
             <svg class="w-6 h-6 ">
               <use href="#cog"></use>
             </svg>
-            <a href="">اطلاعات حساب </a>
+            <a href="{% url 'dashboard:complete_profile' %}">اطلاعات حساب </a>
           </li>
-          <li class="text-red-400">
+          <li class="text-red-400 hover:text-red-500">
             <svg class="w-6 h-6 ">
               <use href="#arrow-left-end"></use>
             </svg>
-            <a href="">خروج</a>
+            <a href="{% url 'account:logout' %}">خروج</a>
           </li>
         </ul>
       </aside>
@@ -153,47 +153,47 @@
               </span>
             </div>
             <ul class="w-full relative space-y-2 child:duration-300 child:transition-all child:py-3 child:px-2 child:flex child:gap-x-2 text-lg child:cursor-pointer child:rounded-lg">
-              <li class="bg-blue-500/10 text-blue-500">
+              <li class="{% if request.resolver_match.url_name == 'dashboard' or request.path == '/dashboard/' %}bg-blue-500/10 text-blue-500{% else %}hover:text-blue-500{% endif %}">
                 <svg class="w-6 h-6 ">
                   <use href="#squares"></use>
                 </svg>
-                <a href="">داشبورد</a>
+                <a href="{% url 'dashboard:home' %}">داشبورد</a>
               </li>
-              <li class="hover:text-blue-500">
+              <li class="{% if request.resolver_match.url_name == 'orders' %}bg-blue-500/10 text-blue-500{% else %}hover:text-blue-500{% endif %}">
                 <svg class="w-6 h-6 ">
                   <use href="#shopping-bag"></use>
                 </svg>
-                <a href="">سفارش ها</a>
+                <a href="{% url 'dashboard:orders' %}">سفارش ها</a>
               </li>
-              <li class="hover:text-blue-500">
+              <li class="{% if request.resolver_match.url_name == 'list_favorit' %}bg-blue-500/10 text-blue-500{% else %}hover:text-blue-500{% endif %}">
                 <svg class="w-6 h-6 ">
                   <use href="#heart"></use>
                 </svg>
-                <a href="">علاقه‌مندی ها</a>
+                <a href="{% url 'dashboard:list_favorit' %}">علاقه‌مندی ها</a>
               </li>
-              <li class="hover:text-blue-500">
+              <li class="{% if request.resolver_match.url_name == 'address_list' %}bg-blue-500/10 text-blue-500{% else %}hover:text-blue-500{% endif %}">
                 <svg class="w-6 h-6 ">
                   <use href="#map"></use>
                 </svg>
-                <a href="">آدرس ها</a>
+                <a href="{% url 'dashboard:address_list' %}">آدرس ها</a>
               </li>
-              <li class="hover:text-blue-500">
+              <li class="{% if request.resolver_match.url_name == 'notifications' %}bg-blue-500/10 text-blue-500{% else %}hover:text-blue-500{% endif %}">
                 <svg class="w-6 h-6 ">
                   <use href="#bell"></use>
                 </svg>
-                <a href="">پیام ها</a>
+                <a href="{% url 'dashboard:notifications' %}">پیام ها</a>
               </li>
-              <li class="hover:text-blue-500">
+              <li class="{% if request.resolver_match.url_name == 'complete_profile' %}bg-blue-500/10 text-blue-500{% else %}hover:text-blue-500{% endif %}">
                 <svg class="w-6 h-6 ">
                   <use href="#cog"></use>
                 </svg>
-                <a href="">اطلاعات حساب </a>
+                <a href="{% url 'dashboard:complete_profile' %}">اطلاعات حساب </a>
               </li>
-              <li class="text-red-400">
+              <li class="text-red-400 hover:text-red-500">
                 <svg class="w-6 h-6 ">
                   <use href="#arrow-left-end"></use>
                 </svg>
-                <a href="">خروج</a>
+                <a href="{% url 'account:logout' %}">خروج</a>
               </li>
             </ul>
           </div>
@@ -209,9 +209,24 @@
 
 
   <script src='{% static "scripts/app.js" %}' ></script>
-
   <script src='{% static "scripts/dashboard.js" %}' ></script>
 
+  <script>
+    // فقط اضافه کردن event listener برای بستن منوی موبایل
+    document.addEventListener('DOMContentLoaded', function() {
+      const closeMenuBtn = document.querySelector('.close-user-menu');
+
+      // بستن منو با کلیک روی ضربدر
+      if (closeMenuBtn) {
+        closeMenuBtn.addEventListener('click', function() {
+          const userMenu = document.querySelector('.user-menu');
+          if (userMenu) {
+            userMenu.style.display = 'none';
+          }
+        });
+      }
+    });
+  </script>
 
 </body>
-<script>
+</html>

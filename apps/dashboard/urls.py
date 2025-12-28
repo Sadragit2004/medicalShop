@@ -20,5 +20,6 @@ urlpatterns = [
     path('api/notifications/unread-count/', views.get_unread_count, name='get_unread_count'),
     path('api/notifications/mark-read/', views.mark_as_read, name='mark_as_read'),
     path('api/notifications/delete/', views.delete_notification, name='delete_notification'),
+    path('complete-profile/', views.complete_profile, name='complete_profile'),
 
 ]

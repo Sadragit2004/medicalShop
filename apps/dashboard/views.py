@@ -545,3 +545,77 @@ def delete_notification(request):
 
 
 # =======================
+
+
+# views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from apps.user.models.user import CustomUser
+import jdatetime
+
+@login_required
+def complete_profile(request):
+    user = request.user
+
+    if request.method == 'POST':
+        # دریافت داده‌ها از فرم
+        name = request.POST.get('name', '').strip()
+        family = request.POST.get('family', '').strip()
+        email = request.POST.get('email', '').strip()
+        birth_date_str = request.POST.get('birth_date', '').strip()
+        gender = request.POST.get('gender')
+
+        # به‌روزرسانی اطلاعات
+        if name:
+            user.name = name
+        if family:
+            user.family = family
+        if email:
+            user.email = email
+        if gender in ['M', 'F']:
+            user.gender = gender
+
+        # پردازش تاریخ تولد شمسی
+        if birth_date_str:
+            try:
+                # تبدیل تاریخ شمسی به میلادی
+                jalali_parts = birth_date_str.split('/')
+                if len(jalali_parts) == 3:
+                    year = int(jalali_parts[0])
+                    month = int(jalali_parts[1])
+                    day = int(jalali_parts[2])
+
+                    # تبدیل به میلادی
+                    jalali_date = jdatetime.date(year, month, day)
+                    gregorian_date = jalali_date.togregorian()
+
+                    user.birth_date = gregorian_date
+            except (ValueError, IndexError, jdatetime.JalaliDateOutsideRangeError):
+                messages.error(request, 'فرمت تاریخ تولد صحیح نیست. مثال: 1400/1/1')
+
+        # ذخیره کاربر
+        user.save()
+        messages.success(request, 'اطلاعات با موفقیت به‌روزرسانی شد')
+        return redirect('dashboard:complete_profile')
+
+    # آماده کردن داده‌ها برای نمایش
+    context = {
+        'user': user,
+        'birth_date_jalali': None
+    }
+
+    # تبدیل تاریخ میلادی به شمسی برای نمایش
+    if user.birth_date:
+        try:
+            gregorian_date = user.birth_date
+            jalali_date = jdatetime.date.fromgregorian(
+                year=gregorian_date.year,
+                month=gregorian_date.month,
+                day=gregorian_date.day
+            )
+            context['birth_date_jalali'] = f"{jalali_date.year}/{jalali_date.month}/{jalali_date.day}"
+        except:
+            context['birth_date_jalali'] = None
+
+    return render(request, 'dashboard_app/profile/complete_profile.html', context)
