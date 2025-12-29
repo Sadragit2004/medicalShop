@@ -92,3 +92,101 @@ def validateImageOrSvg(file):
         ) from exc
 
 
+
+
+
+class ContactPhone(models.Model):
+    PHONE_TYPE_CHOICES = (
+        ('mobile', 'موبایل'),
+        ('phone', 'تلفن ثابت'),
+        ('support', 'پشتیبانی'),
+        ('sales', 'فروش'),
+        ('whatsapp', 'واتساپ'),
+    )
+
+    title = models.CharField(
+        max_length=100,
+        verbose_name="عنوان شماره"
+    )
+
+    phone_number = models.CharField(
+        max_length=20,
+        verbose_name="شماره تماس"
+    )
+
+    phone_type = models.CharField(
+        max_length=20,
+        choices=PHONE_TYPE_CHOICES,
+        default='mobile',
+        verbose_name="نوع شماره"
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="فعال"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="تاریخ ایجاد"
+    )
+
+    class Meta:
+        verbose_name = "شماره تماس"
+        verbose_name_plural = "شماره‌های تماس"
+
+    def __str__(self):
+        return f"{self.title} - {self.phone_number}"
+
+class SettingShop(models.Model):
+    name_shop = models.CharField(
+        max_length=200,
+        verbose_name="نام فروشگاه"
+    )
+
+    establishment_year = models.PositiveIntegerField(
+        verbose_name="سال تأسیس"
+    )
+
+    about_shop = models.TextField(
+        blank=True,
+        verbose_name="درباره فروشگاه"
+    )
+
+    is_call = models.BooleanField(
+        default=True,
+        verbose_name="امکان تماس"
+    )
+
+    emergency_phone = models.ForeignKey(
+        ContactPhone,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='emergency_for_shop',
+        verbose_name="شماره تماس اضطراری"
+    )
+
+    logo = models.ImageField(
+        upload_to="shop/logo/",
+        blank=True,
+        null=True,
+        verbose_name="لوگوی فروشگاه"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="تاریخ ایجاد"
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="آخرین بروزرسانی"
+    )
+
+    class Meta:
+        verbose_name = "تنظیمات فروشگاه"
+        verbose_name_plural = "تنظیمات فروشگاه"
+
+    def __str__(self):
+        return self.name_shop

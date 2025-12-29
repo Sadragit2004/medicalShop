@@ -1,0 +1,85 @@
+{% load static %}
+{% for main_item in tree_data %}
+    <li>
+        <div class="relative open-detail-category">
+            <a>
+                {% if main_item.main.image %}
+                    <span class="mobile-menu-category-badge">
+                        {{ main_item.main.title }}
+                    </span>
+                    <img src="{{ main_item.main.image.url }}" class="h-28 w-full object-cover rounded" alt="{{ main_item.main.title }}">
+                {% else %}
+                    <span class="mobile-menu-category-badge">
+                        {{ main_item.main.title }}
+                    </span>
+                    <img src="{% static 'images/category/default.webp' %}" class="h-28 w-full object-cover rounded" alt="{{ main_item.main.title }}">
+                {% endif %}
+            </a>
+        </div>
+
+        <!-- Mobile SLIDE -->
+        <div class="detail-category">
+            <span class="close-detail-category flex-center gap-x-1 mx-4 bg-gray-100 dark:bg-gray-900 rounded p-2 cursor-pointer">
+                {{ main_item.main.title }}
+                <svg class="size-4">
+                    <use href="#arrow" />
+                </svg>
+            </span>
+
+            <ul class="mt-5 flex flex-col child:py-3 divide-y-2 dark:divide-gray-700 child:px-4">
+                {% for child_item in main_item.children %}
+                    <li>
+                        <span class="flex group items-center justify-between open-submenu">
+                            <a href="{% url 'product:show_by_filter' child_item.child.slug %}">
+                                {{ child_item.child.title }}
+                            </a>
+                            {% if child_item.grandchildren %}
+                                <svg class="size-4 rotate-90">
+                                    <use href="#chevron" />
+                                </svg>
+                            {% endif %}
+                        </span>
+
+                        {% if child_item.grandchildren %}
+                            <ul class="menu-category-submenu child:list-disc child-hover:mr-2 child:transition-all child:duration-300">
+                                {% for grandchild in child_item.grandchildren %}
+                                    <li>
+                                        <a href="{% url 'product:show_by_filter' grandchild.slug %}">
+                                            {{ grandchild.title }}
+                                        </a>
+                                    </li>
+                                {% endfor %}
+
+                                <!-- لینک "همه زیردسته‌ها" -->
+                                <li class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                    <a href="{% url 'product:show_by_filter' child_item.child.slug %}" class="text-blue-500 font-medium">
+                                        همه {{ child_item.child.title }}
+                                    </a>
+                                </li>
+                            </ul>
+                        {% endif %}
+                    </li>
+                {% empty %}
+                    <li class="text-center text-gray-400 py-3">
+                        زیردسته‌ای موجود نیست
+                    </li>
+                {% endfor %}
+
+                <!-- لینک "همه دسته‌بندی‌ها" برای سطح اصلی -->
+                <li class="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
+                    <a href="{% url 'product:show_by_filter' main_item.main.slug %}"
+                       class="flex items-center justify-center gap-2 text-blue-600 dark:text-blue-400 font-semibold">
+                        <span>مشاهده همه {{ main_item.main.title }}</span>
+                        <svg class="size-4">
+                            <use href="#chevron-left" />
+                        </svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </li>
+{% empty %}
+    <li class="text-center text-gray-400 py-8">
+        دسته‌بندی‌ای یافت نشد
+    </li>
+{% endfor %}

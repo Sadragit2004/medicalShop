@@ -22,6 +22,7 @@ urlpatterns = [
     path('brand/<slug:slug>/features/', views.get_brand_feature_filter, name='get_brand_feature_filter'),
     path('s/top-selling/',views.top_selling_products,name='top_selling'),
     path('s/get-category-tree/',views.get_category_tree,name='get_category_tree'),
+    path('s/get-category-tree-mobile/',views.get_category_tree_mobile,name='get_category_tree_mobile'),
 
 ]
 

@@ -8,13 +8,13 @@
                         <div class="swiper-slide amazing-card">
                             <img class="w-28 h-28" src="{{media_url}}/images/slider/Amazings.svg" alt="">
                             <!-- TIMER -->
-                            <div class="flex items-center gap-x-2">
+                            {% comment %} <div class="flex items-center gap-x-2">
                                 <span class="timer-box" id="seconds">00</span>
                                 <p class="text-white">:</p>
                                 <span class="timer-box" id="minutes">00</span>
                                 <p class="text-white">:</p>
                                 <span class="timer-box" id="hours">03</span>
-                            </div>
+                            </div> {% endcomment %}
 
                             <a href="{% url 'discount:amazing_products' %}" class="flex items-center gap-x-.5 text-gray-100 cursor-pointer">
                                 <p>مشاهده همه</p>

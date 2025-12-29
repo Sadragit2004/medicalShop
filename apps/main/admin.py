@@ -48,3 +48,98 @@ class BannerAdmin(admin.ModelAdmin):
         return "بدون تصویر"
 
     image_preview.short_description = 'پیش‌نمایش تصویر'
+
+
+
+
+@admin.register(ContactPhone)
+class ContactPhoneAdmin(admin.ModelAdmin):
+    list_display = (
+        'title',
+        'phone_number',
+        'phone_type',
+        'is_active',
+        'created_at',
+    )
+
+    list_filter = (
+        'phone_type',
+        'is_active',
+    )
+
+    search_fields = (
+        'title',
+        'phone_number',
+    )
+
+    list_editable = (
+        'is_active',
+    )
+
+    ordering = ('-created_at',)
+
+    fieldsets = (
+        ('اطلاعات شماره تماس', {
+            'fields': ('title', 'phone_number', 'phone_type')
+        }),
+        ('وضعیت', {
+            'fields': ('is_active',)
+        }),
+        ('اطلاعات سیستمی', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+
+    readonly_fields = ('created_at',)
+
+
+
+@admin.register(SettingShop)
+class SettingShopAdmin(admin.ModelAdmin):
+    list_display = (
+        'name_shop',
+        'establishment_year',
+        'is_call',
+        'emergency_phone',
+        'updated_at',
+    )
+
+    list_filter = (
+        'is_call',
+    )
+
+    search_fields = (
+        'name_shop',
+    )
+
+    ordering = ('-updated_at',)
+
+    fieldsets = (
+        ('اطلاعات اصلی فروشگاه', {
+            'fields': (
+                'name_shop',
+                'establishment_year',
+                'about_shop',
+                'logo',
+            )
+        }),
+        ('تنظیمات تماس', {
+            'fields': (
+                'is_call',
+                'emergency_phone',
+            )
+        }),
+        ('اطلاعات سیستمی', {
+            'fields': (
+                'created_at',
+                'updated_at',
+            ),
+            'classes': ('collapse',)
+        }),
+    )
+
+    readonly_fields = (
+        'created_at',
+        'updated_at',
+    )

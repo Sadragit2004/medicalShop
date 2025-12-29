@@ -60,10 +60,10 @@
 
       <!-- SIDE MENU -->
       <aside class="lg:sticky mb-8 top-1 h-fit lg:w-1/4 hidden lg:flex flex-col gap-y-4 items-center shadow rounded-lg p-4 dark:bg-gray-800 bg-white">
-        <!-- NAME AND AVATAR  -->
+        <!-- NAME AND    -->
         <div class="w-full flex items-center justify-between border-b border-gray-200 dark:border-white/20 py-3">
           <div class="flex items-center gap-x-3">
-            <img src="{% static 'images/svg/user.png' %}" class="size-10 ring-2 ring-gray-400/20 rounded-full" alt="AVATAR">
+            <img src="{% static 'images/svg/user.png' %}" class="size-10 ring-2 ring-gray-400/20 rounded-full" alt=" ">
             <span class="felx flex-col gap-y-2">
               <p class="font-DanaMedium text-lg">{{ request.user.name|default:"کاربر" }}</p>
               <p class="text-gray-400">{{ request.user.mobileNumber|default:"-" }}</p>
@@ -137,10 +137,10 @@
                 <use href="#x-mark" />
               </svg>
             </button>
-            <!-- NAME AND AVATAR  -->
+            <!-- NAME AND    -->
             <div class="w-full flex items-center justify-between border-b border-gray-200 dark:border-white/20 py-3">
               <div class="flex items-center gap-x-3">
-                <img src="{% static 'images/svg/user.png' %}" class="size-10 ring-2 ring-gray-400/20 rounded-full" alt="AVATAR">
+                <img src="{% static 'images/svg/user.png' %}" class="size-10 ring-2 ring-gray-400/20 rounded-full" alt=" ">
                 <span class="felx flex-col gap-y-2">
                   <p class="font-DanaMedium text-lg">{{ request.user.name|default:"کاربر" }}</p>
                   <p class="text-gray-400">{{ request.user.mobileNumber|default:"-" }}</p>
