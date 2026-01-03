@@ -1,0 +1,432 @@
+<!-- templates/admin/products/product/detail.html -->
+{% extends '../../base/base.html' %}
+
+{% block title %}جزئیات محصول - {{ product.title }}{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_product_list' %}">محصولات</a></li>
+<li class="breadcrumb-item active">جزئیات {{ product.title }}</li>
+{% endblock %}
+
+{% block page_title %}جزئیات محصول <small class="text-muted">({{ product.title }})</small>{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- اطلاعات اصلی -->
+    <div class="col-lg-8">
+        <!-- کارت اطلاعات محصول -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-info-circle"></i> اطلاعات محصول</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- تصویر اصلی -->
+                    <div class="col-md-4 mb-4">
+                        <div class="text-center">
+                            {% if product.mainImage %}
+                            <img src="{{ product.mainImage.url }}" alt="{{ product.title }}"
+                                 class="img-fluid rounded mb-3" style="max-height: 250px; object-fit: contain;">
+                            {% else %}
+                            <div class="no-image-large">
+                                <i class="fas fa-image fa-4x text-muted"></i>
+                                <p class="text-muted mt-2">بدون تصویر</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- اطلاعات پایه -->
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">عنوان</label>
+                                <div class="form-control-plaintext">
+                                    <h5 class="mb-0">{{ product.title }}</h5>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">اسلاگ</label>
+                                <div class="form-control-plaintext">
+                                    <code>{{ product.slug }}</code>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">برند</label>
+                                <div class="form-control-plaintext">
+                                    {% if product.brand %}
+                                    <span class="badge bg-primary">{{ product.brand.title }}</span>
+                                    {% else %}
+                                    <span class="text-muted">بدون برند</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">وضعیت</label>
+                                <div class="form-control-plaintext">
+                                    {% if product.isActive %}
+                                    <span class="badge bg-success">فعال</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">غیرفعال</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label text-muted">توضیح کوتاه</label>
+                                <div class="form-control-plaintext bg-light p-3 rounded">
+                                    {{ product.shortDescription }}
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">تاریخ ایجاد</label>
+                                <div class="form-control-plaintext">
+                                    {{ product.createdAt|date:"Y/m/d H:i" }}
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">آخرین ویرایش</label>
+                                <div class="form-control-plaintext">
+                                    {{ product.updatedAt|date:"Y/m/d H:i" }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- کارت دسته‌بندی‌ها -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-folder"></i> دسته‌بندی‌ها</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for category in product.category.all %}
+                    <div class="col-md-3 col-sm-4 col-6 mb-2">
+                        <div class="category-badge">
+                            <span class="badge bg-info w-100 py-2">
+                                <i class="fas fa-folder me-1"></i>
+                                {{ category.title }}
+                                {% if category.parent %}
+                                <small class="d-block text-light">({{ category.parent.title }})</small>
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            هیچ دسته‌بندی انتخاب نشده است
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- کارت توضیحات -->
+        {% if product.description %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-align-left"></i> توضیحات کامل</h5>
+            </div>
+            <div class="card-body">
+                <div class="product-description">
+                    {{ product.description|safe }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- سایدبار -->
+    <div class="col-lg-4">
+        <!-- کارت آمار -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-bar"></i> آمار محصول</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="p-3 bg-light rounded">
+                            <div class="h4 mb-0">{{ product.total_comments }}</div>
+                            <div class="text-muted">نظرات</div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="p-3 bg-light rounded">
+                            <div class="h4 mb-0">{{ comment_stats.average_rating|default:"0.0" }}</div>
+                            <div class="text-muted">امتیاز</div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="p-3 bg-light rounded">
+                            <div class="h4 mb-0">{{ product.galleries.count }}</div>
+                            <div class="text-muted">تصاویر</div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="p-3 bg-light rounded">
+                            <div class="h4 mb-0">{{ product.saleTypes.count }}</div>
+                            <div class="text-muted">قیمت‌ها</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- توزیع امتیازها -->
+                {% if comment_stats.rating_distribution %}
+                <div class="mt-4">
+                    <h6>توزیع امتیازها:</h6>
+                    {% for i in "54321" %}
+                    {% with star=i|add:"0" %}
+                    <div class="d-flex align-items-center mb-2">
+                        <small class="me-2" style="width: 20px;">{{ star }} ستاره</small>
+                        <div class="progress flex-grow-1" style="height: 10px;">
+                            {% with count=comment_stats.rating_distribution.star_star %}
+                            <div class="progress-bar bg-warning"
+                                 style="width: {% widthratio count comment_stats.total_ratings 100 %}%">
+                            </div>
+                            {% endwith %}
+                        </div>
+                        <small class="ms-2" style="width: 30px;">
+                            {{ comment_stats.rating_distribution.star_star|default:0 }}
+                        </small>
+                    </div>
+                    {% endwith %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- کارت اقدامات -->
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-cog"></i> اقدامات</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'panelAdmin:admin_product_update' product.id %}"
+                       class="btn btn-warning">
+                        <i class="fas fa-edit"></i> ویرایش محصول
+                    </a>
+                    <a href="{% url 'panelAdmin:admin_sale_type_create' product.id %}"
+                       class="btn btn-success">
+                        <i class="fas fa-tag"></i> افزودن قیمت
+                    </a>
+                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#galleryModal">
+                        <i class="fas fa-images"></i> مدیریت گالری
+                    </button>
+                    <a href="{% url 'panelAdmin:admin_product_delete' product.id %}"
+                       class="btn btn-danger"
+                       onclick="return confirm('آیا از حذف این محصول اطمینان دارید؟')">
+                        <i class="fas fa-trash"></i> حذف محصول
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- کارت قیمت‌ها -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-tags"></i> قیمت‌گذاری</h5>
+            </div>
+            <div class="card-body">
+                {% if product.saleTypes.all %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>نوع فروش</th>
+                                <th>قیمت</th>
+                                <th>وضعیت</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sale_type in product.saleTypes.all %}
+                            <tr>
+                                <td>{{ sale_type.get_typeSale_display }}</td>
+                                <td>
+                                    <strong>{{ sale_type.price|floatformat:0 }}</strong>
+                                    <small class="text-muted d-block">تومان</small>
+                                </td>
+                                <td>
+                                    {% if sale_type.isActive %}
+                                    <span class="badge bg-success">فعال</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">غیرفعال</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'panelAdmin:admin_sale_type_update' sale_type.id %}"
+                                           class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="#" class="btn btn-sm btn-danger"
+                                           onclick="deleteSaleType({{ sale_type.id }})">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    هیچ قیمتی ثبت نشده است
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال گالری -->
+<div class="modal fade" id="galleryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">گالری محصول</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    {% for gallery in product.galleries.all %}
+                    <div class="col-md-3 col-sm-4 col-6 mb-3">
+                        <div class="card gallery-item">
+                            <img src="{{ gallery.image.url }}"
+                                 class="card-img-top"
+                                 alt="{{ gallery.altText|default:product.title }}"
+                                 style="height: 150px; object-fit: cover;">
+                            <div class="card-body text-center">
+                                <small class="text-muted">{{ gallery.createdAt|date:"Y/m/d" }}</small>
+                                <div class="mt-2">
+                                    <a href="{% url 'panelAdmin:admin_delete_gallery_image' gallery.id %}"
+                                       class="btn btn-sm btn-danger"
+                                       onclick="return confirm('آیا از حذف این تصویر اطمینان دارید؟')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-images fa-3x text-muted mb-3"></i>
+                        <h5>تصویری یافت نشد</h5>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- فرم آپلود تصاویر جدید -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">افزودن تصاویر جدید</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'panelAdmin:admin_product_update' product.id %}"
+                              enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <input type="file"
+                                           class="form-control"
+                                           name="gallery_images"
+                                           multiple
+                                           accept="image/*">
+                                </div>
+                                <div class="col-md-4">
+                                    <button type="submit" class="btn btn-success w-100">
+                                        <i class="fas fa-upload"></i> آپلود
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.no-image-large {
+    width: 100%;
+    height: 250px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px dashed #dee2e6;
+}
+
+.category-badge {
+    text-align: center;
+}
+
+.gallery-item {
+    transition: all 0.3s;
+}
+.gallery-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.product-description {
+    line-height: 1.8;
+}
+.product-description img {
+    max-width: 100%;
+    height: auto;
+}
+</style>
+
+<script>
+function deleteSaleType(saleTypeId) {
+    if (confirm('آیا از حذف این قیمت اطمینان دارید؟')) {
+        fetch(`/panelAdmin/sale-type/${saleTypeId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('خطا در حذف قیمت');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('خطا در ارتباط با سرور');
+        });
+    }
+}
+
+// نمایش تصاویر گالری بزرگ
+document.querySelectorAll('.gallery-item img').forEach(img => {
+    img.addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('imageViewModal'));
+        const modalImage = document.getElementById('modalImage');
+        modalImage.src = this.src;
+        modal.show();
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,506 @@
+<!-- templates/admin/products/product/update.html -->
+{% extends '../../base/base.html' %}
+
+{% block title %}ویرایش محصول - {{ product.title }}{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_product_list' %}">محصولات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_product_detail' product.id %}">{{ product.title }}</a></li>
+<li class="breadcrumb-item active">ویرایش</li>
+{% endblock %}
+
+{% block page_title %}ویرایش محصول <small class="text-muted">({{ product.title }})</small>{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-edit"></i> فرم ویرایش محصول</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" novalidate id="productForm">
+                    {% csrf_token %}
+
+                    <!-- تب‌ها -->
+                    <ul class="nav nav-tabs mb-4" id="productTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="basic-tab" data-bs-toggle="tab"
+                                    data-bs-target="#basic" type="button" role="tab">
+                                <i class="fas fa-info-circle"></i> اطلاعات پایه
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="images-tab" data-bs-toggle="tab"
+                                    data-bs-target="#images" type="button" role="tab">
+                                <i class="fas fa-images"></i> تصاویر
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="features-tab" data-bs-toggle="tab"
+                                    data-bs-target="#features" type="button" role="tab">
+                                <i class="fas fa-list"></i> ویژگی‌ها
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="description-tab" data-bs-toggle="tab"
+                                    data-bs-target="#description" type="button" role="tab">
+                                <i class="fas fa-align-left"></i> توضیحات
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="productTabsContent">
+                        <!-- تب اطلاعات پایه -->
+                        <div class="tab-pane fade show active" id="basic" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="title" class="form-label required">عنوان محصول</label>
+                                    <input type="text"
+                                           class="form-control"
+                                           id="title"
+                                           name="title"
+                                           value="{{ product.title }}"
+                                           required>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="slug" class="form-label">اسلاگ</label>
+                                    <input type="text"
+                                           class="form-control"
+                                           id="slug"
+                                           name="slug"
+                                           value="{{ product.slug }}">
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="brand" class="form-label">برند</label>
+                                    <select class="form-select" id="brand" name="brand">
+                                        <option value="">بدون برند</option>
+                                        {% for brand in brands %}
+                                        <option value="{{ brand.id }}"
+                                                {% if product.brand and product.brand.id == brand.id %}selected{% endif %}>
+                                            {{ brand.title }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="shortDescription" class="form-label required">توضیح کوتاه</label>
+                                    <textarea class="form-control"
+                                              id="shortDescription"
+                                              name="shortDescription"
+                                              rows="2"
+                                              required>{{ product.shortDescription }}</textarea>
+                                </div>
+
+                                <div class="col-12 mb-3">
+                                    <label class="form-label required">دسته‌بندی‌ها</label>
+                                    <div class="row">
+                                        {% for category in categories %}
+                                        <div class="col-md-3 col-sm-4 col-6 mb-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input"
+                                                       type="checkbox"
+                                                       id="category_{{ category.id }}"
+                                                       name="categories"
+                                                       value="{{ category.id }}"
+                                                       {% if category in selected_categories %}checked{% endif %}>
+                                                <label class="form-check-label" for="category_{{ category.id }}">
+                                                    {{ category.title }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               id="isActive"
+                                               name="isActive"
+                                               {% if product.isActive %}checked{% endif %}>
+                                        <label class="form-check-label fw-bold" for="isActive">
+                                            محصول فعال
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- تب تصاویر -->
+                        <div class="tab-pane fade" id="images" role="tabpanel">
+                            <div class="row">
+                                <!-- تصویر اصلی -->
+                                <div class="col-md-6 mb-4">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">تصویر اصلی</h6>
+                                        </div>
+                                        <div class="card-body text-center">
+                                            {% if product.mainImage %}
+                                            <img src="{{ product.mainImage.url }}"
+                                                 alt="{{ product.title }}"
+                                                 class="img-fluid rounded mb-3"
+                                                 style="max-height: 200px; object-fit: contain;">
+                                            <div class="mt-2">
+                                                <button type="button" class="btn btn-sm btn-danger"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#deleteMainImageModal">
+                                                    <i class="fas fa-trash"></i> حذف تصویر
+                                                </button>
+                                            </div>
+                                            {% else %}
+                                            <div class="alert alert-warning">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                تصویر اصلی وجود ندارد
+                                            </div>
+                                            {% endif %}
+
+                                            <div class="mt-3">
+                                                <label for="mainImage" class="form-label">تغییر تصویر اصلی</label>
+                                                <input type="file"
+                                                       class="form-control"
+                                                       id="mainImage"
+                                                       name="mainImage"
+                                                       accept="image/*">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- گالری تصاویر -->
+                                <div class="col-md-6 mb-4">
+                                    <div class="card">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">گالری تصاویر</h6>
+                                            <span class="badge bg-primary">{{ product.galleries.count }}</span>
+                                        </div>
+                                        <div class="card-body">
+                                            {% if product.galleries.all %}
+                                            <div class="row g-2 mb-3">
+                                                {% for gallery in product.galleries.all|slice:":4" %}
+                                                <div class="col-3">
+                                                    <div class="position-relative">
+                                                        <img src="{{ gallery.image.url }}"
+                                                             class="img-thumbnail"
+                                                             alt="{{ gallery.altText }}"
+                                                             style="width: 80px; height: 80px; object-fit: cover;">
+                                                        <a href="{% url 'panelAdmin:admin_delete_gallery_image' gallery.id %}"
+                                                           class="btn btn-sm btn-danger position-absolute top-0 end-0"
+                                                           onclick="return confirm('آیا از حذف اطمینان دارید؟')">
+                                                            <i class="fas fa-times"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                                {% if product.galleries.count > 4 %}
+                                                <div class="col-3">
+                                                    <div class="text-center h-100 d-flex align-items-center justify-content-center">
+                                                        <span class="text-muted">+{{ product.galleries.count|add:"-4" }}</span>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            {% else %}
+                                            <div class="alert alert-info">
+                                                <i class="fas fa-info-circle"></i>
+                                                هیچ تصویری در گالری وجود ندارد
+                                            </div>
+                                            {% endif %}
+
+                                            <div>
+                                                <label for="gallery_images" class="form-label">افزودن تصاویر به گالری</label>
+                                                <input type="file"
+                                                       class="form-control"
+                                                       id="gallery_images"
+                                                       name="gallery_images"
+                                                       multiple
+                                                       accept="image/*">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- تب ویژگی‌ها -->
+                        <div class="tab-pane fade" id="features" role="tabpanel">
+                            <div class="row">
+                                <div class="col-12 mb-3">
+                                    <button type="button" class="btn btn-success mb-3" id="addFeatureBtn">
+                                        <i class="fas fa-plus"></i> افزودن ویژگی جدید
+                                    </button>
+                                </div>
+
+                                <div class="col-12" id="featuresContainer">
+                                    {% for feature in product.featuresValue.all %}
+                                    <div class="card mb-3" id="feature_{{ forloop.counter }}">
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-4 mb-2">
+                                                    <label class="form-label">ویژگی</label>
+                                                    <select class="form-select feature-select" name="feature_{{ forloop.counter }}">
+                                                        <option value="">انتخاب ویژگی</option>
+                                                        {% for f in features %}
+                                                        <option value="{{ f.id }}"
+                                                                {% if feature.feature.id == f.id %}selected{% endif %}>
+                                                            {{ f.title }}
+                                                        </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-4 mb-2">
+                                                    <label class="form-label">مقدار</label>
+                                                    <input type="text"
+                                                           class="form-control"
+                                                           name="value_{{ forloop.counter }}"
+                                                           value="{{ feature.value }}"
+                                                           placeholder="مقدار ویژگی">
+                                                </div>
+                                                <div class="col-md-3 mb-2">
+                                                    <label class="form-label">مقدار فیلترینگ</label>
+                                                    <input type="text"
+                                                           class="form-control"
+                                                           name="filter_value_{{ forloop.counter }}"
+                                                           value="{{ feature.filterValue.value|default:'' }}"
+                                                           placeholder="اختیاری">
+                                                </div>
+                                                <div class="col-md-1 mb-2 d-flex align-items-end">
+                                                    <button type="button" class="btn btn-danger w-100"
+                                                            onclick="removeFeature({{ forloop.counter }})">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+
+                                <input type="hidden" id="featureCount" name="feature_count"
+                                       value="{{ product.featuresValue.count }}">
+                            </div>
+                        </div>
+
+                        <!-- تب توضیحات -->
+                        <div class="tab-pane fade" id="description" role="tabpanel">
+                            <div class="row">
+                                <div class="col-12 mb-3">
+                                    <label for="description" class="form-label">توضیحات کامل محصول</label>
+                                    <textarea class="form-control ckeditor"
+                                              id="description"
+                                              name="description"
+                                              rows="12">{{ product.description|default:'' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- دکمه‌های اقدام -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <a href="{% url 'panelAdmin:admin_product_detail' product.id %}"
+                                       class="btn btn-secondary me-2">
+                                        <i class="fas fa-times"></i> انصراف
+                                    </a>
+                                    <a href="{% url 'panelAdmin:admin_product_delete' product.id %}"
+                                       class="btn btn-outline-danger"
+                                       onclick="return confirm('آیا از حذف این محصول اطمینان دارید؟')">
+                                        <i class="fas fa-trash"></i> حذف محصول
+                                    </a>
+                                </div>
+                                <div>
+                                    <button type="reset" class="btn btn-outline-secondary me-2">
+                                        <i class="fas fa-redo"></i> بازنشانی
+                                    </button>
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="fas fa-save"></i> ذخیره تغییرات
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال حذف تصویر اصلی -->
+<div class="modal fade" id="deleteMainImageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">حذف تصویر اصلی</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>آیا از حذف تصویر اصلی اطمینان دارید؟</p>
+                <p class="text-muted small">پس از حذف، باید تصویر جدیدی آپلود کنید.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-danger" onclick="deleteMainImage()">بله، حذف شود</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.nav-tabs .nav-link {
+    border-radius: 0;
+    border: none;
+    padding: 10px 20px;
+    color: #6c757d;
+}
+.nav-tabs .nav-link.active {
+    background-color: #ffc107;
+    color: #212529;
+    font-weight: bold;
+}
+.tab-content {
+    padding: 20px 0;
+}
+.feature-select {
+    min-width: 150px;
+}
+</style>
+
+<script>
+// مدیریت ویژگی‌ها
+let featureCounter = {{ product.featuresValue.count }};
+const featuresContainer = document.getElementById('featuresContainer');
+const featureCountInput = document.getElementById('featureCount');
+
+document.getElementById('addFeatureBtn').addEventListener('click', function() {
+    featureCounter++;
+    featureCountInput.value = featureCounter;
+
+    const featureDiv = document.createElement('div');
+    featureDiv.className = 'card mb-3';
+    featureDiv.id = `feature_${featureCounter}`;
+    featureDiv.innerHTML = `
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-2">
+                    <label class="form-label">ویژگی</label>
+                    <select class="form-select feature-select" name="feature_${featureCounter}">
+                        <option value="">انتخاب ویژگی</option>
+                        {% for feature in features %}
+                        <option value="{{ feature.id }}">{{ feature.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <label class="form-label">مقدار</label>
+                    <input type="text" class="form-control" name="value_${featureCounter}" placeholder="مقدار ویژگی">
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label class="form-label">مقدار فیلترینگ</label>
+                    <input type="text" class="form-control" name="filter_value_${featureCounter}" placeholder="اختیاری">
+                </div>
+                <div class="col-md-1 mb-2 d-flex align-items-end">
+                    <button type="button" class="btn btn-danger w-100" onclick="removeFeature(${featureCounter})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    featuresContainer.appendChild(featureDiv);
+});
+
+function removeFeature(featureId) {
+    const featureDiv = document.getElementById(`feature_${featureId}`);
+    if (featureDiv) {
+        featureDiv.remove();
+    }
+}
+
+// حذف تصویر اصلی
+function deleteMainImage() {
+    const mainImageInput = document.getElementById('mainImage');
+
+    // ایجاد فیلد مخفی برای حذف تصویر
+    let hiddenInput = document.querySelector('input[name="delete_main_image"]');
+    if (!hiddenInput) {
+        hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'delete_main_image';
+        hiddenInput.value = 'true';
+        document.getElementById('productForm').appendChild(hiddenInput);
+    }
+
+    // پاک کردن پیش‌نمایش
+    const cardBody = document.querySelector('#images .card-body');
+    cardBody.innerHTML = `
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i> تصویر اصلی حذف شد
+        </div>
+        <div class="mt-3">
+            <label for="mainImage" class="form-label">آپلود تصویر جدید</label>
+            <input type="file" class="form-control" id="mainImage" name="mainImage" accept="image/*" required>
+        </div>
+    `;
+
+    // بستن مودال
+    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteMainImageModal'));
+    modal.hide();
+}
+
+// فعال‌سازی CKEditor
+if (document.querySelector('.ckeditor')) {
+    ClassicEditor
+        .create(document.querySelector('.ckeditor'), {
+            language: 'fa',
+            toolbar: {
+                items: [
+                    'heading', '|',
+                    'bold', 'italic', 'underline', 'strikethrough', '|',
+                    'link', 'blockQuote', 'codeBlock', '|',
+                    'bulletedList', 'numberedList', '|',
+                    'insertTable', '|',
+                    'undo', 'redo'
+                ]
+            }
+        })
+        .catch(error => {
+            console.error(error);
+        });
+}
+
+// اعتبارسنجی فرم
+document.getElementById('productForm').addEventListener('submit', function(e) {
+    const title = document.getElementById('title').value.trim();
+    const shortDescription = document.getElementById('shortDescription').value.trim();
+
+    if (!title) {
+        e.preventDefault();
+        alert('عنوان محصول الزامی است');
+        return;
+    }
+
+    if (!shortDescription) {
+        e.preventDefault();
+        alert('توضیح کوتاه الزامی است');
+        return;
+    }
+
+    // بررسی حداقل یک دسته‌بندی
+    const selectedCategories = document.querySelectorAll('input[name="categories"]:checked');
+    if (selectedCategories.length === 0) {
+        if (!confirm('هیچ دسته‌بندی انتخاب نشده است. آیا ادامه می‌دهید؟')) {
+            e.preventDefault();
+            return;
+        }
+    }
+});
+</script>
+{% endblock %}

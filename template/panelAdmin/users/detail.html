@@ -1,0 +1,323 @@
+<!-- templates/panelAdmin/users/detail.html -->
+{% extends '../base/base.html' %}
+
+{% block title %}جزئیات کاربر - {{ user.mobileNumber }}{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_user_list' %}">کاربران</a></li>
+<li class="breadcrumb-item active">جزئیات کاربر</li>
+{% endblock %}
+
+{% block page_title %}جزئیات کاربر <small class="text-muted">({{ user.mobileNumber }})</small>{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- کارت اطلاعات اصلی -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">مشخصات کاربر</h5>
+            </div>
+            <div class="card-body text-center">
+                <!-- آواتار -->
+                <div class="mb-4">
+                    <div class="avatar-placeholder mx-auto">
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center"
+                             style="width: 120px; height: 120px; margin: 0 auto; border: 3px solid #4361ee;">
+                            <i class="fas fa-user fa-3x text-primary"></i>
+                        </div>
+                    </div>
+                    <h4 class="mt-3 mb-1">
+                        {% if user.name or user.family %}
+                            {{ user.name }} {{ user.family }}
+                        {% else %}
+                            کاربر {{ user.mobileNumber }}
+                        {% endif %}
+                    </h4>
+                    <p class="text-muted">{{ user.mobileNumber }}</p>
+                </div>
+
+                <!-- وضعیت‌ها -->
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <div class="p-3 border rounded">
+                            <div class="mb-2">
+                                {% if user.is_active %}
+                                    <i class="fas fa-check-circle fa-2x text-success"></i>
+                                {% else %}
+                                    <i class="fas fa-times-circle fa-2x text-danger"></i>
+                                {% endif %}
+                            </div>
+                            <div class="fw-bold">حساب</div>
+                            <div>
+                                {% if user.is_active %}
+                                    <span class="badge bg-success">فعال</span>
+                                {% else %}
+                                    <span class="badge bg-danger">غیرفعال</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 border rounded">
+                            <div class="mb-2">
+                                {% if user.is_staff %}
+                                    <i class="fas fa-user-shield fa-2x text-warning"></i>
+                                {% else %}
+                                    <i class="fas fa-user fa-2x text-secondary"></i>
+                                {% endif %}
+                            </div>
+                            <div class="fw-bold">نقش</div>
+                            <div>
+                                {% if user.is_superuser %}
+                                    <span class="badge bg-danger">سوپرادمین</span>
+                                {% elif user.is_staff %}
+                                    <span class="badge bg-warning text-dark">ادمین</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">کاربر عادی</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- دکمه‌های عملیاتی -->
+                <div class="d-grid gap-2">
+                    <a href="{% url 'panelAdmin:admin_update_user' user.id %}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> ویرایش کاربر
+                    </a>
+                    <a href="{% url 'panelAdmin:admin_user_devices' user.id %}" class="btn btn-info">
+                        <i class="fas fa-laptop"></i> دستگاه‌ها ({{ user.devices.count }})
+                    </a>
+                    <a href="{% url 'panelAdmin:admin_delete_user' user.id %}"
+                       class="btn btn-danger"
+                       onclick="return confirm('آیا از حذف کاربر اطمینان دارید؟')">
+                        <i class="fas fa-trash"></i> حذف کاربر
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- کارت امنیت -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-shield-alt"></i> وضعیت امنیتی</h5>
+            </div>
+            <div class="card-body">
+                {% if user.security %}
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>مسدود شده</span>
+                        <span>
+                            {% if user.security.isBan %}
+                                <span class="badge bg-danger">بله</span>
+                            {% else %}
+                                <span class="badge bg-success">خیر</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>تکمیل اطلاعات</span>
+                        <span>
+                            {% if user.security.isInfoFiled %}
+                                <span class="badge bg-success">تکمیل شده</span>
+                            {% else %}
+                                <span class="badge bg-warning">ناقص</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>آخرین ورود</span>
+                        <span class="text-muted">
+                            {% if user.last_login %}
+                                {{ user.last_login|date:"Y/m/d H:i" }}
+                            {% else %}
+                                هرگز
+                            {% endif %}
+                        </span>
+                    </li>
+                </ul>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    اطلاعات امنیتی یافت نشد
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- اطلاعات تکمیلی -->
+    <div class="col-lg-8">
+        <!-- کارت اطلاعات شخصی -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-user-circle"></i> اطلاعات شخصی</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">شماره موبایل</label>
+                        <div class="form-control-plaintext">
+                            <strong class="text-primary">{{ user.mobileNumber }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">ایمیل</label>
+                        <div class="form-control-plaintext">
+                            {% if user.email %}
+                                {{ user.email }}
+                            {% else %}
+                                <span class="text-muted">ثبت نشده</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">نام</label>
+                        <div class="form-control-plaintext">
+                            {% if user.name %}
+                                {{ user.name }}
+                            {% else %}
+                                <span class="text-muted">ثبت نشده</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">نام خانوادگی</label>
+                        <div class="form-control-plaintext">
+                            {% if user.family %}
+                                {{ user.family }}
+                            {% else %}
+                                <span class="text-muted">ثبت نشده</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">جنسیت</label>
+                        <div class="form-control-plaintext">
+                            {{ user.get_gender_display }}
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">تاریخ تولد</label>
+                        <div class="form-control-plaintext">
+                            {% if user.birth_date %}
+                                {{ user.birth_date|date:"Y/m/d" }}
+                                <small class="text-muted d-block">سن: {{ user.age }} سال</small>
+                            {% else %}
+                                <span class="text-muted">ثبت نشده</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">تاریخ عضویت</label>
+                        <div class="form-control-plaintext">
+                            {{ user.createAt|date:"Y/m/d H:i" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- کارت آمار -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-bar"></i> آمار کاربر</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card primary p-3 rounded">
+                            <div class="h2 mb-0">{{ user.orders.count }}</div>
+                            <div class="text-muted">سفارشات</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card success p-3 rounded">
+                            <div class="h2 mb-0">{{ user.addresses.count }}</div>
+                            <div class="text-muted">آدرس‌ها</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card warning p-3 rounded">
+                            <div class="h2 mb-0">{{ user.devices.count }}</div>
+                            <div class="text-muted">دستگاه‌ها</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card danger p-3 rounded">
+                            <div class="h2 mb-0">
+                                {% if user.last_login %}
+                                    {{ user.last_login|timesince }}
+                                {% else %}
+                                    ۰
+                                {% endif %}
+                            </div>
+                            <div class="text-muted">آخرین ورود</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- کارت آخرین فعالیت‌ها -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-history"></i> آخرین فعالیت‌ها</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>نوع فعالیت</th>
+                                <th>توضیحات</th>
+                                <th>تاریخ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for device in user.devices.all|slice:":5" %}
+                            <tr>
+                                <td><span class="badge bg-info">ورود</span></td>
+                                <td>ورود از {{ device.deviceInfo|default:"دستگاه ناشناس" }}</td>
+                                <td>{{ device.createdAt|date:"Y/m/d H:i" }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% for order in user.orders.all|slice:":3" %}
+                            <tr>
+                                <td><span class="badge bg-success">سفارش</span></td>
+                                <td>ثبت سفارش {{ order.orderCode }}</td>
+                                <td>{{ order.registerDate|date:"Y/m/d H:i" }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% if not user.devices.all and not user.orders.all %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-3">
+                                    هیچ فعالیتی ثبت نشده است
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-card {
+    background: white;
+    border-left: 4px solid;
+    transition: all 0.3s;
+}
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.stat-card.primary { border-color: #4361ee; }
+.stat-card.success { border-color: #4cc9f0; }
+.stat-card.warning { border-color: #f8961e; }
+.stat-card.danger { border-color: #f72585; }
+</style>
+{% endblock %}

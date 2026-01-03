@@ -1,0 +1,355 @@
+<!-- templates/admin/dashboard/index.html -->
+{% extends '../base/base.html' %}
+
+{% block title %}داشبورد مدیریت{% endblock %}
+
+{% block page_title %}داشبورد مدیریت{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active" aria-current="page">داشبورد</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Stats Cards -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">کاربران</h6>
+                        <h3 class="mb-0">{{ stats.total_users }}</h3>
+                        <small class="text-success">
+                            <i class="fas fa-arrow-up me-1"></i>
+                            {{ stats.new_users_today }} جدید امروز
+                        </small>
+                    </div>
+                    <div class="bg-primary rounded-circle p-3">
+                        <i class="fas fa-users fa-2x text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">سفارشات</h6>
+                        <h3 class="mb-0">{{ stats.total_orders }}</h3>
+                        <small class="text-success">
+                            <i class="fas fa-arrow-up me-1"></i>
+                            {{ stats.today_orders }} امروز
+                        </small>
+                    </div>
+                    <div class="bg-success rounded-circle p-3">
+                        <i class="fas fa-shopping-cart fa-2x text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">محصولات</h6>
+                        <h3 class="mb-0">{{ stats.total_products }}</h3>
+                        <small class="text-success">
+                            <i class="fas fa-box me-1"></i>
+                            {{ stats.active_products }} فعال
+                        </small>
+                    </div>
+                    <div class="bg-warning rounded-circle p-3">
+                        <i class="fas fa-box fa-2x text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card danger h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">درآمد</h6>
+                        <h3 class="mb-0">{{ stats.total_revenue|floatformat:0 }}</h3>
+                        <small class="text-success">
+                            <i class="fas fa-money-bill-wave me-1"></i>
+                            {{ stats.today_revenue|floatformat:0 }} امروز
+                        </small>
+                    </div>
+                    <div class="bg-danger rounded-circle p-3">
+                        <i class="fas fa-dollar-sign fa-2x text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Chart -->
+    <div class="col-xl-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">آمار فروش ۷ روز اخیر</h6>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        این هفته
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#">امروز</a></li>
+                        <li><a class="dropdown-item" href="#">این هفته</a></li>
+                        <li><a class="dropdown-item" href="#">این ماه</a></li>
+                        <li><a class="dropdown-item" href="#">این سال</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="salesChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="col-xl-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">آخرین سفارشات</h6>
+                <a href="{% url 'panelAdmin:admin_order_list' %}" class="btn btn-sm btn-outline-primary">
+                    مشاهده همه
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for order in recent_orders %}
+                    <div class="list-group-item border-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">سفارش #{{ order.orderCode|slice:":8" }}</h6>
+                                <small class="text-muted">
+                                    {{ order.customer.mobileNumber }}
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <strong>{{ order.get_final_price|floatformat:0 }}</strong>
+                                <div>
+                                    <span class="badge
+                                        {% if order.status == 'delivered' %}bg-success
+                                        {% elif order.status == 'pending' %}bg-warning
+                                        {% elif order.status == 'canceled' %}bg-danger
+                                        {% else %}bg-info{% endif %}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Users -->
+    <div class="col-xl-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">کاربران جدید</h6>
+                <a href="{% url 'panelAdmin:admin_user_list' %}" class="btn btn-sm btn-outline-primary">
+                    مشاهده همه
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>نام</th>
+                                <th>موبایل</th>
+                                <th>تاریخ عضویت</th>
+                                <th>وضعیت</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in recent_users %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://via.placeholder.com/40" class="avatar me-2" alt="...">
+                                        <div>
+                                            <strong>{{ user.name }} {{ user.family }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ user.email|default:"-" }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ user.mobileNumber }}</td>
+                                <td>{{ user.date_joined|date:"Y/m/d" }}</td>
+                                <td>
+                                    {% if user.is_active %}
+                                    <span class="badge bg-success">فعال</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">غیرفعال</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Products -->
+    <div class="col-xl-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">محصولات پرفروش</h6>
+                <a href="{% url 'panelAdmin:admin_product_list' %}" class="btn btn-sm btn-outline-primary">
+                    مشاهده همه
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>محصول</th>
+                                <th>دسته‌بندی</th>
+                                <th>فروش</th>
+                                <th>درآمد</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in top_products %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if product.mainImage %}
+                                        <img src="{{ product.mainImage.url }}" class="img-thumbnail me-2" alt="..." style="width: 50px; height: 50px;">
+                                        {% endif %}
+                                        <div>
+                                            <strong>{{ product.title }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ product.brand.title|default:"بدون برند" }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% for cat in product.category.all|slice:":2" %}
+                                    <span class="badge bg-light text-dark">{{ cat.title }}</span>
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    <strong>{{ product.total_sold|default:0 }}</strong>
+                                </td>
+                                <td>
+                                    <strong class="text-success">{{ product.total_revenue|floatformat:0 }}</strong>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">اقدامات سریع</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3 col-6">
+                        <a href="{% url 'panelAdmin:admin_product_create' %}" class="btn btn-primary w-100">
+                            <i class="fas fa-plus me-2"></i>محصول جدید
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="{% url 'panelAdmin:admin_order_create' %}" class="btn btn-success w-100">
+                            <i class="fas fa-shopping-cart me-2"></i>سفارش جدید
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="{% url 'panelAdmin:admin_coupon_create' %}" class="btn btn-warning w-100">
+                            <i class="fas fa-percent me-2"></i>کوپن جدید
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="{% url 'panelAdmin:admin_slider_site_create' %}" class="btn btn-info w-100">
+                            <i class="fas fa-sliders-h me-2"></i>اسلایدر جدید
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Sales Chart
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    const salesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ chart_labels|safe }},
+            datasets: [{
+                label: 'فروش روزانه',
+                data: {{ chart_data|safe }},
+                borderColor: '#4361ee',
+                backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        font: {
+                            family: 'Vazirmatn'
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString('fa-IR');
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

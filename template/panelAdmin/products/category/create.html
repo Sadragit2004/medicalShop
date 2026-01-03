@@ -1,0 +1,294 @@
+<!-- templates/panelAdmin/products/category/create.html -->
+{% extends '../../base/base.html' %}
+
+{% block title %}ایجاد دسته‌بندی جدید{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_category_list' %}">دسته‌بندی‌ها</a></li>
+<li class="breadcrumb-item active">ایجاد جدید</li>
+{% endblock %}
+
+{% block page_title %}ایجاد دسته‌بندی جدید{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-plus"></i> فرم ایجاد دسته‌بندی</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" novalidate id="categoryForm">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <!-- عنوان -->
+                        <div class="col-md-6 mb-3">
+                            <label for="title" class="form-label required">عنوان دسته‌بندی</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="title"
+                                   name="title"
+                                   required
+                                   placeholder="مثال: لوازم الکترونیکی"
+                                   autofocus>
+                            <div class="invalid-feedback">لطفاً عنوان دسته‌بندی را وارد کنید</div>
+                        </div>
+
+                        <!-- اسلاگ -->
+                        <div class="col-md-6 mb-3">
+                            <label for="slug" class="form-label">اسلاگ (Slug)</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="slug"
+                                   name="slug"
+                                   placeholder="به صورت خودکار ایجاد می‌شود"
+                                   pattern="[a-z0-9\-]+">
+                            <div class="form-text">برای URL استفاده می‌شود - فقط حروف کوچک، اعداد و خط تیره</div>
+                        </div>
+
+                        <!-- والد -->
+                        <div class="col-md-6 mb-3">
+                            <label for="parent" class="form-label">دسته‌بندی والد</label>
+                            <select class="form-select" id="parent" name="parent">
+                                <option value="">بدون والد (دسته‌بندی اصلی)</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.title }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">در صورت خالی بودن، این یک دسته‌بندی اصلی خواهد بود</div>
+                        </div>
+
+                        <!-- تصویر -->
+                        <div class="col-md-6 mb-3">
+                            <label for="image" class="form-label">تصویر دسته‌بندی</label>
+                            <input type="file"
+                                   class="form-control"
+                                   id="image"
+                                   name="image"
+                                   accept="image/*">
+                            <div class="form-text">حداکثر 2 مگابایت - فرمت‌های مجاز: JPG, PNG, WebP</div>
+                        </div>
+
+                        <!-- پیش‌نمایش تصویر -->
+                        <div class="col-12 mb-3">
+                            <div id="imagePreview" class="d-none">
+                                <label class="form-label">پیش‌نمایش تصویر:</label>
+                                <div class="border rounded p-3 text-center">
+                                    <img id="previewImage" src="#" alt="پیش‌نمایش"
+                                         class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-sm btn-danger" id="removeImage">
+                                            <i class="fas fa-times"></i> حذف تصویر
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- وضعیت -->
+                        <div class="col-12 mb-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">تنظیمات دسته‌بندی</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               id="isActive"
+                                               name="isActive"
+                                               checked>
+                                        <label class="form-check-label fw-bold" for="isActive">
+                                            <i class="fas fa-toggle-on text-success"></i> دسته‌بندی فعال
+                                        </label>
+                                        <div class="form-text">دسته‌بندی‌های غیرفعال در سایت نمایش داده نمی‌شوند</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- دکمه‌های اقدام -->
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'panelAdmin:admin_category_list' %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-right"></i> بازگشت به لیست
+                                </a>
+                                <div>
+                                    <button type="reset" class="btn btn-outline-secondary me-2">
+                                        <i class="fas fa-redo"></i> بازنشانی فرم
+                                    </button>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-save"></i> ایجاد دسته‌بندی
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- سایدبار راهنما -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-info-circle"></i> راهنمای ایجاد</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-lightbulb"></i> نکات مهم:</h6>
+                    <ul class="mb-0">
+                        <li class="mb-2"><strong>عنوان:</strong> باید منحصر به فرد و واضح باشد</li>
+                        <li class="mb-2"><strong>اسلاگ:</strong> برای URL استفاده می‌شود</li>
+                        <li class="mb-2"><strong>والد:</strong> برای ایجاد ساختار درختی</li>
+                        <li class="mb-2"><strong>تصویر:</strong> ابعاد مناسب: 400x400 پیکسل</li>
+                        <li><strong>وضعیت:</strong> غیرفعال کردن دسترسی کاربران</li>
+                    </ul>
+                </div>
+
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle"></i> هشدارها:</h6>
+                    <ul class="mb-0">
+                        <li>دسته‌بندی‌های اصلی نمی‌توانند والد داشته باشند</li>
+                        <li>حذف دسته‌بندی، زیردسته‌ها را هم حذف می‌کند</li>
+                        <li>تغییر اسلاگ ممکن است لینک‌های قبلی را بشکند</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- نمونه ساختار درختی -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-sitemap"></i> نمونه ساختار درختی</h5>
+            </div>
+            <div class="card-body">
+                <div class="tree-example">
+                    <ul>
+                        <li>الکترونیک
+                            <ul>
+                                <li>موبایل</li>
+                                <li>لپ‌تاپ</li>
+                                <li>تبلت</li>
+                            </ul>
+                        </li>
+                        <li>پوشاک
+                            <ul>
+                                <li>مردانه</li>
+                                <li>زنانه</li>
+                                <li>بچگانه</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ایجاد اسلاگ از عنوان
+document.getElementById('title').addEventListener('input', function(e) {
+    const slugField = document.getElementById('slug');
+    if (!slugField.value || slugField.value === slugField.defaultValue) {
+        const slug = e.target.value
+            .replace(/[^\u0600-\u06FF\w\s]/g, '')
+            .replace(/\s+/g, '-')
+            .toLowerCase()
+            .replace(/[^a-z0-9\-]/g, '');
+        slugField.value = slug;
+    }
+});
+
+// پیش‌نمایش تصویر
+const imageInput = document.getElementById('image');
+const imagePreview = document.getElementById('imagePreview');
+const previewImage = document.getElementById('previewImage');
+
+imageInput.addEventListener('change', function(e) {
+    if (this.files && this.files[0]) {
+        // بررسی حجم فایل
+        const fileSize = this.files[0].size / 1024 / 1024; // MB
+        if (fileSize > 2) {
+            alert('حجم فایل باید کمتر از 2 مگابایت باشد');
+            this.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            imagePreview.classList.remove('d-none');
+        }
+
+        reader.readAsDataURL(this.files[0]);
+    } else {
+        imagePreview.classList.add('d-none');
+    }
+});
+
+// حذف تصویر
+document.getElementById('removeImage').addEventListener('click', function() {
+    imageInput.value = '';
+    imagePreview.classList.add('d-none');
+});
+
+// اعتبارسنجی فرم
+document.getElementById('categoryForm').addEventListener('submit', function(e) {
+    const title = document.getElementById('title').value.trim();
+    const slug = document.getElementById('slug').value.trim();
+
+    if (!title) {
+        e.preventDefault();
+        alert('عنوان دسته‌بندی الزامی است');
+        return;
+    }
+
+    if (slug && !/^[a-z0-9\-]+$/.test(slug)) {
+        e.preventDefault();
+        alert('اسلاگ فقط می‌تواند شامل حروف کوچک، اعداد و خط تیره باشد');
+        return;
+    }
+});
+
+// فعال‌سازی توضیحات برای اسلاگ
+document.getElementById('slug').addEventListener('focus', function() {
+    this.title = 'مثال: electronic-devices';
+});
+</script>
+
+<style>
+.required:after {
+    content: " *";
+    color: red;
+}
+
+.tree-example ul {
+    list-style: none;
+    padding-left: 20px;
+}
+
+.tree-example li {
+    padding: 5px 0;
+    position: relative;
+}
+
+.tree-example li:before {
+    content: "📁";
+    position: absolute;
+    right: -20px;
+}
+
+.tree-example ul ul li:before {
+    content: "📄";
+}
+
+#imagePreview img {
+    max-width: 100%;
+    height: auto;
+}
+</style>
+{% endblock %}

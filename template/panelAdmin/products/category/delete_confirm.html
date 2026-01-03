@@ -1,0 +1,173 @@
+<!-- templates/panelAdmin/products/category/delete_confirm.html -->
+{% extends '../../base/base.html' %}
+
+
+{% block title %}حذف دسته‌بندی - {{ category.title }}{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_category_list' %}">دسته‌بندی‌ها</a></li>
+<li class="breadcrumb-item active">حذف {{ category.title }}</li>
+{% endblock %}
+
+{% block page_title %}حذف دسته‌بندی <small class="text-muted">({{ category.title }})</small>{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-exclamation-triangle"></i> تأیید حذف دسته‌بندی</h5>
+            </div>
+            <div class="card-body">
+                <!-- هشدار -->
+                <div class="alert alert-danger mb-4">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="alert-heading">هشدار!</h5>
+                            <p class="mb-0">این عملیات غیرقابل بازگشت است</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- اطلاعات دسته‌بندی -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">مشخصات دسته‌بندی</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <strong>عنوان:</strong><br>
+                                <span>{{ category.title }}</span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <strong>اسلاگ:</strong><br>
+                                <code>{{ category.slug }}</code>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <strong>وضعیت:</strong><br>
+                                {% if category.isActive %}
+                                <span class="badge bg-success">فعال</span>
+                                {% else %}
+                                <span class="badge bg-danger">غیرفعال</span>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <strong>والد:</strong><br>
+                                {% if category.parent %}
+                                <span class="badge bg-secondary">{{ category.parent.title }}</span>
+                                {% else %}
+                                <span class="text-muted">اصلی</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- آمار و هشدارها -->
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0"><i class="fas fa-chart-bar"></i> آمار مرتبط</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            {% if category.products.count > 0 %}
+                            <div class="col-md-6 mb-3">
+                                <div class="p-3 bg-light rounded">
+                                    <div class="h4 text-danger mb-0">{{ category.products.count }}</div>
+                                    <div class="text-muted">محصول در این دسته</div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if category.children.count > 0 %}
+                            <div class="col-md-6 mb-3">
+                                <div class="p-3 bg-light rounded">
+                                    <div class="h4 text-danger mb-0">{{ category.children.count }}</div>
+                                    <div class="text-muted">زیردسته</div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if category.products.count > 0 or category.children.count > 0 %}
+                        <div class="alert alert-warning mt-3">
+                            <h6><i class="fas fa-info-circle"></i> توجه:</h6>
+                            <ul class="mb-0">
+                                {% if category.products.count > 0 %}
+                                <li>{{ category.products.count }} محصول به این دسته‌بندی مرتبط هستند</li>
+                                {% endif %}
+                                {% if category.children.count > 0 %}
+                                <li>{{ category.children.count }} زیردسته به این دسته‌بندی وابسته هستند</li>
+                                {% endif %}
+                                <li>با حذف این دسته‌بندی، همه زیردسته‌ها نیز حذف می‌شوند</li>
+                                <li>محصولات مرتبط از دسته‌بندی خارج می‌شوند</li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- لیست زیردسته‌ها (اگر وجود داشته باشد) -->
+                {% if category.children.all %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">زیردسته‌هایی که حذف می‌شوند:</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for child in category.children.all %}
+                            <div class="col-md-4 mb-2">
+                                <div class="border rounded p-2">
+                                    <strong>{{ child.title }}</strong>
+                                    <small class="d-block text-muted">{{ child.slug }}</small>
+                                    <span class="badge bg-secondary">{{ child.products.count }} محصول</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- فرم حذف -->
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'panelAdmin:admin_category_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-right"></i> بازگشت
+                        </a>
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('آیا مطمئن هستید؟')">
+                            <i class="fas fa-trash"></i> بله، حذف شود
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card.border-danger {
+    border-width: 2px;
+    border-color: #dc3545 !important;
+}
+</style>
+
+<script>
+// تأیید نهایی
+const form = document.querySelector('form');
+form.addEventListener('submit', function(e) {
+    if (!confirm('⚠️ هشدار نهایی!\n\nبا حذف این دسته‌بندی:\n' +
+                 '• همه زیردسته‌ها حذف می‌شوند\n' +
+                 '• محصولات از دسته‌بندی خارج می‌شوند\n' +
+                 '• این عمل غیرقابل بازگشت است\n\n' +
+                 'آیا مطمئن هستید؟')) {
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock %}

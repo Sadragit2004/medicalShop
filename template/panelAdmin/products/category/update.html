@@ -1,0 +1,372 @@
+<!-- templates/panelAdmin/products/category/update.html -->
+{% extends '../../base/base.html' %}
+
+{% block title %}ویرایش دسته‌بندی - {{ category.title }}{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_category_list' %}">دسته‌بندی‌ها</a></li>
+<li class="breadcrumb-item active">ویرایش {{ category.title }}</li>
+{% endblock %}
+
+{% block page_title %}ویرایش دسته‌بندی <small class="text-muted">({{ category.title }})</small>{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-edit"></i> فرم ویرایش دسته‌بندی</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" novalidate id="categoryForm">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <!-- عنوان -->
+                        <div class="col-md-6 mb-3">
+                            <label for="title" class="form-label required">عنوان دسته‌بندی</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="title"
+                                   name="title"
+                                   value="{{ category.title }}"
+                                   required>
+                            <div class="invalid-feedback">لطفاً عنوان دسته‌بندی را وارد کنید</div>
+                        </div>
+
+                        <!-- اسلاگ -->
+                        <div class="col-md-6 mb-3">
+                            <label for="slug" class="form-label">اسلاگ (Slug)</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="slug"
+                                   name="slug"
+                                   value="{{ category.slug }}">
+                            <div class="form-text">تغییر اسلاگ ممکن است لینک‌های قبلی را بشکند</div>
+                        </div>
+
+                        <!-- والد -->
+                        <div class="col-md-6 mb-3">
+                            <label for="parent" class="form-label">دسته‌بندی والد</label>
+                            <select class="form-select" id="parent" name="parent">
+                                <option value="">بدون والد (دسته‌بندی اصلی)</option>
+                                {% for cat in categories %}
+                                    {% if cat.id != category.id %}
+                                    <option value="{{ cat.id }}" {% if category.parent and category.parent.id == cat.id %}selected{% endif %}>
+                                        {{ cat.title }}
+                                    </option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">انتخاب والد باعث ایجاد ساختار درختی می‌شود</div>
+                        </div>
+
+                        <!-- تصویر فعلی -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">تصویر فعلی</label>
+                            <div class="current-image">
+                                {% if category.image %}
+                                <img src="{{ category.image.url }}" alt="{{ category.title }}"
+                                     class="img-thumbnail mb-2" style="width: 100px; height: 100px; object-fit: cover;">
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteImageModal">
+                                        <i class="fas fa-trash"></i> حذف تصویر
+                                    </button>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i> تصویری وجود ندارد
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- تغییر تصویر -->
+                        <div class="col-12 mb-3">
+                            <label for="image" class="form-label">تغییر تصویر</label>
+                            <input type="file"
+                                   class="form-control"
+                                   id="image"
+                                   name="image"
+                                   accept="image/*">
+                            <div class="form-text">تصویر جدید جایگزین تصویر فعلی می‌شود</div>
+                        </div>
+
+                        <!-- پیش‌نمایش تصویر جدید -->
+                        <div class="col-12 mb-3">
+                            <div id="imagePreview" class="d-none">
+                                <label class="form-label">پیش‌نمایش تصویر جدید:</label>
+                                <div class="border rounded p-3 text-center">
+                                    <img id="previewImage" src="#" alt="پیش‌نمایش"
+                                         class="img-thumbnail" style="max-width: 200px;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- وضعیت -->
+                        <div class="col-12 mb-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">تنظیمات دسته‌بندی</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               id="isActive"
+                                               name="isActive"
+                                               {% if category.isActive %}checked{% endif %}>
+                                        <label class="form-check-label fw-bold" for="isActive">
+                                            <i class="fas fa-toggle-on text-success"></i> دسته‌بندی فعال
+                                        </label>
+                                        <div class="form-text">دسته‌بندی‌های غیرفعال در سایت نمایش داده نمی‌شوند</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- اطلاعات تکمیلی -->
+                        <div class="col-12 mb-4">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> اطلاعات دسته‌بندی</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-2">
+                                            <strong>تاریخ ایجاد:</strong><br>
+                                            <span class="text-muted">{{ category.createdAt|date:"Y/m/d H:i" }}</span>
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <strong>آخرین ویرایش:</strong><br>
+                                            <span class="text-muted">{{ category.updatedAt|date:"Y/m/d H:i" }}</span>
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <strong>تعداد محصولات:</strong><br>
+                                            <span class="badge bg-primary">{{ category.products.count }}</span>
+                                        </div>
+                                        {% if category.children.all %}
+                                        <div class="col-12 mt-2">
+                                            <strong>زیردسته‌ها:</strong><br>
+                                            {% for child in category.children.all %}
+                                            <span class="badge bg-secondary">{{ child.title }}</span>
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- دکمه‌های اقدام -->
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <a href="{% url 'panelAdmin:admin_category_list' %}" class="btn btn-secondary me-2">
+                                        <i class="fas fa-times"></i> انصراف
+                                    </a>
+                                    <a href="{% url 'panelAdmin:admin_category_delete' category.id %}"
+                                       class="btn btn-outline-danger"
+                                       onclick="return confirm('آیا از حذف این دسته‌بندی اطمینان دارید؟')">
+                                        <i class="fas fa-trash"></i> حذف دسته‌بندی
+                                    </a>
+                                </div>
+                                <div>
+                                    <button type="reset" class="btn btn-outline-secondary me-2">
+                                        <i class="fas fa-redo"></i> بازنشانی
+                                    </button>
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="fas fa-save"></i> ذخیره تغییرات
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- سایدبار -->
+    <div class="col-lg-4">
+        <!-- اطلاعات کلی -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-folder"></i> خلاصه دسته‌بندی</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    {% if category.image %}
+                    <img src="{{ category.image.url }}" alt="{{ category.title }}"
+                         class="img-thumbnail rounded-circle" style="width: 120px; height: 120px; object-fit: cover;">
+                    {% else %}
+                    <div class="no-image-circle">
+                        <i class="fas fa-folder fa-3x text-muted"></i>
+                    </div>
+                    {% endif %}
+                    <h5 class="mt-3">{{ category.title }}</h5>
+                    <p class="text-muted">{{ category.slug }}</p>
+                </div>
+
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>وضعیت</span>
+                        <span>
+                            {% if category.isActive %}
+                            <span class="badge bg-success">فعال</span>
+                            {% else %}
+                            <span class="badge bg-danger">غیرفعال</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>والد</span>
+                        <span>
+                            {% if category.parent %}
+                            <span class="badge bg-secondary">{{ category.parent.title }}</span>
+                            {% else %}
+                            <span class="text-muted">اصلی</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>تعداد محصولات</span>
+                        <span class="badge bg-primary rounded-pill">{{ category.products.count }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>زیردسته‌ها</span>
+                        <span class="badge bg-info rounded-pill">{{ category.children.count }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>تاریخ ایجاد</span>
+                        <span class="text-muted">{{ category.createdAt|date:"Y/m/d" }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- هشدارها -->
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0"><i class="fas fa-exclamation-triangle"></i> هشدارهای مهم</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-lightbulb"></i> توجه:</h6>
+                    <ul class="mb-0 small">
+                        <li class="mb-2">تغییر والد، ساختار درختی را تغییر می‌دهد</li>
+                        <li class="mb-2">غیرفعال کردن، محصولات را مخفی می‌کند</li>
+                        <li class="mb-2">تغییر اسلاگ، لینک‌های قدیمی را می‌شکند</li>
+                        <li class="mb-2">حذف دسته‌بندی، زیردسته‌ها را هم حذف می‌کند</li>
+                        <li>پس از ذخیره، تغییرات بلافاصله اعمال می‌شود</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال حذف تصویر -->
+<div class="modal fade" id="deleteImageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">حذف تصویر</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>آیا از حذف تصویر فعلی اطمینان دارید؟</p>
+                <p class="text-muted small">پس از حذف، می‌توانید تصویر جدیدی اضافه کنید.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-danger" onclick="deleteCurrentImage()">بله، حذف شود</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// پیش‌نمایش تصویر جدید
+document.getElementById('image').addEventListener('change', function(e) {
+    const preview = document.getElementById('imagePreview');
+    const previewImage = document.getElementById('previewImage');
+
+    if (this.files && this.files[0]) {
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            preview.classList.remove('d-none');
+        }
+
+        reader.readAsDataURL(this.files[0]);
+    } else {
+        preview.classList.add('d-none');
+    }
+});
+
+// حذف تصویر فعلی
+function deleteCurrentImage() {
+    const imageInput = document.getElementById('image');
+    const currentImage = document.querySelector('.current-image');
+
+    // ایجاد فیلد مخفی برای حذف تصویر
+    let hiddenInput = document.querySelector('input[name="delete_image"]');
+    if (!hiddenInput) {
+        hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'delete_image';
+        hiddenInput.value = 'true';
+        document.getElementById('categoryForm').appendChild(hiddenInput);
+    }
+
+    // پاک کردن پیش‌نمایش
+    currentImage.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> تصویر حذف شد</div>';
+
+    // بستن مودال
+    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteImageModal'));
+    modal.hide();
+}
+
+// اعتبارسنجی والد (نمی‌تواند خودش باشد)
+document.getElementById('parent').addEventListener('change', function() {
+    if (this.value == '{{ category.id }}') {
+        alert('یک دسته‌بندی نمی‌تواند والد خودش باشد');
+        this.value = '';
+    }
+});
+
+// جلوگیری از انتخاب زیردسته‌ها به عنوان والد
+const categoryId = '{{ category.id }}';
+const parentSelect = document.getElementById('parent');
+// می‌توانید با AJAX لیست زیردسته‌ها را دریافت و غیرفعال کنید
+</script>
+
+<style>
+.required:after {
+    content: " *";
+    color: red;
+}
+
+.no-image-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    border: 2px dashed #dee2e6;
+}
+
+.current-image {
+    text-align: center;
+}
+
+.modal-backdrop {
+    background-color: rgba(0,0,0,0.5);
+}
+</style>
+{% endblock %}

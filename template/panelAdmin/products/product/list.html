@@ -1,0 +1,449 @@
+<!-- templates/admin/products/product/list.html -->
+{% extends '../../base/base.html' %}
+
+{% block title %}مدیریت محصولات{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_dashboard' %}">داشبورد</a></li>
+<li class="breadcrumb-item active">محصولات</li>
+{% endblock %}
+
+{% block page_title %}مدیریت محصولات{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">لیست محصولات</h5>
+                <a href="{% url 'panelAdmin:admin_product_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> محصول جدید
+                </a>
+            </div>
+            <div class="card-body">
+                <!-- فیلترها -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <select class="form-select" id="filterCategory">
+                            <option value="">همه دسته‌بندی‌ها</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"i" %}selected{% endif %}>
+                                {{ cat.title }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="filterBrand">
+                            <option value="">همه برندها</option>
+                            {% for brand in brands %}
+                            <option value="{{ brand.id }}" {% if selected_brand == brand.id|stringformat:"i" %}selected{% endif %}>
+                                {{ brand.title }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="filterStatus">
+                            <option value="">همه وضعیت‌ها</option>
+                            <option value="active" {% if selected_status == 'active' %}selected{% endif %}>فعال</option>
+                            <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>غیرفعال</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <form method="get" class="search-box">
+                            <div class="input-group">
+                                <input type="text"
+                                       class="form-control"
+                                       name="search"
+                                       placeholder="جستجوی محصول..."
+                                       value="{{ search_query }}">
+                                <button class="btn btn-outline-primary" type="submit">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- آمار محصولات -->
+                <div class="row mb-4">
+                    <div class="col-md-2 col-6 mb-3">
+                        <div class="stat-card primary p-3 text-center rounded">
+                            <div class="h4 mb-0">{{ page_obj.paginator.count }}</div>
+                            <div class="text-muted">کل محصولات</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6 mb-3">
+                        <div class="stat-card success p-3 text-center rounded">
+                            {% with active_count=page_obj.paginator.count|default:0 %}
+                            <div class="h4 mb-0">{{ active_count }}</div>
+                            {% endwith %}
+                            <div class="text-muted">محصولات فعال</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6 mb-3">
+                        <div class="stat-card warning p-3 text-center rounded">
+                            <div class="h4 mb-0">{{ total_comments|default:0 }}</div>
+                            <div class="text-muted">کل نظرات</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6 mb-3">
+                        <div class="stat-card info p-3 text-center rounded">
+                            <div class="h4 mb-0">{{ avg_rating|default:"0.0" }}</div>
+                            <div class="text-muted">میانگین امتیاز</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6 mb-3">
+                        <div class="stat-card danger p-3 text-center rounded">
+                            <div class="h4 mb-0">{{ no_image_count|default:0 }}</div>
+                            <div class="text-muted">بدون تصویر</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6 mb-3">
+                        <div class="stat-card secondary p-3 text-center rounded">
+                            <div class="h4 mb-0">{{ no_price_count|default:0 }}</div>
+                            <div class="text-muted">بدون قیمت</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- جدول محصولات -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th width="50">#</th>
+                                <th>تصویر</th>
+                                <th>عنوان محصول</th>
+                                <th>دسته‌بندی</th>
+                                <th>برند</th>
+                                <th>امتیاز</th>
+                                <th>قیمت</th>
+                                <th>وضعیت</th>
+                                <th>تاریخ</th>
+                                <th width="150">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in page_obj %}
+                            <tr>
+                                <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+                                <td>
+                                    {% if product.mainImage %}
+                                    <img src="{{ product.mainImage.url }}" alt="{{ product.title }}"
+                                         class="img-thumbnail"
+                                         style="width: 60px; height: 60px; object-fit: cover;"
+                                         data-bs-toggle="tooltip"
+                                         title="{{ product.title }}">
+                                    {% else %}
+                                    <div class="no-image" data-bs-toggle="tooltip" title="بدون تصویر">
+                                        <i class="fas fa-image text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>{{ product.title }}</strong>
+                                    <div class="small text-muted mt-1">
+                                        {{ product.shortDescription|truncatechars:100 }}
+                                    </div>
+                                    <div class="mt-1">
+                                        <small class="badge bg-secondary">{{ product.slug }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% for cat in product.category.all|slice:":2" %}
+                                    <span class="badge bg-info mb-1 d-block">{{ cat.title }}</span>
+                                    {% if forloop.last and product.category.count > 2 %}
+                                    <span class="badge bg-light text-dark">+{{ product.category.count|add:"-2" }}</span>
+                                    {% endif %}
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    {% if product.brand %}
+                                    <span class="badge bg-primary">{{ product.brand.title }}</span>
+                                    {% else %}
+                                    <span class="text-muted">بدون برند</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="rating">
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="fas fa-star"></i> {{ product.average_rating|default:"0.0" }}
+                                        </span>
+                                        <small class="text-muted d-block">({{ product.total_comments }})</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% with product.saleTypes.first as price %}
+                                        {% if price %}
+                                            <div class="text-success fw-bold">{{ price.price|floatformat:0 }} تومان</div>
+                                            <small class="text-muted">{{ price.get_typeSale_display }}</small>
+                                        {% else %}
+                                            <span class="text-danger">قیمت نامشخص</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% if product.isActive %}
+                                    <span class="badge bg-success">فعال</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">غیرفعال</span>
+                                    {% endif %}
+                                    {% if product.galleries.count > 0 %}
+                                    <span class="badge bg-info d-block mt-1">{{ product.galleries.count }} تصویر</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ product.createdAt|date:"Y/m/d" }}
+                                    <small class="d-block text-muted">{{ product.updatedAt|timesince }} پیش</small>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{% url 'panelAdmin:admin_product_detail' product.id %}"
+                                           class="btn btn-sm btn-info mb-1" data-bs-toggle="tooltip" title="جزئیات">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'panelAdmin:admin_product_update' product.id %}"
+                                           class="btn btn-sm btn-warning mb-1" data-bs-toggle="tooltip" title="ویرایش">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="#" class="btn btn-sm btn-secondary mb-1" data-bs-toggle="tooltip" title="گالری"
+                                           onclick="showGallery({{ product.id }})">
+                                            <i class="fas fa-images"></i>
+                                        </a>
+                                        <a href="{% url 'panelAdmin:admin_sale_type_create' product.id %}"
+                                           class="btn btn-sm btn-success mb-1" data-bs-toggle="tooltip" title="افزودن قیمت">
+                                            <i class="fas fa-tag"></i>
+                                        </a>
+                                        <a href="{% url 'panelAdmin:admin_product_delete' product.id %}"
+                                           class="btn btn-sm btn-danger" data-bs-toggle="tooltip" title="حذف"
+                                           onclick="return confirm('آیا از حذف محصول {{ product.title }} اطمینان دارید؟')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="10" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="fas fa-box-open fa-3x mb-3"></i>
+                                        <h5>هیچ محصولی یافت نشد</h5>
+                                        <p class="mb-3">محصول جدیدی ایجاد کنید</p>
+                                        <a href="{% url 'panelAdmin:admin_product_create' %}" class="btn btn-primary">
+                                            <i class="fas fa-plus"></i> ایجاد محصول جدید
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- صفحه‌بندی -->
+                {% if page_obj.has_other_pages %}
+                <nav aria-label="صفحه‌بندی">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">قبلی</a>
+                        </li>
+                        {% endif %}
+
+                        {% for i in page_obj.paginator.page_range %}
+                            {% if page_obj.number == i %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ i }}</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ i }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">{{ i }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">بعدی</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال نمایش گالری -->
+<div class="modal fade" id="galleryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">گالری محصول</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="galleryImages" class="row">
+                    <!-- تصاویر با AJAX بارگذاری می‌شوند -->
+                </div>
+                <div id="galleryLoading" class="text-center py-5 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">در حال بارگذاری...</span>
+                    </div>
+                </div>
+                <div id="noGallery" class="text-center py-5 d-none">
+                    <i class="fas fa-images fa-3x text-muted mb-3"></i>
+                    <h5>تصویری یافت نشد</h5>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-card {
+    background: white;
+    border-left: 4px solid;
+    transition: all 0.3s;
+}
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.stat-card.primary { border-color: #4361ee; }
+.stat-card.success { border-color: #28a745; }
+.stat-card.warning { border-color: #ffc107; }
+.stat-card.info { border-color: #17a2b8; }
+.stat-card.danger { border-color: #dc3545; }
+.stat-card.secondary { border-color: #6c757d; }
+
+.no-image {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border-radius: 6px;
+    font-size: 24px;
+}
+
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-width: 110px;
+}
+
+.action-buttons .btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.gallery-item {
+    text-align: center;
+    margin-bottom: 15px;
+}
+.gallery-item img {
+    max-width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 5px;
+}
+</style>
+
+<script>
+// فیلتر کردن محصولات
+document.getElementById('filterCategory').addEventListener('change', function() {
+    filterProducts();
+});
+
+document.getElementById('filterBrand').addEventListener('change', function() {
+    filterProducts();
+});
+
+document.getElementById('filterStatus').addEventListener('change', function() {
+    filterProducts();
+});
+
+function filterProducts() {
+    const category = document.getElementById('filterCategory').value;
+    const brand = document.getElementById('filterBrand').value;
+    const status = document.getElementById('filterStatus').value;
+    const search = document.querySelector('input[name="search"]').value;
+
+    let url = new URL(window.location.href);
+    let params = new URLSearchParams();
+
+    if (category) params.append('category', category);
+    if (brand) params.append('brand', brand);
+    if (status) params.append('status', status);
+    if (search) params.append('search', search);
+
+    window.location.href = url.pathname + '?' + params.toString();
+}
+
+// نمایش گالری محصول
+function showGallery(productId) {
+    const modal = new bootstrap.Modal(document.getElementById('galleryModal'));
+    const galleryImages = document.getElementById('galleryImages');
+    const loading = document.getElementById('galleryLoading');
+    const noGallery = document.getElementById('noGallery');
+
+    galleryImages.innerHTML = '';
+    loading.classList.remove('d-none');
+    noGallery.classList.add('d-none');
+
+    // نمایش مودال
+    modal.show();
+
+    // درخواست AJAX برای دریافت تصاویر
+    fetch(`/panelAdmin/ajax/product/${productId}/gallery/`)
+        .then(response => response.json())
+        .then(data => {
+            loading.classList.add('d-none');
+
+            if (data.success && data.images.length > 0) {
+                data.images.forEach(image => {
+                    const galleryItem = `
+                    <div class="col-md-4 col-sm-6">
+                        <div class="gallery-item">
+                            <img src="${image.url}" alt="${image.alt || 'تصویر محصول'}">
+                            <small class="text-muted">${image.created_at}</small>
+                        </div>
+                    </div>`;
+                    galleryImages.innerHTML += galleryItem;
+                });
+            } else {
+                noGallery.classList.remove('d-none');
+            }
+        })
+        .catch(error => {
+            loading.classList.add('d-none');
+            noGallery.classList.remove('d-none');
+            console.error('Error:', error);
+        });
+}
+
+// اعتبارسنجی فرم جستجو
+document.querySelector('form.search-box').addEventListener('submit', function(e) {
+    const searchInput = this.querySelector('input[name="search"]');
+    if (searchInput.value.trim().length < 2 && searchInput.value.trim() !== '') {
+        e.preventDefault();
+        alert('حداقل 2 کاراکتر برای جستجو وارد کنید');
+        searchInput.focus();
+    }
+});
+</script>
+{% endblock %}

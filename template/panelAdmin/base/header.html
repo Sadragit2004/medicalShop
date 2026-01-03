@@ -1,0 +1,121 @@
+<!-- templates/admin/base/header.html -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
+    <div class="container-fluid">
+        <!-- Sidebar Toggle Button -->
+        <button class="btn btn-outline-secondary me-2" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- Brand -->
+        <a class="navbar-brand fw-bold text-primary" href="{% url 'panelAdmin:admin_dashboard' %}">
+            <i class="fas fa-crown me-2"></i>
+            پنل مدیریت
+        </a>
+
+        <!-- Search (Hidden on mobile) -->
+        <div class="d-none d-md-flex search-box me-auto" style="max-width: 300px;">
+            <input type="text" class="form-control" placeholder="جستجو...">
+            <i class="fas fa-search"></i>
+        </div>
+
+        <!-- Right Side -->
+        <div class="navbar-nav align-items-center">
+            <!-- Notifications -->
+            <div class="nav-item dropdown me-3">
+                <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button"
+                   data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-bell fa-lg"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        3
+                    </span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown">
+                    <h6 class="dropdown-header">اعلان‌ها</h6>
+                    <a class="dropdown-item" href="#">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-shopping-cart text-success"></i>
+                            </div>
+                            <div class="flex-grow-1 me-3">
+                                <p class="mb-0">سفارش جدید ثبت شد</p>
+                                <small class="text-muted">5 دقیقه پیش</small>
+                            </div>
+                        </div>
+                    </a>
+                    <a class="dropdown-item" href="#">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-user text-primary"></i>
+                            </div>
+                            <div class="flex-grow-1 me-3">
+                                <p class="mb-0">کاربر جدید ثبت‌نام کرد</p>
+                                <small class="text-muted">1 ساعت پیش</small>
+                            </div>
+                        </div>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item text-center text-primary" href="#">
+                        مشاهده همه اعلان‌ها
+                    </a>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div class="nav-item dropdown me-3">
+                <a class="nav-link position-relative" href="#" id="messageDropdown" role="button"
+                   data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-envelope fa-lg"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning">
+                        5
+                    </span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="messageDropdown">
+                    <h6 class="dropdown-header">پیام‌ها</h6>
+                    <a class="dropdown-item" href="#">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <img src="https://via.placeholder.com/40" class="avatar" alt="...">
+                            </div>
+                            <div class="flex-grow-1 me-3">
+                                <p class="mb-0">علی محمدی</p>
+                                <small class="text-muted">سفارش من کی ارسال میشه؟</small>
+                            </div>
+                        </div>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item text-center text-primary" href="#">
+                        مشاهده همه پیام‌ها
+                    </a>
+                </div>
+            </div>
+
+            <!-- User Dropdown -->
+            <div class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown"
+                   role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="https://via.placeholder.com/35" class="rounded-circle me-2" alt="...">
+                    <span class="d-none d-md-inline">
+                        {% if user.get_full_name %}
+                            {{ user.get_full_name }}
+                        {% else %}
+                            {{ user.mobileNumber }}
+                        {% endif %}
+                    </span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <h6 class="dropdown-header">پروفایل کاربری</h6>
+                    <a class="dropdown-item" href="#">
+                        <i class="fas fa-user me-2"></i>پروفایل من
+                    </a>
+                    <a class="dropdown-item" href="#">
+                        <i class="fas fa-cog me-2"></i>تنظیمات
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    {% comment %} <a class="dropdown-item" href="{% url 'admin_logout' %}"> {% endcomment %}
+                        <i class="fas fa-sign-out-alt me-2"></i>خروج
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>

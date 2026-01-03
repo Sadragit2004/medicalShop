@@ -51,7 +51,8 @@ INSTALLED_APPS = [
     'apps.peyment.apps.PeymentConfig',
     'apps.search.apps.SearchConfig',
     'apps.blog.apps.BlogConfig',
-    'apps.dashboard.apps.DashboardConfig'
+    'apps.dashboard.apps.DashboardConfig',
+    'apps.panelAdmin.apps.PaneladminConfig'
 
 ]
 

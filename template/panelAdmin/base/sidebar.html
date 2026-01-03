@@ -1,0 +1,225 @@
+<!-- templates/admin/base/sidebar.html -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-content">
+        <!-- User Info -->
+        <div class="user-info text-center py-3 border-bottom border-secondary">
+            <img src="https://via.placeholder.com/80" class="rounded-circle mb-2" alt="User Avatar">
+            <h6 class="text-white mb-1">
+                {% if user.get_full_name %}
+                    {{ user.get_full_name }}
+                {% else %}
+                    {{ user.mobileNumber }}
+                {% endif %}
+            </h6>
+            <small class="text-light">
+                {% if user.is_superuser %}
+                    <span class="badge bg-success">سوپر ادمین</span>
+                {% elif user.is_staff %}
+                    <span class="badge bg-primary">ادمین</span>
+                {% else %}
+                    <span class="badge bg-secondary">کاربر</span>
+                {% endif %}
+            </small>
+        </div>
+
+        <!-- Menu -->
+        <ul class="sidebar-menu mt-3">
+            <!-- Dashboard -->
+            <li>
+                <a href="{% url 'panelAdmin:admin_dashboard' %}" class="{% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    داشبورد
+                </a>
+            </li>
+
+            <!-- Users -->
+            <li>
+                <a href="#" onclick="toggleSubmenu(this)">
+                    <i class="fas fa-users"></i>
+                    کاربران
+                    <i class="fas fa-chevron-left float-start mt-1"></i>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{% url 'panelAdmin:admin_user_list' %}"
+                           class="{% if 'panelAdmin:admin_user' in request.resolver_match.url_name %}active{% endif %}">
+                            مدیریت کاربران
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            نقش‌های کاربری
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- Products -->
+            <li>
+                <a href="#" onclick="toggleSubmenu(this)">
+                    <i class="fas fa-box"></i>
+                    محصولات
+                    <i class="fas fa-chevron-left float-start mt-1"></i>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{% url 'panelAdmin:admin_product_list' %}">
+                            همه محصولات
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'panelAdmin:admin_category_list' %}">
+                            دسته‌بندی‌ها
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'panelAdmin:admin_brand_list' %}">
+                            برندها
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'panelAdmin:admin_feature_list' %}">
+                            ویژگی‌ها
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            موجودی انبار
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- Orders -->
+            <li>
+                <a href="#" onclick="toggleSubmenu(this)">
+                    <i class="fas fa-shopping-cart"></i>
+                    سفارشات
+                    <i class="fas fa-chevron-left float-start mt-1"></i>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{% url 'panelAdmin:admin_order_list' %}">
+                            همه سفارشات
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'panelAdmin:admin_order_list' %}?status=pending">
+                            سفارشات در انتظار
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'panelAdmin:admin_order_list' %}?status=processing">
+                            در حال پردازش
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'panelAdmin:admin_state_list' %}">
+                            استان‌ها و شهرها
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- Payments -->
+            <li>
+                <a href="{% url 'panelAdmin:admin_payment_list' %}">
+                    <i class="fas fa-credit-card"></i>
+                    پرداخت‌ها
+                </a>
+            </li>
+
+            <!-- Discounts -->
+            <li>
+                <a href="#" onclick="toggleSubmenu(this)">
+                    <i class="fas fa-percent"></i>
+                    تخفیف‌ها
+                    <i class="fas fa-chevron-left float-start mt-1"></i>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{% url 'panelAdmin:admin_coupon_list' %}">
+                            کوپن‌ها
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'panelAdmin:admin_discount_basket_list' %}">
+                            سبدهای تخفیف
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- Site -->
+            <li>
+                <a href="#" onclick="toggleSubmenu(this)">
+                    <i class="fas fa-globe"></i>
+                    مدیریت سایت
+                    <i class="fas fa-chevron-left float-start mt-1"></i>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{% url 'panelAdmin:admin_slider_site_list' %}">
+                            اسلایدر سایت
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'panelAdmin:admin_slider_main_list' %}">
+                            اسلایدر اصلی
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'panelAdmin:admin_banner_list' %}">
+                            بنرها
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'panelAdmin:admin_contact_phone_list' %}">
+                            شماره‌های تماس
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'panelAdmin:admin_shop_settings' %}">
+                            تنظیمات فروشگاه
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- Comments -->
+            <li>
+                <a href="{% url 'panelAdmin:admin_comment_list' %}">
+                    <i class="fas fa-comments"></i>
+                    نظرات
+                    <span class="badge bg-danger float-start mt-1">12</span>
+                </a>
+            </li>
+
+            <!-- Reports -->
+            <li>
+                <a href="#">
+                    <i class="fas fa-chart-bar"></i>
+                    گزارش‌ها
+                </a>
+            </li>
+
+            <!-- Settings -->
+            <li>
+                <a href="#">
+                    <i class="fas fa-cogs"></i>
+                    تنظیمات سیستم
+                </a>
+            </li>
+        </ul>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer position-absolute bottom-0 start-0 end-0 p-3 border-top border-secondary">
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-light">نسخه ۱.۰.۰</small>
+                <a href="#" class="text-light" data-bs-toggle="tooltip" title="پشتیبانی">
+                    <i class="fas fa-life-ring"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</aside>

@@ -1,0 +1,1246 @@
+<!-- templates/admin/products/product/create.html -->
+{% extends '../../base/base.html' %}
+{% load static %}
+
+{% block title %}ایجاد محصول جدید{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_product_list' %}">محصولات</a></li>
+<li class="breadcrumb-item active">ایجاد محصول</li>
+{% endblock %}
+
+{% block page_title %}ایجاد محصول جدید{% endblock %}
+
+{% block extra_css %}
+<style>
+/* استایل‌های کلی */
+.required:after {
+    content: " *";
+    color: #dc3545;
+}
+
+.section-header {
+    color: #2c3e50;
+    font-weight: 600;
+    border-bottom: 2px solid #4dabf7;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    margin-bottom: 25px;
+}
+
+.card:hover {
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 18px 25px;
+    border-bottom: none;
+}
+
+.card-header.bg-primary {
+    background: linear-gradient(135deg, #4dabf7 0%, #3b5bdb 100%);
+}
+
+.card-header.bg-warning {
+    background: linear-gradient(135deg, #ffd166 0%, #ff9e00 100%);
+    color: #333;
+}
+
+.card-header.bg-info {
+    background: linear-gradient(135deg, #06d6a0 0%, #118ab2 100%);
+}
+
+.form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-control, .form-select {
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 14px;
+    transition: all 0.3s;
+    background: #f8f9fa;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #4dabf7;
+    box-shadow: 0 0 0 0.25rem rgba(77, 171, 247, 0.15);
+    background: white;
+}
+
+.input-group-text {
+    background: #f8f9fa;
+    border: 1.5px solid #e0e0e0;
+    color: #6c757d;
+}
+
+/* استایل‌های گالری */
+.gallery-upload-area {
+    border: 3px dashed #4dabf7;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 20px;
+}
+
+.gallery-upload-area:hover {
+    border-color: #3b5bdb;
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    transform: translateY(-2px);
+}
+
+.gallery-upload-area i {
+    font-size: 48px;
+    color: #4dabf7;
+    margin-bottom: 15px;
+}
+
+.gallery-preview-container {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.gallery-preview-item {
+    position: relative;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 12px;
+    background: white;
+    transition: all 0.3s;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.gallery-preview-item:hover {
+    border-color: #4dabf7;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.gallery-preview-item img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.remove-gallery-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border: 2px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 10;
+}
+
+.gallery-preview-item:hover .remove-gallery-btn {
+    opacity: 1;
+    top: 5px;
+    right: 5px;
+}
+
+/* استایل‌های ویژگی‌ها */
+.features-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 10px;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+}
+
+.feature-btn {
+    border: 2px solid #e0e0e0;
+    border-radius: 25px;
+    padding: 10px 20px;
+    margin: 5px;
+    background: white;
+    color: #2c3e50;
+    font-weight: 500;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+}
+
+.feature-btn:hover {
+    border-color: #4dabf7;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e3f2fd 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(77, 171, 247, 0.2);
+}
+
+.feature-btn i {
+    margin-left: 8px;
+    font-size: 14px;
+}
+
+.feature-item {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-left: 4px solid #4dabf7;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: all 0.3s;
+}
+
+.feature-item:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.feature-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.feature-item-title {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 16px;
+}
+
+.remove-feature-btn {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 15px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.remove-feature-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* استایل‌های دکمه‌ها */
+.btn {
+    border-radius: 8px;
+    padding: 10px 25px;
+    font-weight: 600;
+    transition: all 0.3s;
+    border: none;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #4dabf7 0%, #3b5bdb 100%);
+    color: white;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: white;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ffd166 0%, #ff9e00 100%);
+    color: #333;
+}
+
+/* استایل‌های فرم */
+.form-check-input:checked {
+    background-color: #4dabf7;
+    border-color: #4dabf7;
+}
+
+.form-check-input:focus {
+    border-color: #4dabf7;
+    box-shadow: 0 0 0 0.25rem rgba(77, 171, 247, 0.25);
+}
+
+/* استایل‌های پیش‌نمایش */
+#mainImagePreview {
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    padding: 15px;
+    background: white;
+}
+
+#mainImagePreview img {
+    max-width: 100%;
+    max-height: 250px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+/* استایل‌های شمارنده */
+.counter-badge {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    color: white;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-right: 5px;
+}
+
+/* استایل‌های دسته‌بندی */
+.category-checkbox {
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    transition: all 0.3s;
+    background: white;
+}
+
+.category-checkbox:hover {
+    border-color: #4dabf7;
+    background: #f8f9fa;
+    transform: translateY(-1px);
+}
+
+.category-checkbox .form-check-input {
+    margin-top: 0.3em;
+}
+
+/* استایل‌های responsive */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 15px;
+    }
+
+    .gallery-preview-item img {
+        height: 100px;
+    }
+
+    .feature-btn {
+        min-width: 100px;
+        padding: 8px 15px;
+        font-size: 13px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-plus-circle me-2"></i> فرم ایجاد محصول جدید</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" novalidate id="productForm">
+                        {% csrf_token %}
+                        <input type="hidden" id="features_json" name="features_json" value="">
+
+                        <!-- بخش 1: اطلاعات پایه -->
+                        <div class="row mb-5">
+                            <div class="col-12 mb-4">
+                                <h4 class="section-header"><i class="fas fa-info-circle me-2"></i> اطلاعات پایه محصول</h4>
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <label for="title" class="form-label required">عنوان محصول</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-heading"></i></span>
+                                    <input type="text"
+                                           class="form-control"
+                                           id="title"
+                                           name="title"
+                                           required
+                                           placeholder="عنوان کامل محصول را وارد کنید">
+                                </div>
+                                <small class="text-muted mt-1 d-block">عنوانی واضح و گویا برای محصول انتخاب کنید</small>
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <label for="slug" class="form-label">آدرس یکتا (Slug)</label>
+                                <div class="input-group">
+                                    <input type="text"
+                                           class="form-control"
+                                           id="slug"
+                                           name="slug"
+                                           placeholder="به صورت خودکار ایجاد می‌شود">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="generateSlug()">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted mt-1 d-block">برای URL محصول استفاده می‌شود</small>
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <label for="brand" class="form-label">برند محصول</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                                    <select class="form-select" id="brand" name="brand">
+                                        <option value="">بدون برند (عمومی)</option>
+                                        {% for brand in brands %}
+                                        <option value="{{ brand.id }}">{{ brand.title }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <small class="text-muted mt-1 d-block">برند مربوط به محصول را انتخاب کنید</small>
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <label for="shortDescription" class="form-label required">توضیح کوتاه</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-align-left"></i></span>
+                                    <textarea class="form-control"
+                                              id="shortDescription"
+                                              name="shortDescription"
+                                              rows="3"
+                                              required
+                                              placeholder="توضیح مختصر محصول (حداکثر 500 کاراکتر)"
+                                              maxlength="500"></textarea>
+                                </div>
+                                <small class="text-muted mt-1 d-block">این توضیح در لیست محصولات نمایش داده می‌شود</small>
+                            </div>
+                        </div>
+
+                        <!-- بخش 2: دسته‌بندی‌ها -->
+                        <div class="row mb-5">
+                            <div class="col-12 mb-4">
+                                <h4 class="section-header"><i class="fas fa-folder me-2"></i> دسته‌بندی‌ها</h4>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    با انتخاب دسته‌بندی، ویژگی‌های مربوطه به صورت خودکار بارگذاری می‌شوند.
+                                </div>
+
+                                <div class="row">
+                                    {% for category in categories %}
+                                    <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                                        <div class="category-checkbox">
+                                            <div class="form-check">
+                                                <input class="form-check-input"
+                                                       type="checkbox"
+                                                       id="category_{{ category.id }}"
+                                                       name="categories"
+                                                       value="{{ category.id }}">
+                                                <label class="form-check-label d-flex align-items-center" for="category_{{ category.id }}">
+                                                    <i class="fas fa-folder text-warning me-2"></i>
+                                                    <div>
+                                                        <div class="fw-medium">{{ category.title }}</div>
+                                                        {% if category.children.all %}
+                                                        <small class="text-muted">{{ category.children.count }} زیردسته</small>
+                                                        {% endif %}
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <div class="col-12">
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            هنوز دسته‌بندی‌ای ایجاد نشده است.
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- بخش 3: تصاویر محصول -->
+                        <div class="row mb-5">
+                            <div class="col-12 mb-4">
+                                <h4 class="section-header"><i class="fas fa-images me-2"></i> تصاویر محصول</h4>
+                            </div>
+
+                            <!-- تصویر اصلی -->
+                            <div class="col-lg-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0"><i class="fas fa-crown me-2"></i> تصویر اصلی محصول</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="mainImage" class="form-label required">انتخاب تصویر اصلی</label>
+                                            <input type="file"
+                                                   class="form-control"
+                                                   id="mainImage"
+                                                   name="mainImage"
+                                                   required
+                                                   accept="image/*">
+                                        </div>
+
+                                        <div id="mainImagePreview" class="mt-4 text-center d-none">
+                                            <h6 class="mb-3"><i class="fas fa-eye me-2"></i> پیش‌نمایش تصویر</h6>
+                                            <div class="border rounded p-3">
+                                                <img id="previewMainImage" src="#" alt="پیش‌نمایش تصویر اصلی"
+                                                     class="img-fluid rounded">
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-3">
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                تصویر شاخص محصول - حداکثر حجم: 5MB
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- گالری تصاویر -->
+                            <div class="col-lg-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header bg-warning text-dark">
+                                        <h5 class="mb-0"><i class="fas fa-images me-2"></i> گالری تصاویر</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- آپلودر -->
+                                        <div class="gallery-upload-area mb-4" onclick="document.getElementById('galleryInput').click()">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                            <h5 class="mt-3 mb-2">تصاویر را اینجا رها کنید</h5>
+                                            <p class="text-muted mb-0">یا برای انتخاب کلیک کنید</p>
+                                            <small class="d-block mt-2 text-primary">
+                                                <i class="fas fa-mouse-pointer"></i> حداکثر 50 تصویر - هر تصویر حداکثر 5MB
+                                            </small>
+                                        </div>
+
+                                        <input type="file"
+                                               id="galleryInput"
+                                               name="gallery_images"
+                                               multiple
+                                               accept="image/*"
+                                               style="display: none;">
+
+                                        <!-- پیش‌نمایش تصاویر -->
+                                        <div id="galleryPreview">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-image me-2"></i>
+                                                    تصاویر انتخاب شده
+                                                    <span class="counter-badge" id="galleryCount">0</span>
+                                                </h6>
+                                                <button type="button" class="btn btn-sm btn-danger" onclick="clearGallery()">
+                                                    <i class="fas fa-trash me-1"></i> حذف همه
+                                                </button>
+                                            </div>
+
+                                            <div class="gallery-preview-container">
+                                                <div class="row g-3" id="galleryPreviews">
+                                                    <!-- تصاویر اینجا نمایش داده می‌شوند -->
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- متن جایگزین -->
+                                        <div class="mt-4">
+                                            <label for="altText" class="form-label">
+                                                <i class="fas fa-text-height me-1"></i>
+                                                متن جایگزین تصاویر
+                                            </label>
+                                            <input type="text"
+                                                   class="form-control"
+                                                   id="altText"
+                                                   name="altText"
+                                                   placeholder="متن جایگزین برای SEO (اختیاری)">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- بخش 4: توضیحات کامل -->
+                        <div class="row mb-5">
+                            <div class="col-12 mb-4">
+                                <h4 class="section-header"><i class="fas fa-align-justify me-2"></i> توضیحات کامل محصول</h4>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header bg-info text-white">
+                                        <h5 class="mb-0"><i class="fas fa-edit me-2"></i> ویرایشگر پیشرفته</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <label for="description" class="form-label">توضیحات کامل محصول</label>
+                                        <textarea class="form-control ckeditor"
+                                                  id="description"
+                                                  name="description"
+                                                  rows="10"></textarea>
+                                        <small class="text-muted mt-2 d-block">
+                                            <i class="fas fa-lightbulb me-1"></i>
+                                            توضیحات کامل محصول را با استفاده از ویرایشگر پیشرفته وارد کنید
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- بخش 5: ویژگی‌های محصول -->
+                        <div class="row mb-5">
+                            <div class="col-12 mb-4">
+                                <h4 class="section-header"><i class="fas fa-list-alt me-2"></i> ویژگی‌های محصول</h4>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header bg-gradient-info text-white">
+                                        <h5 class="mb-0"><i class="fas fa-cogs me-2"></i> مدیریت ویژگی‌ها</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- ویژگی‌های موجود -->
+                                        <div class="mb-5">
+                                            <h6 class="mb-3">
+                                                <i class="fas fa-database me-2"></i>
+                                                ویژگی‌های موجود در سیستم
+                                            </h6>
+                                            <div class="features-container">
+                                                <div class="d-flex flex-wrap justify-content-center">
+                                                    {% for feature in features %}
+                                                    <button type="button"
+                                                            class="btn feature-btn"
+                                                            data-feature-id="{{ feature.id }}"
+                                                            data-feature-title="{{ feature.title }}"
+                                                            onclick="addFeature(this)">
+                                                        <i class="fas fa-plus-circle me-2"></i>
+                                                        {{ feature.title }}
+                                                        {% if feature.featureValues.count > 0 %}
+                                                        <span class="badge bg-primary ms-2">{{ feature.featureValues.count }}</span>
+                                                        {% endif %}
+                                                    </button>
+                                                    {% empty %}
+                                                    <div class="alert alert-warning w-100 text-center">
+                                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                                        هیچ ویژگی‌ای در سیستم ثبت نشده است.
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- ویژگی‌های اضافه شده -->
+                                        <div id="addedFeaturesSection" class="mb-4">
+                                            <h6 class="mb-3">
+                                                <i class="fas fa-check-circle me-2 text-success"></i>
+                                                ویژگی‌های اضافه شده به محصول
+                                                <span class="counter-badge" id="featuresCount">0</span>
+                                            </h6>
+                                            <div id="featuresList">
+                                                <!-- ویژگی‌ها اینجا نمایش داده می‌شوند -->
+                                            </div>
+                                        </div>
+
+                                        <!-- ویژگی‌های پرکاربرد -->
+                                        <div class="mt-4">
+                                            <h6 class="mb-3">
+                                                <i class="fas fa-bolt me-2 text-warning"></i>
+                                                ویژگی‌های پرکاربرد
+                                            </h6>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                <button type="button" class="btn btn-outline-primary" onclick="addCommonFeature('سایز')">
+                                                    <i class="fas fa-ruler me-1"></i> سایز
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary" onclick="addCommonFeature('رنگ')">
+                                                    <i class="fas fa-palette me-1"></i> رنگ
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary" onclick="addCommonFeature('وزن')">
+                                                    <i class="fas fa-weight me-1"></i> وزن
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary" onclick="addCommonFeature('جنس')">
+                                                    <i class="fas fa-tshirt me-1"></i> جنس
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary" onclick="addCommonFeature('ابعاد')">
+                                                    <i class="fas fa-expand me-1"></i> ابعاد
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary" onclick="addCommonFeature('مدل')">
+                                                    <i class="fas fa-cube me-1"></i> مدل
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- بخش 6: تنظیمات محصول -->
+                        <div class="row mb-5">
+                            <div class="col-12 mb-4">
+                                <h4 class="section-header"><i class="fas fa-cog me-2"></i> تنظیمات محصول</h4>
+                            </div>
+
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input"
+                                                   type="checkbox"
+                                                   id="isActive"
+                                                   name="isActive"
+                                                   checked
+                                                   style="width: 50px; height: 25px;">
+                                            <label class="form-check-label fw-bold fs-5" for="isActive">
+                                                <i class="fas fa-toggle-on text-success me-2"></i> محصول فعال
+                                            </label>
+                                        </div>
+                                        <small class="text-muted">محصولات غیرفعال در سایت نمایش داده نمی‌شوند</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <h5 class="text-primary">
+                                            <i class="fas fa-tags me-2"></i>
+                                            قیمت‌گذاری
+                                        </h5>
+                                        <p class="text-muted mt-2">قیمت‌ها بعد از ایجاد محصول اضافه می‌شوند</p>
+                                        <button type="button" class="btn btn-outline-primary mt-2" disabled>
+                                            <i class="fas fa-plus me-1"></i> افزودن قیمت
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <h5 class="text-warning">
+                                            <i class="fas fa-chart-line me-2"></i>
+                                            موجودی و انبار
+                                        </h5>
+                                        <p class="text-muted mt-2">موجودی در بخش مدیریت فروش تنظیم می‌شود</p>
+                                        <button type="button" class="btn btn-outline-warning mt-2" disabled>
+                                            <i class="fas fa-warehouse me-1"></i> مدیریت انبار
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- بخش 7: دکمه‌های اقدام -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <a href="{% url 'panelAdmin:admin_product_list' %}" class="btn btn-secondary btn-lg">
+                                                    <i class="fas fa-arrow-right me-2"></i> بازگشت به لیست
+                                                </a>
+                                            </div>
+                                            <div>
+                                                <button type="reset" class="btn btn-outline-secondary btn-lg me-3">
+                                                    <i class="fas fa-redo me-2"></i> بازنشانی فرم
+                                                </button>
+                                                <button type="submit" class="btn btn-success btn-lg px-5">
+                                                    <i class="fas fa-save me-2"></i> ایجاد محصول
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- تمپلیت ویژگی -->
+<template id="featureTemplate">
+    <div class="feature-item" data-feature-id="">
+        <div class="feature-item-header">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-tag text-primary me-2"></i>
+                <span class="feature-item-title fw-bold"></span>
+                <small class="text-muted ms-2 feature-id"></small>
+            </div>
+            <button type="button" class="btn btn-sm remove-feature-btn">
+                <i class="fas fa-trash me-1"></i> حذف
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label required">
+                    <i class="fas fa-pen me-1"></i>
+                    مقدار ویژگی
+                </label>
+                <input type="text"
+                       class="form-control feature-value"
+                       placeholder="مثال: بزرگ، قرمز، 500 گرم"
+                       required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">
+                    <i class="fas fa-filter me-1"></i>
+                    انتخاب از مقادیر موجود
+                </label>
+                <select class="form-select feature-values-select">
+                    <option value="">-- انتخاب کنید --</option>
+                </select>
+                <small class="text-muted mt-1 d-block">
+                    اگر مقدار در لیست موجود است، انتخاب کنید
+                </small>
+            </div>
+            <div class="col-md-2 mb-3 d-flex align-items-end">
+                <button type="button" class="btn btn-sm btn-outline-info w-100" onclick="updateFeatureValues(this)">
+                    <i class="fas fa-sync-alt me-1"></i> بروزرسانی
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+// ==================== متغیرهای سراسری ====================
+let galleryImages = []; // آرایه برای ذخیره تصاویر گالری
+let addedFeatures = {}; // ویژگی‌های اضافه شده
+
+// ==================== مدیریت اسلاگ ====================
+function generateSlug() {
+    const title = document.getElementById('title').value.trim();
+    if (!title) {
+        showToast('خطا', 'لطفا ابتدا عنوان محصول را وارد کنید', 'warning');
+        return;
+    }
+
+    const slug = title
+        .replace(/[^\u0600-\u06FF\w\s]/g, '')
+        .replace(/\s+/g, '-')
+        .toLowerCase()
+        .replace(/[^a-z0-9\-]/g, '')
+        .replace(/\-+/g, '-')
+        .replace(/^-+/, '')
+        .replace(/-+$/, '');
+
+    document.getElementById('slug').value = slug;
+    showToast('موفق', 'اسلاگ با موفقیت ایجاد شد', 'success');
+}
+
+// ==================== مدیریت تصویر اصلی ====================
+document.getElementById('mainImage').addEventListener('change', function(e) {
+    const preview = document.getElementById('mainImagePreview');
+    const previewImage = document.getElementById('previewMainImage');
+
+    if (this.files && this.files[0]) {
+        const file = this.files[0];
+
+        // بررسی حجم فایل
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('خطا', 'حجم تصویر نباید بیشتر از 5 مگابایت باشد', 'error');
+            this.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            preview.classList.remove('d-none');
+        };
+        reader.readAsDataURL(file);
+    } else {
+        preview.classList.add('d-none');
+    }
+});
+
+// ==================== مدیریت گالری تصاویر ====================
+document.getElementById('galleryInput').addEventListener('change', function(e) {
+    handleGalleryFiles(this.files);
+});
+
+function handleGalleryFiles(files) {
+    if (!files || files.length === 0) return;
+
+    const previewsContainer = document.getElementById('galleryPreviews');
+    const galleryCount = document.getElementById('galleryCount');
+
+    // محدودیت تعداد تصاویر
+    if (galleryImages.length + files.length > 50) {
+        showToast('خطا', 'حداکثر 50 تصویر قابل آپلود است', 'warning');
+        return;
+    }
+
+    Array.from(files).forEach(file => {
+        // بررسی حجم
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('اخطار', `تصویر ${file.name} حجمش بیشتر از 5MB است و اضافه نشد`, 'warning');
+            return;
+        }
+
+        // بررسی نوع
+        if (!file.type.startsWith('image/')) {
+            showToast('اخطار', `فایل ${file.name} تصویر نیست`, 'warning');
+            return;
+        }
+
+        galleryImages.push(file);
+
+        // نمایش پیش‌نمایش
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const col = document.createElement('div');
+            col.className = 'col-xl-2 col-lg-3 col-md-4 col-sm-6';
+            col.innerHTML = `
+                <div class="gallery-preview-item">
+                    <button type="button" class="remove-gallery-btn" onclick="removeGalleryImage(${galleryImages.length - 1})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <img src="${e.target.result}"
+                         class="img-fluid rounded"
+                         alt="پیش‌نمایش تصویر">
+                    <div class="mt-2 text-center">
+                        <small class="text-truncate d-block" title="${file.name}">
+                            ${file.name}
+                        </small>
+                        <small class="text-muted">
+                            ${(file.size / 1024).toFixed(1)} KB
+                        </small>
+                    </div>
+                </div>
+            `;
+            previewsContainer.appendChild(col);
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // به‌روزرسانی تعداد
+    galleryCount.textContent = galleryImages.length;
+    updateGalleryPreview();
+}
+
+function removeGalleryImage(index) {
+    if (confirm('آیا از حذف این تصویر اطمینان دارید؟')) {
+        galleryImages.splice(index, 1);
+        updateGalleryPreview();
+        showToast('موفق', 'تصویر با موفقیت حذف شد', 'success');
+    }
+}
+
+function clearGallery() {
+    if (galleryImages.length === 0) return;
+
+    if (confirm('آیا از حذف همه تصاویر گالری اطمینان دارید؟')) {
+        galleryImages = [];
+        document.getElementById('galleryInput').value = '';
+        updateGalleryPreview();
+        showToast('موفق', 'همه تصاویر حذف شدند', 'success');
+    }
+}
+
+function updateGalleryPreview() {
+    const previewsContainer = document.getElementById('galleryPreviews');
+    const galleryCount = document.getElementById('galleryCount');
+
+    previewsContainer.innerHTML = '';
+    galleryCount.textContent = galleryImages.length;
+
+    if (galleryImages.length === 0) return;
+
+    galleryImages.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const col = document.createElement('div');
+            col.className = 'col-xl-2 col-lg-3 col-md-4 col-sm-6';
+            col.innerHTML = `
+                <div class="gallery-preview-item">
+                    <button type="button" class="remove-gallery-btn" onclick="removeGalleryImage(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <img src="${e.target.result}"
+                         class="img-fluid rounded"
+                         alt="پیش‌نمایش تصویر">
+                    <div class="mt-2 text-center">
+                        <small class="text-truncate d-block" title="${file.name}">
+                            ${file.name}
+                        </small>
+                        <small class="text-muted">
+                            ${(file.size / 1024).toFixed(1)} KB
+                        </small>
+                    </div>
+                </div>
+            `;
+            previewsContainer.appendChild(col);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+// ==================== مدیریت ویژگی‌ها ====================
+function addFeature(button) {
+    const featureId = button.dataset.featureId;
+    const featureTitle = button.dataset.featureTitle;
+
+    if (addedFeatures[featureId]) {
+        showToast('اخطار', 'این ویژگی قبلاً اضافه شده است', 'warning');
+        return;
+    }
+
+    const template = document.getElementById('featureTemplate').content.cloneNode(true);
+    const featureElement = template.querySelector('.feature-item');
+
+    featureElement.dataset.featureId = featureId;
+    featureElement.querySelector('.feature-item-title').textContent = featureTitle;
+    featureElement.querySelector('.feature-id').textContent = `(کد: ${featureId})`;
+
+    const removeBtn = featureElement.querySelector('.remove-feature-btn');
+    removeBtn.addEventListener('click', function() {
+        if (confirm('آیا از حذف این ویژگی اطمینان دارید؟')) {
+            featureElement.remove();
+            delete addedFeatures[featureId];
+            updateFeaturesJson();
+            updateFeaturesCount();
+            showToast('موفق', 'ویژگی حذف شد', 'success');
+        }
+    });
+
+    loadFeatureValues(featureId, featureElement.querySelector('.feature-values-select'));
+
+    const valueInput = featureElement.querySelector('.feature-value');
+    valueInput.addEventListener('input', updateFeaturesJson);
+
+    const selectElement = featureElement.querySelector('.feature-values-select');
+    selectElement.addEventListener('change', function() {
+        if (this.value) {
+            valueInput.value = this.options[this.selectedIndex].text;
+            updateFeaturesJson();
+        }
+    });
+
+    document.getElementById('featuresList').appendChild(featureElement);
+    addedFeatures[featureId] = featureElement;
+
+    updateFeaturesJson();
+    updateFeaturesCount();
+    showToast('موفق', `ویژگی "${featureTitle}" اضافه شد`, 'success');
+}
+
+function loadFeatureValues(featureId, selectElement) {
+    fetch(`{% url 'panelAdmin:admin_get_feature_values' %}?feature_id=${featureId}`)
+        .then(response => response.json())
+        .then(values => {
+            values.forEach(value => {
+                const option = document.createElement('option');
+                option.value = value.id;
+                option.textContent = value.value;
+                selectElement.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading feature values:', error);
+        });
+}
+
+function updateFeatureValues(button) {
+    const featureElement = button.closest('.feature-item');
+    const featureId = featureElement.dataset.featureId;
+    const selectElement = featureElement.querySelector('.feature-values-select');
+
+    selectElement.innerHTML = '<option value="">-- انتخاب کنید --</option>';
+    loadFeatureValues(featureId, selectElement);
+    showToast('اطلاع', 'مقادیر ویژگی بروزرسانی شد', 'info');
+}
+
+function addCommonFeature(featureName) {
+    const featureId = `manual_${Date.now()}`;
+    const template = document.getElementById('featureTemplate').content.cloneNode(true);
+    const featureElement = template.querySelector('.feature-item');
+
+    featureElement.dataset.featureId = featureId;
+    featureElement.querySelector('.feature-item-title').textContent = featureName;
+    featureElement.querySelector('.feature-id').textContent = '(دستی)';
+
+    const removeBtn = featureElement.querySelector('.remove-feature-btn');
+    removeBtn.addEventListener('click', function() {
+        if (confirm('آیا از حذف این ویژگی اطمینان دارید؟')) {
+            featureElement.remove();
+            delete addedFeatures[featureId];
+            updateFeaturesJson();
+            updateFeaturesCount();
+            showToast('موفق', 'ویژگی حذف شد', 'success');
+        }
+    });
+
+    const valueInput = featureElement.querySelector('.feature-value');
+    valueInput.addEventListener('input', updateFeaturesJson);
+
+    // مخفی کردن select برای ویژگی‌های دستی
+    featureElement.querySelector('.col-md-6').style.display = 'none';
+
+    document.getElementById('featuresList').appendChild(featureElement);
+    addedFeatures[featureId] = featureElement;
+
+    updateFeaturesJson();
+    updateFeaturesCount();
+    showToast('موفق', `ویژگی "${featureName}" اضافه شد`, 'success');
+}
+
+function updateFeaturesJson() {
+    const features = [];
+
+    document.querySelectorAll('.feature-item').forEach(item => {
+        const featureId = item.dataset.featureId;
+        const featureTitle = item.querySelector('.feature-item-title').textContent;
+        const value = item.querySelector('.feature-value').value;
+        const selectElement = item.querySelector('.feature-values-select');
+        const filterValueId = selectElement ? selectElement.value : null;
+
+        if (value) {
+            const featureData = {
+                feature_title: featureTitle,
+                value: value
+            };
+
+            if (!featureId.startsWith('manual_')) {
+                featureData.feature_id = featureId;
+            }
+
+            if (filterValueId) {
+                featureData.filter_value_id = filterValueId;
+            }
+
+            features.push(featureData);
+        }
+    });
+
+    document.getElementById('features_json').value = JSON.stringify(features);
+}
+
+function updateFeaturesCount() {
+    const count = Object.keys(addedFeatures).length;
+    document.getElementById('featuresCount').textContent = count;
+}
+
+// ==================== اعتبارسنجی فرم ====================
+document.getElementById('productForm').addEventListener('submit', function(e) {
+    // اعتبارسنجی الزامی
+    const title = document.getElementById('title').value.trim();
+    const shortDescription = document.getElementById('shortDescription').value.trim();
+    const mainImage = document.getElementById('mainImage').value;
+
+    if (!title || !shortDescription || !mainImage) {
+        e.preventDefault();
+        showToast('خطا', 'پر کردن فیلدهای الزامی ضروری است', 'error');
+        return;
+    }
+
+    // بررسی دسته‌بندی
+    const selectedCategories = document.querySelectorAll('input[name="categories"]:checked');
+    if (selectedCategories.length === 0) {
+        if (!confirm('⚠️ هیچ دسته‌بندی انتخاب نشده است. آیا ادامه می‌دهید؟')) {
+            e.preventDefault();
+            return;
+        }
+    }
+
+    // بررسی ویژگی‌ها
+    const featuresJson = document.getElementById('features_json').value;
+    if (!featuresJson || JSON.parse(featuresJson).length === 0) {
+        if (!confirm('⚠️ هیچ ویژگی‌ای اضافه نکرده‌اید. آیا ادامه می‌دهید؟')) {
+            e.preventDefault();
+            return;
+        }
+    }
+
+    // تبدیل galleryImages به FileList
+    const dataTransfer = new DataTransfer();
+    galleryImages.forEach(file => {
+        dataTransfer.items.add(file);
+    });
+
+    const galleryInput = document.getElementById('galleryInput');
+    galleryInput.files = dataTransfer.files;
+});
+
+// ==================== ابزارهای کمکی ====================
+function showToast(title, message, type = 'info') {
+    // ایجاد یک toast ساده
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-radius: 8px;
+    `;
+    toast.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}
+               text-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} me-2"></i>
+            <div>
+                <strong>${title}</strong>
+                <div class="small">${message}</div>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 5000);
+}
+
+// ==================== مقداردهی اولیه ====================
+document.addEventListener('DOMContentLoaded', function() {
+    // رویداد اسلاگ
+    document.getElementById('title').addEventListener('input', function() {
+        const slugField = document.getElementById('slug');
+        if (!slugField.value) {
+            generateSlug();
+        }
+    });
+
+    // به‌روزرسانی تعداد ویژگی‌ها
+    updateFeaturesCount();
+
+    // مخفی کردن گالری اگر تصویری نیست
+    if (galleryImages.length === 0) {
+        document.getElementById('galleryPreview').style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

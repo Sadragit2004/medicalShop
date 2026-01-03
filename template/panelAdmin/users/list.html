@@ -1,0 +1,211 @@
+<!-- templates/panelAdmin/users/list.html -->
+{% extends '../base/base.html' %}
+
+{% block title %}مدیریت کاربران{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_user_list' %}">کاربران</a></li>
+<li class="breadcrumb-item active">لیست کاربران</li>
+{% endblock %}
+
+{% block page_title %}مدیریت کاربران{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">لیست کاربران</h5>
+                <a href="{% url 'panelAdmin:admin_create_user' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> کاربر جدید
+                </a>
+            </div>
+            <div class="card-body">
+                <!-- آمار کاربران -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="stat-card primary p-3 rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">کل کاربران</h6>
+                                    <h3 class="mb-0">{{ users.count }}</h3>
+                                </div>
+                                <i class="fas fa-users fa-2x text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card success p-3 rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">کاربران فعال</h6>
+                                    <h3 class="mb-0">{{ active_users_count }}</h3>
+                                </div>
+                                <i class="fas fa-user-check fa-2x text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card warning p-3 rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">ادمین‌ها</h6>
+                                    <h3 class="mb-0">{{ staff_count }}</h3>
+                                </div>
+                                <i class="fas fa-user-shield fa-2x text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card danger p-3 rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">مسدود شده</h6>
+                                    <h3 class="mb-0">{{ banned_count }}</h3>
+                                </div>
+                                <i class="fas fa-user-slash fa-2x text-danger"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- فیلتر جستجو -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <form method="get" class="search-box">
+                            <div class="input-group">
+                                <input type="text"
+                                       class="form-control"
+                                       name="search"
+                                       placeholder="جستجوی بر اساس شماره موبایل، نام یا ایمیل..."
+                                       value="{{ request.GET.search }}">
+                                <button class="btn btn-outline-primary" type="submit">
+                                    <i class="fas fa-search"></i> جستجو
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- جدول کاربران -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="50">#</th>
+                                <th>شماره موبایل</th>
+                                <th>نام و نام خانوادگی</th>
+                                <th>وضعیت</th>
+                                <th>نقش</th>
+                                <th>تاریخ عضویت</th>
+                                <th width="150">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <strong class="text-primary">{{ user.mobileNumber }}</strong>
+                                    {% if user.security and user.security.isBan %}
+                                    <span class="badge bg-danger ms-2">مسدود</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.name or user.family %}
+                                        {{ user.name }} {{ user.family }}
+                                    {% else %}
+                                        <span class="text-muted">نامشخص</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.is_active %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle"></i> فعال
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times-circle"></i> غیرفعال
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.is_superuser %}
+                                        <span class="badge bg-danger">سوپرادمین</span>
+                                    {% elif user.is_staff %}
+                                        <span class="badge bg-warning text-dark">ادمین</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">کاربر عادی</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="text-muted">
+                                        {{ user.createAt|date:"Y/m/d" }}
+                                    </span>
+                                    <small class="d-block text-muted">{{ user.createAt|time }}</small>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{% url 'panelAdmin:admin_user_detail' user.id %}"
+                                           class="btn btn-sm btn-info"
+                                           data-bs-toggle="tooltip"
+                                           title="مشاهده جزئیات">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'panelAdmin:admin_update_user' user.id %}"
+                                           class="btn btn-sm btn-warning"
+                                           data-bs-toggle="tooltip"
+                                           title="ویرایش">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'panelAdmin:admin_user_devices' user.id %}"
+                                           class="btn btn-sm btn-secondary"
+                                           data-bs-toggle="tooltip"
+                                           title="دستگاه‌ها">
+                                            <i class="fas fa-laptop"></i>
+                                        </a>
+                                        <a href="{% url 'panelAdmin:admin_delete_user' user.id %}"
+                                           class="btn btn-sm btn-danger"
+                                           data-bs-toggle="tooltip"
+                                           title="حذف"
+                                           onclick="return confirm('آیا از حذف کاربر {{ user.mobileNumber }} اطمینان دارید؟')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="fas fa-users fa-3x mb-3"></i>
+                                        <h5>هیچ کاربری یافت نشد</h5>
+                                        <p class="mb-0">کاربر جدیدی اضافه کنید</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-card {
+    background: white;
+    border-left: 4px solid;
+    transition: transform 0.3s;
+}
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+.stat-card.primary { border-color: #4361ee; }
+.stat-card.success { border-color: #4cc9f0; }
+.stat-card.warning { border-color: #f8961e; }
+.stat-card.danger { border-color: #f72585; }
+</style>
+
+{% endblock %}

@@ -1,0 +1,444 @@
+<!-- templates/panelAdmin/products/brand/list.html -->
+{% extends '../../base/base.html' %}
+
+
+{% block title %}مدیریت برندها{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_dashboard' %}">داشبورد</a></li>
+<li class="breadcrumb-item active">برندها</li>
+{% endblock %}
+
+{% block page_title %}مدیریت برندها{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">لیست برندها</h5>
+                <a href="{% url 'panelAdmin:admin_brand_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> برند جدید
+                </a>
+            </div>
+            <div class="card-body">
+                <!-- آمار برندها -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="stat-card primary p-3 rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">کل برندها</h6>
+                                    <h3 class="mb-0">{{ brands.count }}</h3>
+                                </div>
+                                <i class="fas fa-tag fa-2x text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card success p-3 rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">برندهای فعال</h6>
+                                    <h3 class="mb-0">{{ active_brands }}</h3>
+                                </div>
+                                <i class="fas fa-check-circle fa-2x text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card warning p-3 rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">محصولات کل</h6>
+                                    <h3 class="mb-0">{{ total_products }}</h3>
+                                </div>
+                                <i class="fas fa-box fa-2x text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card danger p-3 rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">بدون لوگو</h6>
+                                    <h3 class="mb-0">{{ brands_without_logo }}</h3>
+                                </div>
+                                <i class="fas fa-image fa-2x text-danger"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- فیلتر و جستجو -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="search-box">
+                            <input type="text" class="form-control" placeholder="جستجوی برند..." id="searchInput">
+                            <i class="fas fa-search"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="statusFilter">
+                            <option value="">همه وضعیت‌ها</option>
+                            <option value="active">فعال</option>
+                            <option value="inactive">غیرفعال</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="logoFilter">
+                            <option value="">همه برندها</option>
+                            <option value="with_logo">دارای لوگو</option>
+                            <option value="without_logo">بدون لوگو</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- جدول برندها -->
+                <div class="table-responsive">
+                    <table class="table table-hover" id="brandTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="50">#</th>
+                                <th>لوگو</th>
+                                <th>عنوان برند</th>
+                                <th>اسلاگ</th>
+                                <th>تعداد محصولات</th>
+                                <th>وضعیت</th>
+                                <th>تاریخ ایجاد</th>
+                                <th width="120">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for brand in brands %}
+                            <tr data-status="{% if brand.isActive %}active{% else %}inactive{% endif %}"
+                                data-logo="{% if brand.logo %}with_logo{% else %}without_logo{% endif %}">
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    {% if brand.logo %}
+                                    <img src="{{ brand.logo.url }}" alt="{{ brand.title }}"
+                                         class="img-thumbnail brand-logo"
+                                         data-bs-toggle="tooltip"
+                                         title="{{ brand.title }}">
+                                    {% else %}
+                                    <div class="no-logo" data-bs-toggle="tooltip" title="بدون لوگو">
+                                        <i class="fas fa-image text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong class="brand-title">{{ brand.title }}</strong>
+                                    {% if brand.description %}
+                                    <p class="text-muted mb-0 small mt-1" style="max-width: 300px;">
+                                        {{ brand.description|truncatechars:100 }}
+                                    </p>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <code class="brand-slug">{{ brand.slug }}</code>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ brand.products.count }}</span>
+                                </td>
+                                <td>
+                                    {% if brand.isActive %}
+                                    <span class="badge bg-success">فعال</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">غیرفعال</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ brand.createdAt|date:"Y/m/d" }}
+                                    <small class="d-block text-muted">{{ brand.createdAt|time }}</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'panelAdmin:admin_brand_update' brand.id %}"
+                                           class="btn btn-warning" data-bs-toggle="tooltip" title="ویرایش">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="#" class="btn btn-info" data-bs-toggle="tooltip" title="محصولات"
+                                           onclick="showBrandProducts({{ brand.id }}, '{{ brand.title }}')">
+                                            <i class="fas fa-box"></i>
+                                        </a>
+                                        <a href="{% url 'panelAdmin:admin_brand_delete' brand.id %}"
+                                           class="btn btn-danger" data-bs-toggle="tooltip" title="حذف"
+                                           onclick="return confirm('آیا از حذف برند اطمینان دارید؟')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="fas fa-tags fa-3x mb-3"></i>
+                                        <h5>هیچ برندی یافت نشد</h5>
+                                        <p class="mb-3">اولین برند را ایجاد کنید</p>
+                                        <a href="{% url 'panelAdmin:admin_brand_create' %}" class="btn btn-primary">
+                                            ایجاد برند
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- گالری برندها -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">گالری برندها</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="brandGallery">
+                            {% for brand in brands %}
+                            <div class="col-md-2 col-sm-4 col-6 mb-3">
+                                <div class="card brand-card text-center h-100">
+                                    <div class="card-body">
+                                        {% if brand.logo %}
+                                        <img src="{{ brand.logo.url }}" alt="{{ brand.title }}"
+                                             class="img-fluid mb-2" style="height: 60px; object-fit: contain;">
+                                        {% else %}
+                                        <div class="no-logo-placeholder mb-2">
+                                            <i class="fas fa-tag fa-2x text-muted"></i>
+                                        </div>
+                                        {% endif %}
+                                        <h6 class="mb-1">{{ brand.title }}</h6>
+                                        <small class="text-muted">{{ brand.products.count }} محصول</small>
+                                        <div class="mt-2">
+                                            {% if brand.isActive %}
+                                            <span class="badge bg-success">فعال</span>
+                                            {% else %}
+                                            <span class="badge bg-danger">غیرفعال</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-transparent border-0 py-2">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'panelAdmin:admin_brand_update' brand.id %}"
+                                               class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-sm btn-info"
+                                               onclick="showBrandProducts({{ brand.id }}, '{{ brand.title }}')">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال نمایش محصولات برند -->
+<div class="modal fade" id="productsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalTitle">محصولات برند</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="productsList" class="row">
+                    <!-- محصولات با AJAX بارگذاری می‌شوند -->
+                </div>
+                <div id="loading" class="text-center py-5 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">در حال بارگذاری...</span>
+                    </div>
+                </div>
+                <div id="noProducts" class="text-center py-5 d-none">
+                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                    <h5>هیچ محصولی یافت نشد</h5>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-card {
+    background: white;
+    border-left: 4px solid;
+    transition: transform 0.3s;
+}
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+.stat-card.primary { border-color: #4361ee; }
+.stat-card.success { border-color: #4cc9f0; }
+.stat-card.warning { border-color: #f8961e; }
+.stat-card.danger { border-color: #f72585; }
+
+.brand-logo {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    background: white;
+}
+
+.no-logo {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border-radius: 6px;
+    font-size: 24px;
+}
+
+.brand-card {
+    transition: all 0.3s;
+    border: 1px solid #dee2e6;
+}
+.brand-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.no-logo-placeholder {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.product-item {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+    transition: all 0.3s;
+}
+.product-item:hover {
+    background: #f8f9fa;
+}
+</style>
+
+<script>
+// فیلتر جدول
+function filterTable() {
+    const searchValue = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const logoFilter = document.getElementById('logoFilter').value;
+
+    const rows = document.querySelectorAll('#brandTable tbody tr');
+    const galleryItems = document.querySelectorAll('#brandGallery .col-md-2');
+
+    rows.forEach((row, index) => {
+        const title = row.querySelector('.brand-title').textContent.toLowerCase();
+        const slug = row.querySelector('.brand-slug').textContent.toLowerCase();
+        const status = row.getAttribute('data-status');
+        const logo = row.getAttribute('data-logo');
+
+        let show = true;
+
+        // جستجو
+        if (searchValue && !title.includes(searchValue) && !slug.includes(searchValue)) {
+            show = false;
+        }
+
+        // فیلتر وضعیت
+        if (statusFilter && status !== statusFilter) {
+            show = false;
+        }
+
+        // فیلتر لوگو
+        if (logoFilter && logo !== logoFilter) {
+            show = false;
+        }
+
+        row.style.display = show ? '' : 'none';
+
+        // نمایش/مخفی کردن در گالری
+        if (galleryItems[index]) {
+            galleryItems[index].style.display = show ? '' : 'none';
+        }
+    });
+}
+
+document.getElementById('searchInput').addEventListener('input', filterTable);
+document.getElementById('statusFilter').addEventListener('change', filterTable);
+document.getElementById('logoFilter').addEventListener('change', filterTable);
+
+// نمایش محصولات برند
+function showBrandProducts(brandId, brandTitle) {
+    const modal = new bootstrap.Modal(document.getElementById('productsModal'));
+    const modalTitle = document.getElementById('modalTitle');
+    const productsList = document.getElementById('productsList');
+    const loading = document.getElementById('loading');
+    const noProducts = document.getElementById('noProducts');
+
+    modalTitle.textContent = `محصولات برند: ${brandTitle}`;
+    productsList.innerHTML = '';
+    loading.classList.remove('d-none');
+    noProducts.classList.add('d-none');
+
+    // نمایش مودال
+    modal.show();
+
+    // درخواست AJAX برای دریافت محصولات
+    fetch(`/ajax/get-brand-products/${brandId}/`)
+        .then(response => response.json())
+        .then(data => {
+            loading.classList.add('d-none');
+
+            if (data.success && data.products.length > 0) {
+                data.products.forEach(product => {
+                    const productItem = `
+                    <div class="col-md-6">
+                        <div class="product-item">
+                            <div class="d-flex align-items-center">
+                                ${product.image ?
+                                    `<img src="${product.image}" alt="${product.title}"
+                                          class="img-thumbnail me-3" style="width: 60px; height: 60px;">` :
+                                    `<div class="no-image me-3">
+                                        <i class="fas fa-box text-muted"></i>
+                                    </div>`
+                                }
+                                <div>
+                                    <h6 class="mb-1">${product.title}</h6>
+                                    <small class="text-muted">${product.price ? product.price + ' تومان' : 'قیمت نامشخص'}</small>
+                                    <div class="mt-1">
+                                        <span class="badge ${product.isActive ? 'bg-success' : 'bg-danger'}">
+                                            ${product.isActive ? 'فعال' : 'غیرفعال'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                    productsList.innerHTML += productItem;
+                });
+            } else {
+                noProducts.classList.remove('d-none');
+            }
+        })
+        .catch(error => {
+            loading.classList.add('d-none');
+            noProducts.classList.remove('d-none');
+            console.error('Error:', error);
+        });
+}
+
+// تابع کمکی برای AJAX (می‌توانید URL را تنظیم کنید)
+function getBrandProductsUrl(brandId) {
+    return `/panelAdmin/ajax/brand/${brandId}/products/`;
+}
+</script>
+{% endblock %}

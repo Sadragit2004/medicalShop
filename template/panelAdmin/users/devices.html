@@ -1,0 +1,257 @@
+<!-- templates/panelAdmin/users/devices.html -->
+{% extends '../base/base.html' %}
+
+{% block title %}مدیریت دستگاه‌های {{ user.mobileNumber }}{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_user_list' %}">کاربران</a></li>
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_user_detail' user.id %}">{{ user.mobileNumber }}</a></li>
+<li class="breadcrumb-item active">دستگاه‌ها</li>
+{% endblock %}
+
+{% block page_title %}مدیریت دستگاه‌های کاربر <small class="text-muted">({{ user.mobileNumber }})</small>{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- کارت دستگاه‌ها -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">لیست دستگاه‌های کاربر</h5>
+                <span class="badge bg-info">{{ devices.count }} دستگاه</span>
+            </div>
+            <div class="card-body">
+                {% if devices %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="50">#</th>
+                                <th>اطلاعات دستگاه</th>
+                                <th>آدرس IP</th>
+                                <th>تاریخ ورود</th>
+                                <th>آخرین فعالیت</th>
+                                <th width="100">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for device in devices %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="device-icon me-3">
+                                            {% if 'android' in device.deviceInfo|lower %}
+                                                <i class="fab fa-android fa-lg text-success"></i>
+                                            {% elif 'ios' in device.deviceInfo|lower or 'iphone' in device.deviceInfo|lower %}
+                                                <i class="fab fa-apple fa-lg text-secondary"></i>
+                                            {% elif 'windows' in device.deviceInfo|lower %}
+                                                <i class="fab fa-windows fa-lg text-primary"></i>
+                                            {% elif 'linux' in device.deviceInfo|lower %}
+                                                <i class="fab fa-linux fa-lg text-warning"></i>
+                                            {% else %}
+                                                <i class="fas fa-desktop fa-lg text-info"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <strong>{{ device.deviceInfo|truncatechars:30 }}</strong>
+                                            {% if forloop.first %}
+                                            <span class="badge bg-success ms-2">فعلی</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <code>{{ device.ipAddress|default:"نامشخص" }}</code>
+                                </td>
+                                <td>
+                                    <span class="text-muted">{{ device.createdAt|date:"Y/m/d" }}</span>
+                                    <small class="d-block text-muted">{{ device.createdAt|time }}</small>
+                                </td>
+                                <td>
+                                    {{ device.updatedAt|timesince }} پیش
+                                </td>
+                                <td>
+                                    <a href="{% url 'panelAdmin:admin_delete_device' device.id %}"
+                                       class="btn btn-sm btn-danger"
+                                       onclick="return confirm('آیا از حذف این دستگاه اطمینان دارید؟')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="text-muted">
+                        <i class="fas fa-laptop fa-3x mb-3"></i>
+                        <h5>هیچ دستگاهی یافت نشد</h5>
+                        <p>کاربر هنوز از هیچ دستگاهی وارد نشده است</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- کارت افزودن دستگاه جدید -->
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-plus"></i> افزودن دستگاه جدید</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="deviceInfo" class="form-label">اطلاعات دستگاه *</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="deviceInfo"
+                                   name="deviceInfo"
+                                   required
+                                   placeholder="مثال: Android Chrome 120">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="ipAddress" class="form-label">آدرس IP</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="ipAddress"
+                                   name="ipAddress"
+                                   placeholder="مثال: 192.168.1.1">
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'panelAdmin:admin_user_detail' user.id %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-right"></i> بازگشت
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> ذخیره دستگاه
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- سایدبار اطلاعات کاربر -->
+    <div class="col-lg-4">
+        <!-- کارت اطلاعات کاربر -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-user"></i> اطلاعات کاربر</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <div class="avatar-placeholder">
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto"
+                             style="width: 80px; height: 80px; border: 2px solid #4361ee;">
+                            <i class="fas fa-user fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                    <h6 class="mt-3 mb-1">{{ user.name|default:"-" }} {{ user.family|default:"-" }}</h6>
+                    <p class="text-muted">{{ user.mobileNumber }}</p>
+                </div>
+
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>تعداد دستگاه‌ها</span>
+                        <span class="badge bg-primary rounded-pill">{{ devices.count }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>آخرین ورود</span>
+                        <span class="text-muted">
+                            {% if user.last_login %}
+                                {{ user.last_login|timesince }} پیش
+                            {% else %}
+                                هرگز
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>دستگاه فعلی</span>
+                        <span class="text-muted">
+                            {% if devices.first %}
+                                {{ devices.first.deviceInfo|truncatechars:20 }}
+                            {% else %}
+                                ندارد
+                            {% endif %}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- کارت راهنما -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-info-circle"></i> راهنما</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-lightbulb"></i> نکات:</h6>
+                    <ul class="mb-0 small">
+                        <li class="mb-2">دستگاه فعلی: آخرین دستگاهی که کاربر از آن وارد شده است</li>
+                        <li class="mb-2">حذف دستگاه، کاربر را از آن دستگاه خارج می‌کند</li>
+                        <li class="mb-2">افزودن دستگاه دستی برای تست یا مشکل‌یابی</li>
+                        <li>آی‌پی برای ردیابی موقعیت جغرافیایی استفاده می‌شود</li>
+                    </ul>
+                </div>
+
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle"></i> هشدارها:</h6>
+                    <ul class="mb-0 small">
+                        <li>افزودن دستگاه ناشناخته ممکن است خطرناک باشد</li>
+                        <li>دستگاه‌های قدیمی را می‌توانید حذف کنید</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.device-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background-color: #f8f9fa;
+}
+
+.avatar-placeholder {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+</style>
+
+<script>
+// فرمت آدرس IP
+document.getElementById('ipAddress').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/[^0-9.]/g, '');
+
+    // اضافه کردن خودکار نقطه
+    const parts = value.split('.');
+    if (parts.length > 4) {
+        value = parts.slice(0, 4).join('.');
+    }
+
+    // محدود کردن هر بخش به 3 رقم
+    parts.forEach((part, index) => {
+        if (part.length > 3) {
+            parts[index] = part.substring(0, 3);
+        }
+    });
+
+    e.target.value = parts.join('.');
+});
+</script>
+{% endblock %}

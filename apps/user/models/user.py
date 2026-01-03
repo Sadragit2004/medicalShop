@@ -5,6 +5,7 @@ from django.contrib.auth.models import (
 import uuid
 from datetime import date
 from ..validators.mobile_validator import validate_iranian_mobile
+from django.utils import timezone
 
 
 class CustomUserManager(BaseUserManager):
@@ -41,6 +42,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     birth_date = models.DateField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    createAt = models.DateTimeField(default=timezone.now,verbose_name='ساخته شده')
 
     USERNAME_FIELD = "mobileNumber"
     REQUIRED_FIELDS = []

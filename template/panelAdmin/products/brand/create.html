@@ -1,0 +1,320 @@
+<!-- templates/panelAdmin/products/brand/create.html -->
+{% extends '../../base/base.html' %}
+
+
+{% block title %}ایجاد برند جدید{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_brand_list' %}">برندها</a></li>
+<li class="breadcrumb-item active">ایجاد جدید</li>
+{% endblock %}
+
+{% block page_title %}ایجاد برند جدید{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-plus"></i> فرم ایجاد برند</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" novalidate id="brandForm">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <!-- عنوان -->
+                        <div class="col-md-6 mb-3">
+                            <label for="title" class="form-label required">عنوان برند</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="title"
+                                   name="title"
+                                   required
+                                   placeholder="مثال: سامسونگ"
+                                   autofocus>
+                            <div class="invalid-feedback">لطفاً عنوان برند را وارد کنید</div>
+                        </div>
+
+                        <!-- اسلاگ -->
+                        <div class="col-md-6 mb-3">
+                            <label for="slug" class="form-label">اسلاگ (Slug)</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="slug"
+                                   name="slug"
+                                   placeholder="به صورت خودکار ایجاد می‌شود"
+                                   pattern="[a-z0-9\-]+">
+                            <div class="form-text">برای URL استفاده می‌شود - فقط حروف کوچک، اعداد و خط تیره</div>
+                        </div>
+
+                        <!-- توضیحات -->
+                        <div class="col-12 mb-3">
+                            <label for="description" class="form-label">توضیحات برند</label>
+                            <textarea class="form-control"
+                                      id="description"
+                                      name="description"
+                                      rows="3"
+                                      placeholder="توضیح مختصر درباره برند..."></textarea>
+                            <div class="form-text">توضیح اختیاری درباره برند (حداکثر 500 کاراکتر)</div>
+                        </div>
+
+                        <!-- لوگو -->
+                        <div class="col-md-6 mb-3">
+                            <label for="logo" class="form-label">لوگوی برند</label>
+                            <input type="file"
+                                   class="form-control"
+                                   id="logo"
+                                   name="logo"
+                                   accept="image/*">
+                            <div class="form-text">فرمت‌های مجاز: JPG, PNG, SVG, WebP - حداکثر 1 مگابایت</div>
+                        </div>
+
+                        <!-- پیش‌نمایش لوگو -->
+                        <div class="col-12 mb-3">
+                            <div id="logoPreview" class="d-none">
+                                <label class="form-label">پیش‌نمایش لوگو:</label>
+                                <div class="border rounded p-3 text-center">
+                                    <img id="previewLogo" src="#" alt="پیش‌نمایش لوگو"
+                                         class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-sm btn-danger" id="removeLogo">
+                                            <i class="fas fa-times"></i> حذف لوگو
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- وضعیت -->
+                        <div class="col-12 mb-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">تنظیمات برند</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               id="isActive"
+                                               name="isActive"
+                                               checked>
+                                        <label class="form-check-label fw-bold" for="isActive">
+                                            <i class="fas fa-toggle-on text-success"></i> برند فعال
+                                        </label>
+                                        <div class="form-text">برندهای غیرفعال در سایت نمایش داده نمی‌شوند</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- دکمه‌های اقدام -->
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'panelAdmin:admin_brand_list' %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-right"></i> بازگشت به لیست
+                                </a>
+                                <div>
+                                    <button type="reset" class="btn btn-outline-secondary me-2">
+                                        <i class="fas fa-redo"></i> بازنشانی فرم
+                                    </button>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-save"></i> ایجاد برند
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- سایدبار راهنما -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-info-circle"></i> راهنمای ایجاد برند</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-lightbulb"></i> نکات مهم:</h6>
+                    <ul class="mb-0">
+                        <li class="mb-2"><strong>عنوان:</strong> باید منحصر به فرد و واضح باشد</li>
+                        <li class="mb-2"><strong>اسلاگ:</strong> برای URL استفاده می‌شود</li>
+                        <li class="mb-2"><strong>لوگو:</strong> بهتر است لوگوی با کیفیت آپلود شود</li>
+                        <li class="mb-2"><strong>توضیحات:</strong> برای SEO مفید است</li>
+                        <li><strong>وضعیت:</strong> برندهای غیرفعال نمایش داده نمی‌شوند</li>
+                    </ul>
+                </div>
+
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle"></i> هشدارها:</h6>
+                    <ul class="mb-0">
+                        <li>عنوان تکراری مجاز نیست</li>
+                        <li>لوگو باید مربع یا نزدیک به مربع باشد</li>
+                        <li>تغییر اسلاگ ممکن است لینک‌های قبلی را بشکند</li>
+                        <li>حذف برند، محصولات آن را حذف نمی‌کند</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- نمونه لوگوها -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-image"></i> نمونه لوگوهای مناسب</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="p-3 border rounded">
+                            <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                            <div class="small">لوگوی شفاف (PNG)</div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="p-3 border rounded">
+                            <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                            <div class="small">لوگوی مربع</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 border rounded">
+                            <i class="fas fa-times-circle text-danger fa-2x mb-2"></i>
+                            <div class="small">لوگوی بزرگ (بالای 1MB)</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 border rounded">
+                            <i class="fas fa-times-circle text-danger fa-2x mb-2"></i>
+                            <div class="small">لوگوی مستطیلی</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ایجاد اسلاگ از عنوان
+document.getElementById('title').addEventListener('input', function(e) {
+    const slugField = document.getElementById('slug');
+    if (!slugField.value || slugField.value === slugField.defaultValue) {
+        const slug = e.target.value
+            .replace(/[^\u0600-\u06FF\w\s]/g, '')
+            .replace(/\s+/g, '-')
+            .toLowerCase()
+            .replace(/[^a-z0-9\-]/g, '');
+        slugField.value = slug;
+    }
+});
+
+// پیش‌نمایش لوگو
+const logoInput = document.getElementById('logo');
+const logoPreview = document.getElementById('logoPreview');
+const previewLogo = document.getElementById('previewLogo');
+
+logoInput.addEventListener('change', function(e) {
+    if (this.files && this.files[0]) {
+        // بررسی حجم فایل
+        const fileSize = this.files[0].size / 1024 / 1024; // MB
+        if (fileSize > 1) {
+            alert('حجم فایل باید کمتر از 1 مگابایت باشد');
+            this.value = '';
+            return;
+        }
+
+        // بررسی فرمت فایل
+        const validTypes = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/webp'];
+        if (!validTypes.includes(this.files[0].type)) {
+            alert('فرمت فایل مجاز نیست. فقط JPG, PNG, SVG, WebP مجاز است');
+            this.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            previewLogo.src = e.target.result;
+            logoPreview.classList.remove('d-none');
+        }
+
+        reader.readAsDataURL(this.files[0]);
+    } else {
+        logoPreview.classList.add('d-none');
+    }
+});
+
+// حذف لوگو
+document.getElementById('removeLogo').addEventListener('click', function() {
+    logoInput.value = '';
+    logoPreview.classList.add('d-none');
+});
+
+// اعتبارسنجی فرم
+document.getElementById('brandForm').addEventListener('submit', function(e) {
+    const title = document.getElementById('title').value.trim();
+    const slug = document.getElementById('slug').value.trim();
+
+    if (!title) {
+        e.preventDefault();
+        alert('عنوان برند الزامی است');
+        return;
+    }
+
+    if (slug && !/^[a-z0-9\-]+$/.test(slug)) {
+        e.preventDefault();
+        alert('اسلاگ فقط می‌تواند شامل حروف کوچک، اعداد و خط تیره باشد');
+        return;
+    }
+
+    // بررسی حداقل 2 کاراکتر برای عنوان
+    if (title.length < 2) {
+        e.preventDefault();
+        alert('عنوان برند باید حداقل 2 کاراکتر باشد');
+        return;
+    }
+});
+
+// محدودیت کاراکتر برای توضیحات
+document.getElementById('description').addEventListener('input', function(e) {
+    const maxLength = 500;
+    const currentLength = e.target.value.length;
+
+    if (currentLength > maxLength) {
+        e.target.value = e.target.value.substring(0, maxLength);
+        alert(`حداکثر ${maxLength} کاراکتر مجاز است`);
+    }
+
+    // نمایش تعداد کاراکتر
+    const counter = document.getElementById('charCounter') || (function() {
+        const counter = document.createElement('div');
+        counter.id = 'charCounter';
+        counter.className = 'form-text text-end';
+        e.target.parentNode.appendChild(counter);
+        return counter;
+    })();
+
+    counter.textContent = `${currentLength}/${maxLength} کاراکتر`;
+});
+</script>
+
+<style>
+.required:after {
+    content: " *";
+    color: red;
+}
+
+#logoPreview img {
+    max-width: 100%;
+    height: auto;
+}
+
+.char-counter {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+</style>
+{% endblock %}

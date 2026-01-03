@@ -1,0 +1,523 @@
+<!-- templates/admin/products/sale_type/create.html -->
+{% extends '../../base/base.html' %}
+
+{% block title %}افزودن نوع فروش{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_dashboard' %}">داشبورد</a></li>
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_product_list' %}">محصولات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_product_detail' product.id %}">{{ product.title|truncatechars:20 }}</a></li>
+<li class="breadcrumb-item active">افزودن نوع فروش</li>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center">
+    <h4>افزودن نوع فروش جدید</h4>
+    <div class="badge bg-info">
+        <i class="fas fa-box"></i> {{ product.title|truncatechars:30 }}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-tags"></i> فرم ایجاد نوع فروش</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="saleTypeForm" novalidate>
+                    {% csrf_token %}
+
+                    <!-- نوع فروش -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">🏷️ انتخاب نوع فروش</h6>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="typeSale" class="form-label required">نوع فروش</label>
+                            <select class="form-select" id="typeSale" name="typeSale" required>
+                                <option value="">انتخاب کنید</option>
+                                {% for value, label in sale_types %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">نحوه فروش محصول را انتخاب کنید</div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="title" class="form-label">عنوان نمایشی</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="title"
+                                   name="title"
+                                   placeholder="مثال: فروش عمده، فروش تک‌نفره">
+                            <div class="form-text">عنوانی که به کاربر نمایش داده می‌شود</div>
+                        </div>
+                    </div>
+
+                    <!-- قیمت‌گذاری -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">💰 قیمت‌گذاری</h6>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="price" class="form-label required">قیمت (تومان)</label>
+                            <div class="input-group">
+                                <input type="number"
+                                       class="form-control"
+                                       id="price"
+                                       name="price"
+                                       required
+                                       min="0"
+                                       step="1000"
+                                       placeholder="0"
+                                       oninput="formatPrice(this)">
+                                <span class="input-group-text">تومان</span>
+                            </div>
+                            <div class="form-text">قیمت پایه محصول را وارد کنید</div>
+                            <div id="pricePreview" class="mt-2 text-success fw-bold"></div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="finalPrice" class="form-label">قیمت نهایی (تومان)</label>
+                            <div class="input-group">
+                                <input type="number"
+                                       class="form-control"
+                                       id="finalPrice"
+                                       name="finalPrice"
+                                       readonly
+                                       placeholder="به صورت خودکار محاسبه می‌شود">
+                                <span class="input-group-text">تومان</span>
+                            </div>
+                            <div class="form-text">قیمت نهایی بعد از محاسبات</div>
+                        </div>
+                    </div>
+
+                    <!-- تنظیمات پیشرفته -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">⚙️ تنظیمات پیشرفته</h6>
+                        </div>
+
+                        <!-- تعداد در کارتن -->
+                        <div class="col-md-4 mb-3 carton-setting d-none">
+                            <label for="memberCarton" class="form-label required">تعداد در کارتن</label>
+                            <div class="input-group">
+                                <input type="number"
+                                       class="form-control"
+                                       id="memberCarton"
+                                       name="memberCarton"
+                                       min="1"
+                                       placeholder="12">
+                                <span class="input-group-text">عدد</span>
+                            </div>
+                            <div class="form-text">تعداد محصول در هر کارتن</div>
+                        </div>
+
+                        <!-- محدودیت خرید -->
+                        <div class="col-md-4 mb-3 limited-setting d-none">
+                            <label for="limitedSale" class="form-label required">محدودیت خرید</label>
+                            <div class="input-group">
+                                <input type="number"
+                                       class="form-control"
+                                       id="limitedSale"
+                                       name="limitedSale"
+                                       min="1"
+                                       placeholder="5">
+                                <span class="input-group-text">عدد</span>
+                            </div>
+                            <div class="form-text">حداکثر تعداد قابل خرید</div>
+                        </div>
+
+                        <!-- وضعیت فعال‌سازی -->
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check form-switch mt-4 pt-2">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="isActive"
+                                       name="isActive"
+                                       checked>
+                                <label class="form-check-label fw-bold" for="isActive">
+                                    <i class="fas fa-toggle-on text-success"></i> فعال
+                                </label>
+                                <div class="form-text">این نوع فروش قابل استفاده باشد</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- اطلاعات محصول -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="mb-3"><i class="fas fa-info-circle"></i> اطلاعات محصول</h6>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="mb-2">
+                                                <small class="text-muted">عنوان محصول:</small>
+                                                <div class="fw-bold">{{ product.title }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-2">
+                                                <small class="text-muted">وضعیت:</small>
+                                                <div>
+                                                    {% if product.isActive %}
+                                                    <span class="badge bg-success">فعال</span>
+                                                    {% else %}
+                                                    <span class="badge bg-danger">غیرفعال</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-2">
+                                                <small class="text-muted">تعداد انواع فروش:</small>
+                                                <div class="fw-bold">{{ product.saleTypes.count }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% if product.saleTypes.count > 0 %}
+                                    <div class="alert alert-warning mt-3">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        این محصول {{ product.saleTypes.count }} نوع فروش دیگر دارد.
+                                        حواستون باشه قیمت‌های جدید با قیمت‌های موجود تداخل نداشته باشه.
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- دکمه‌های اقدام -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'panelAdmin:admin_product_detail' product.id %}"
+                                   class="btn btn-secondary">
+                                    <i class="fas fa-arrow-right"></i> بازگشت به محصول
+                                </a>
+                                <div>
+                                    <button type="reset" class="btn btn-outline-secondary me-2">
+                                        <i class="fas fa-redo"></i> بازنشانی
+                                    </button>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-save"></i> ایجاد نوع فروش
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- پنل راهنما -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-question-circle"></i> راهنمای انواع فروش</h5>
+            </div>
+            <div class="card-body">
+                <!-- تک فروشی -->
+                <div class="guide-item mb-4">
+                    <h6 class="text-primary"><i class="fas fa-shopping-cart"></i> تک فروشی</h6>
+                    <p class="small text-muted">فروش محصول به صورت تکی. هر عدد به قیمت مشخص شده به فروش می‌رسد.</p>
+                    <ul class="small">
+                        <li>قیمت = قیمت هر عدد</li>
+                        <li>بدون محدودیت تعداد</li>
+                        <li>مناسب برای مشتریان عادی</li>
+                    </ul>
+                </div>
+
+                <!-- کارتن فروشی -->
+                <div class="guide-item mb-4">
+                    <h6 class="text-success"><i class="fas fa-boxes"></i> کارتن فروشی</h6>
+                    <p class="small text-muted">فروش محصول به صورت کارتنی. قیمت برای هر کارتن محاسبه می‌شود.</p>
+                    <ul class="small">
+                        <li>قیمت = قیمت هر کارتن</li>
+                        <li>تعیین تعداد در هر کارتن</li>
+                        <li>مناسب برای فروش عمده</li>
+                    </ul>
+                </div>
+
+                <!-- تک فروشی با محدودیت -->
+                <div class="guide-item">
+                    <h6 class="text-warning"><i class="fas fa-exclamation-triangle"></i> تک فروشی با محدودیت</h6>
+                    <p class="small text-muted">فروش تکی با محدودیت تعداد خرید برای هر کاربر.</p>
+                    <ul class="small">
+                        <li>قیمت = قیمت هر عدد</li>
+                        <li>تعیین محدودیت خرید</li>
+                        <li>مناسب برای حراجی‌ها</li>
+                    </ul>
+                </div>
+
+                <hr>
+
+                <!-- نکات مهم -->
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-lightbulb"></i> نکات مهم</h6>
+                    <ul class="small mb-0">
+                        <li>قیمت نهایی همیشه برابر با قیمت پایه است</li>
+                        <li>برای کارتن فروشی، قیمت هر کارتن را وارد کنید</li>
+                        <li>محدودیت خرید فقط برای نوع سوم کاربرد دارد</li>
+                        <li>می‌توانید چند نوع فروش برای یک محصول ایجاد کنید</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- پیش‌نمایش -->
+        <div class="card mt-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-eye"></i> پیش‌نمایش</h5>
+            </div>
+            <div class="card-body">
+                <div id="previewContent" class="text-center text-muted">
+                    <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                    <p>اطلاعات را وارد کنید تا پیش‌نمایش نمایش داده شود</p>
+                </div>
+
+                <div id="pricePreviewCard" class="d-none">
+                    <div class="text-center">
+                        <div class="display-4 text-success mb-2" id="previewPrice">0</div>
+                        <div class="text-muted" id="previewType">تومان</div>
+                        <hr>
+                        <div class="small">
+                            <div id="previewDetails"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.required:after {
+    content: " *";
+    color: red;
+}
+
+.guide-item {
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+.guide-item h6 i {
+    margin-left: 8px;
+}
+
+.input-group-text {
+    background-color: #f8f9fa;
+    color: #495057;
+}
+
+#pricePreviewCard {
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+</style>
+
+<script>
+// مدیریت نمایش فیلدهای پیشرفته بر اساس نوع فروش
+document.getElementById('typeSale').addEventListener('change', function() {
+    updateFormFields();
+    updatePreview();
+});
+
+document.getElementById('price').addEventListener('input', function() {
+    formatPrice(this);
+    updatePreview();
+    updateFinalPrice();
+});
+
+document.getElementById('memberCarton').addEventListener('input', updatePreview);
+document.getElementById('limitedSale').addEventListener('input', updatePreview);
+document.getElementById('title').addEventListener('input', updatePreview);
+
+// قالب‌بندی قیمت
+function formatPrice(input) {
+    const value = input.value;
+    if (value) {
+        const formatted = new Intl.NumberFormat('fa-IR').format(value);
+        const preview = document.getElementById('pricePreview');
+        preview.textContent = `${formatted} تومان`;
+    } else {
+        document.getElementById('pricePreview').textContent = '';
+    }
+}
+
+// بروزرسانی فیلدهای فرم
+function updateFormFields() {
+    const saleType = document.getElementById('typeSale').value;
+    const cartonFields = document.querySelector('.carton-setting');
+    const limitedFields = document.querySelector('.limited-setting');
+
+    // مخفی کردن همه فیلدها
+    if (cartonFields) cartonFields.classList.add('d-none');
+    if (limitedFields) limitedFields.classList.add('d-none');
+
+    // حذف required از همه فیلدها
+    const memberCarton = document.getElementById('memberCarton');
+    const limitedSale = document.getElementById('limitedSale');
+
+    if (memberCarton) memberCarton.required = false;
+    if (limitedSale) limitedSale.required = false;
+
+    // نمایش فیلدهای مربوطه
+    if (saleType === '2') { // کارتن فروشی
+        if (cartonFields) {
+            cartonFields.classList.remove('d-none');
+            if (memberCarton) memberCarton.required = true;
+        }
+    } else if (saleType === '3') { // تک فروشی با محدودیت
+        if (limitedFields) {
+            limitedFields.classList.remove('d-none');
+            if (limitedSale) limitedSale.required = true;
+        }
+    }
+
+    updateFinalPrice();
+}
+
+// بروزرسانی قیمت نهایی
+function updateFinalPrice() {
+    const price = document.getElementById('price').value;
+    const finalPriceInput = document.getElementById('finalPrice');
+
+    if (price && !isNaN(price)) {
+        finalPriceInput.value = price;
+    } else {
+        finalPriceInput.value = '';
+    }
+}
+
+// بروزرسانی پیش‌نمایش
+function updatePreview() {
+    const saleType = document.getElementById('typeSale').value;
+    const price = document.getElementById('price').value;
+    const title = document.getElementById('title').value;
+    const memberCarton = document.getElementById('memberCarton')?.value;
+    const limitedSale = document.getElementById('limitedSale')?.value;
+
+    const previewContent = document.getElementById('previewContent');
+    const previewCard = document.getElementById('pricePreviewCard');
+    const previewPrice = document.getElementById('previewPrice');
+    const previewType = document.getElementById('previewType');
+    const previewDetails = document.getElementById('previewDetails');
+
+    if (!saleType || !price) {
+        previewContent.classList.remove('d-none');
+        previewCard.classList.add('d-none');
+        return;
+    }
+
+    // نمایش پیش‌نمایش
+    previewContent.classList.add('d-none');
+    previewCard.classList.remove('d-none');
+
+    // قالب‌بندی قیمت
+    const formattedPrice = new Intl.NumberFormat('fa-IR').format(price);
+    previewPrice.textContent = formattedPrice;
+
+    // تعیین نوع فروش
+    let typeText = '';
+    let detailsHtml = '';
+
+    switch(saleType) {
+        case '1':
+            typeText = 'تک فروشی';
+            detailsHtml = `<div><i class="fas fa-check text-success"></i> قیمت برای هر عدد</div>`;
+            if (title) detailsHtml += `<div class="mt-1"><strong>عنوان:</strong> ${title}</div>`;
+            break;
+
+        case '2':
+            typeText = 'کارتن فروشی';
+            if (memberCarton) {
+                detailsHtml = `
+                    <div><i class="fas fa-check text-success"></i> قیمت برای هر کارتن</div>
+                    <div class="mt-1"><strong>تعداد در کارتن:</strong> ${memberCarton} عدد</div>
+                `;
+                if (title) detailsHtml += `<div class="mt-1"><strong>عنوان:</strong> ${title}</div>`;
+            }
+            break;
+
+        case '3':
+            typeText = 'تک فروشی با محدودیت';
+            detailsHtml = `<div><i class="fas fa-check text-success"></i> قیمت برای هر عدد</div>`;
+            if (limitedSale) {
+                detailsHtml += `<div class="mt-1"><strong>محدودیت خرید:</strong> ${limitedSale} عدد</div>`;
+            }
+            if (title) detailsHtml += `<div class="mt-1"><strong>عنوان:</strong> ${title}</div>`;
+            break;
+    }
+
+    previewType.textContent = typeText;
+    previewDetails.innerHTML = detailsHtml;
+}
+
+// اعتبارسنجی فرم
+document.getElementById('saleTypeForm').addEventListener('submit', function(e) {
+    const saleType = document.getElementById('typeSale').value;
+    const price = document.getElementById('price').value;
+
+    if (!saleType) {
+        e.preventDefault();
+        alert('لطفا نوع فروش را انتخاب کنید');
+        document.getElementById('typeSale').focus();
+        return;
+    }
+
+    if (!price || price <= 0) {
+        e.preventDefault();
+        alert('لطفا قیمت معتبر وارد کنید');
+        document.getElementById('price').focus();
+        return;
+    }
+
+    // اعتبارسنجی فیلدهای اضافی
+    if (saleType === '2') {
+        const memberCarton = document.getElementById('memberCarton').value;
+        if (!memberCarton || memberCarton <= 0) {
+            e.preventDefault();
+            alert('لطفا تعداد در کارتن را وارد کنید');
+            document.getElementById('memberCarton').focus();
+            return;
+        }
+    }
+
+    if (saleType === '3') {
+        const limitedSale = document.getElementById('limitedSale').value;
+        if (!limitedSale || limitedSale <= 0) {
+            e.preventDefault();
+            alert('لطفا محدودیت خرید را وارد کنید');
+            document.getElementById('limitedSale').focus();
+            return;
+        }
+    }
+
+    // نمایش پیام تایید
+    if (!confirm('آیا از اطلاعات وارد شده اطمینان دارید؟')) {
+        e.preventDefault();
+    }
+});
+
+// مقداردهی اولیه
+document.addEventListener('DOMContentLoaded', function() {
+    updateFormFields();
+    updatePreview();
+});
+</script>
+{% endblock %}
