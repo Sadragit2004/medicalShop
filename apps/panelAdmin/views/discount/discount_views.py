@@ -297,6 +297,12 @@ def discount_basket_create(request):
                 is_amazing = request.POST.get('isamzing') == 'on'
                 product_ids = request.POST.getlist('products')
 
+                # دیباگ - چاپ مقادیر دریافتی
+                print(f"Title: {title}")
+                print(f"Discount: {discount}")
+                print(f"Product IDs: {product_ids}")
+                print(f"Product IDs count: {len(product_ids)}")
+
                 # اعتبارسنجی
                 if not title:
                     messages.error(request, 'عنوان سبد تخفیف الزامی است')
@@ -321,6 +327,7 @@ def discount_basket_create(request):
                 )
 
                 # اضافه کردن محصولات
+                added_count = 0
                 for product_id in product_ids:
                     try:
                         product = Product.objects.get(id=product_id, isActive=True)
@@ -328,14 +335,21 @@ def discount_basket_create(request):
                             discountBasket=basket,
                             product=product
                         )
+                        added_count += 1
+                        print(f"Added product: {product_id} - {product.title}")
                     except Product.DoesNotExist:
+                        print(f"Product not found: {product_id}")
                         continue
 
-                messages.success(request, f'سبد تخفیف {title} با موفقیت ایجاد شد')
+                print(f"Total products added: {added_count}")
+
+                messages.success(request, f'سبد تخفیف {title} با {added_count} محصول ایجاد شد')
                 return redirect('panelAdmin:admin_discount_basket_detail', basket_id=basket.id)
 
         except Exception as e:
             messages.error(request, f'خطا در ایجاد سبد تخفیف: {str(e)}')
+            import traceback
+            traceback.print_exc()
             return redirect('panelAdmin:admin_discount_basket_create')
 
     # دریافت دسته‌بندی‌ها و برندها
@@ -361,8 +375,33 @@ def discount_basket_detail(request, basket_id):
     basket = get_object_or_404(DiscountBasket, id=basket_id)
 
     # دریافت محصولات مرتبط از طریق DiscountDetail
-    discount_details = DiscountDetail.objects.filter(discountBasket=basket).select_related('product')
-    products = [detail.product for detail in discount_details]
+    discount_details = DiscountDetail.objects.filter(discountBasket=basket).select_related('product__brand')
+
+    # آماده‌سازی داده‌های محصولات
+    products_list = []
+    for detail in discount_details:
+        product = detail.product
+        sale_type = product.saleTypes.first()
+        original_price = sale_type.price if sale_type else 0
+
+        # محاسبه قیمت با تخفیف (در پایتون)
+        discount_percent = basket.discount
+        if original_price > 0:
+            discount_amount = (original_price * discount_percent) // 100
+            final_price = original_price - discount_amount
+        else:
+            discount_amount = 0
+            final_price = 0
+
+        products_list.append({
+            'detail': detail,
+            'product': product,
+            'original_price': original_price,
+            'discount_amount': discount_amount,
+            'final_price': final_price,
+            'discount_percent': discount_percent,
+            'has_image': bool(product.mainImage)
+        })
 
     now = timezone.now()
     is_expired = basket.endDate < now
@@ -371,8 +410,8 @@ def discount_basket_detail(request, basket_id):
 
     context = {
         'discount_basket': basket,
-        'products': products,
-        'product_count': len(products),
+        'products_list': products_list,  # استفاده از products_list به جای discount_details
+        'product_count': len(products_list),
         'is_expired': is_expired,
         'is_upcoming': is_upcoming,
         'is_current': is_current,
@@ -380,6 +419,9 @@ def discount_basket_detail(request, basket_id):
     }
 
     return render(request, 'panelAdmin/discounts/basket/detail.html', context)
+
+
+
 
 def discount_basket_update(request, basket_id):
     """ویرایش سبد تخفیف"""
@@ -555,33 +597,51 @@ def search_products_ajax(request):
         price = sale_type.price if sale_type else 0
 
         # دریافت دسته‌بندی‌ها
-        categories = [{'id': cat.id, 'title': cat.title} for cat in product.category.all()[:2]]
+        categories = []
+        for cat in product.category.all()[:2]:
+            categories.append({'id': cat.id, 'title': cat.title})
 
         # دریافت تصویر
-        image_url = product.mainImage.url if product.mainImage else ''
+        image_url = ''
+        if product.mainImage:
+            try:
+                image_url = product.mainImage.url
+            except:
+                image_url = ''
 
         results.append({
-            'id': product.id,
+            'id': str(product.id),  # تبدیل به string
             'title': product.title,
             'image': image_url,
             'price': price,
             'price_formatted': f'{price:,}',
             'brand': product.brand.title if product.brand else 'بدون برند',
-            'brand_id': product.brand.id if product.brand else None,
+            'brand_id': str(product.brand.id) if product.brand else None,
             'categories': categories,
             'has_image': bool(product.mainImage)
         })
 
     # دریافت دسته‌بندی‌ها و برندهای موجود برای فیلترها
-    all_categories = Category.objects.filter(
-        isActive=True,
-        product__in=products  # اینجا product (نه products)
-    ).distinct().values('id', 'title')[:20]
+    if products.exists():
+        # استفاده از product__in به جای products__in (بستگی به مدل Category دارد)
+        try:
+            all_categories = Category.objects.filter(
+                isActive=True,
+                product__in=products  # بررسی کنید کدام یک کار می‌کند
+            ).distinct().values('id', 'title')[:20]
+        except:
+            all_categories = Category.objects.filter(
+                isActive=True,
+                products__in=products  # حالت دیگر
+            ).distinct().values('id', 'title')[:20]
 
-    all_brands = Brand.objects.filter(
-        isActive=True,
-        products__in=products
-    ).distinct().values('id', 'title')[:20]
+        all_brands = Brand.objects.filter(
+            isActive=True,
+            products__in=products
+        ).distinct().values('id', 'title')[:20]
+    else:
+        all_categories = []
+        all_brands = []
 
     return JsonResponse({
         'success': True,

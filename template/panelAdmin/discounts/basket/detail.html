@@ -123,12 +123,12 @@
                         <i class="fas fa-boxes text-primary me-2"></i>محصولات این سبد تخفیف
                     </h6>
                     <span class="badge bg-secondary">
-                        {{ discount_details.count }} محصول
+                        {{ product_count }} محصول
                     </span>
                 </div>
             </div>
             <div class="card-body">
-                {% if discount_details %}
+                {% if products_list %}
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
@@ -136,19 +136,20 @@
                                 <th>#</th>
                                 <th>محصول</th>
                                 <th>دسته‌بندی</th>
+                                <th>برند</th>
                                 <th>قیمت اصلی</th>
                                 <th>قیمت با تخفیف</th>
                                 <th>عملیات</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for detail in discount_details %}
-                            {% with product=detail.product %}
+                            {% for item in products_list %}
+                            {% with product=item.product %}
                             <tr>
                                 <td>{{ forloop.counter }}</td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        {% if product.mainImage %}
+                                        {% if item.has_image %}
                                         <img src="{{ product.mainImage.url }}" alt="{{ product.title }}"
                                              class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
                                         {% else %}
@@ -159,47 +160,42 @@
                                         {% endif %}
                                         <div>
                                             <strong class="d-block">{{ product.title }}</strong>
-                                            {% if product.brand %}
-                                            <small class="text-muted">{{ product.brand.title }}</small>
-                                            {% endif %}
+                                            <small class="text-muted">کد: {{ product.id }}</small>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
                                     {% for category in product.category.all|slice:":2" %}
-                                    <span class="badge bg-light text-dark me-1">{{ category.title }}</span>
+                                    <span class="badge bg-light text-dark me-1 mb-1">{{ category.title }}</span>
                                     {% endfor %}
                                 </td>
                                 <td>
-                                    {% with sale_type=product.saleTypes.first %}
-                                    {% if sale_type %}
-                                    <span class="fw-medium">{{ sale_type.price|intcomma }}</span>
-                                    <small class="text-muted">تومان</small>
+                                    {% if product.brand %}
+                                    <span class="badge bg-info">{{ product.brand.title }}</span>
                                     {% else %}
-                                    <span class="text-muted">نامشخص</span>
+                                    <span class="badge bg-secondary">بدون برند</span>
                                     {% endif %}
-                                    {% endwith %}
                                 </td>
                                 <td>
-                                    {% with sale_type=product.saleTypes.first %}
-                                    {% if sale_type %}
-                                    {% widthratio sale_type.price 1 discount_basket.discount as discount_amount %}
-                                    {% with final_price=sale_type.price|add:discount_amount %}
-                                    <span class="fw-bold text-success">{{ final_price|intcomma }}</span>
+                                    <span class="fw-medium">{{ item.original_price|intcomma }}</span>
+                                    <small class="text-muted">تومان</small>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-success">{{ item.final_price|intcomma }}</span>
                                     <small class="text-muted">تومان</small>
                                     <div>
-                                        <small class="text-danger">صرفه‌جویی: {{ discount_amount|intcomma }} تومان</small>
+                                        <small class="text-danger">
+                                            صرفه‌جویی: {{ item.discount_amount|intcomma }} تومان
+                                            ({{ item.discount_percent }}%)
+                                        </small>
                                     </div>
-                                    {% endwith %}
-                                    {% endif %}
-                                    {% endwith %}
                                 </td>
                                 <td>
                                     <form method="post"
-                                          action="{% url 'panelAdmin:admin_remove_product_from_basket' detail.id %}"
+                                          action="{% url 'panelAdmin:admin_remove_product_from_basket' item.detail.id %}"
                                           onsubmit="return confirm('آیا از حذف این محصول از سبد تخفیف اطمینان دارید؟')">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="حذف">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
@@ -211,9 +207,14 @@
                     </table>
                 </div>
                 {% else %}
-                <div class="text-center py-4">
+                <div class="text-center py-5">
                     <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
                     <h6 class="text-muted">هیچ محصولی در این سبد تخفیف وجود ندارد</h6>
+                    <p class="text-muted">می‌توانید با ویرایش سبد تخفیف، محصولات جدید اضافه کنید</p>
+                    <a href="{% url 'panelAdmin:admin_discount_basket_update' discount_basket.id %}"
+                       class="btn btn-primary">
+                        <i class="fas fa-edit me-2"></i>ویرایش و اضافه کردن محصولات
+                    </a>
                 </div>
                 {% endif %}
             </div>
@@ -274,7 +275,7 @@
                         <span class="text-muted">
                             <i class="fas fa-box me-2"></i>تعداد محصولات
                         </span>
-                        <span class="badge bg-primary rounded-pill">{{ discount_details.count }}</span>
+                        <span class="badge bg-primary rounded-pill">{{ product_count }}</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                         <span class="text-muted">

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فاکتور {{ order.orderCode }}</title>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+    <style>
+        /* ریست */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* چاپ */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 15mm 20mm;
+            }
+
+            body {
+                font-family: Vazirmatn, sans-serif !important;
+                font-size: 11.5pt;
+                line-height: 1.3;
+                color: black;
+                background: white;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+            }
+
+            .no-print { display: none !important; }
+            .invoice { margin: 0 !important; padding: 0 !important; box-shadow: none !important; }
+            .page-break { page-break-inside: avoid !important; }
+        }
+
+        /* نمایش */
+        body {
+            font-family: Vazirmatn, sans-serif;
+            background: #f0f2f5;
+            padding: 10px;
+        }
+
+        .invoice {
+            width: 210mm;
+            min-height: 287mm;
+            max-height: 287mm;
+            background: white;
+            margin: 0 auto;
+            padding: 20mm;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* محتوای فاکتور */
+        .invoice-content {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        /* هدر */
+        .header {
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .company {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .company-name {
+            font-size: 20pt;
+            font-weight: 900;
+            color: #2c3e50;
+            margin-bottom: 3px;
+        }
+
+        .company-details {
+            font-size: 10pt;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        .invoice-title {
+            text-align: center;
+            font-size: 16pt;
+            font-weight: 700;
+            color: #e74c3c;
+            margin: 8px 0;
+        }
+
+        /* اطلاعات */
+        .info-section {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 10.5pt;
+        }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 3px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #2c3e50;
+            min-width: 100px;
+        }
+
+        .info-value {
+            flex: 1;
+            color: #333;
+        }
+
+        /* جدول */
+        .table-container {
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10pt;
+            table-layout: fixed;
+        }
+
+        .products-table th {
+            background: #34495e;
+            color: white;
+            font-weight: 600;
+            padding: 6px 4px;
+            border: 1px solid #2c3e50;
+            text-align: center;
+        }
+
+        .products-table td {
+            padding: 5px 4px;
+            border: 1px solid #ddd;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .products-table tbody tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        /* قیمت‌ها */
+        .prices-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 15px 0;
+            width: 300px;
+            margin-left: auto;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px dashed #ccc;
+        }
+
+        .price-row:last-child {
+            border-bottom: none;
+            border-top: 2px solid #2c3e50;
+            padding-top: 8px;
+            margin-top: 8px;
+            font-weight: 700;
+            font-size: 12pt;
+            color: #e74c3c;
+        }
+
+        /* فوت‌تر */
+        .footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding-top: 15px;
+            border-top: 1px solid #ccc;
+            font-size: 9pt;
+            color: #666;
+        }
+
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+
+        .signature {
+            text-align: center;
+            width: 45%;
+        }
+
+        .signature-line {
+            border-top: 1px solid #333;
+            margin: 25px auto 5px;
+            width: 150px;
+        }
+
+        /* دکمه‌ها */
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+
+        .btn {
+            font-family: Vazirmatn, sans-serif;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 5px;
+            font-size: 11pt;
+            font-weight: 500;
+        }
+
+        .btn-print {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-back {
+            background: #7f8c8d;
+            color: white;
+        }
+
+        /* اعداد فارسی */
+        .persian-num {
+            font-feature-settings: "numr";
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* جلوگیری از شکستن صفحه */
+        .no-break {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+    </style>
+</head>
+<body>
+    <!-- دکمه‌ها -->
+    <div class="controls no-print">
+        <button class="btn btn-print" onclick="window.print()">🖨️ چاپ</button>
+        <button class="btn btn-back" onclick="window.history.back()">🔙 بازگشت</button>
+    </div>
+
+    <!-- فاکتور -->
+    <div class="invoice">
+        <div class="invoice-content">
+            <!-- هدر -->
+            <div class="header">
+                <div class="company">
+                    <div class="company-name">شرکت تجاری نمونه</div>
+                    <div class="company-details">
+                        تهران، خیابان ولیعصر، پلاک ۱۲۳ | تلفن: ۰۲۱-۸۸۵۶۱۲۳۴
+                        <br>کد اقتصادی: ۱۲۳۴۵۶۷۸۹۰ | شناسه ملی: ۱۴۱۳۲۴۵۶۷۸
+                    </div>
+                </div>
+
+                <div class="invoice-title">فاکتور فروش</div>
+
+                <div style="text-align: left; font-size: 10pt; color: #666;">
+                    <div>شماره: <strong>{{ order.orderCode }}</strong></div>
+                    <div>تاریخ: {{ order.registerDate|date:"Y/m/d" }}</div>
+                </div>
+            </div>
+
+            <!-- اطلاعات مشتری -->
+            <div class="info-section no-break">
+                <div class="info-row">
+                    <span class="info-label">مشتری:</span>
+                    <span class="info-value">
+                        {{ order.customer.name|default:"-" }} {{ order.customer.family|default:"" }}
+                        ({{ order.customer.mobileNumber }})
+                    </span>
+                </div>
+                {% if order.address %}
+                <div class="info-row">
+                    <span class="info-label">آدرس:</span>
+                    <span class="info-value">{{ order.address.fullAddress }}</span>
+                </div>
+                {% endif %}
+                <div class="info-row">
+                    <span class="info-label">وضعیت:</span>
+                    <span class="info-value">{{ order.get_status_display }}</span>
+                </div>
+            </div>
+
+            <!-- جدول محصولات -->
+            <div class="table-container no-break">
+                <table class="products-table">
+                    <thead>
+                        <tr>
+                            <th width="5%">ردیف</th>
+                            <th width="40%">کالا</th>
+                            <th width="10%">تعداد</th>
+                            <th width="15%">فی (تومان)</th>
+                            <th width="15%">مبلغ (تومان)</th>
+                            <th width="15%">توضیحات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order_details %}
+                        <tr>
+                            <td class="persian-num">{{ forloop.counter }}</td>
+                            <td style="text-align: right; padding-right: 8px;">
+                                <div style="font-weight: 500;">{{ item.product.title }}</div>
+                                {% if item.brand %}
+                                <div style="font-size: 9pt; color: #666;">{{ item.brand.title }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="persian-num">{{ item.qty }}</td>
+                            <td class="persian-num">{{ item.price|floatformat:0 }}</td>
+                            <td class="persian-num">{{ item.getTotalPrice|floatformat:0 }}</td>
+                            <td style="font-size: 9pt;">
+                                {% if item.selectedOptions %}
+                                {{ item.selectedOptions|truncatechars:15 }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- محاسبات -->
+            <div class="prices-box no-break">
+                <div class="price-row">
+                    <span>جمع فاکتور:</span>
+                    <span class="persian-num">{{ total_price|floatformat:0 }}</span>
+                </div>
+
+                {% if order.discount > 0 %}
+                <div class="price-row">
+                    <span>تخفیف ({{ order.discount }}%):</span>
+                    <span class="persian-num">- {{ discount_amount|floatformat:0 }}</span>
+                </div>
+
+                <div class="price-row">
+                    <span>بعد از تخفیف:</span>
+                    <span class="persian-num">{{ final_price|floatformat:0 }}</span>
+                </div>
+                {% endif %}
+
+                <div class="price-row">
+                    <span>مالیات ({{ tax_percentage }}%):</span>
+                    <span class="persian-num">{{ tax_amount|floatformat:0 }}</span>
+                </div>
+
+                <div class="price-row">
+                    <span>مبلغ نهایی:</span>
+                    <span class="persian-num">{{ total_with_tax|floatformat:0 }} تومان</span>
+                </div>
+            </div>
+
+            <!-- توضیحات -->
+            {% if order.description %}
+            <div class="info-section no-break" style="margin-bottom: 60px;">
+                <div class="info-label" style="margin-bottom: 5px;">توضیحات سفارش:</div>
+                <div>{{ order.description|linebreaks }}</div>
+            </div>
+            {% endif %}
+
+            <!-- فوت‌تر -->
+            <div class="footer">
+                <div class="signatures">
+                    <div class="signature">
+                        <div>امضای فروشنده</div>
+                        <div class="signature-line"></div>
+                        <div style="margin-top: 5px;">تاریخ: {{ print_date|date:"Y/m/d" }}</div>
+                    </div>
+
+                    <div class="signature">
+                        <div>امضای خریدار</div>
+                        <div class="signature-line"></div>
+                        <div style="margin-top: 5px;">تاریخ: {{ print_date|date:"Y/m/d" }}</div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 10px; color: #888; font-size: 8pt;">
+                    این فاکتور به شماره {{ order.orderCode }} صادر شده و در سیستم ثبت گردیده است
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // فرمت اعداد فارسی با جداکننده هزار
+            document.querySelectorAll('.persian-num').forEach(el => {
+                let text = el.textContent;
+                let num = parseInt(text.replace(/[^0-9]/g, ''));
+                if (!isNaN(num)) {
+                    let formatted = num.toLocaleString('fa-IR');
+                    el.textContent = text.replace(num.toString(), formatted);
+                }
+            });
+
+            // بررسی ارتفاع برای جلوگیری از دو صفحه شدن
+            function checkHeight() {
+                const invoice = document.querySelector('.invoice');
+                const content = document.querySelector('.invoice-content');
+                const maxHeight = 287; // mm
+
+                if (content.scrollHeight > invoice.offsetHeight) {
+                    // اگر محتوا بلندتر از صفحه است، فونت‌ها را کوچک‌تر کن
+                    document.body.style.fontSize = '11pt';
+                }
+            }
+
+            checkHeight();
+
+            // چاپ خودکار (اختیاری)
+            // setTimeout(() => window.print(), 300);
+        });
+    </script>
+</body>
+</html>

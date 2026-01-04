@@ -278,6 +278,13 @@
                         <i class="fas fa-edit"></i> ویرایش سفارش
                     </a>
 
+                    <!-- در بخش عملیات سریع، بعد از دکمه "ویرایش سفارش" -->
+
+<a href="{% url 'panelAdmin:admin_order_invoice' order.id %}"
+   class="btn btn-info" target="_blank">
+    <i class="fas fa-file-invoice"></i> مشاهده فاکتور
+</a>
+
                     <form method="post" action="{% url 'panelAdmin:admin_toggle_order_final' order.id %}"
                           class="d-grid">
                         {% csrf_token %}

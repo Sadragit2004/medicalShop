@@ -367,9 +367,27 @@ def product_create(request):
     if request.method == 'POST':
         try:
             with transaction.atomic():
+                # دریافت اسلاگ از فرم
+                slug = request.POST.get('slug', '').strip()
+                title = request.POST.get('title')
+
+                # اگر اسلاگ خالی بود، از عنوان ایجاد کن
+                if not slug and title:
+                    from django.utils.text import slugify
+                    slug = slugify(title, allow_unicode=True)
+
+                # بررسی تکراری بودن اسلاگ
+                if slug:
+                    base_slug = slug
+                    counter = 1
+                    while Product.objects.filter(slug=slug).exists():
+                        slug = f"{base_slug}-{counter}"
+                        counter += 1
+
                 # ایجاد محصول
                 product = Product.objects.create(
-                    title=request.POST.get('title'),
+                    title=title,
+                    slug=slug,  # ذخیره اسلاگ دستی
                     brand_id=request.POST.get('brand') if request.POST.get('brand') else None,
                     mainImage=request.FILES.get('mainImage'),
                     description=request.POST.get('description'),
@@ -382,12 +400,12 @@ def product_create(request):
                 if selected_categories:
                     product.category.set(selected_categories)
 
-                # ایجاد گالری تصاویر - اصلاح شده
+                # ایجاد گالری تصاویر
                 gallery_images = request.FILES.getlist('gallery_images')
                 alt_text = request.POST.get('altText', product.title)
 
                 for image in gallery_images:
-                    if image:  # بررسی وجود فایل
+                    if image:
                         ProductGallery.objects.create(
                             product=product,
                             image=image,
@@ -416,7 +434,7 @@ def product_create(request):
 
         except Exception as e:
             messages.error(request, f'خطا در ایجاد محصول: {str(e)}')
-            print(f"Error: {str(e)}")  # برای دیباگ
+            print(f"Error: {str(e)}")
 
     return render(request, 'panelAdmin/products/product/create.html', {
         'categories': categories,

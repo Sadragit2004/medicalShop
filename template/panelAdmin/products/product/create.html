@@ -1,4 +1,4 @@
-<!-- templates/admin/products/product/create.html -->
+<!-- templates/panelAdmin/products/product/create.html -->
 {% extends '../../base/base.html' %}
 {% load static %}
 
@@ -401,12 +401,12 @@
                                            class="form-control"
                                            id="slug"
                                            name="slug"
-                                           placeholder="به صورت خودکار ایجاد می‌شود">
+                                           placeholder="آدرس انگلیسی محصول را وارد کنید">
                                     <button class="btn btn-outline-secondary" type="button" onclick="generateSlug()">
                                         <i class="fas fa-sync-alt"></i>
                                     </button>
                                 </div>
-                                <small class="text-muted mt-1 d-block">برای URL محصول استفاده می‌شود</small>
+                                <small class="text-muted mt-1 d-block">برای URL محصول استفاده می‌شود (اختیاری)</small>
                             </div>
 
                             <div class="col-md-6 mb-4">
@@ -551,7 +551,7 @@
                                                style="display: none;">
 
                                         <!-- پیش‌نمایش تصاویر -->
-                                        <div id="galleryPreview">
+                                        <div id="galleryPreview" class="d-none">
                                             <div class="d-flex justify-content-between align-items-center mb-3">
                                                 <h6 class="mb-0">
                                                     <i class="fas fa-image me-2"></i>
@@ -888,11 +888,34 @@ document.getElementById('galleryInput').addEventListener('change', function(e) {
     handleGalleryFiles(this.files);
 });
 
+// کشیدن و رها کردن تصاویر
+document.querySelector('.gallery-upload-area').addEventListener('dragover', function(e) {
+    e.preventDefault();
+    this.style.borderColor = '#3b5bdb';
+    this.style.transform = 'scale(1.02)';
+});
+
+document.querySelector('.gallery-upload-area').addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    this.style.borderColor = '#4dabf7';
+    this.style.transform = 'scale(1)';
+});
+
+document.querySelector('.gallery-upload-area').addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.style.borderColor = '#4dabf7';
+    this.style.transform = 'scale(1)';
+
+    if (e.dataTransfer.files) {
+        handleGalleryFiles(e.dataTransfer.files);
+    }
+});
+
 function handleGalleryFiles(files) {
     if (!files || files.length === 0) return;
 
     const previewsContainer = document.getElementById('galleryPreviews');
-    const galleryCount = document.getElementById('galleryCount');
+    const galleryPreview = document.getElementById('galleryPreview');
 
     // محدودیت تعداد تصاویر
     if (galleryImages.length + files.length > 50) {
@@ -943,8 +966,8 @@ function handleGalleryFiles(files) {
         reader.readAsDataURL(file);
     });
 
-    // به‌روزرسانی تعداد
-    galleryCount.textContent = galleryImages.length;
+    // نمایش گالری
+    galleryPreview.classList.remove('d-none');
     updateGalleryPreview();
 }
 
@@ -970,11 +993,15 @@ function clearGallery() {
 function updateGalleryPreview() {
     const previewsContainer = document.getElementById('galleryPreviews');
     const galleryCount = document.getElementById('galleryCount');
+    const galleryPreview = document.getElementById('galleryPreview');
 
     previewsContainer.innerHTML = '';
     galleryCount.textContent = galleryImages.length;
 
-    if (galleryImages.length === 0) return;
+    if (galleryImages.length === 0) {
+        galleryPreview.classList.add('d-none');
+        return;
+    }
 
     galleryImages.forEach((file, index) => {
         const reader = new FileReader();
@@ -1226,20 +1253,12 @@ function showToast(title, message, type = 'info') {
 
 // ==================== مقداردهی اولیه ====================
 document.addEventListener('DOMContentLoaded', function() {
-    // رویداد اسلاگ
-    document.getElementById('title').addEventListener('input', function() {
-        const slugField = document.getElementById('slug');
-        if (!slugField.value) {
-            generateSlug();
-        }
-    });
-
     // به‌روزرسانی تعداد ویژگی‌ها
     updateFeaturesCount();
 
     // مخفی کردن گالری اگر تصویری نیست
     if (galleryImages.length === 0) {
-        document.getElementById('galleryPreview').style.display = 'none';
+        document.getElementById('galleryPreview').classList.add('d-none');
     }
 });
 </script>

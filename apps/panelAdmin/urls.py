@@ -64,7 +64,7 @@ urlpatterns = [
     path('ajax/upload-gallery-images/', product_view.ajax_upload_gallery_images, name='admin_ajax_upload_gallery_images'),
     path('ajax/get-product-features/', product_view.get_product_features, name='admin_get_product_features'),
     path('ajax/get-dynamic-features-html/', product_view.get_dynamic_features_html, name='admin_get_dynamic_features_html'),
-     path('coupons/', discount_views.coupon_list, name='admin_coupon_list'),
+    path('coupons/', discount_views.coupon_list, name='admin_coupon_list'),
     path('coupons/create/', discount_views.coupon_create, name='admin_coupon_create'),
     path('coupons/<int:coupon_id>/', discount_views.coupon_detail, name='admin_coupon_detail'),
     path('coupons/<int:coupon_id>/update/', discount_views.coupon_update, name='admin_coupon_update'),
@@ -110,7 +110,7 @@ urlpatterns = [
 
     # Order URLs
     path('orders/', order_views.order_list, name='admin_order_list'),
-    path('orders/create/', order_views.order_create, name='admin_order_create'),
+    path('order/<int:order_id>/invoice/', order_views.order_invoice, name='admin_order_invoice'),    path('orders/create/', order_views.order_create, name='admin_order_create'),
     path('orders/<int:order_id>/', order_views.order_detail, name='admin_order_detail'),
     path('orders/<int:order_id>/update/', order_views.order_update, name='admin_order_update'),
     path('orders/<int:order_id>/delete/', order_views.order_delete, name='admin_order_delete'),

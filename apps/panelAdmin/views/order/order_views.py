@@ -948,3 +948,44 @@ def get_cities_by_state(request):
         cities = City.objects.filter(state_id=state_id).values('id', 'name')
         return JsonResponse({'cities': list(cities)})
     return JsonResponse({'cities': []})
+
+
+
+
+# در order_views.py اضافه کنید
+
+# در order_views.py، قبل از order_report اضافه کن
+
+def order_invoice(request, order_id):
+    """نمایش فاکتور کاغذی"""
+    order = get_object_or_404(
+        Order.objects.select_related('customer', 'address__city__state')
+        .prefetch_related('details__product', 'details__brand'),
+        id=order_id
+    )
+
+    order_details = order.details.all()
+
+    # محاسبه قیمت‌ها
+    total_price = order.getTotalPrice()
+    final_price = order.getFinalPrice()
+    discount_amount = total_price - final_price if order.discount else 0
+
+    # محاسبه مالیات
+    TAX_PERCENTAGE = 9
+    tax_amount = (final_price * TAX_PERCENTAGE) // 100
+    total_with_tax = final_price + tax_amount
+
+    context = {
+        'order': order,
+        'order_details': order_details,
+        'total_price': total_price,
+        'final_price': final_price,
+        'discount_amount': discount_amount,
+        'tax_percentage': TAX_PERCENTAGE,
+        'tax_amount': tax_amount,
+        'total_with_tax': total_with_tax,
+        'print_date': timezone.now(),
+    }
+
+    return render(request, 'panelAdmin/orders/order/invoice.html', context)
