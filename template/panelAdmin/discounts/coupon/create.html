@@ -1,0 +1,354 @@
+{% extends '../../base/base.html' %}
+{% load static %}
+
+{% block title %}ایجاد کوپن تخفیف جدید{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_dashboard' %}">داشبورد</a></li>
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_coupon_list' %}">کوپن‌های تخفیف</a></li>
+<li class="breadcrumb-item active">ایجاد کوپن جدید</li>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center">
+    <h4 class="mb-0">
+        <i class="fas fa-plus-circle text-primary me-2"></i>ایجاد کوپن تخفیف جدید
+    </h4>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light border-0 py-3">
+                <h6 class="mb-0">
+                    <i class="fas fa-edit text-primary me-2"></i>فرم ایجاد کوپن تخفیف
+                </h6>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" id="couponForm">
+                    {% csrf_token %}
+
+                    <!-- کد تخفیف -->
+                    <div class="mb-4">
+                        <label class="form-label fw-medium mb-2">
+                            <i class="fas fa-ticket-alt text-primary me-2"></i>کد تخفیف
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">
+                                <i class="fas fa-hashtag"></i>
+                            </span>
+                            <input type="text" name="copon" class="form-control"
+                                   placeholder="مثال: SPRING1403" required
+                                   maxlength="10" minlength="3">
+                        </div>
+                        <div class="form-text">
+                            کد تخفیف باید بین ۳ تا ۱۰ کاراکتر باشد. از حروف انگلیسی و اعداد استفاده کنید.
+                        </div>
+                    </div>
+
+                    <!-- درصد تخفیف -->
+                    <div class="mb-4">
+                        <label class="form-label fw-medium mb-2">
+                            <i class="fas fa-percentage text-primary me-2"></i>درصد تخفیف
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">%</span>
+                            <input type="number" name="discount" class="form-control"
+                                   min="1" max="100" step="1" value="10" required>
+                        </div>
+                        <div class="form-text">
+                            درصد تخفیف باید بین ۱ تا ۱۰۰ باشد.
+                        </div>
+                    </div>
+
+                    <!-- تاریخ شروع -->
+                    <div class="mb-4">
+                        <label class="form-label fw-medium mb-2">
+                            <i class="fas fa-calendar-alt text-primary me-2"></i>تاریخ شروع
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">
+                                <i class="fas fa-clock"></i>
+                            </span>
+                            <input type="datetime-local" name="startDate"
+                                   class="form-control" required>
+                        </div>
+                        <div class="form-text">
+                            تاریخ و ساعت شروع اعتبار کوپن
+                        </div>
+                    </div>
+
+                    <!-- تاریخ پایان -->
+                    <div class="mb-4">
+                        <label class="form-label fw-medium mb-2">
+                            <i class="fas fa-calendar-times text-primary me-2"></i>تاریخ پایان
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">
+                                <i class="fas fa-clock"></i>
+                            </span>
+                            <input type="datetime-local" name="endDate"
+                                   class="form-control" required>
+                        </div>
+                        <div class="form-text">
+                            تاریخ و ساعت پایان اعتبار کوپن
+                        </div>
+                    </div>
+
+                    <!-- وضعیت فعال -->
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox"
+                                   name="isActive" id="isActive" checked>
+                            <label class="form-check-label fw-medium" for="isActive">
+                                <i class="fas fa-toggle-on text-success me-2"></i>کوپن فعال باشد
+                            </label>
+                        </div>
+                        <div class="form-text">
+                            در صورت فعال بودن، کاربران می‌توانند از کوپن استفاده کنند.
+                        </div>
+                    </div>
+
+                    <!-- پیش‌نمایش -->
+                    <div class="card bg-light border-0 mb-4">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3">
+                                <i class="fas fa-eye me-2"></i>پیش‌نمایش کوپن
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="bg-primary bg-opacity-10 p-3 rounded me-3">
+                                            <i class="fas fa-ticket-alt fa-2x text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted d-block">کد تخفیف</small>
+                                            <span id="previewCode" class="fw-bold fs-5">SPRING1403</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="bg-danger bg-opacity-10 p-3 rounded me-3">
+                                            <i class="fas fa-percentage fa-2x text-danger"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted d-block">درصد تخفیف</small>
+                                            <span id="previewDiscount" class="fw-bold fs-5">10%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block">تاریخ شروع</small>
+                                        <span id="previewStartDate" class="fw-medium">۱۴۰۳/۰۱/۰۱ - ۱۲:۰۰</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block">تاریخ پایان</small>
+                                        <span id="previewEndDate" class="fw-medium">۱۴۰۳/۰۱/۱۵ - ۲۳:۵۹</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-success rounded-pill me-3">
+                                    <i class="fas fa-check-circle me-1"></i>فعال
+                                </span>
+                                <small class="text-muted">وضعیت: فعال</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- دکمه‌های عملیات -->
+                    <div class="d-flex justify-content-between pt-3 border-top">
+                        <a href="{% url 'panelAdmin:admin_coupon_list' %}"
+                           class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-right me-2"></i>بازگشت
+                        </a>
+                        <div>
+                            <button type="reset" class="btn btn-outline-danger me-2">
+                                <i class="fas fa-redo me-2"></i>پاک کردن فرم
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>ذخیره کوپن
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- نکات مهم -->
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-light border-0 py-3">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle text-primary me-2"></i>نکات مهم
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        کد تخفیف باید یکتا باشد و قبلاً استفاده نشده باشد.
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        تاریخ پایان باید بعد از تاریخ شروع باشد.
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        کوپن‌های غیرفعال برای کاربران نمایش داده نمی‌شوند.
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        پس از ایجاد، می‌توانید کوپن را ویرایش یا غیرفعال کنید.
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        کاربران می‌توانند از هر کوپن فقط یک بار استفاده کنند.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // تنظیم تاریخ‌های پیش‌فرض
+        const now = new Date();
+        const startDate = new Date(now.getTime() + (60 * 60 * 1000)); // 1 ساعت بعد
+        const endDate = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 روز بعد
+
+        // فرمت تاریخ برای input datetime-local
+        function formatDateTime(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        // تنظیم تاریخ‌های پیش‌فرض
+        $('input[name="startDate"]').val(formatDateTime(startDate));
+        $('input[name="endDate"]').val(formatDateTime(endDate));
+
+        // به‌روزرسانی پیش‌نمایش
+        function updatePreview() {
+            // کد تخفیف
+            const code = $('input[name="copon"]').val() || 'SPRING1403';
+            $('#previewCode').text(code);
+
+            // درصد تخفیف
+            const discount = $('input[name="discount"]').val() || '10';
+            $('#previewDiscount').text(discount + '%');
+
+            // تاریخ شروع
+            const startDateVal = $('input[name="startDate"]').val();
+            if (startDateVal) {
+                const startDateObj = new Date(startDateVal);
+                $('#previewStartDate').text(formatDate(startDateObj));
+            }
+
+            // تاریخ پایان
+            const endDateVal = $('input[name="endDate"]').val();
+            if (endDateVal) {
+                const endDateObj = new Date(endDateVal);
+                $('#previewEndDate').text(formatDate(endDateObj));
+            }
+
+            // وضعیت فعال
+            const isActive = $('#isActive').is(':checked');
+            if (isActive) {
+                $('.badge').removeClass('bg-danger').addClass('bg-success');
+                $('.badge i').removeClass('fa-times-circle').addClass('fa-check-circle');
+                $('.badge + small').text('وضعیت: فعال');
+            } else {
+                $('.badge').removeClass('bg-success').addClass('bg-danger');
+                $('.badge i').removeClass('fa-check-circle').addClass('fa-times-circle');
+                $('.badge + small').text('وضعیت: غیرفعال');
+            }
+        }
+
+        // فرمت تاریخ به فارسی
+        function formatDate(date) {
+            const options = {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return new Intl.DateTimeFormat('fa-IR', options).format(date);
+        }
+
+        // رویداد تغییر روی فیلدها
+        $('input[name="copon"], input[name="discount"], input[name="startDate"], input[name="endDate"], #isActive')
+            .on('input change', updatePreview);
+
+        // مقداردهی اولیه پیش‌نمایش
+        updatePreview();
+
+        // اعتبارسنجی فرم
+        $('#couponForm').submit(function(e) {
+            const code = $('input[name="copon"]').val();
+            const discount = parseInt($('input[name="discount"]').val());
+            const startDate = new Date($('input[name="startDate"]').val());
+            const endDate = new Date($('input[name="endDate"]').val());
+
+            // اعتبارسنجی کد تخفیف
+            if (code.length < 3 || code.length > 10) {
+                e.preventDefault();
+                alert('کد تخفیف باید بین ۳ تا ۱۰ کاراکتر باشد');
+                $('input[name="copon"]').focus();
+                return false;
+            }
+
+            // اعتبارسنجی درصد تخفیف
+            if (discount < 1 || discount > 100) {
+                e.preventDefault();
+                alert('درصد تخفیف باید بین ۱ تا ۱۰۰ باشد');
+                $('input[name="discount"]').focus();
+                return false;
+            }
+
+            // اعتبارسنجی تاریخ‌ها
+            if (endDate <= startDate) {
+                e.preventDefault();
+                alert('تاریخ پایان باید بعد از تاریخ شروع باشد');
+                $('input[name="endDate"]').focus();
+                return false;
+            }
+
+            // اعتبارسنجی تاریخ شروع با زمان حال
+            const now = new Date();
+            if (startDate < now) {
+                if (!confirm('تاریخ شروع از زمان فعلی گذشته است. آیا مطمئن هستید؟')) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        // تولید کد تخفیف تصادفی
+        $('#generateCode').click(function() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let code = '';
+            for (let i = 0; i < 8; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            $('input[name="copon"]').val(code).trigger('input');
+        });
+    });
+</script>
+{% endblock %}

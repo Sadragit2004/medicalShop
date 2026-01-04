@@ -1,0 +1,343 @@
+{% extends '../../base/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}سبد تخفیف - {{ discount_basket.discountTitle }}{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_dashboard' %}">داشبورد</a></li>
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_discount_basket_list' %}">سبدهای تخفیف</a></li>
+<li class="breadcrumb-item active">{{ discount_basket.discountTitle }}</li>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center">
+    <h4 class="mb-0">
+        <i class="fas fa-shopping-basket text-primary me-2"></i>سبد تخفیف: {{ discount_basket.discountTitle }}
+    </h4>
+    <div>
+        {% if discount_basket.isActive %}
+        <span class="badge bg-success">
+            <i class="fas fa-check-circle me-1"></i>فعال
+        </span>
+        {% else %}
+        <span class="badge bg-danger">
+            <i class="fas fa-times-circle me-1"></i>غیرفعال
+        </span>
+        {% endif %}
+        {% if discount_basket.isamzing %}
+        <span class="badge bg-warning ms-2">
+            <i class="fas fa-star me-1"></i>شگفت‌انگیز
+        </span>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- اطلاعات اصلی -->
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light border-0 py-3">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle text-primary me-2"></i>اطلاعات سبد تخفیف
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label small text-muted mb-1">عنوان تخفیف</label>
+                            <div class="fs-5 fw-bold">{{ discount_basket.discountTitle }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label small text-muted mb-1">درصد تخفیف</label>
+                            <div>
+                                <span class="badge bg-danger rounded-pill fs-5 px-4 py-2">
+                                    {{ discount_basket.discount }}%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label small text-muted mb-1">تاریخ شروع</label>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-calendar-alt text-primary me-2"></i>
+                                <span class="fw-medium">{{ discount_basket.startDate|date:"Y/m/d" }}</span>
+                                <small class="text-muted ms-2">{{ discount_basket.startDate|date:"H:i" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label small text-muted mb-1">تاریخ پایان</label>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-calendar-times text-primary me-2"></i>
+                                <span class="fw-medium">{{ discount_basket.endDate|date:"Y/m/d" }}</span>
+                                <small class="text-muted ms-2">{{ discount_basket.endDate|date:"H:i" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label class="form-label small text-muted mb-1">وضعیت فعلی</label>
+                            <div>
+                                {% if is_expired %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-clock me-1"></i>منقضی شده
+                                </span>
+                                <small class="text-muted ms-2">(تاریخ پایان گذشته است)</small>
+                                {% elif is_upcoming %}
+                                <span class="badge bg-info">
+                                    <i class="fas fa-hourglass-start me-1"></i>آینده
+                                </span>
+                                <small class="text-muted ms-2">(هنوز شروع نشده)</small>
+                                {% elif is_current %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle me-1"></i>در حال اجرا
+                                </span>
+                                <small class="text-muted ms-2">(تا {{ discount_basket.endDate|timeuntil }} دیگر)</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- لیست محصولات -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light border-0 py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-boxes text-primary me-2"></i>محصولات این سبد تخفیف
+                    </h6>
+                    <span class="badge bg-secondary">
+                        {{ discount_details.count }} محصول
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if discount_details %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>محصول</th>
+                                <th>دسته‌بندی</th>
+                                <th>قیمت اصلی</th>
+                                <th>قیمت با تخفیف</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for detail in discount_details %}
+                            {% with product=detail.product %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if product.mainImage %}
+                                        <img src="{{ product.mainImage.url }}" alt="{{ product.title }}"
+                                             class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center"
+                                             style="width: 50px; height: 50px;">
+                                            <i class="fas fa-box text-muted"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <strong class="d-block">{{ product.title }}</strong>
+                                            {% if product.brand %}
+                                            <small class="text-muted">{{ product.brand.title }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% for category in product.category.all|slice:":2" %}
+                                    <span class="badge bg-light text-dark me-1">{{ category.title }}</span>
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    {% with sale_type=product.saleTypes.first %}
+                                    {% if sale_type %}
+                                    <span class="fw-medium">{{ sale_type.price|intcomma }}</span>
+                                    <small class="text-muted">تومان</small>
+                                    {% else %}
+                                    <span class="text-muted">نامشخص</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% with sale_type=product.saleTypes.first %}
+                                    {% if sale_type %}
+                                    {% widthratio sale_type.price 1 discount_basket.discount as discount_amount %}
+                                    {% with final_price=sale_type.price|add:discount_amount %}
+                                    <span class="fw-bold text-success">{{ final_price|intcomma }}</span>
+                                    <small class="text-muted">تومان</small>
+                                    <div>
+                                        <small class="text-danger">صرفه‌جویی: {{ discount_amount|intcomma }} تومان</small>
+                                    </div>
+                                    {% endwith %}
+                                    {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    <form method="post"
+                                          action="{% url 'panelAdmin:admin_remove_product_from_basket' detail.id %}"
+                                          onsubmit="return confirm('آیا از حذف این محصول از سبد تخفیف اطمینان دارید؟')">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">هیچ محصولی در این سبد تخفیف وجود ندارد</h6>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- سایدبار عملیات -->
+    <div class="col-md-4">
+        <!-- کارت وضعیت -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light border-0 py-3">
+                <h6 class="mb-0">
+                    <i class="fas fa-cogs text-primary me-2"></i>عملیات
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'panelAdmin:admin_discount_basket_update' discount_basket.id %}"
+                       class="btn btn-warning">
+                        <i class="fas fa-edit me-2"></i>ویرایش سبد تخفیف
+                    </a>
+
+                    <form method="post"
+                          action="{% url 'panelAdmin:admin_discount_basket_toggle' discount_basket.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-{% if discount_basket.isActive %}danger{% else %}success{% endif %} w-100">
+                            {% if discount_basket.isActive %}
+                            <i class="fas fa-power-off me-2"></i>غیرفعال کردن
+                            {% else %}
+                            <i class="fas fa-power-off me-2"></i>فعال کردن
+                            {% endif %}
+                        </button>
+                    </form>
+
+                    <button type="button" class="btn btn-outline-danger"
+                            data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="fas fa-trash me-2"></i>حذف سبد تخفیف
+                    </button>
+
+                    <a href="{% url 'panelAdmin:admin_discount_basket_list' %}"
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-right me-2"></i>بازگشت به لیست
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- آمار -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light border-0 py-3">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-bar text-primary me-2"></i>آمار
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 border-0">
+                        <span class="text-muted">
+                            <i class="fas fa-box me-2"></i>تعداد محصولات
+                        </span>
+                        <span class="badge bg-primary rounded-pill">{{ discount_details.count }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span class="text-muted">
+                            <i class="fas fa-calendar-alt me-2"></i>مدت باقی‌مانده
+                        </span>
+                        <span class="fw-medium">
+                            {% if is_current %}
+                            {{ discount_basket.endDate|timeuntil }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span class="text-muted">
+                            <i class="fas fa-clock me-2"></i>تاریخ ایجاد
+                        </span>
+                        <small>{{ discount_basket.startDate|date:"Y/m/d" }}</small>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 border-0">
+                        <span class="text-muted">
+                            <i class="fas fa-history me-2"></i>وضعیت
+                        </span>
+                        <span>
+                            {% if is_expired %}
+                            <span class="badge bg-secondary">منقضی</span>
+                            {% elif is_upcoming %}
+                            <span class="badge bg-info">آینده</span>
+                            {% elif is_current %}
+                            <span class="badge bg-success">در حال اجرا</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال حذف -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تأیید حذف سبد تخفیف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <i class="fas fa-exclamation-triangle text-warning fa-4x"></i>
+                </div>
+                <p class="text-center">آیا از حذف سبد تخفیف <strong>"{{ discount_basket.discountTitle }}"</strong> اطمینان دارید؟</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    این عمل غیرقابل بازگشت است. تمام محصولات مرتبط نیز از سبد تخفیف حذف خواهند شد.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <a href="{% url 'panelAdmin:admin_discount_basket_delete' discount_basket.id %}"
+                   class="btn btn-danger">حذف</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

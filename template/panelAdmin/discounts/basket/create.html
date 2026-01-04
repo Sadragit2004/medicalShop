@@ -1,0 +1,1175 @@
+{% extends '../../base/base.html' %}
+{% load static %}
+
+{% block title %}ایجاد سبد تخفیف جدید{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_dashboard' %}">داشبورد</a></li>
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_discount_basket_list' %}">سبدهای تخفیف</a></li>
+<li class="breadcrumb-item active">ایجاد سبد جدید</li>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center">
+    <h4 class="mb-0">
+        <i class="fas fa-plus-circle text-primary me-2"></i>ایجاد سبد تخفیف جدید
+    </h4>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- فرم اصلی -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light border-0 py-3">
+                <h6 class="mb-0">
+                    <i class="fas fa-edit text-primary me-2"></i>مشخصات سبد تخفیف
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post" id="basketForm">
+                    {% csrf_token %}
+
+                    <!-- عنوان تخفیف -->
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">
+                            <i class="fas fa-heading text-primary me-2"></i>عنوان تخفیف
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" name="discountTitle" class="form-control"
+                               placeholder="مثال: تخفیف ویژه نوروزی" required maxlength="100"
+                               value="{% if request.POST.discountTitle %}{{ request.POST.discountTitle }}{% endif %}">
+                        <div class="form-text">عنوان جذاب و واضح برای سبد تخفیف</div>
+                    </div>
+
+                    <!-- درصد تخفیف -->
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">
+                            <i class="fas fa-percentage text-primary me-2"></i>درصد تخفیف
+                            <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="number" name="discount" class="form-control"
+                                   min="1" max="100" step="1" value="20" required>
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="form-text">درصد تخفیف اعمال شده به تمام محصولات</div>
+                    </div>
+
+                    <!-- تاریخ شروع و پایان -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">
+                                <i class="fas fa-calendar-alt text-primary me-2"></i>تاریخ شروع
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input type="datetime-local" name="startDate" class="form-control" required
+                                   value="{{ default_start }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">
+                                <i class="fas fa-calendar-times text-primary me-2"></i>تاریخ پایان
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input type="datetime-local" name="endDate" class="form-control" required
+                                   value="{{ default_end }}">
+                        </div>
+                    </div>
+
+                    <!-- وضعیت‌ها -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="isActive" id="isActive" checked>
+                                <label class="form-check-label fw-medium" for="isActive">
+                                    <i class="fas fa-toggle-on text-success me-2"></i>فعال
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="isamzing" id="isamazing">
+                                <label class="form-check-label fw-medium" for="isamazing">
+                                    <i class="fas fa-star text-warning me-2"></i>شگفت‌انگیز
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- محصولات انتخاب شده (مخفی) -->
+                    <div id="selectedProductsInputs"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- پیش‌نمایش -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light border-0 py-3">
+                <h6 class="mb-0">
+                    <i class="fas fa-eye text-primary me-2"></i>پیش‌نمایش
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <i class="fas fa-shopping-basket fa-3x text-primary mb-3"></i>
+                    <h5 id="previewTitle">تخفیف ویژه</h5>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="border rounded p-2 text-center">
+                            <small class="text-muted d-block">تخفیف</small>
+                            <span id="previewDiscount" class="fw-bold text-danger fs-5">20%</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-2 text-center">
+                            <small class="text-muted d-block">محصولات</small>
+                            <span id="previewProductCount" class="fw-bold fs-5">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">مدت اعتبار</small>
+                    <div id="previewDateRange" class="fw-medium">--</div>
+                </div>
+
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">وضعیت</small>
+                    <div>
+                        <span id="previewStatus" class="badge bg-success">
+                            <i class="fas fa-check-circle me-1"></i>فعال
+                        </span>
+                        <span id="previewAmazing" class="badge bg-warning d-none">
+                            <i class="fas fa-star me-1"></i>شگفت‌انگیز
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top">
+                    <button type="submit" form="basketForm" class="btn btn-primary w-100">
+                        <i class="fas fa-save me-2"></i>ذخیره سبد تخفیف
+                    </button>
+                    <a href="{% url 'panelAdmin:admin_discount_basket_list' %}"
+                       class="btn btn-outline-secondary w-100 mt-2">
+                        <i class="fas fa-arrow-right me-2"></i>بازگشت
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- آمار محصولات -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light border-0 py-3">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-bar text-primary me-2"></i>آمار انتخاب
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="selectionStats">
+                    <div class="text-center py-4">
+                        <i class="fas fa-box-open fa-2x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">هیچ محصولی انتخاب نشده</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- بخش انتخاب محصولات -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-light border-0 py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+                <i class="fas fa-boxes text-primary me-2"></i>انتخاب محصولات
+            </h6>
+            <div class="d-flex align-items-center">
+                <div class="badge bg-primary">
+                    <span id="totalSelectedCount">0</span> محصول انتخاب شده
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger ms-3" onclick="clearAllProducts()">
+                    <i class="fas fa-trash me-1"></i>پاک کردن همه
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- فیلترها و جستجوی پیشرفته -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label class="form-label small text-muted mb-1">
+                    <i class="fas fa-search me-1"></i>جستجوی محصول
+                </label>
+                <div class="input-group">
+                    <input type="text" id="productSearch" class="form-control"
+                           placeholder="نام محصول، برند یا دسته‌بندی...">
+                    <button class="btn btn-outline-primary" type="button" onclick="searchProducts(1)">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">
+                    <i class="fas fa-layer-group me-1"></i>دسته‌بندی
+                </label>
+                <select id="categoryFilter" class="form-select" onchange="searchProducts(1)">
+                    <option value="">همه دسته‌بندی‌ها</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">
+                    <i class="fas fa-copyright me-1"></i>برند
+                </label>
+                <select id="brandFilter" class="form-select" onchange="searchProducts(1)">
+                    <option value="">همه برندها</option>
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-primary w-100" onclick="loadAllProducts()">
+                    <i class="fas fa-list me-1"></i>همه محصولات
+                </button>
+            </div>
+        </div>
+
+        <!-- دکمه‌های سریع -->
+        <div class="mb-4">
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-outline-success" onclick="selectAllVisibleProducts()">
+                    <i class="fas fa-check-double me-1"></i>انتخاب همه محصولات نمایش داده شده
+                </button>
+                <button type="button" class="btn btn-outline-warning" onclick="deselectAllVisibleProducts()">
+                    <i class="fas fa-times me-1"></i>لغو انتخاب همه نمایش داده شده
+                </button>
+                <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#quickSelectModal">
+                    <i class="fas fa-bolt me-1"></i>انتخاب سریع
+                </button>
+            </div>
+        </div>
+
+        <!-- نمایش محصولات -->
+        <div id="productsContainer">
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">برای نمایش محصولات جستجو کنید</h5>
+                <p class="text-muted mb-4">یا از دکمه "همه محصولات" برای مشاهده تمام محصولات استفاده کنید</p>
+                <button type="button" class="btn btn-primary" onclick="loadAllProducts()">
+                    <i class="fas fa-list me-2"></i>نمایش همه محصولات
+                </button>
+            </div>
+        </div>
+
+        <!-- صفحه‌بندی -->
+        <nav id="paginationContainer" class="d-none mt-4">
+            <ul class="pagination justify-content-center" id="paginationList">
+                <!-- صفحات اینجا ساخته می‌شوند -->
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- مودال انتخاب سریع -->
+<div class="modal fade" id="quickSelectModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-bolt text-warning me-2"></i>انتخاب سریع محصولات
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="fas fa-layer-group fa-3x text-primary mb-3"></i>
+                                <h5 class="mb-3">انتخاب بر اساس دسته‌بندی</h5>
+
+                                <div class="mb-3">
+                                    <select id="quickCategorySelect" class="form-select">
+                                        <option value="">انتخاب دسته‌بندی</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="includeSubcategories">
+                                        <label class="form-check-label" for="includeSubcategories">
+                                            شامل زیردسته‌بندی‌ها
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary w-100" onclick="selectByCategory()">
+                                    <i class="fas fa-check me-2"></i>انتخاب دسته‌بندی
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="fas fa-copyright fa-3x text-success mb-3"></i>
+                                <h5 class="mb-3">انتخاب بر اساس برند</h5>
+
+                                <div class="mb-3">
+                                    <select id="quickBrandSelect" class="form-select">
+                                        <option value="">انتخاب برند</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <input type="number" id="minPrice" class="form-control mb-2"
+                                           placeholder="حداقل قیمت">
+                                    <input type="number" id="maxPrice" class="form-control"
+                                           placeholder="حداکثر قیمت">
+                                </div>
+
+                                <button class="btn btn-success w-100" onclick="selectByBrand()">
+                                    <i class="fas fa-check me-2"></i>انتخاب برند
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm mt-3">
+                            <div class="card-body text-center">
+                                <i class="fas fa-sort-amount-up fa-3x text-info mb-3"></i>
+                                <h5 class="mb-3">انتخاب محصولات پرفروش</h5>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <select id="topProductsCount" class="form-select">
+                                            <option value="10">۱۰ محصول پرفروش</option>
+                                            <option value="20">۲۰ محصول پرفروش</option>
+                                            <option value="50">۵۰ محصول پرفروش</option>
+                                            <option value="100">۱۰۰ محصول پرفروش</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button class="btn btn-info w-100" onclick="selectTopProducts()">
+                                            <i class="fas fa-chart-line me-2"></i>انتخاب پرفروش‌ها
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+                <button type="button" class="btn btn-warning" onclick="selectRandomProducts()">
+                    <i class="fas fa-random me-2"></i>انتخاب تصادفی
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- لیست محصولات انتخاب شده -->
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-light border-0 py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+                <i class="fas fa-check-circle text-success me-2"></i>محصولات انتخاب شده
+            </h6>
+            <div>
+                <span class="badge bg-success" id="selectedProductsCount">0</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleSelectedProducts()">
+                    <i class="fas fa-eye me-1"></i>نمایش/مخفی
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body d-none" id="selectedProductsList">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th width="50">#</th>
+                        <th>محصول</th>
+                        <th>دسته‌بندی</th>
+                        <th>برند</th>
+                        <th>قیمت</th>
+                        <th width="100">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody id="selectedProductsTable">
+                    <!-- ردیف‌های محصولات انتخاب شده اینجا اضافه می‌شوند -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="text-center py-3" id="noSelectedProducts">
+            <i class="fas fa-inbox fa-2x text-muted mb-3"></i>
+            <p class="text-muted mb-0">هیچ محصولی انتخاب نشده است</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.product-card {
+    transition: all 0.3s;
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.product-card.selected {
+    border-color: #4361ee;
+    background-color: rgba(67, 97, 238, 0.05);
+}
+
+.product-card .select-checkbox {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+}
+
+.product-image-container {
+    height: 150px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.product-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.category-badge {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    margin: 2px;
+}
+
+.price-badge {
+    font-size: 0.9rem;
+    padding: 5px 10px;
+}
+
+.quick-actions {
+    position: sticky;
+    top: 70px;
+    z-index: 100;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+#selectedProductsList {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0,0,0,0.1);
+    border-radius: 50%;
+    border-top-color: #4361ee;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.pagination .page-link {
+    margin: 0 2px;
+    border-radius: 6px;
+}
+
+/* استایل برای نمایش محصولات در حالت شبکه‌ای */
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+/* استایل برای نمایش در حالت لیست */
+.products-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.view-toggle {
+    position: sticky;
+    top: 0;
+    background: white;
+    padding: 10px 0;
+    z-index: 100;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.sticky-actions {
+    position: sticky;
+    bottom: 20px;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ========================
+// متغیرهای عمومی
+// ========================
+let selectedProducts = new Set();
+let allVisibleProducts = new Set();
+let currentPage = 1;
+let totalPages = 1;
+let isLoading = false;
+
+// ========================
+// توابع اصلی
+// ========================
+
+$(document).ready(function() {
+    // بارگذاری اولیه دسته‌بندی‌ها و برندها
+    loadCategories();
+    loadBrands();
+
+    // تنظیم تاریخ‌های پیش‌فرض
+    updatePreview();
+
+    // رویدادهای فرم
+    $('input[name="discountTitle"]').on('input', updatePreview);
+    $('input[name="discount"]').on('input', updatePreview);
+    $('input[name="startDate"], input[name="endDate"]').on('change', updatePreview);
+    $('#isActive, #isamazing').on('change', updatePreview);
+
+    // اعتبارسنجی فرم
+    $('#basketForm').submit(function(e) {
+        if (selectedProducts.size === 0) {
+            e.preventDefault();
+            alert('لطفاً حداقل یک محصول انتخاب کنید');
+            return false;
+        }
+
+        // اضافه کردن محصولات انتخاب شده به فرم
+        $('#selectedProductsInputs').empty();
+        selectedProducts.forEach(productId => {
+            $('#selectedProductsInputs').append(
+                `<input type="hidden" name="products" value="${productId}">`
+            );
+        });
+
+        return true;
+    });
+});
+
+// ========================
+// توابع مربوط به محصولات
+// ========================
+
+function loadAllProducts(page = 1) {
+    searchProducts(page, '', '', '');
+}
+
+function searchProducts(page = 1, search = '', category = '', brand = '') {
+    if (isLoading) return;
+
+    isLoading = true;
+    const searchTerm = search || $('#productSearch').val();
+    const categoryId = category || $('#categoryFilter').val();
+    const brandId = brand || $('#brandFilter').val();
+
+    // نمایش لودینگ
+    $('#productsContainer').html(`
+        <div class="text-center py-5">
+            <div class="loading-spinner mb-3"></div>
+            <p class="text-muted">در حال بارگذاری محصولات...</p>
+        </div>
+    `);
+
+    $.ajax({
+        url: '{% url "panelAdmin:admin_search_products_ajax" %}',
+        data: {
+            q: searchTerm,
+            category_id: categoryId,
+            brand_id: brandId,
+            page: page,
+            limit: 12
+        },
+        success: function(response) {
+            if (response.success) {
+                displayProducts(response.results);
+                setupPagination(response.total_pages, page);
+                updateFilters(response.categories, response.brands);
+                currentPage = page;
+                totalPages = response.total_pages;
+            } else {
+                showError('خطا در بارگذاری محصولات');
+            }
+        },
+        error: function() {
+            showError('خطا در ارتباط با سرور');
+        },
+        complete: function() {
+            isLoading = false;
+        }
+    });
+}
+
+function displayProducts(products) {
+    const container = $('#productsContainer');
+
+    if (products.length === 0) {
+        container.html(`
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">محصولی یافت نشد</h5>
+                <p class="text-muted">می‌توانید از دکمه "همه محصولات" استفاده کنید</p>
+                <button type="button" class="btn btn-primary mt-3" onclick="loadAllProducts()">
+                    <i class="fas fa-list me-2"></i>نمایش همه محصولات
+                </button>
+            </div>
+        `);
+        return;
+    }
+
+    let html = '<div class="row g-3">';
+
+    products.forEach(product => {
+        const isSelected = selectedProducts.has(product.id.toString());
+        allVisibleProducts.add(product.id.toString());
+
+        html += `
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card product-card h-100 ${isSelected ? 'selected' : ''}">
+                    <div class="position-relative">
+                        <div class="product-image-container p-3">
+                            ${product.has_image ?
+                                `<img src="${product.image}" alt="${product.title}" class="product-image">` :
+                                `<i class="fas fa-box fa-3x text-muted"></i>`
+                            }
+                        </div>
+
+                        <div class="select-checkbox">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                       id="product-${product.id}"
+                                       ${isSelected ? 'checked' : ''}
+                                       onchange="toggleProductSelection(${product.id}, '${product.title.replace(/'/g, "\\'")}')">
+                                <label class="form-check-label" for="product-${product.id}"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <h6 class="card-title mb-2" style="height: 40px; overflow: hidden;">
+                            ${product.title}
+                        </h6>
+
+                        <div class="mb-2">
+                            ${product.categories.map(cat =>
+                                `<span class="badge bg-light text-dark category-badge">${cat.title}</span>`
+                            ).join('')}
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-muted d-block">برند</small>
+                                <span class="small fw-medium">${product.brand}</span>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted d-block">قیمت</small>
+                                <span class="price-badge bg-primary text-white">
+                                    ${product.price_formatted}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-transparent border-top-0 pt-0">
+                        <button type="button" class="btn btn-sm w-100 ${isSelected ? 'btn-danger' : 'btn-success'}"
+                                onclick="toggleProductSelection(${product.id}, '${product.title.replace(/'/g, "\\'")}')">
+                            <i class="fas fa-${isSelected ? 'minus' : 'plus'} me-1"></i>
+                            ${isSelected ? 'حذف از انتخاب' : 'افزودن به انتخاب'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.html(html);
+}
+
+// ========================
+// توابع انتخاب محصولات
+// ========================
+
+function toggleProductSelection(productId, productTitle) {
+    const checkbox = $(`#product-${productId}`);
+    const isChecked = checkbox.is(':checked');
+
+    if (isChecked) {
+        selectedProducts.add(productId.toString());
+        addProductToTable(productId, productTitle);
+    } else {
+        selectedProducts.delete(productId.toString());
+        removeProductFromTable(productId);
+    }
+
+    // آپدیت UI
+    $(`#product-${productId}`).closest('.product-card').toggleClass('selected', isChecked);
+    updateSelectionStats();
+    updatePreview();
+}
+
+function selectAllVisibleProducts() {
+    allVisibleProducts.forEach(productId => {
+        if (!selectedProducts.has(productId)) {
+            selectedProducts.add(productId);
+            $(`#product-${productId}`).prop('checked', true)
+                .closest('.product-card').addClass('selected');
+        }
+    });
+
+    // به‌روزرسانی جدول
+    loadSelectedProductsTable();
+    updateSelectionStats();
+    updatePreview();
+}
+
+function deselectAllVisibleProducts() {
+    allVisibleProducts.forEach(productId => {
+        selectedProducts.delete(productId);
+        $(`#product-${productId}`).prop('checked', false)
+            .closest('.product-card').removeClass('selected');
+    });
+
+    updateSelectionStats();
+    updatePreview();
+}
+
+function clearAllProducts() {
+    if (confirm('آیا از حذف تمام محصولات انتخاب شده اطمینان دارید؟')) {
+        selectedProducts.clear();
+        $('.product-card').removeClass('selected');
+        $('.product-card input[type="checkbox"]').prop('checked', false);
+        updateSelectionStats();
+        updatePreview();
+        loadSelectedProductsTable();
+    }
+}
+
+// ========================
+// توابع انتخاب سریع
+// ========================
+
+function loadCategories() {
+    $.ajax({
+        url: '{% url "panelAdmin:admin_get_all_categories_ajax" %}',
+        success: function(response) {
+            if (response.success) {
+                populateCategorySelect(response.categories, '#categoryFilter');
+                populateCategorySelect(response.categories, '#quickCategorySelect');
+            }
+        }
+    });
+}
+
+function loadBrands() {
+    $.ajax({
+        url: '{% url "panelAdmin:admin_get_all_brands_ajax" %}',
+        success: function(response) {
+            if (response.success) {
+                populateBrandSelect(response.brands, '#brandFilter');
+                populateBrandSelect(response.brands, '#quickBrandSelect');
+            }
+        }
+    });
+}
+
+function populateCategorySelect(categories, selector) {
+    const select = $(selector);
+    select.empty().append('<option value="">همه دسته‌بندی‌ها</option>');
+
+    function addCategories(catList, level = 0) {
+        catList.forEach(category => {
+            const prefix = '─'.repeat(level) + ' ';
+            select.append(`<option value="${category.id}">${prefix}${category.title}</option>`);
+            if (category.children && category.children.length > 0) {
+                addCategories(category.children, level + 1);
+            }
+        });
+    }
+
+    addCategories(categories);
+}
+
+function populateBrandSelect(brands, selector) {
+    const select = $(selector);
+    select.empty().append('<option value="">همه برندها</option>');
+
+    brands.forEach(brand => {
+        select.append(`<option value="${brand.id}">${brand.title}</option>`);
+    });
+}
+
+function selectByCategory() {
+    const categoryId = $('#quickCategorySelect').val();
+    if (!categoryId) {
+        alert('لطفاً یک دسته‌بندی انتخاب کنید');
+        return;
+    }
+
+    searchProducts(1, '', categoryId, '');
+}
+
+function selectByBrand() {
+    const brandId = $('#quickBrandSelect').val();
+    if (!brandId) {
+        alert('لطفاً یک برند انتخاب کنید');
+        return;
+    }
+
+    const minPrice = $('#minPrice').val();
+    const maxPrice = $('#maxPrice').val();
+
+    // در اینجا می‌توانید فیلتر قیمت را اعمال کنید
+    searchProducts(1, '', '', brandId);
+}
+
+function selectTopProducts() {
+    const count = $('#topProductsCount').val();
+    alert(`در حال انتخاب ${count} محصول پرفروش...`);
+    // اینجا می‌توانید منطق انتخاب محصولات پرفروش را پیاده‌سازی کنید
+}
+
+function selectRandomProducts() {
+    if (allVisibleProducts.size === 0) {
+        alert('ابتدا محصولات را بارگذاری کنید');
+        return;
+    }
+
+    const count = Math.min(10, allVisibleProducts.size);
+    const randomProducts = Array.from(allVisibleProducts).sort(() => 0.5 - Math.random()).slice(0, count);
+
+    // حذف انتخاب‌های قبلی
+    selectedProducts.clear();
+    $('.product-card').removeClass('selected');
+    $('.product-card input[type="checkbox"]').prop('checked', false);
+
+    // انتخاب تصادفی
+    randomProducts.forEach(productId => {
+        selectedProducts.add(productId);
+        $(`#product-${productId}`).prop('checked', true)
+            .closest('.product-card').addClass('selected');
+    });
+
+    loadSelectedProductsTable();
+    updateSelectionStats();
+    updatePreview();
+}
+
+// ========================
+// توابع کمکی
+// ========================
+
+function updatePreview() {
+    // عنوان
+    const title = $('input[name="discountTitle"]').val() || 'تخفیف ویژه';
+    $('#previewTitle').text(title);
+
+    // درصد تخفیف
+    const discount = $('input[name="discount"]').val() || '20';
+    $('#previewDiscount').text(discount + '%');
+
+    // تعداد محصولات
+    $('#previewProductCount').text(selectedProducts.size);
+    $('#totalSelectedCount').text(selectedProducts.size);
+    $('#selectedProductsCount').text(selectedProducts.size);
+
+    // تاریخ‌ها
+    const startDate = $('input[name="startDate"]').val();
+    const endDate = $('input[name="endDate"]').val();
+    if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        $('#previewDateRange').text(formatDate(start) + ' تا ' + formatDate(end));
+    }
+
+    // وضعیت
+    const isActive = $('#isActive').is(':checked');
+    if (isActive) {
+        $('#previewStatus').removeClass('bg-danger').addClass('bg-success');
+        $('#previewStatus i').removeClass('fa-times-circle').addClass('fa-check-circle');
+    } else {
+        $('#previewStatus').removeClass('bg-success').addClass('bg-danger');
+        $('#previewStatus i').removeClass('fa-check-circle').addClass('fa-times-circle');
+    }
+
+    // شگفت‌انگیز
+    const isAmazing = $('#isamazing').is(':checked');
+    if (isAmazing) {
+        $('#previewAmazing').removeClass('d-none');
+    } else {
+        $('#previewAmazing').addClass('d-none');
+    }
+}
+
+function updateSelectionStats() {
+    const statsContainer = $('#selectionStats');
+
+    if (selectedProducts.size === 0) {
+        statsContainer.html(`
+            <div class="text-center py-4">
+                <i class="fas fa-box-open fa-2x text-muted mb-3"></i>
+                <p class="text-muted mb-0">هیچ محصولی انتخاب نشده</p>
+            </div>
+        `);
+        return;
+    }
+
+    statsContainer.html(`
+        <div class="stat-item">
+            <div class="d-flex justify-content-between">
+                <span>تعداد محصولات:</span>
+                <span class="fw-bold">${selectedProducts.size}</span>
+            </div>
+        </div>
+        <div class="stat-item">
+            <div class="d-flex justify-content-between">
+                <span>درصد تخفیف:</span>
+                <span class="fw-bold text-danger">${$('input[name="discount"]').val() || '20'}%</span>
+            </div>
+        </div>
+        <div class="stat-item">
+            <div class="d-flex justify-content-between">
+                <span>وضعیت:</span>
+                <span class="badge ${$('#isActive').is(':checked') ? 'bg-success' : 'bg-danger'}">
+                    ${$('#isActive').is(':checked') ? 'فعال' : 'غیرفعال'}
+                </span>
+            </div>
+        </div>
+    `);
+}
+
+function loadSelectedProductsTable() {
+    if (selectedProducts.size === 0) {
+        $('#selectedProductsTable').empty();
+        $('#noSelectedProducts').show();
+        return;
+    }
+
+    $('#noSelectedProducts').hide();
+
+    // اگر تعداد زیاد است، فقط 20 تای اول را نمایش بده
+    const productIds = Array.from(selectedProducts).slice(0, 20);
+
+    $.ajax({
+        url: '{% url "panelAdmin:admin_get_products_bulk_ajax" %}',
+        data: { ids: productIds },
+        traditional: true,
+        success: function(response) {
+            if (response.success) {
+                let tableHtml = '';
+
+                response.products.forEach((product, index) => {
+                    tableHtml += `
+                        <tr id="selected-row-${product.id}">
+                            <td>${index + 1}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    ${product.image ?
+                                        `<img src="${product.image}" alt="${product.title}"
+                                              class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">` :
+                                        `<div class="bg-light rounded me-2 d-flex align-items-center justify-content-center"
+                                              style="width: 40px; height: 40px;">
+                                            <i class="fas fa-box text-muted"></i>
+                                        </div>`
+                                    }
+                                    <span>${product.title}</span>
+                                </div>
+                            </td>
+                            <td>
+                                ${product.categories.join('، ')}
+                            </td>
+                            <td>${product.brand}</td>
+                            <td>${product.price_formatted}</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        onclick="removeSelectedProduct(${product.id})">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                $('#selectedProductsTable').html(tableHtml);
+
+                // اگر محصولات بیشتری وجود دارد
+                if (selectedProducts.size > 20) {
+                    $('#selectedProductsTable').append(`
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">
+                                و ${selectedProducts.size - 20} محصول دیگر...
+                            </td>
+                        </tr>
+                    `);
+                }
+            }
+        }
+    });
+}
+
+function removeSelectedProduct(productId) {
+    selectedProducts.delete(productId.toString());
+    $(`#product-${productId}`).prop('checked', false)
+        .closest('.product-card').removeClass('selected');
+    $(`#selected-row-${productId}`).remove();
+
+    updateSelectionStats();
+    updatePreview();
+
+    if (selectedProducts.size === 0) {
+        $('#noSelectedProducts').show();
+    }
+}
+
+function addProductToTable(productId, productTitle) {
+    // در صورت نیاز می‌توانید اینجا محصول را به جدول اضافه کنید
+    // یا منتظر بمانید تا کاربر جدول را باز کند
+}
+
+function removeProductFromTable(productId) {
+    $(`#selected-row-${productId}`).remove();
+}
+
+function toggleSelectedProducts() {
+    $('#selectedProductsList').toggleClass('d-none');
+    if (!$('#selectedProductsList').hasClass('d-none')) {
+        loadSelectedProductsTable();
+    }
+}
+
+function setupPagination(totalPages, currentPage) {
+    const container = $('#paginationContainer');
+    const paginationList = $('#paginationList');
+
+    if (totalPages <= 1) {
+        container.addClass('d-none');
+        return;
+    }
+
+    container.removeClass('d-none');
+    paginationList.empty();
+
+    // دکمه قبلی
+    if (currentPage > 1) {
+        paginationList.append(`
+            <li class="page-item">
+                <button class="page-link" onclick="searchProducts(${currentPage - 1})">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </li>
+        `);
+    }
+
+    // صفحات
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+
+    for (let page = startPage; page <= endPage; page++) {
+        paginationList.append(`
+            <li class="page-item ${page === currentPage ? 'active' : ''}">
+                <button class="page-link" onclick="searchProducts(${page})">
+                    ${page}
+                </button>
+            </li>
+        `);
+    }
+
+    // دکمه بعدی
+    if (currentPage < totalPages) {
+        paginationList.append(`
+            <li class="page-item">
+                <button class="page-link" onclick="searchProducts(${currentPage + 1})">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </li>
+        `);
+    }
+}
+
+function updateFilters(categories, brands) {
+    // به‌روزرسانی فیلترهای دسته‌بندی و برند
+    if (categories && categories.length > 0) {
+        const categorySelect = $('#categoryFilter');
+        categorySelect.find('option:not(:first)').remove();
+
+        categories.forEach(category => {
+            categorySelect.append(`<option value="${category.id}">${category.title}</option>`);
+        });
+    }
+
+    if (brands && brands.length > 0) {
+        const brandSelect = $('#brandFilter');
+        brandSelect.find('option:not(:first)').remove();
+
+        brands.forEach(brand => {
+            brandSelect.append(`<option value="${brand.id}">${brand.title}</option>`);
+        });
+    }
+}
+
+function formatDate(date) {
+    return new Intl.DateTimeFormat('fa-IR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).format(date);
+}
+
+function showError(message) {
+    $('#productsContainer').html(`
+        <div class="text-center py-5">
+            <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+            <h5 class="text-danger">خطا</h5>
+            <p class="text-muted">${message}</p>
+            <button type="button" class="btn btn-primary mt-3" onclick="loadAllProducts()">
+                <i class="fas fa-redo me-2"></i>تلاش مجدد
+            </button>
+        </div>
+    `);
+}
+</script>
+{% endblock %}

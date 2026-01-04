@@ -64,29 +64,32 @@ urlpatterns = [
     path('ajax/upload-gallery-images/', product_view.ajax_upload_gallery_images, name='admin_ajax_upload_gallery_images'),
     path('ajax/get-product-features/', product_view.get_product_features, name='admin_get_product_features'),
     path('ajax/get-dynamic-features-html/', product_view.get_dynamic_features_html, name='admin_get_dynamic_features_html'),
-    path('coupons/', discount_views.coupon_list, name='admin_coupon_list'),
+     path('coupons/', discount_views.coupon_list, name='admin_coupon_list'),
     path('coupons/create/', discount_views.coupon_create, name='admin_coupon_create'),
     path('coupons/<int:coupon_id>/', discount_views.coupon_detail, name='admin_coupon_detail'),
     path('coupons/<int:coupon_id>/update/', discount_views.coupon_update, name='admin_coupon_update'),
     path('coupons/<int:coupon_id>/delete/', discount_views.coupon_delete, name='admin_coupon_delete'),
     path('coupons/<int:coupon_id>/toggle/', discount_views.coupon_toggle, name='admin_coupon_toggle'),
-    path('ajax/get-all-features/', product_view.get_all_features, name='admin_get_all_features'),
 
-    # Discount Basket URLs
-    path('discount-baskets/', discount_views.discount_basket_list, name='admin_discount_basket_list'),
-    path('discount-baskets/create/', discount_views.discount_basket_create, name='admin_discount_basket_create'),
-    path('discount-baskets/<int:basket_id>/', discount_views.discount_basket_detail, name='admin_discount_basket_detail'),
-    path('discount-baskets/<int:basket_id>/update/', discount_views.discount_basket_update, name='admin_discount_basket_update'),
-    path('discount-baskets/<int:basket_id>/delete/', discount_views.discount_basket_delete, name='admin_discount_basket_delete'),
-    path('discount-baskets/<int:basket_id>/toggle/', discount_views.discount_basket_toggle, name='admin_discount_basket_toggle'),
-    path('discount-detail/<int:detail_id>/remove/', discount_views.remove_product_from_basket, name='admin_remove_product_from_basket'),
+    # سبدهای تخفیف
+    path('baskets/', discount_views.discount_basket_list, name='admin_discount_basket_list'),
+    path('baskets/create/', discount_views.discount_basket_create, name='admin_discount_basket_create'),
+    path('baskets/<int:basket_id>/', discount_views.discount_basket_detail, name='admin_discount_basket_detail'),
+    path('baskets/<int:basket_id>/update/', discount_views.discount_basket_update, name='admin_discount_basket_update'),
+    path('baskets/<int:basket_id>/delete/', discount_views.discount_basket_delete, name='admin_discount_basket_delete'),
+    path('baskets/<int:basket_id>/toggle/', discount_views.discount_basket_toggle, name='admin_discount_basket_toggle'),
+    path('baskets/remove-product/<int:detail_id>/', discount_views.remove_product_from_basket, name='admin_remove_product_from_basket'),
 
-    # AJAX URLs
+    # گزارشات
+    path('reports/', discount_views.discount_report, name='admin_discount_report'),
+
+    # AJAX Views
     path('ajax/search-products/', discount_views.search_products_ajax, name='admin_search_products_ajax'),
     path('ajax/get-product-details/', discount_views.get_product_details, name='admin_get_product_details'),
+    path('ajax/get-all-categories/', discount_views.get_all_categories_ajax, name='admin_get_all_categories_ajax'),
+    path('ajax/get-all-brands/', discount_views.get_all_brands_ajax, name='admin_get_all_brands_ajax'),
+    path('ajax/get-products-bulk/', discount_views.get_products_bulk_ajax, name='admin_get_products_bulk_ajax'),
 
-    # Report URLs
-    path('discounts/report/', discount_views.discount_report, name='admin_discount_report'),
     path('states/', order_views.state_list, name='admin_state_list'),
     path('states/create/', order_views.state_create, name='admin_state_create'),
     path('states/<int:state_id>/update/', order_views.state_update, name='admin_state_update'),

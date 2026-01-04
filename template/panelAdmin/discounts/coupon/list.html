@@ -1,0 +1,386 @@
+{% extends '../../base/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}مدیریت کوپن‌های تخفیف{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_dashboard' %}">داشبورد</a></li>
+<li class="breadcrumb-item active">کوپن‌های تخفیف</li>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center">
+    <h4 class="mb-0">
+        <i class="fas fa-ticket-alt text-primary me-2"></i>مدیریت کوپن‌های تخفیف
+    </h4>
+    <div>
+        <span class="badge bg-primary">
+            <i class="fas fa-tags me-1"></i>
+            {{ page_obj.paginator.count }} کوپن
+        </span>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- فیلترها -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light border-0 py-3">
+                <h6 class="mb-0">
+                    <i class="fas fa-filter text-primary me-2"></i>فیلتر کوپن‌ها
+                </h6>
+            </div>
+            <div class="card-body p-4">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted mb-1">
+                            <i class="fas fa-search me-1"></i>جستجوی کد تخفیف
+                        </label>
+                        <div class="input-group">
+                            <input type="text" name="search" class="form-control form-control-sm"
+                                   placeholder="کد کوپن..."
+                                   value="{{ search_query }}">
+                            <button class="btn btn-outline-secondary btn-sm" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">
+                            <i class="fas fa-toggle-on me-1"></i>وضعیت
+                        </label>
+                        <select name="status" class="form-select form-select-sm">
+                            <option value="">همه وضعیت‌ها</option>
+                            <option value="active" {% if selected_status == 'active' %}selected{% endif %}>فعال</option>
+                            <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>غیرفعال</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">
+                            <i class="fas fa-calendar me-1"></i>فیلتر تاریخ
+                        </label>
+                        <select name="date_filter" class="form-select form-select-sm">
+                            <option value="">همه</option>
+                            <option value="expired" {% if selected_date_filter == 'expired' %}selected{% endif %}>منقضی شده</option>
+                            <option value="current" {% if selected_date_filter == 'current' %}selected{% endif %}>در حال اجرا</option>
+                            <option value="upcoming" {% if selected_date_filter == 'upcoming' %}selected{% endif %}>آینده</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2 d-flex align-items-end">
+                        <div class="btn-group w-100">
+                            <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                                <i class="fas fa-filter me-1"></i>اعمال
+                            </button>
+                            <a href="{% url 'panelAdmin:admin_coupon_list' %}"
+                               class="btn btn-outline-secondary btn-sm" title="حذف فیلترها">
+                                <i class="fas fa-redo"></i>
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- آمار سریع -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card stat-card primary border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">کل کوپن‌ها</h6>
+                                <h3 class="mb-0">{{ page_obj.paginator.count }}</h3>
+                            </div>
+                            <div class="bg-primary bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-tags fa-2x text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card stat-card success border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">فعال</h6>
+                                <h3 class="mb-0">
+                                    {% with active_coupons=page_obj.paginator.object_list.filter|default:page_obj.paginator.object_list|slice:":1" %}
+                                    {{ active_coupons|length }}
+                                    {% endwith %}
+                                </h3>
+                            </div>
+                            <div class="bg-success bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-check-circle fa-2x text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card stat-card warning border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">در حال اجرا</h6>
+                                <h3 class="mb-0">
+                                    {% with now=now|default:'' %}
+                                    {% if now %}
+                                    {% widthratio page_obj.paginator.object_list.filter|default:page_obj.paginator.object_list|length 1 1 %}
+                                    {% else %}
+                                    0
+                                    {% endif %}
+                                    {% endwith %}
+                                </h3>
+                            </div>
+                            <div class="bg-warning bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-clock fa-2x text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card stat-card danger border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">منقضی شده</h6>
+                                <h3 class="mb-0">0</h3>
+                            </div>
+                            <div class="bg-danger bg-opacity-10 p-3 rounded">
+                                <i class="fas fa-times-circle fa-2x text-danger"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- لیست کوپن‌ها -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light border-0 py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-list text-primary me-2"></i>لیست کوپن‌های تخفیف
+                    </h6>
+                    <a href="{% url 'panelAdmin:admin_coupon_create' %}" class="btn btn-success btn-sm">
+                        <i class="fas fa-plus me-1"></i>ایجاد کوپن جدید
+                    </a>
+                </div>
+            </div>
+
+            <div class="card-body p-0">
+                {% if page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="border-0">کد تخفیف</th>
+                                <th class="border-0">درصد تخفیف</th>
+                                <th class="border-0">تاریخ شروع</th>
+                                <th class="border-0">تاریخ پایان</th>
+                                <th class="border-0">وضعیت</th>
+                                <th class="border-0 text-center" style="width: 120px;">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for coupon in page_obj %}
+                            {% with now=now|default:'' %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary bg-opacity-10 p-2 rounded me-3">
+                                            <i class="fas fa-ticket-alt text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <strong class="d-block">{{ coupon.copon }}</strong>
+                                            <small class="text-muted">کد تخفیف</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-danger rounded-pill fs-6 px-3 py-2">
+                                        {{ coupon.discount }}%
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="small fw-medium">
+                                            {{ coupon.startDate|date:"Y/m/d" }}
+                                        </span>
+                                        <small class="text-muted">
+                                            {{ coupon.startDate|date:"H:i" }}
+                                        </small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="small fw-medium">
+                                            {{ coupon.endDate|date:"Y/m/d" }}
+                                        </span>
+                                        <small class="text-muted">
+                                            {{ coupon.endDate|date:"H:i" }}
+                                        </small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if coupon.isActive %}
+                                            {% if coupon.endDate < now %}
+                                            <span class="badge bg-secondary rounded-pill">
+                                                <i class="fas fa-clock me-1"></i>منقضی شده
+                                            </span>
+                                            {% elif coupon.startDate > now %}
+                                            <span class="badge bg-info rounded-pill">
+                                                <i class="fas fa-hourglass-start me-1"></i>آینده
+                                            </span>
+                                            {% else %}
+                                            <span class="badge bg-success rounded-pill">
+                                                <i class="fas fa-check-circle me-1"></i>فعال
+                                            </span>
+                                            {% endif %}
+                                        {% else %}
+                                        <span class="badge bg-danger rounded-pill">
+                                            <i class="fas fa-times-circle me-1"></i>غیرفعال
+                                        </span>
+                                        {% endif %}
+
+                                        <form method="post" action="{% url 'panelAdmin:admin_coupon_toggle' coupon.id %}"
+                                              class="d-inline ms-2">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-xs btn-outline-{% if coupon.isActive %}danger{% else %}success{% endif %} btn-sm"
+                                                    title="{% if coupon.isActive %}غیرفعال کردن{% else %}فعال کردن{% endif %}">
+                                                <i class="fas fa-power-off"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex justify-content-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'panelAdmin:admin_coupon_detail' coupon.id %}"
+                                               class="btn btn-outline-primary" title="مشاهده">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'panelAdmin:admin_coupon_update' coupon.id %}"
+                                               class="btn btn-outline-warning" title="ویرایش">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button"
+                                                    class="btn btn-outline-danger"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteModal{{ coupon.id }}"
+                                                    title="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- مودال حذف -->
+                                    <div class="modal fade" id="deleteModal{{ coupon.id }}" tabindex="-1">
+                                        <div class="modal-dialog modal-sm">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h6 class="modal-title">تأیید حذف</h6>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body text-center">
+                                                    <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                                                    <p class="mb-0">آیا از حذف این کوپن اطمینان دارید؟</p>
+                                                    <small class="text-muted">این عمل غیرقابل بازگشت است</small>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary btn-sm"
+                                                            data-bs-dismiss="modal">انصراف</button>
+                                                    <a href="{% url 'panelAdmin:admin_coupon_delete' coupon.id %}"
+                                                       class="btn btn-danger btn-sm">حذف</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-ticket-alt fa-4x text-muted"></i>
+                    </div>
+                    <h5 class="text-muted mb-3">هیچ کوپنی یافت نشد</h5>
+                    <p class="text-muted mb-4">می‌توانید با استفاده از دکمه زیر یک کوپن جدید ایجاد کنید</p>
+                    <a href="{% url 'panelAdmin:admin_coupon_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>ایجاد کوپن جدید
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- صفحه‌بندی -->
+            {% if page_obj.has_other_pages %}
+            <div class="card-footer bg-light border-0 py-3">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            نمایش <strong>{{ page_obj.start_index }}</strong> تا
+                            <strong>{{ page_obj.end_index }}</strong> از
+                            <strong>{{ page_obj.paginator.count }}</strong> کوپن
+                        </small>
+                    </div>
+                    <div class="col-md-6">
+                        <nav aria-label="صفحه‌بندی" class="d-flex justify-content-end">
+                            <ul class="pagination pagination-sm mb-0">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+                                        {% if page_obj.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                        {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                                {{ num }}
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,6 +1,6 @@
 {% extends '../../base/base.html' %}
-
 {% load static %}
+{% load humanize %}
 
 {% block title %}مدیریت سفارشات{% endblock %}
 
@@ -8,316 +8,450 @@
 <li class="breadcrumb-item active">سفارشات</li>
 {% endblock %}
 
-{% block page_title %}مدیریت سفارشات{% endblock %}
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center">
+    <h4 class="mb-0">
+        <i class="fas fa-shopping-cart me-2"></i>مدیریت سفارشات
+    </h4>
+    <div>
+        <span class="badge bg-primary">
+            <i class="fas fa-chart-line me-1"></i>
+            {{ page_obj.paginator.count }} سفارش
+        </span>
+    </div>
+</div>
+{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">لیست سفارشات</h5>
-        <div>
-            <a href="{% url 'panelAdmin:admin_order_create' %}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> سفارش جدید
-            </a>
-            <a href="{% url 'panelAdmin:admin_order_report' %}" class="btn btn-info ms-2">
-                <i class="fas fa-chart-bar"></i> گزارشات
-            </a>
-        </div>
-    </div>
-
-    <div class="card-body">
-        <!-- فیلترهای پیشرفته -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6 class="mb-0"><i class="fas fa-filter"></i> فیلتر سفارشات</h6>
+<div class="row">
+    <div class="col-12">
+        <!-- کارت فیلترها -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light border-0 py-3">
+                <h6 class="mb-0">
+                    <i class="fas fa-filter text-primary me-2"></i>فیلتر سفارشات
+                </h6>
             </div>
-            <div class="card-body">
-                <form method="get" id="filterForm">
-                    <div class="row g-3">
-                        <!-- جستجوی کلی -->
-                        <div class="col-md-4">
-                            <label class="form-label">جستجو</label>
-                            <div class="input-group">
-                                <input type="text" name="search" class="form-control"
-                                       placeholder="کد سفارش، مشتری، شهر، استان..."
-                                       value="{{ search_query }}">
-                                <button class="btn btn-outline-secondary" type="button">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
-                        </div>
+            <div class="card-body p-4">
+                <form method="get" id="filterForm" class="row g-3">
+                    <!-- ردیف اول -->
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">
+                            <i class="fas fa-search me-1"></i>جستجو
+                        </label>
+                        <input type="text" name="search" class="form-control form-control-sm"
+                               placeholder="کد سفارش، مشتری، شهر..."
+                               value="{{ search_query }}">
+                    </div>
 
-                        <!-- وضعیت -->
-                        <div class="col-md-2">
-                            <label class="form-label">وضعیت</label>
-                            <select name="status" class="form-select">
-                                <option value="">همه وضعیت‌ها</option>
-                                {% for code, name in status_choices %}
-                                <option value="{{ code }}" {% if selected_status == code %}selected{% endif %}>
-                                    {{ name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted mb-1">
+                            <i class="fas fa-tag me-1"></i>وضعیت
+                        </label>
+                        <select name="status" class="form-select form-select-sm">
+                            <option value="">همه وضعیت‌ها</option>
+                            {% for code, name in status_choices %}
+                            <option value="{{ code }}"
+                                    {% if selected_status == code %}selected{% endif %}>
+                                {{ name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-                        <!-- استان -->
-                        <div class="col-md-2">
-                            <label class="form-label">استان</label>
-                            <select name="state" class="form-select" id="stateSelect">
-                                <option value="">همه استان‌ها</option>
-                                {% for state in states %}
-                                <option value="{{ state.id }}" {% if selected_state == state.id|stringformat:"s" %}selected{% endif %}>
-                                    {{ state.name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted mb-1">
+                            <i class="fas fa-map-marker-alt me-1"></i>استان
+                        </label>
+                        <select name="state" class="form-select form-select-sm" id="stateSelect">
+                            <option value="">همه استان‌ها</option>
+                            {% for state in states %}
+                            <option value="{{ state.id }}"
+                                    {% if selected_state|stringformat:"s" == state.id|stringformat:"s" %}selected{% endif %}>
+                                {{ state.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-                        <!-- شهر -->
-                        <div class="col-md-2">
-                            <label class="form-label">شهر</label>
-                            <select name="city" class="form-select" id="citySelect">
-                                <option value="">همه شهرها</option>
-                                {% for city in cities %}
-                                <option value="{{ city.id }}" {% if selected_city == city.id|stringformat:"s" %}selected{% endif %}>
-                                    {{ city.name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted mb-1">
+                            <i class="fas fa-city me-1"></i>شهر
+                        </label>
+                        <select name="city" class="form-select form-select-sm" id="citySelect">
+                            <option value="">همه شهرها</option>
+                            {% for city in cities %}
+                            <option value="{{ city.id }}"
+                                    {% if selected_city|stringformat:"s" == city.id|stringformat:"s" %}selected{% endif %}>
+                                {{ city.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-                        <!-- دکمه‌های عملیات -->
-                        <div class="col-md-2 d-flex align-items-end">
-                            <div class="btn-group w-100">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-filter"></i> فیلتر
-                                </button>
-                                <a href="{% url 'panelAdmin:admin_order_list' %}" class="btn btn-outline-secondary">
-                                    <i class="fas fa-redo"></i>
-                                </a>
-                            </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <div class="btn-group w-100">
+                            <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                                <i class="fas fa-filter me-1"></i>اعمال فیلتر
+                            </button>
+                            <a href="{% url 'panelAdmin:admin_order_list' %}"
+                               class="btn btn-outline-secondary btn-sm" title="حذف فیلترها">
+                                <i class="fas fa-redo"></i>
+                            </a>
+                            <button type="button" class="btn btn-outline-info btn-sm"
+                                    data-bs-toggle="collapse" data-bs-target="#moreFilters">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
                         </div>
                     </div>
 
-                    <!-- فیلترهای اضافی -->
-                    <div class="row mt-3">
-                        <div class="col-md-3">
-                            <label class="form-label">مشتری</label>
-                            <select name="user" class="form-select">
-                                <option value="">همه مشتریان</option>
-                                {% for user in users %}
-                                <option value="{{ user.id }}" {% if selected_user == user.id|stringformat:"s" %}selected{% endif %}>
-                                    {{ user.mobileNumber }} - {{ user.name|default:"" }} {{ user.family|default:"" }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                    <!-- فیلترهای بیشتر (Collapsible) -->
+                    <div class="col-12 collapse" id="moreFilters">
+                        <div class="border-top pt-3 mt-3">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label small text-muted mb-1">
+                                        <i class="fas fa-user me-1"></i>مشتری
+                                    </label>
+                                    <select name="user" class="form-select form-select-sm">
+                                        <option value="">همه مشتریان</option>
+                                        {% for user in users %}
+                                        <option value="{{ user.id }}"
+                                                {% if selected_user|stringformat:"s" == user.id|stringformat:"s" %}selected{% endif %}>
+                                            {{ user.mobileNumber }}
+                                            {% if user.name or user.family %}
+                                            ({{ user.name|default:'' }} {{ user.family|default:'' }})
+                                            {% endif %}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
 
-                        <div class="col-md-2">
-                            <label class="form-label">از تاریخ</label>
-                            <input type="date" name="date_from" class="form-control"
-                                   value="{{ date_from }}">
-                        </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small text-muted mb-1">
+                                        <i class="fas fa-calendar-alt me-1"></i>از تاریخ
+                                    </label>
+                                    <input type="date" name="date_from" class="form-control form-control-sm"
+                                           value="{{ date_from }}">
+                                </div>
 
-                        <div class="col-md-2">
-                            <label class="form-label">تا تاریخ</label>
-                            <input type="date" name="date_to" class="form-control"
-                                   value="{{ date_to }}">
-                        </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small text-muted mb-1">
+                                        <i class="fas fa-calendar-alt me-1"></i>تا تاریخ
+                                    </label>
+                                    <input type="date" name="date_to" class="form-control form-control-sm"
+                                           value="{{ date_to }}">
+                                </div>
 
-                        <div class="col-md-3 d-flex align-items-end">
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="is_finally"
-                                       id="all_finally" value="" {% if not selected_is_finally %}checked{% endif %}>
-                                <label class="form-check-label" for="all_finally">همه</label>
+                                <div class="col-md-3">
+                                    <label class="form-label small text-muted mb-1 d-block">
+                                        <i class="fas fa-check-circle me-1"></i>وضعیت نهایی
+                                    </label>
+                                    <div class="btn-group btn-group-sm w-100" role="group">
+                                        <input type="radio" class="btn-check" name="is_finally"
+                                               id="all_finally" value=""
+                                               {% if not selected_is_finally %}checked{% endif %}>
+                                        <label class="btn btn-outline-secondary" for="all_finally">
+                                            همه
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="is_finally"
+                                               id="finally_yes" value="yes"
+                                               {% if selected_is_finally == 'yes' %}checked{% endif %}>
+                                        <label class="btn btn-outline-success" for="finally_yes">
+                                            نهایی
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="is_finally"
+                                               id="finally_no" value="no"
+                                               {% if selected_is_finally == 'no' %}checked{% endif %}>
+                                        <label class="btn btn-outline-warning" for="finally_no">
+                                            پیش‌نویس
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label small text-muted mb-1">
+                                        <i class="fas fa-sort me-1"></i>مرتب‌سازی
+                                    </label>
+                                    <select name="sort_by" class="form-select form-select-sm">
+                                        <option value="-registerDate"
+                                                {% if sort_by == '-registerDate' %}selected{% endif %}>
+                                            جدیدترین
+                                        </option>
+                                        <option value="registerDate"
+                                                {% if sort_by == 'registerDate' %}selected{% endif %}>
+                                            قدیمی‌ترین
+                                        </option>
+                                        <option value="-final_price"
+                                                {% if sort_by == '-final_price' %}selected{% endif %}>
+                                            بیشترین مبلغ
+                                        </option>
+                                        <option value="final_price"
+                                                {% if sort_by == 'final_price' %}selected{% endif %}>
+                                            کمترین مبلغ
+                                        </option>
+                                    </select>
+                                </div>
                             </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="is_finally"
-                                       id="finally_yes" value="yes" {% if selected_is_finally == 'yes' %}checked{% endif %}>
-                                <label class="form-check-label" for="finally_yes">نهایی</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="is_finally"
-                                       id="finally_no" value="no" {% if selected_is_finally == 'no' %}checked{% endif %}>
-                                <label class="form-check-label" for="finally_no">پیش‌نویس</label>
-                            </div>
-                        </div>
-
-                        <div class="col-md-2 d-flex align-items-end">
-                            <select name="sort_by" class="form-select">
-                                <option value="-registerDate" {% if sort_by == '-registerDate' %}selected{% endif %}>جدیدترین</option>
-                                <option value="registerDate" {% if sort_by == 'registerDate' %}selected{% endif %}>قدیمی‌ترین</option>
-                                <option value="-total_price" {% if sort_by == '-total_price' %}selected{% endif %}>بیشترین مبلغ</option>
-                                <option value="total_price" {% if sort_by == 'total_price' %}selected{% endif %}>کمترین مبلغ</option>
-                            </select>
                         </div>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- جدول سفارشات -->
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>کد سفارش</th>
-                        <th>مشتری</th>
-                        <th>آدرس</th>
-                        <th>تعداد اقلام</th>
-                        <th>مبلغ نهایی</th>
-                        <th>وضعیت</th>
-                        <th>تاریخ ثبت</th>
-                        <th>عملیات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order in page_obj %}
-                    <tr>
-                        <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
-                        <td>
-                            <strong>
-                                <a href="{% url 'panelAdmin:admin_order_detail' order.id %}"
-                                   class="text-decoration-none">
-                                    {{ order.orderCode|slice:":12" }}
-                                </a>
-                            </strong>
-                            {% if order.isFinally %}
-                            <span class="badge bg-success ms-1">نهایی</span>
-                            {% else %}
-                            <span class="badge bg-warning ms-1">پیش‌نویس</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <div>
-                                <strong>{{ order.customer.mobileNumber }}</strong>
-                                {% if order.customer.name or order.customer.family %}
-                                <br>
-                                <small>{{ order.customer.name|default:"" }} {{ order.customer.family|default:"" }}</small>
-                                {% endif %}
-                            </div>
-                        </td>
-                        <td>
-                            {% if order.address %}
-                            <div>
-                                <small class="text-muted">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    {{ order.address.city.state.name }} - {{ order.address.city.name }}
-                                </small>
-                                {% if order.address.addressDetail %}
-                                <br>
-                                <small>{{ order.address.addressDetail|truncatechars:30 }}</small>
-                                {% endif %}
-                            </div>
-                            {% else %}
-                            <span class="text-muted">بدون آدرس</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <span class="badge bg-secondary">{{ order.item_count }}</span>
-                        </td>
-                        <td>
-                            <strong>{{ order.final_price|floatformat:0 }}</strong>
-                            <small class="text-muted">تومان</small>
-                        </td>
-                        <td>
-                            {% if order.status == 'pending' %}
-                            <span class="badge bg-secondary">در حال بررسی</span>
-                            {% elif order.status == 'processing' %}
-                            <span class="badge bg-info">در حال پردازش</span>
-                            {% elif order.status == 'shipped' %}
-                            <span class="badge bg-primary">ارسال شده</span>
-                            {% elif order.status == 'delivered' %}
-                            <span class="badge bg-success">تحویل داده شده</span>
-                            {% elif order.status == 'canceled' %}
-                            <span class="badge bg-danger">لغو شده</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {{ order.registerDate|date:"Y/m/d" }}
-                            <br>
-                            <small>{{ order.registerDate|date:"H:i" }}</small>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <a href="{% url 'panelAdmin:admin_order_detail' order.id %}"
-                                   class="btn btn-outline-primary" title="مشاهده">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{% url 'panelAdmin:admin_order_update' order.id %}"
-                                   class="btn btn-outline-warning" title="ویرایش">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <a href="{% url 'panelAdmin:admin_order_delete' order.id %}"
-                                   class="btn btn-outline-danger" title="حذف"
-                                   onclick="return confirm('آیا از حذف سفارش اطمینان دارید؟')">
-                                    <i class="fas fa-trash"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="9" class="text-center py-5">
-                            <div class="text-muted">
-                                <i class="fas fa-shopping-cart fa-3x mb-3"></i>
-                                <h5>هیچ سفارشی یافت نشد</h5>
-                                <p>برای ایجاد سفارش جدید روی دکمه زیر کلیک کنید</p>
-                                <a href="{% url 'panelAdmin:admin_order_create' %}" class="btn btn-primary">
-                                    <i class="fas fa-plus"></i> ایجاد سفارش جدید
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <!-- صفحه‌بندی -->
-        {% if page_obj.has_other_pages %}
-        <nav aria-label="صفحه‌بندی" class="mt-4">
-            <ul class="pagination justify-content-center">
-                {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if selected_status %}status={{ selected_status }}&{% endif %}{% if selected_user %}user={{ selected_user }}&{% endif %}{% if selected_state %}state={{ selected_state }}&{% endif %}{% if selected_city %}city={{ selected_city }}&{% endif %}{% if date_from %}date_from={{ date_from }}&{% endif %}{% if date_to %}date_to={{ date_to }}&{% endif %}{% if selected_is_finally %}is_finally={{ selected_is_finally }}&{% endif %}sort_by={{ sort_by }}&page={{ page_obj.previous_page_number }}">
-                        <i class="fas fa-chevron-right"></i>
-                    </a>
-                </li>
-                {% endif %}
-
-                {% for num in page_obj.paginator.page_range %}
-                    {% if page_obj.number == num %}
-                    <li class="page-item active">
-                        <span class="page-link">{{ num }}</span>
-                    </li>
-                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                    <li class="page-item">
-                        <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if selected_status %}status={{ selected_status }}&{% endif %}{% if selected_user %}user={{ selected_user }}&{% endif %}{% if selected_state %}state={{ selected_state }}&{% endif %}{% if selected_city %}city={{ selected_city }}&{% endif %}{% if date_from %}date_from={{ date_from }}&{% endif %}{% if date_to %}date_to={{ date_to }}&{% endif %}{% if selected_is_finally %}is_finally={{ selected_is_finally }}&{% endif %}sort_by={{ sort_by }}&page={{ num }}">{{ num }}</a>
-                    </li>
-                    {% endif %}
-                {% endfor %}
-
-                {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if selected_status %}status={{ selected_status }}&{% endif %}{% if selected_user %}user={{ selected_user }}&{% endif %}{% if selected_state %}state={{ selected_state }}&{% endif %}{% if selected_city %}city={{ selected_city }}&{% endif %}{% if date_from %}date_from={{ date_from }}&{% endif %}{% if date_to %}date_to={{ date_to }}&{% endif %}{% if selected_is_finally %}is_finally={{ selected_is_finally }}&{% endif %}sort_by={{ sort_by }}&page={{ page_obj.next_page_number }}">
-                        <i class="fas fa-chevron-left"></i>
-                    </a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
-        {% endif %}
-    </div>
-
-    <div class="card-footer text-muted">
-        <div class="row">
-            <div class="col-md-6">
-                نمایش {{ page_obj.start_index }} تا {{ page_obj.end_index }} از {{ page_obj.paginator.count }} سفارش
+        <!-- کارت لیست سفارشات -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light border-0 py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-list text-primary me-2"></i>لیست سفارشات
+                    </h6>
+                    <div>
+                        <a href="{% url 'panelAdmin:admin_order_create' %}"
+                           class="btn btn-success btn-sm">
+                            <i class="fas fa-plus me-1"></i>سفارش جدید
+                        </a>
+                        <a href="{% url 'panelAdmin:admin_order_report' %}"
+                           class="btn btn-info btn-sm ms-2">
+                            <i class="fas fa-chart-bar me-1"></i>گزارشات
+                        </a>
+                    </div>
+                </div>
             </div>
-            <div class="col-md-6 text-end">
-                <small>آخرین بروزرسانی: {% now "H:i" %}</small>
+
+            <div class="card-body p-0">
+                {% if page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="border-0" style="width: 40px;">#</th>
+                                <th class="border-0">کد سفارش</th>
+                                <th class="border-0">مشتری</th>
+                                <th class="border-0">مبلغ</th>
+                                <th class="border-0">وضعیت</th>
+                                <th class="border-0">تاریخ</th>
+                                <th class="border-0 text-center" style="width: 120px;">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in page_obj %}
+                            <tr class="{% if order.isFinally %}table-success-light{% else %}table-warning-light{% endif %}">
+                                <td class="text-muted small">
+                                    {{ forloop.counter0|add:page_obj.start_index }}
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <a href="{% url 'panelAdmin:admin_order_detail' order.id %}"
+                                           class="text-decoration-none text-dark fw-bold">
+                                            {{ order.orderCode|slice:":8" }}...
+                                        </a>
+                                        <div class="mt-1">
+                                            {% if order.isFinally %}
+                                            <span class="badge bg-success rounded-pill" style="font-size: 10px;">
+                                                <i class="fas fa-check-circle me-1"></i>نهایی
+                                            </span>
+                                            {% else %}
+                                            <span class="badge bg-warning rounded-pill" style="font-size: 10px;">
+                                                <i class="fas fa-edit me-1"></i>پیش‌نویس
+                                            </span>
+                                            {% endif %}
+
+                                            <span class="badge bg-secondary rounded-pill ms-1" style="font-size: 10px;">
+                                                <i class="fas fa-box me-1"></i>{{ order.item_count }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-medium">{{ order.customer.mobileNumber }}</span>
+                                        {% if order.customer.name or order.customer.family %}
+                                        <small class="text-muted">
+                                            {{ order.customer.name|default:'' }} {{ order.customer.family|default:'' }}
+                                        </small>
+                                        {% endif %}
+                                        {% if order.address %}
+                                        <small class="text-muted mt-1">
+                                            <i class="fas fa-map-marker-alt me-1"></i>
+                                            {{ order.address.city.name|default:'نامشخص' }}
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-bold text-primary">
+                                            {{ order.final_price|intcomma }}
+                                            <small class="text-muted" style="font-size: 11px;">تومان</small>
+                                        </span>
+                                        {% if order.discount > 0 %}
+                                        <div class="mt-1">
+                                            <small class="text-decoration-line-through text-muted">
+                                                {{ order.total_price|intcomma }}
+                                            </small>
+                                            <span class="badge bg-danger rounded-pill ms-1" style="font-size: 9px;">
+                                                {{ order.discount }}% تخفیف
+                                            </span>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if order.status == 'pending' %}
+                                    <span class="badge bg-secondary rounded-pill">
+                                        <i class="fas fa-clock me-1"></i>{{ order.order_obj.get_status_display }}
+                                    </span>
+                                    {% elif order.status == 'processing' %}
+                                    <span class="badge bg-info rounded-pill">
+                                        <i class="fas fa-cog me-1"></i>{{ order.order_obj.get_status_display }}
+                                    </span>
+                                    {% elif order.status == 'shipped' %}
+                                    <span class="badge bg-primary rounded-pill">
+                                        <i class="fas fa-truck me-1"></i>{{ order.order_obj.get_status_display }}
+                                    </span>
+                                    {% elif order.status == 'delivered' %}
+                                    <span class="badge bg-success rounded-pill">
+                                        <i class="fas fa-check-circle me-1"></i>{{ order.order_obj.get_status_display }}
+                                    </span>
+                                    {% elif order.status == 'canceled' %}
+                                    <span class="badge bg-danger rounded-pill">
+                                        <i class="fas fa-times-circle me-1"></i>{{ order.order_obj.get_status_display }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="small fw-medium">
+                                            {{ order.registerDate|date:"Y/m/d" }}
+                                        </span>
+                                        <small class="text-muted">
+                                            {{ order.registerDate|date:"H:i" }}
+                                        </small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex justify-content-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'panelAdmin:admin_order_detail' order.id %}"
+                                               class="btn btn-outline-primary"
+                                               data-bs-toggle="tooltip" title="مشاهده">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'panelAdmin:admin_order_update' order.id %}"
+                                               class="btn btn-outline-warning"
+                                               data-bs-toggle="tooltip" title="ویرایش">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button"
+                                                    class="btn btn-outline-danger"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteModal{{ order.id }}"
+                                                    title="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- مودال حذف -->
+                                    <div class="modal fade" id="deleteModal{{ order.id }}" tabindex="-1">
+                                        <div class="modal-dialog modal-sm">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h6 class="modal-title">تأیید حذف</h6>
+                                                    <button type="button" class="btn-close"
+                                                            data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body text-center">
+                                                    <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                                                    <p class="mb-0">آیا از حذف این سفارش اطمینان دارید؟</p>
+                                                    <small class="text-muted">این عمل غیرقابل بازگشت است</small>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary btn-sm"
+                                                            data-bs-dismiss="modal">انصراف</button>
+                                                    <a href="{% url 'panelAdmin:admin_order_delete' order.id %}"
+                                                       class="btn btn-danger btn-sm">حذف</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-shopping-cart fa-4x text-muted"></i>
+                    </div>
+                    <h5 class="text-muted mb-3">هیچ سفارشی یافت نشد</h5>
+                    <p class="text-muted mb-4">می‌توانید با استفاده از دکمه زیر یک سفارش جدید ایجاد کنید</p>
+                    <a href="{% url 'panelAdmin:admin_order_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>ایجاد سفارش جدید
+                    </a>
+                </div>
+                {% endif %}
             </div>
+
+            <!-- فوتر با اطلاعات صفحه‌بندی -->
+            {% if page_obj.has_other_pages %}
+            <div class="card-footer bg-light border-0 py-3">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            نمایش <strong>{{ page_obj.start_index }}</strong> تا
+                            <strong>{{ page_obj.end_index }}</strong> از
+                            <strong>{{ page_obj.paginator.count }}</strong> سفارش
+                        </small>
+                    </div>
+                    <div class="col-md-6">
+                        <nav aria-label="صفحه‌بندی" class="d-flex justify-content-end">
+                            <ul class="pagination pagination-sm mb-0">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link"
+                                       href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+                                        {% if page_obj.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                        {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link"
+                                               href="?page={{ num }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                                {{ num }}
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link"
+                                       href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -325,69 +459,115 @@
 
 {% block extra_js %}
 <script>
-    $(document).ready(function() {
-        // تغییر استان - بروزرسانی لیست شهرها
-        $('#stateSelect').change(function() {
-            const stateId = $(this).val();
-            const $citySelect = $('#citySelect');
+$(document).ready(function() {
+    // فعال‌سازی tooltip
+    $('[data-bs-toggle="tooltip"]').tooltip();
 
-            if (stateId) {
-                // درخواست AJAX برای دریافت شهرهای استان
-                $.ajax({
-                    url: '{% url "panelAdmin:admin_get_cities_by_state" %}',
-                    data: { state_id: stateId },
-                    success: function(response) {
-                        $citySelect.empty().append('<option value="">همه شهرها</option>');
+    // تغییر استان - بروزرسانی شهرها
+    $('#stateSelect').change(function() {
+        const stateId = $(this).val();
+        const $citySelect = $('#citySelect');
 
-                        response.cities.forEach(function(city) {
-                            $citySelect.append(
-                                `<option value="${city.id}">${city.name}</option>`
-                            );
-                        });
-                    }
-                });
-            } else {
-                // اگر استان انتخاب نشده، همه شهرها را نشان بده
-                $citySelect.empty().append('<option value="">همه شهرها</option>');
-                {% for city in cities %}
-                $citySelect.append(
-                    `<option value="{{ city.id }}">{{ city.name }}</option>`
-                );
-                {% endfor %}
-            }
-        });
+        if (stateId) {
+            $.ajax({
+                url: '{% url "panelAdmin:admin_get_cities_by_state" %}',
+                data: { state_id: stateId },
+                success: function(response) {
+                    $citySelect.empty().append('<option value="">همه شهرها</option>');
 
-        // جستجوی سریع با Enter
-        $('input[name="search"]').keypress(function(e) {
-            if (e.which === 13) {
-                $('#filterForm').submit();
-            }
-        });
-
-        // تغییر خودکار فیلتر
-        $('select[name="status"], select[name="state"], select[name="city"], select[name="user"], select[name="sort_by"]').change(function() {
-            $('#filterForm').submit();
-        });
-
-        $('input[name="is_finally"]').change(function() {
-            $('#filterForm').submit();
-        });
-
-        // اعتبارسنجی تاریخ
-        $('#filterForm').submit(function(e) {
-            const dateFrom = $('input[name="date_from"]').val();
-            const dateTo = $('input[name="date_to"]').val();
-
-            if (dateFrom && dateTo) {
-                if (new Date(dateFrom) > new Date(dateTo)) {
-                    e.preventDefault();
-                    alert('تاریخ "از" نمی‌تواند بزرگتر از تاریخ "تا" باشد');
-                    return false;
+                    response.cities.forEach(function(city) {
+                        $citySelect.append(
+                            `<option value="${city.id}">${city.name}</option>`
+                        );
+                    });
+                },
+                error: function() {
+                    console.log('خطا در دریافت شهرها');
                 }
-            }
-
-            return true;
-        });
+            });
+        } else {
+            $citySelect.empty().append('<option value="">همه شهرها</option>');
+            {% for city in cities %}
+            $citySelect.append(
+                `<option value="{{ city.id }}">{{ city.name }}</option>`
+            );
+            {% endfor %}
+        }
     });
+
+    // جستجوی سریع
+    $('input[name="search"]').keypress(function(e) {
+        if (e.which === 13) {
+            $('#filterForm').submit();
+        }
+    });
+
+    // تغییر خودکار برخی فیلترها
+    $('select[name="status"], select[name="state"], select[name="city"], select[name="user"], select[name="sort_by"]').change(function() {
+        $('#filterForm').submit();
+    });
+
+    // تغییر خودکار وضعیت نهایی
+    $('input[name="is_finally"]').change(function() {
+        $('#filterForm').submit();
+    });
+
+    // اعتبارسنجی تاریخ
+    $('input[name="date_from"], input[name="date_to"]').change(function() {
+        const dateFrom = $('input[name="date_from"]').val();
+        const dateTo = $('input[name="date_to"]').val();
+
+        if (dateFrom && dateTo) {
+            if (new Date(dateFrom) > new Date(dateTo)) {
+                alert('تاریخ "از" نمی‌تواند از تاریخ "تا" بزرگتر باشد');
+                $(this).val('');
+            }
+        }
+    });
+});
 </script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.table-success-light {
+    background-color: rgba(25, 135, 84, 0.05) !important;
+}
+
+.table-warning-light {
+    background-color: rgba(255, 193, 7, 0.05) !important;
+}
+
+.badge {
+    padding: 4px 8px;
+    font-weight: 500;
+}
+
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.pagination .page-link {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+}
+
+.card {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.form-control-sm, .form-select-sm {
+    border-radius: 6px;
+}
+
+.border-0 {
+    border: none !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+</style>
 {% endblock %}

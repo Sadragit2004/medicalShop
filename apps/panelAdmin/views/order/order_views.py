@@ -279,7 +279,7 @@ def order_list(request):
     """لیست سفارشات"""
     orders = Order.objects.select_related(
         'customer', 'address__city__state'
-    ).all()
+    ).prefetch_related('details').all()
 
     # فیلتر بر اساس وضعیت
     status = request.GET.get('status')
@@ -311,23 +311,23 @@ def order_list(request):
     # فیلتر بر اساس تاریخ
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
+
+    date_from_obj = None
+    date_to_obj = None
+
     if date_from:
         try:
             date_from_obj = datetime.strptime(date_from, '%Y-%m-%d')
             orders = orders.filter(registerDate__date__gte=date_from_obj)
         except:
-            date_from_obj = None
-    else:
-        date_from_obj = None
+            date_from = ''
 
     if date_to:
         try:
             date_to_obj = datetime.strptime(date_to, '%Y-%m-%d')
             orders = orders.filter(registerDate__date__lte=date_to_obj)
         except:
-            date_to_obj = None
-    else:
-        date_to_obj = None
+            date_to = ''
 
     # فیلتر بر اساس جستجو
     search_query = request.GET.get('search', '')
@@ -338,27 +338,59 @@ def order_list(request):
             Q(customer__name__icontains=search_query) |
             Q(customer__family__icontains=search_query) |
             Q(address__addressDetail__icontains=search_query) |
-            Q(address__city__name__icontains=search_query) |  # جستجوی نام شهر
-            Q(address__city__state__name__icontains=search_query)  # جستجوی نام استان
+            Q(address__city__name__icontains=search_query) |
+            Q(address__city__state__name__icontains=search_query)
         )
 
-    # محاسبه قیمت‌ها و تعداد آیتم‌ها
+    # محاسبه قیمت‌ها و تعداد آیتم‌ها برای هر سفارش
+    orders_list = []
     for order in orders:
-        order.total_price = order.getTotalPrice()
-        order.final_price = order.getFinalPrice()
-        order.item_count = order.details.aggregate(Sum('qty'))['qty__sum'] or 0
+        # محاسبه قیمت کل سفارش
+        total_price = sum(detail.price * detail.qty for detail in order.details.all())
+
+        # محاسبه قیمت نهایی با تخفیف
+        if order.discount:
+            final_price = total_price - (total_price * order.discount // 100)
+        else:
+            final_price = total_price
+
+        # تعداد کل آیتم‌ها
+        item_count = sum(detail.qty for detail in order.details.all())
+
+        # اضافه کردن به لیست با همه اطلاعات
+        orders_list.append({
+            'id': order.id,
+            'orderCode': order.orderCode,
+            'customer': order.customer,
+            'address': order.address,
+            'status': order.status,
+            'isFinally': order.isFinally,
+            'registerDate': order.registerDate,
+            'discount': order.discount,
+            'description': order.description,
+            'total_price': total_price,
+            'final_price': final_price,
+            'item_count': item_count,
+            'order_obj': order  # خود آبجکت سفارش هم برای دسترسی به متدها
+        })
 
     # مرتب‌سازی
     sort_by = request.GET.get('sort_by', '-registerDate')
-    if sort_by in ['registerDate', '-registerDate', 'total_price', '-total_price']:
-        if sort_by == 'total_price':
-            orders = sorted(orders, key=lambda x: x.total_price)
-        elif sort_by == '-total_price':
-            orders = sorted(orders, key=lambda x: x.total_price, reverse=True)
-        else:
-            orders = orders.order_by(sort_by)
+    if sort_by == 'registerDate':
+        orders_list.sort(key=lambda x: x['registerDate'])
+    elif sort_by == '-registerDate':
+        orders_list.sort(key=lambda x: x['registerDate'], reverse=True)
+    elif sort_by == 'total_price':
+        orders_list.sort(key=lambda x: x['total_price'])
+    elif sort_by == '-total_price':
+        orders_list.sort(key=lambda x: x['total_price'], reverse=True)
+    elif sort_by == 'final_price':
+        orders_list.sort(key=lambda x: x['final_price'])
+    elif sort_by == '-final_price':
+        orders_list.sort(key=lambda x: x['final_price'], reverse=True)
 
-    paginator = Paginator(orders, 15)
+    # صفحه‌بندی
+    paginator = Paginator(orders_list, 15)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -382,8 +414,8 @@ def order_list(request):
         'selected_city': city_id,
         'selected_is_finally': is_finally,
         'search_query': search_query,
-        'date_from': date_from_obj.strftime('%Y-%m-%d') if date_from_obj else '',
-        'date_to': date_to_obj.strftime('%Y-%m-%d') if date_to_obj else '',
+        'date_from': date_from,
+        'date_to': date_to,
         'sort_by': sort_by
     })
 
