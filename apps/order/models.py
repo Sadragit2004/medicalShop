@@ -159,6 +159,10 @@ class Order(models.Model):
         final_price, tax = utils.price_by_delivery_tax(total, self.discount)
         return int(final_price * 10)
 
+
+    
+
+
     class Meta:
         verbose_name = "سفارش"
         verbose_name_plural = "سفارش‌ها"

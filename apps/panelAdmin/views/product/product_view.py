@@ -39,7 +39,7 @@ def category_create(request):
                 isActive=request.POST.get('isActive') == 'on'
             )
             messages.success(request, 'دسته‌بندی با موفقیت ایجاد شد')
-            return redirect('admin_category_list')
+            return redirect('panelAdmin:admin_category_list')
         except Exception as e:
             messages.error(request, f'خطا در ایجاد دسته‌بندی: {str(e)}')
 
@@ -62,7 +62,7 @@ def category_update(request, category_id):
             category.save()
 
             messages.success(request, 'دسته‌بندی با موفقیت ویرایش شد')
-            return redirect('admin_category_list')
+            return redirect('panelAdmin:admin_category_list')
         except Exception as e:
             messages.error(request, f'خطا در ویرایش دسته‌بندی: {str(e)}')
 
@@ -79,7 +79,7 @@ def category_delete(request, category_id):
         try:
             category.delete()
             messages.success(request, 'دسته‌بندی با موفقیت حذف شد')
-            return redirect('admin_category_list')
+            return redirect('panelAdmin:admin_category_list')
         except Exception as e:
             messages.error(request, f'خطا در حذف دسته‌بندی: {str(e)}')
 
@@ -165,6 +165,7 @@ def feature_create(request):
     if request.method == 'POST':
         try:
             with transaction.atomic():
+                # ایجاد ویژگی
                 feature = Feature.objects.create(
                     title=request.POST.get('title'),
                     isActive=request.POST.get('isActive') == 'on'
@@ -175,10 +176,20 @@ def feature_create(request):
                 if selected_categories:
                     feature.categories.set(selected_categories)
 
+                # ذخیره مقادیر ویژگی
+                values = request.POST.getlist('feature_values[]')
+                for value in values:
+                    if value.strip():  # فقط اگر مقدار خالی نباشد
+                        FeatureValue.objects.create(
+                            feature=feature,
+                            value=value.strip()
+                        )
+
                 messages.success(request, 'ویژگی با موفقیت ایجاد شد')
-                return redirect('admin_feature_list')
+                return redirect('panelAdmin:admin_feature_list')
         except Exception as e:
             messages.error(request, f'خطا در ایجاد ویژگی: {str(e)}')
+            print(f"Error in feature_create: {str(e)}")  # برای دیباگ
 
     return render(request, 'panelAdmin/products/feature/create.html', {'categories': categories})
 
@@ -199,10 +210,20 @@ def feature_update(request, feature_id):
                 selected_categories = request.POST.getlist('categories')
                 feature.categories.set(selected_categories)
 
+                # اضافه کردن مقادیر جدید
+                new_values = request.POST.getlist('new_values[]')
+                for value in new_values:
+                    if value.strip():  # فقط اگر مقدار خالی نباشد
+                        FeatureValue.objects.create(
+                            feature=feature,
+                            value=value.strip()
+                        )
+
                 messages.success(request, 'ویژگی با موفقیت ویرایش شد')
-                return redirect('admin_feature_list')
+                return redirect('panelAdmin:admin_feature_list')
         except Exception as e:
             messages.error(request, f'خطا در ویرایش ویژگی: {str(e)}')
+            print(f"Error in feature_update: {str(e)}")  # برای دیباگ
 
     return render(request, 'panelAdmin/products/feature/update.html', {
         'feature': feature,
@@ -218,11 +239,72 @@ def feature_delete(request, feature_id):
         try:
             feature.delete()
             messages.success(request, 'ویژگی با موفقیت حذف شد')
-            return redirect('admin_feature_list')
+            return redirect('panelAdmin:admin_feature_list')
         except Exception as e:
             messages.error(request, f'خطا در حذف ویژگی: {str(e)}')
 
     return render(request, 'panelAdmin/products/feature/delete_confirm.html', {'feature': feature})
+
+
+
+
+
+# ========================
+# FEATURE VALUE MANAGEMENT
+# ========================
+
+def feature_value_create(request, feature_id):
+    """ایجاد مقدار جدید برای ویژگی"""
+    feature = get_object_or_404(Feature, id=feature_id)
+
+    if request.method == 'POST':
+        try:
+            value = request.POST.get('value', '').strip()
+            if value:
+                FeatureValue.objects.create(
+                    feature=feature,
+                    value=value
+                )
+                messages.success(request, 'مقدار با موفقیت اضافه شد')
+            else:
+                messages.error(request, 'مقدار نمی‌تواند خالی باشد')
+        except Exception as e:
+            messages.error(request, f'خطا در ایجاد مقدار: {str(e)}')
+
+    return redirect('panelAdmin:admin_feature_update', feature_id=feature_id)
+
+def feature_value_update(request, value_id):
+    """ویرایش مقدار ویژگی"""
+    feature_value = get_object_or_404(FeatureValue, id=value_id)
+    feature_id = feature_value.feature.id
+
+    if request.method == 'POST':
+        try:
+            value = request.POST.get('value', '').strip()
+            if value:
+                feature_value.value = value
+                feature_value.save()
+                messages.success(request, 'مقدار با موفقیت ویرایش شد')
+            else:
+                messages.error(request, 'مقدار نمی‌تواند خالی باشد')
+        except Exception as e:
+            messages.error(request, f'خطا در ویرایش مقدار: {str(e)}')
+
+    return redirect('panelAdmin:admin_feature_update', feature_id=feature_id)
+
+@require_POST
+def feature_value_delete(request, value_id):
+    """حذف مقدار ویژگی"""
+    feature_value = get_object_or_404(FeatureValue, id=value_id)
+    feature_id = feature_value.feature.id
+
+    try:
+        feature_value.delete()
+        messages.success(request, 'مقدار با موفقیت حذف شد')
+    except Exception as e:
+        messages.error(request, f'خطا در حذف مقدار: {str(e)}')
+
+    return redirect('panelAdmin:admin_feature_update', feature_id=feature_id)
 
 
 # ========================

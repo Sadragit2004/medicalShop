@@ -1,0 +1,327 @@
+{% extends '../../base/base.html' %}
+
+{% load static %}
+
+{% block title %}ایجاد سفارش جدید{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_order_list' %}">سفارشات</a></li>
+<li class="breadcrumb-item active">ایجاد سفارش جدید</li>
+{% endblock %}
+
+{% block page_title %}ایجاد سفارش جدید{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">فرم ایجاد سفارش جدید</h5>
+    </div>
+
+    <div class="card-body">
+        <form method="post" id="orderForm">
+            {% csrf_token %}
+
+            <!-- اطلاعات مشتری و آدرس -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">مشتری <span class="text-danger">*</span></label>
+                        <select name="customer" class="form-select" required id="customerSelect">
+                            <option value="">انتخاب مشتری</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}">
+                                {{ user.mobileNumber }} - {{ user.name }} {{ user.family }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">آدرس ارسال</label>
+                        <select name="address" class="form-select" id="addressSelect">
+                            <option value="">انتخاب آدرس</option>
+                        </select>
+                        <div class="form-text">ابتدا مشتری را انتخاب کنید</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- وضعیت و تخفیف -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">وضعیت</label>
+                        <select name="status" class="form-select">
+                            {% for code, name in status_choices %}
+                            <option value="{{ code }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">تخفیف (%)</label>
+                        <input type="number" name="discount" class="form-control"
+                               min="0" max="100" value="0">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">توضیحات</label>
+                        <textarea name="description" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- لیست محصولات -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6>محصولات سفارش</h6>
+                    <button type="button" class="btn btn-sm btn-success" id="addProductBtn">
+                        <i class="fas fa-plus"></i> افزودن محصول
+                    </button>
+                </div>
+
+                <div id="productsContainer">
+                    <!-- محصولات به صورت دینامیک اضافه می‌شوند -->
+                </div>
+            </div>
+
+            <!-- خلاصه سفارش -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">خلاصه سفارش</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-2">
+                                <strong>تعداد محصولات:</strong>
+                                <span id="totalProducts">0</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-2">
+                                <strong>تعداد کل اقلام:</strong>
+                                <span id="totalItems">0</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-2">
+                                <strong>قیمت کل:</strong>
+                                <span id="totalPrice">0</span> تومان
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-2">
+                                <strong>قیمت نهایی:</strong>
+                                <span id="finalPrice">0</span> تومان
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- وضعیت نهایی -->
+            <div class="mb-4">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox"
+                           name="isFinally" id="isFinally">
+                    <label class="form-check-label" for="isFinally">
+                        سفارش نهایی باشد
+                    </label>
+                </div>
+            </div>
+
+            <!-- دکمه‌های عملیات -->
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'panelAdmin:admin_order_list' %}"
+                   class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-right"></i> بازگشت
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> ایجاد سفارش
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- قالب محصول -->
+<script id="productTemplate" type="text/html">
+    <div class="product-item card mb-3">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">محصول</label>
+                    <select name="products[]" class="form-select product-select" required>
+                        <option value="">انتخاب محصول</option>
+                        {% for product in products %}
+                        <option value="{{ product.id }}"
+                                data-price="{{ product.saleTypes.first.price|default:0 }}">
+                            {{ product.title }}
+                            {% if product.brand %}
+                            - {{ product.brand.title }}
+                            {% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">تعداد</label>
+                    <input type="number" name="quantities[]" class="form-control quantity"
+                           min="1" value="1" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">قیمت واحد</label>
+                    <input type="number" name="prices[]" class="form-control price"
+                           min="0" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">ویژگی‌های انتخابی</label>
+                    <input type="text" name="selected_options[]" class="form-control">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="button" class="btn btn-danger w-100 remove-product">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        let productCounter = 0;
+
+        // افزودن محصول جدید
+        $('#addProductBtn').click(function() {
+            const template = $('#productTemplate').html();
+            const $newProduct = $(template);
+            $newProduct.find('.product-select').attr('data-index', productCounter++);
+            $('#productsContainer').append($newProduct);
+            updateSummary();
+        });
+
+        // حذف محصول
+        $(document).on('click', '.remove-product', function() {
+            if ($('.product-item').length > 1) {
+                $(this).closest('.product-item').remove();
+            }
+            updateSummary();
+        });
+
+        // تغییر مشتری - دریافت آدرس‌ها
+        $('#customerSelect').change(function() {
+            const userId = $(this).val();
+            if (userId) {
+                $.ajax({
+                    url: '{% url "panelAdmin:admin_get_user_addresses" %}',
+                    data: { user_id: userId },
+                    success: function(response) {
+                        const $addressSelect = $('#addressSelect');
+                        $addressSelect.empty().append('<option value="">انتخاب آدرس</option>');
+
+                        response.addresses.forEach(function(address) {
+                            $addressSelect.append(
+                                `<option value="${address.id}">${address.full_address}</option>`
+                            );
+                        });
+                    }
+                });
+            }
+        });
+
+        // تغییر محصول - دریافت قیمت
+        $(document).on('change', '.product-select', function() {
+            const productId = $(this).val();
+            const $priceInput = $(this).closest('.row').find('.price');
+
+            if (productId) {
+                $.ajax({
+                    url: '{% url "panelAdmin:admin_get_product_price" %}',
+                    data: { product_id: productId },
+                    success: function(response) {
+                        $priceInput.val(response.price);
+                        updateSummary();
+                    }
+                });
+            } else {
+                $priceInput.val(0);
+                updateSummary();
+            }
+        });
+
+        // تغییر قیمت یا تعداد
+        $(document).on('input', '.quantity, .price', function() {
+            updateSummary();
+        });
+
+        // محاسبه خلاصه سفارش
+        function updateSummary() {
+            let totalProducts = 0;
+            let totalItems = 0;
+            let totalPrice = 0;
+
+            $('.product-item').each(function() {
+                const quantity = parseInt($(this).find('.quantity').val()) || 0;
+                const price = parseInt($(this).find('.price').val()) || 0;
+
+                if (quantity > 0 && price > 0) {
+                    totalProducts++;
+                    totalItems += quantity;
+                    totalPrice += quantity * price;
+                }
+            });
+
+            // محاسبه تخفیف
+            const discount = parseInt($('input[name="discount"]').val()) || 0;
+            let finalPrice = totalPrice;
+            if (discount > 0) {
+                finalPrice = totalPrice - (totalPrice * discount / 100);
+            }
+
+            $('#totalProducts').text(totalProducts);
+            $('#totalItems').text(totalItems);
+            $('#totalPrice').text(totalPrice.toLocaleString());
+            $('#finalPrice').text(finalPrice.toLocaleString());
+        }
+
+        // اعتبارسنجی فرم
+        $('#orderForm').submit(function(e) {
+            const customer = $('#customerSelect').val();
+            if (!customer) {
+                e.preventDefault();
+                alert('لطفاً مشتری را انتخاب کنید');
+                $('#customerSelect').focus();
+                return false;
+            }
+
+            const productCount = $('.product-item').filter(function() {
+                const productId = $(this).find('.product-select').val();
+                const quantity = $(this).find('.quantity').val();
+                return productId && quantity > 0;
+            }).length;
+
+            if (productCount === 0) {
+                e.preventDefault();
+                if (!confirm('هیچ محصولی اضافه نشده است. آیا ادامه می‌دهید؟')) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        // اضافه کردن اولین محصول
+        $('#addProductBtn').click();
+    });
+</script>
+{% endblock %}

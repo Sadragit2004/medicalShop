@@ -1,0 +1,177 @@
+{% extends '../../base/base.html' %}
+{% load static %}
+
+{% block title %}ایجاد ویژگی جدید{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_feature_list' %}">ویژگی‌ها</a></li>
+<li class="breadcrumb-item active">ایجاد ویژگی جدید</li>
+{% endblock %}
+
+{% block page_title %}ایجاد ویژگی جدید{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">فرم ایجاد ویژگی جدید</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data" id="featureForm">
+            {% csrf_token %}
+
+            <div class="row">
+                <!-- عنوان ویژگی -->
+                <div class="col-md-6 mb-3">
+                    <label for="title" class="form-label">عنوان ویژگی <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="title" name="title"
+                           required maxlength="200" placeholder="عنوان ویژگی را وارد کنید">
+                    <div class="form-text">عنوان باید منحصر به فرد باشد</div>
+                </div>
+
+                <!-- وضعیت -->
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">وضعیت</label>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox"
+                               id="isActive" name="isActive" checked>
+                        <label class="form-check-label" for="isActive">
+                            فعال باشد
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- دسته‌بندی‌ها -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <label class="form-label">دسته‌بندی‌های مرتبط <span class="text-danger">*</span></label>
+                    <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                        {% for category in categories %}
+                        <div class="form-check form-check-inline mb-2">
+                            <input class="form-check-input" type="checkbox"
+                                   name="categories" value="{{ category.id }}"
+                                   id="cat_{{ category.id }}">
+                            <label class="form-check-label" for="cat_{{ category.id }}">
+                                {{ category.title }}
+                                {% if category.parent %}
+                                    <small class="text-muted">({{ category.parent.title }})</small>
+                                {% endif %}
+                            </label>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted text-center">هیچ دسته‌بندی‌ای ایجاد نشده است</p>
+                        {% endfor %}
+                    </div>
+                    <div class="form-text">ویژگی در این دسته‌بندی‌ها قابل انتخاب خواهد بود</div>
+                </div>
+            </div>
+
+            <!-- مقادیر ویژگی (قابل توسعه) -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <label class="form-label">مقادیر پیش‌فرض ویژگی (اختیاری)</label>
+                        <button type="button" class="btn btn-sm btn-outline-success" id="addValueBtn">
+                            <i class="fas fa-plus"></i> افزودن مقدار
+                        </button>
+                    </div>
+
+                    <!-- در بخش مقادیر ویژگی در create.html -->
+                    <div id="featureValuesContainer">
+                        <div class="value-item input-group mb-2">
+                            <input type="text" class="form-control"
+                                placeholder="مقدار ویژگی (مثال: قرمز، ۱۶ گیگابایت، ...)"
+                                name="feature_values[]">  <!-- نام اصلاح شده -->
+                            <button type="button" class="btn btn-outline-danger remove-value">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-text">مقادیر از پیش تعریف شده برای ویژگی (می‌توانید بعداً در بخش مقادیر ویژگی مدیریت کنید)</div>
+                </div>
+            </div>
+
+            <!-- دکمه‌های عملیات -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'panelAdmin:admin_feature_list' %}"
+                           class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-right"></i> بازگشت
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> ذخیره ویژگی
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- راهنمایی -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-info-circle text-info"></i> راهنمایی</h6>
+    </div>
+    <div class="card-body">
+        <ul>
+            <li>ویژگی‌ها برای فیلتر کردن و جستجوی محصولات استفاده می‌شوند</li>
+            <li>حتماً دسته‌بندی‌های مرتبط را انتخاب کنید</li>
+            <li>می‌توانید مقادیر پیش‌فرض برای ویژگی تعریف کنید</li>
+            <li>ویژگی‌های غیرفعال در بخش کاربری نمایش داده نمی‌شوند</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // افزودن مقدار جدید
+        $('#addValueBtn').click(function() {
+            var html = `
+            <div class="value-item input-group mb-2">
+                <input type="text" class="form-control"
+                       placeholder="مقدار ویژگی (مثال: قرمز، ۱۶ گیگابایت، ...)"
+                       name="feature_values[]">
+                <button type="button" class="btn btn-outline-danger remove-value">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>`;
+            $('#featureValuesContainer').append(html);
+        });
+
+        // حذف مقدار
+        $(document).on('click', '.remove-value', function() {
+            if ($('.value-item').length > 1) {
+                $(this).closest('.value-item').remove();
+            } else {
+                $(this).closest('.value-item').find('input').val('');
+            }
+        });
+
+        // اعتبارسنجی فرم
+        $('#featureForm').submit(function(e) {
+            var title = $('#title').val().trim();
+            var checkedCategories = $('input[name="categories"]:checked').length;
+
+            if (!title) {
+                e.preventDefault();
+                alert('عنوان ویژگی الزامی است');
+                $('#title').focus();
+                return false;
+            }
+
+            if (checkedCategories === 0) {
+                e.preventDefault();
+                if (!confirm('هیچ دسته‌بندی‌ای انتخاب نشده است. آیا ادامه می‌دهید؟')) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    });
+</script>
+{% endblock %}

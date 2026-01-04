@@ -1,4 +1,4 @@
-# views/payment_views.py
+# views/payments_views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db import transaction
@@ -96,7 +96,7 @@ def payment_list(request):
 
     users = CustomUser.objects.all()
 
-    return render(request, 'panelAdmin/payment/list.html', {
+    return render(request, 'panelAdmin/payments/list.html', {
         'page_obj': page_obj,
         'users': users,
         'total_amount': total_amount,
@@ -136,7 +136,7 @@ def payment_detail(request, payment_id):
     order_total = order.getTotalPrice()
     order_final = order.getFinalPrice()
 
-    return render(request, 'panelAdmin/payment/detail.html', {
+    return render(request, 'panelAdmin/payments/detail.html', {
         'payment': payment,
         'jalali_date': jalali_date,
         'status_text': status_text,
@@ -182,7 +182,7 @@ def payment_create(request):
         except Exception as e:
             messages.error(request, f'خطا در ثبت پرداخت: {str(e)}')
 
-    return render(request, 'panelAdmin/payment/create.html', {
+    return render(request, 'panelAdmin/payments/create.html', {
         'orders': orders
     })
 
@@ -227,7 +227,7 @@ def payment_update(request, payment_id):
         except Exception as e:
             messages.error(request, f'خطا در ویرایش پرداخت: {str(e)}')
 
-    return render(request, 'panelAdmin/payment/update.html', {
+    return render(request, 'panelAdmin/payments/update.html', {
         'payment': payment
     })
 
@@ -236,6 +236,7 @@ def payment_update(request, payment_id):
 # PAYMENT DELETE
 # ========================
 
+# views/payment_views.py
 def payment_delete(request, payment_id):
     """حذف پرداخت"""
     payment = get_object_or_404(Peyment, id=payment_id)
@@ -252,12 +253,12 @@ def payment_delete(request, payment_id):
             payment.delete()
 
             messages.success(request, f'پرداخت {payment_ref} با موفقیت حذف شد')
-            return redirect('admin_payment_list')
+            return redirect('panelAdmin:admin_payment_list')  # تغییر اینجا
         except Exception as e:
             messages.error(request, f'خطا در حذف پرداخت: {str(e)}')
 
-    return render(request, 'panelAdmin/payment/delete_confirm.html', {
-        'payment': payment
+    return render(request, 'panelAdmin/payments/delete_confirm.html', {
+        'payment': payment  # مطمئن شویم payment به تمپلیت پاس داده می‌شود
     })
 
 
@@ -532,7 +533,7 @@ def payment_report(request):
         ]
     }
 
-    return render(request, 'panelAdmin/payment/report.html', context)
+    return render(request, 'panelAdmin/payments/report.html', context)
 
 
 # ========================
@@ -655,4 +656,4 @@ def payment_dashboard_widget(request):
         'now': now,
     }
 
-    return render(request, 'panelAdmin/payment/dashboard_widget.html', context)
+    return render(request, 'panelAdmin/payments/dashboard_widget.html', context)

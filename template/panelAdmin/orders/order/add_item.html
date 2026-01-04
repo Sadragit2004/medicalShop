@@ -1,0 +1,170 @@
+{% extends '../../base/base.html' %}
+
+{% load static %}
+
+{% block title %}افزودن محصول به سفارش{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_order_list' %}">سفارشات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_order_detail' order.id %}">سفارش {{ order.orderCode }}</a></li>
+<li class="breadcrumb-item active">افزودن محصول</li>
+{% endblock %}
+
+{% block page_title %}افزودن محصول به سفارش: {{ order.orderCode }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">افزودن محصول جدید به سفارش</h5>
+            </div>
+
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <!-- انتخاب محصول -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">محصول <span class="text-danger">*</span></label>
+                            <select name="product" class="form-select" id="productSelect" required>
+                                <option value="">انتخاب محصول</option>
+                                {% for product in products %}
+                                <option value="{{ product.id }}"
+                                        data-price="{{ product.saleTypes.first.price|default:0 }}">
+                                    {{ product.title }}
+                                    {% if product.brand %}
+                                    - {{ product.brand.title }}
+                                    {% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- قیمت -->
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">قیمت واحد <span class="text-danger">*</span></label>
+                            <input type="number" name="price" class="form-control"
+                                   id="priceInput" min="0" required>
+                        </div>
+
+                        <!-- تعداد -->
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">تعداد <span class="text-danger">*</span></label>
+                            <input type="number" name="qty" class="form-control"
+                                   min="1" value="1" required>
+                        </div>
+                    </div>
+
+                    <!-- ویژگی‌های انتخابی -->
+                    <div class="mb-4">
+                        <label class="form-label">ویژگی‌های انتخابی (اختیاری)</label>
+                        <textarea name="selectedOptions" class="form-control" rows="2"
+                                  placeholder="ویژگی‌های محصول مانند رنگ، سایز و ..."></textarea>
+                    </div>
+
+                    <!-- اطلاعات محصول انتخاب شده -->
+                    <div class="card mb-4" id="productInfo" style="display: none;">
+                        <div class="card-body">
+                            <h6>اطلاعات محصول:</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>عنوان:</strong> <span id="productTitle"></span></p>
+                                    <p class="mb-1"><strong>برند:</strong> <span id="productBrand"></span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>قیمت پیش‌فرض:</strong> <span id="defaultPrice"></span> تومان</p>
+                                    <p class="mb-1"><strong>قیمت وارد شده:</strong> <span id="enteredPrice"></span> تومان</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- دکمه‌های عملیات -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'panelAdmin:admin_order_detail' order.id %}"
+                           class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> انصراف
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-plus-circle"></i> افزودن به سفارش
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // تغییر محصول - دریافت اطلاعات
+        $('#productSelect').change(function() {
+            const productId = $(this).val();
+            const $priceInput = $('#priceInput');
+            const $productInfo = $('#productInfo');
+
+            if (productId) {
+                $.ajax({
+                    url: '{% url "panelAdmin:admin_get_product_price" %}',
+                    data: { product_id: productId },
+                    success: function(response) {
+                        // نمایش اطلاعات محصول
+                        $productInfo.show();
+                        $('#productTitle').text(response.title);
+                        $('#productBrand').text(response.brand);
+                        $('#defaultPrice').text(response.price.toLocaleString());
+
+                        // تنظیم قیمت پیش‌فرض
+                        const selectedOption = $('#productSelect option:selected');
+                        const defaultPrice = selectedOption.data('price') || response.price;
+                        $priceInput.val(defaultPrice);
+                        $('#enteredPrice').text(defaultPrice.toLocaleString());
+                    }
+                });
+            } else {
+                $productInfo.hide();
+                $priceInput.val(0);
+            }
+        });
+
+        // تغییر قیمت
+        $('#priceInput').on('input', function() {
+            $('#enteredPrice').text($(this).val().toLocaleString());
+        });
+
+        // اعتبارسنجی فرم
+        $('form').submit(function(e) {
+            const productId = $('#productSelect').val();
+            const price = $('#priceInput').val();
+            const qty = $('input[name="qty"]').val();
+
+            if (!productId) {
+                e.preventDefault();
+                alert('لطفاً محصول را انتخاب کنید');
+                $('#productSelect').focus();
+                return false;
+            }
+
+            if (!price || price <= 0) {
+                e.preventDefault();
+                alert('قیمت باید بزرگتر از صفر باشد');
+                $('#priceInput').focus();
+                return false;
+            }
+
+            if (!qty || qty <= 0) {
+                e.preventDefault();
+                alert('تعداد باید بزرگتر از صفر باشد');
+                $('input[name="qty"]').focus();
+                return false;
+            }
+
+            return true;
+        });
+    });
+</script>
+{% endblock %}

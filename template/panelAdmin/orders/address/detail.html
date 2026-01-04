@@ -1,0 +1,300 @@
+{% extends '../../base/base.html' %}
+
+{% load static %}
+
+{% block title %}جزئیات آدرس کاربر{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_dashboard' %}">داشبورد</a></li>
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_user_address_list' %}">آدرس‌های کاربران</a></li>
+<li class="breadcrumb-item active">جزئیات آدرس</li>
+{% endblock %}
+
+{% block page_title %}جزئیات آدرس کاربر{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-map-marker-alt"></i> جزئیات آدرس
+                    </h5>
+                    <span class="badge bg-light text-dark">
+                        <i class="fas fa-calendar"></i> {{ address.createdAt|date:"Y/m/d" }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <!-- اطلاعات کاربر -->
+                <div class="user-info-card mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <div class="avatar-lg">
+                                <i class="fas fa-user-circle fa-4x text-primary"></i>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h5 class="mb-1">{{ address.user.mobileNumber }}</h5>
+                            <p class="mb-1">
+                                {% if address.user.name or address.user.family %}
+                                {{ address.user.name|default:"" }} {{ address.user.family|default:"" }}
+                                {% else %}
+                                <span class="text-muted">نام کامل ثبت نشده</span>
+                                {% endif %}
+                            </p>
+                            <small class="text-muted">
+                                <i class="fas fa-envelope"></i> {{ address.user.email|default:"ایمیل ثبت نشده" }}
+                            </small>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'panelAdmin:admin_user_list' %}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-user"></i> پروفایل کاربر
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- اطلاعات آدرس -->
+                <div class="address-details">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-card mb-3">
+                                <h6><i class="fas fa-flag text-primary"></i> استان</h6>
+                                <div class="detail-content">
+                                    <span class="badge bg-info fs-6">{{ address.state.name }}</span>
+                                    {% if address.state.center %}
+                                    <small class="text-muted d-block mt-1">مرکز استان: {{ address.state.center }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="detail-card mb-3">
+                                <h6><i class="fas fa-city text-primary"></i> شهر</h6>
+                                <div class="detail-content">
+                                    <span class="badge bg-secondary fs-6">{{ address.city.name }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-card mb-3">
+                        <h6><i class="fas fa-map-pin text-primary"></i> آدرس دقیق</h6>
+                        <div class="detail-content border rounded p-3 bg-light">
+                            {{ address.addressDetail|linebreaks }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-card mb-3">
+                                <h6><i class="fas fa-mail-bulk text-primary"></i> کد پستی</h6>
+                                <div class="detail-content">
+                                    {% if address.postalCode %}
+                                    <span class="badge bg-success fs-6">{{ address.postalCode }}</span>
+                                    {% else %}
+                                    <span class="text-muted">ثبت نشده</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="detail-card mb-3">
+                                <h6><i class="fas fa-globe-asia text-primary"></i> مختصات جغرافیایی</h6>
+                                <div class="detail-content">
+                                    {% if address.lat and address.lng %}
+                                    <div class="coordinates">
+                                        <span class="text-muted">عرض جغرافیایی: </span>{{ address.lat }}<br>
+                                        <span class="text-muted">طول جغرافیایی: </span>{{ address.lng }}
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">مختصات ثبت نشده</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- سفارشات این آدرس -->
+                <div class="orders-section mt-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-shopping-cart text-primary"></i>
+                        سفارشات این آدرس
+                    </h5>
+
+                    {% if address.orders.all %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>کد سفارش</th>
+                                    <th>وضعیت</th>
+                                    <th>تاریخ</th>
+                                    <th>مبلغ</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in address.orders.all|slice:":5" %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'panelAdmin:admin_order_detail' order.id %}"
+                                           class="text-decoration-none">
+                                            {{ order.orderCode|truncatechars:10 }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if order.status == 'pending' %}
+                                        <span class="badge bg-secondary">در حال بررسی</span>
+                                        {% elif order.status == 'processing' %}
+                                        <span class="badge bg-info">در حال پردازش</span>
+                                        {% elif order.status == 'shipped' %}
+                                        <span class="badge bg-primary">ارسال شده</span>
+                                        {% elif order.status == 'delivered' %}
+                                        <span class="badge bg-success">تحویل داده شده</span>
+                                        {% elif order.status == 'canceled' %}
+                                        <span class="badge bg-danger">لغو شده</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ order.registerDate|date:"Y/m/d" }}</td>
+                                    <td>{{ order.getFinalPrice|floatformat:0 }} تومان</td>
+                                    <td>
+                                        <a href="{% url 'panelAdmin:admin_order_detail' order.id %}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% if address.orders.count > 5 %}
+                    <div class="text-center mt-3">
+                        <a href="{% url 'panelAdmin:admin_order_list' %}?city={{ address.city.id }}"
+                           class="btn btn-outline-secondary btn-sm">
+                            مشاهده همه {{ address.orders.count }} سفارش
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    {% else %}
+                    <div class="alert alert-light text-center">
+                        <i class="fas fa-shopping-cart fa-2x text-muted mb-2"></i>
+                        <p class="mb-0">هنوز هیچ سفارشی با این آدرس ثبت نشده است</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'panelAdmin:admin_user_address_list' %}"
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-right"></i> بازگشت به لیست
+                    </a>
+
+                    <div>
+                        <a href="{% url 'panelAdmin:admin_user_address_delete' address.id %}"
+                           class="btn btn-danger"
+                           onclick="return confirm('آیا از حذف این آدرس اطمینان دارید؟')">
+                            <i class="fas fa-trash"></i> حذف آدرس
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // نمایش نقشه اگر مختصات وجود داشته باشد
+        {% if address.lat and address.lng %}
+        const lat = {{ address.lat }};
+        const lng = {{ address.lng }};
+
+        // می‌توانید از سرویس Google Maps یا OpenStreetMap استفاده کنید
+        setTimeout(function() {
+            const mapElement = document.createElement('div');
+            mapElement.id = 'addressMap';
+            mapElement.style.height = '300px';
+            mapElement.style.borderRadius = '8px';
+            mapElement.style.marginTop = '1rem';
+
+            $('.coordinates').after(mapElement);
+
+            // نمونه کد برای نمایش نقشه (به API key نیاز دارد)
+            console.log('مختصات آدرس:', lat, lng);
+            // initMap(lat, lng); // تابع مربوط به بارگذاری نقشه
+        }, 1000);
+        {% endif %}
+    });
+</script>
+
+<style>
+    .user-info-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 1.5rem;
+        border: 1px solid #dee2e6;
+    }
+
+    .avatar-lg {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .detail-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        transition: all 0.3s;
+    }
+
+    .detail-card:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+
+    .detail-card h6 {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .detail-content {
+        font-size: 1.1rem;
+    }
+
+    .coordinates {
+        font-family: monospace;
+        background: #f8f9fa;
+        padding: 0.5rem;
+        border-radius: 4px;
+    }
+
+    .orders-section {
+        border-top: 2px solid #dee2e6;
+        padding-top: 1.5rem;
+    }
+
+    .badge.fs-6 {
+        font-size: 1.1rem;
+        padding: 0.5rem 1rem;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,189 @@
+{% extends '../../base/base.html' %}
+
+{% load static %}
+
+{% block title %}ویرایش آیتم سفارش{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_order_list' %}">سفارشات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_order_detail' order_item.order.id %}">سفارش {{ order_item.order.orderCode }}</a></li>
+<li class="breadcrumb-item active">ویرایش آیتم</li>
+{% endblock %}
+
+{% block page_title %}ویرایش آیتم سفارش{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">ویرایش آیتم سفارش</h5>
+                    <span class="badge bg-info">سفارش: {{ order_item.order.orderCode }}</span>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <!-- اطلاعات محصول -->
+                    <div class="mb-4">
+                        <div class="alert alert-info">
+                            <h6>محصول فعلی:</h6>
+                            <p class="mb-1"><strong>{{ order_item.product.title }}</strong></p>
+                            {% if order_item.product.brand %}
+                            <p class="mb-0"><small>برند: {{ order_item.product.brand.title }}</small></p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- انتخاب محصول جدید (اختیاری) -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">تغییر محصول (اختیاری)</label>
+                            <select name="product" class="form-select" id="productSelect">
+                                <option value="">انتخاب محصول جدید</option>
+                                {% for product in products %}
+                                <option value="{{ product.id }}"
+                                        data-price="{{ product.saleTypes.first.price|default:0 }}"
+                                        {% if order_item.product.id == product.id %}selected{% endif %}>
+                                    {{ product.title }}
+                                    {% if product.brand %}
+                                    - {{ product.brand.title }}
+                                    {% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">اگر محصول را تغییر ندهید، محصول فعلی باقی می‌ماند</div>
+                        </div>
+
+                        <!-- قیمت -->
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">قیمت واحد <span class="text-danger">*</span></label>
+                            <input type="number" name="price" class="form-control"
+                                   id="priceInput" min="0" value="{{ order_item.price }}" required>
+                        </div>
+
+                        <!-- تعداد -->
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">تعداد <span class="text-danger">*</span></label>
+                            <input type="number" name="qty" class="form-control"
+                                   min="1" value="{{ order_item.qty }}" required>
+                        </div>
+                    </div>
+
+                    <!-- ویژگی‌های انتخابی -->
+                    <div class="mb-4">
+                        <label class="form-label">ویژگی‌های انتخابی</label>
+                        <textarea name="selectedOptions" class="form-control" rows="2">{{ order_item.selectedOptions|default:'' }}</textarea>
+                    </div>
+
+                    <!-- خلاصه قیمت -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h6>خلاصه قیمت:</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong>قیمت واحد:</strong> <span id="unitPrice">{{ order_item.price }}</span> تومان</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong>تعداد:</strong> <span id="itemQty">{{ order_item.qty }}</span></p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong>قیمت کل:</strong> <span id="totalPrice">{{ order_item.getTotalPrice }}</span> تومان</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- دکمه‌های عملیات -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'panelAdmin:admin_order_detail' order_item.order.id %}"
+                           class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> انصراف
+                        </a>
+                        <div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> ذخیره تغییرات
+                            </button>
+                            <a href="{% url 'panelAdmin:admin_delete_order_item' order_item.id %}"
+                               class="btn btn-outline-danger"
+                               onclick="return confirm('حذف این آیتم از سفارش؟')">
+                                <i class="fas fa-trash"></i> حذف
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // تغییر محصول
+        $('#productSelect').change(function() {
+            const productId = $(this).val();
+            const $priceInput = $('#priceInput');
+
+            if (productId) {
+                $.ajax({
+                    url: '{% url "panelAdmin:admin_get_product_price" %}',
+                    data: { product_id: productId },
+                    success: function(response) {
+                        // تنظیم قیمت پیش‌فرض
+                        const selectedOption = $('#productSelect option:selected');
+                        const defaultPrice = selectedOption.data('price') || response.price;
+                        $priceInput.val(defaultPrice);
+                        updateSummary();
+                    }
+                });
+            }
+        });
+
+        // تغییر قیمت یا تعداد
+        $('#priceInput, input[name="qty"]').on('input', function() {
+            updateSummary();
+        });
+
+        // محاسبه خلاصه
+        function updateSummary() {
+            const price = parseInt($('#priceInput').val()) || 0;
+            const qty = parseInt($('input[name="qty"]').val()) || 0;
+            const total = price * qty;
+
+            $('#unitPrice').text(price.toLocaleString());
+            $('#itemQty').text(qty);
+            $('#totalPrice').text(total.toLocaleString());
+        }
+
+        // محاسبه اولیه
+        updateSummary();
+
+        // اعتبارسنجی فرم
+        $('form').submit(function(e) {
+            const price = $('#priceInput').val();
+            const qty = $('input[name="qty"]').val();
+
+            if (!price || price <= 0) {
+                e.preventDefault();
+                alert('قیمت باید بزرگتر از صفر باشد');
+                $('#priceInput').focus();
+                return false;
+            }
+
+            if (!qty || qty <= 0) {
+                e.preventDefault();
+                alert('تعداد باید بزرگتر از صفر باشد');
+                $('input[name="qty"]').focus();
+                return false;
+            }
+
+            return true;
+        });
+    });
+</script>
+{% endblock %}

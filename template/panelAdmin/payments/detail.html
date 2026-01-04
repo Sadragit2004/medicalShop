@@ -1,0 +1,265 @@
+<!-- templates/panelAdmin/payment/detail.html -->
+{% extends 'panelAdmin/base/base.html' %}
+{% load humanize %}
+{% block title %}جزئیات پرداخت - {{ payment.refId|default:payment.id }}{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_payment_list' %}">پرداخت‌ها</a></li>
+<li class="breadcrumb-item active">جزئیات پرداخت</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-credit-card"></i> جزئیات پرداخت
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- اطلاعات اصلی پرداخت -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">مشخصات پرداخت</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">کد پیگیری</label>
+                        <p class="h5">
+                            {% if payment.refId %}
+                            <span class="badge bg-primary">{{ payment.refId }}</span>
+                            {% else %}
+                            <span class="text-muted">بدون کد پیگیری</span>
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">وضعیت پرداخت</label>
+                        <p class="h5">
+                            {% if payment.isFinaly %}
+                            <span class="badge bg-success">موفق</span>
+                            {% else %}
+                            <span class="badge bg-danger">ناموفق</span>
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">مبلغ پرداخت</label>
+                        <p class="h3 text-primary">{{ payment.amount|floatformat:0|intcomma }} تومان</p>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">تاریخ و زمان</label>
+                        <p class="h6">{{ jalali_date }} - {{ payment.createAt|time:"H:i" }}</p>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">کد وضعیت</label>
+                        <p class="h6">
+                            {% if payment.statusCode %}
+                            <span class="badge {% if payment.statusCode == 200 %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ payment.statusCode }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">ندارد</span>
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">سفارش مرتبط</label>
+                        <p class="h6">
+                            <a href="#" class="text-decoration-none">
+                                <span class="badge bg-info">{{ payment.order.orderCode }}</span>
+                            </a>
+                        </p>
+                    </div>
+
+                    {% if payment.description %}
+                    <div class="col-12 mb-3">
+                        <label class="form-label text-muted">توضیحات</label>
+                        <div class="border rounded p-3 bg-light">
+                            {{ payment.description|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- اطلاعات سفارش -->
+        {% if order %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">اطلاعات سفارش مرتبط</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">شماره سفارش</label>
+                        <p class="h6">{{ order.orderCode }}</p>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">وضعیت سفارش</label>
+                        <p class="h6">
+                            <span class="badge {% if order.status == 'delivered' %}bg-success
+                                            {% elif order.status == 'processing' %}bg-primary
+                                            {% elif order.status == 'shipped' %}bg-info
+                                            {% elif order.status == 'pending' %}bg-warning
+                                            {% else %}bg-danger{% endif %}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </p>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">جمع کل سفارش</label>
+                        <p class="h6">{{ order_total|floatformat:0|intcomma }} تومان</p>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">تخفیف</label>
+                        <p class="h6">{{ order.discount }}٪</p>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">مبلغ نهایی</label>
+                        <p class="h5 text-success">{{ order_final|floatformat:0|intcomma }} تومان</p>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">تاریخ ثبت سفارش</label>
+                        <p class="h6">{{ order.registerDate|date:"Y/m/d H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- سایدبار اقدامات -->
+    <div class="col-lg-4">
+        <!-- اطلاعات مشتری -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">اطلاعات مشتری</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    {% if payment.customer.profile_image %}
+                    <img src="{{ payment.customer.profile_image.url }}" alt="{{ payment.customer.name }}" class="rounded-circle" width="100" height="100">
+                    {% else %}
+                    <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+                        <i class="fas fa-user fa-3x text-white"></i>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="text-center mb-3">
+                    <h5>{{ payment.customer.name }} {{ payment.customer.family }}</h5>
+                    <p class="text-muted">{{ payment.customer.mobileNumber }}</p>
+                </div>
+
+                <div class="row">
+                    <div class="col-12 mb-2">
+                        <i class="fas fa-envelope me-2 text-muted"></i>
+                        <span class="text-muted">ایمیل:</span>
+                        <span class="float-left">{{ payment.customer.email|default:"-" }}</span>
+                    </div>
+
+                    <div class="col-12 mb-2">
+                        <i class="fas fa-calendar me-2 text-muted"></i>
+                        <span class="text-muted">تاریخ عضویت:</span>
+                        <span class="float-left">{{ payment.customer.date_joined|date:"Y/m/d" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- اقدامات سریع -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">اقدامات سریع</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'panelAdmin:admin_payment_update' payment.id %}" class="btn btn-warning">
+                        <i class="fas fa-edit me-2"></i>ویرایش پرداخت
+                    </a>
+
+                    {% if payment.isFinaly %}
+                    <form method="post" action="{% url 'panelAdmin:admin_cancel_payment' payment.id %}" class="d-grid">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('آیا از لغو این پرداخت اطمینان دارید؟')">
+                            <i class="fas fa-times me-2"></i>لغو پرداخت
+                        </button>
+                    </form>
+                    {% else %}
+                    <form method="post" action="{% url 'panelAdmin:admin_verify_payment' payment.id %}" class="d-grid">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success" onclick="return confirm('آیا از تأیید این پرداخت اطمینان دارید؟')">
+                            <i class="fas fa-check me-2"></i>تأیید پرداخت
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'panelAdmin:admin_toggle_payment_status' payment.id %}" class="d-grid">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-info" onclick="return confirm('آیا از تغییر وضعیت پرداخت اطمینان دارید؟')">
+                            <i class="fas fa-sync me-2"></i>تغییر وضعیت
+                        </button>
+                    </form>
+
+                    <a href="{% url 'panelAdmin:admin_payment_delete' payment.id %}" class="btn btn-outline-danger">
+                        <i class="fas fa-trash me-2"></i>حذف پرداخت
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- اطلاعات فنی -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">اطلاعات فنی</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12 mb-2">
+                        <span class="text-muted">ID:</span>
+                        <span class="float-left font-monospace">{{ payment.id }}</span>
+                    </div>
+
+                    <div class="col-12 mb-2">
+                        <span class="text-muted">تاریخ ایجاد:</span>
+                        <span class="float-left">{{ payment.createAt|date:"Y/m/d H:i:s" }}</span>
+                    </div>
+
+                    <div class="col-12 mb-2">
+                        <span class="text-muted">آخرین ویرایش:</span>
+                        <span class="float-left">{{ payment.updateAt|date:"Y/m/d H:i:s" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- برگشت به لیست -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between">
+            <a href="{% url 'panelAdmin:admin_payment_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-right me-2"></i>بازگشت به لیست پرداخت‌ها
+            </a>
+
+            {% if order %}
+            <a href="#" class="btn btn-primary">
+                <i class="fas fa-shopping-cart me-2"></i>مشاهده سفارش
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

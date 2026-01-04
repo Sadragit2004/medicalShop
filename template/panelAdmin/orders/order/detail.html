@@ -1,0 +1,443 @@
+{% extends '../../base/base.html' %}
+
+{% load static %}
+
+{% block title %}جزئیات سفارش - {{ order.orderCode }}{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_order_list' %}">سفارشات</a></li>
+<li class="breadcrumb-item active">سفارش {{ order.orderCode }}</li>
+{% endblock %}
+
+{% block page_title %}جزئیات سفارش: {{ order.orderCode }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- اطلاعات اصلی سفارش -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-shopping-cart"></i> اطلاعات سفارش
+                    </h5>
+                    <div>
+                        <span class="badge bg-light text-dark">
+                            <i class="fas fa-calendar"></i> {{ order.registerDate|date:"Y/m/d" }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">کد سفارش:</th>
+                                <td>
+                                    <strong class="text-primary">{{ order.orderCode }}</strong>
+                                    {% if order.isFinally %}
+                                    <span class="badge bg-success ms-2">نهایی</span>
+                                    {% else %}
+                                    <span class="badge bg-warning ms-2">پیش‌نویس</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>مشتری:</th>
+                                <td>
+                                    <div>
+                                        <strong>{{ order.customer.mobileNumber }}</strong>
+                                        {% if order.customer.name or order.customer.family %}
+                                        <br>
+                                        <small>{{ order.customer.name|default:"" }} {{ order.customer.family|default:"" }}</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>ایمیل:</th>
+                                <td>{{ order.customer.email|default:"ثبت نشده" }}</td>
+                            </tr>
+                            <tr>
+                                <th>تاریخ ثبت:</th>
+                                <td>{{ order.registerDate|date:"Y/m/d H:i" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">وضعیت:</th>
+                                <td>
+                                    <form method="post" action="{% url 'panelAdmin:admin_update_order_status' order.id %}"
+                                          class="d-inline-block" style="min-width: 200px;">
+                                        {% csrf_token %}
+                                        <div class="input-group input-group-sm">
+                                            <select name="status" class="form-select" onchange="this.form.submit()">
+                                                {% for code, name in status_choices %}
+                                                <option value="{{ code }}"
+                                                        {% if order.status == code %}selected{% endif %}>
+                                                    {{ name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                            <button type="submit" class="btn btn-outline-primary">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </button>
+                                        </div>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>آدرس ارسال:</th>
+                                <td>
+                                    {% if order.address %}
+                                    <div class="address-box">
+                                        <strong>{{ order.address.state.name }} - {{ order.address.city.name }}</strong>
+                                        <p class="mb-0 text-muted small">{{ order.address.addressDetail }}</p>
+                                        {% if order.address.postalCode %}
+                                        <small class="text-muted">کد پستی: {{ order.address.postalCode }}</small>
+                                        {% endif %}
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">آدرس ثبت نشده</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>آخرین ویرایش:</th>
+                                <td>{{ order.updateDate|date:"Y/m/d H:i" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- توضیحات -->
+                {% if order.description %}
+                <div class="mt-3">
+                    <h6><i class="fas fa-comment"></i> توضیحات:</h6>
+                    <div class="alert alert-light border">
+                        {{ order.description|linebreaks }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- محصولات سفارش -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-boxes"></i> محصولات سفارش
+                    </h5>
+                    <a href="{% url 'panelAdmin:admin_add_order_item' order.id %}"
+                       class="btn btn-light btn-sm">
+                        <i class="fas fa-plus"></i> افزودن محصول
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>محصول</th>
+                                <th>برند</th>
+                                <th>تعداد</th>
+                                <th>قیمت واحد</th>
+                                <th>قیمت کل</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order_details %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <div>
+                                        <strong>{{ item.product.title }}</strong>
+                                        {% if item.selectedOptions %}
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="fas fa-cog"></i> {{ item.selectedOptions }}
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if item.brand %}
+                                    <span class="badge bg-secondary">{{ item.brand.title }}</span>
+                                    {% else %}
+                                    <span class="text-muted">بدون برند</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary rounded-pill">{{ item.qty }}</span>
+                                </td>
+                                <td>
+                                    {{ item.price|floatformat:0 }} تومان
+                                </td>
+                                <td>
+                                    <strong>{{ item.getTotalPrice|floatformat:0 }}</strong> تومان
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'panelAdmin:admin_update_order_item' item.id %}"
+                                           class="btn btn-outline-warning" title="ویرایش">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="post" action="{% url 'panelAdmin:admin_delete_order_item' item.id %}"
+                                              class="d-inline" onsubmit="return confirm('حذف این محصول از سفارش؟')">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-danger" title="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-box-open fa-3x mb-3"></i>
+                                        <h5>هیچ محصولی در این سفارش وجود ندارد</h5>
+                                        <a href="{% url 'panelAdmin:admin_add_order_item' order.id %}"
+                                           class="btn btn-primary mt-2">
+                                            <i class="fas fa-plus"></i> افزودن اولین محصول
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- سایدبار (اطلاعات مالی و عملیات) -->
+    <div class="col-lg-4">
+        <!-- خلاصه مالی -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-calculator"></i> خلاصه مالی</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>قیمت کل محصولات:</th>
+                        <td class="text-end">{{ total_price|floatformat:0 }} تومان</td>
+                    </tr>
+                    <tr>
+                        <th>تخفیف:</th>
+                        <td class="text-end">
+                            {% if order.discount > 0 %}
+                            <span class="text-danger">
+                                {{ order.discount }}% ({{ discount_amount|floatformat:0 }} تومان)
+                            </span>
+                            {% else %}
+                            <span class="text-muted">ندارد</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr class="table-active">
+                        <th><strong>قیمت نهایی:</strong></th>
+                        <td class="text-end">
+                            <strong class="text-success fs-5">{{ final_price|floatformat:0 }} تومان</strong>
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="text-center mt-3">
+                    {% if order.discount > 0 %}
+                    <div class="alert alert-warning py-2">
+                        <small>
+                            <i class="fas fa-percentage"></i>
+                            {{ order.discount }}% تخفیف اعمال شده
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- عملیات سریع -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt"></i> عملیات سریع</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'panelAdmin:admin_order_update' order.id %}"
+                       class="btn btn-warning">
+                        <i class="fas fa-edit"></i> ویرایش سفارش
+                    </a>
+
+                    <form method="post" action="{% url 'panelAdmin:admin_toggle_order_final' order.id %}"
+                          class="d-grid">
+                        {% csrf_token %}
+                        {% if order.isFinally %}
+                        <button type="submit" class="btn btn-outline-warning">
+                            <i class="fas fa-undo"></i> بازگشت به پیش‌نویس
+                        </button>
+                        {% else %}
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check"></i> نهایی کردن سفارش
+                        </button>
+                        {% endif %}
+                    </form>
+
+                    <a href="{% url 'panelAdmin:admin_add_order_item' order.id %}"
+                       class="btn btn-outline-success">
+                        <i class="fas fa-plus"></i> افزودن محصول
+                    </a>
+
+                    <a href="{% url 'panelAdmin:admin_order_list' %}"
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-right"></i> بازگشت به لیست
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- آمار سفارش -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> آمار سفارش</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="stat-card bg-light p-3 rounded">
+                            <h4 class="mb-0 text-primary">{{ order_details|length }}</h4>
+                            <small class="text-muted">تعداد محصولات</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="stat-card bg-light p-3 rounded">
+                            {% with total_items=0 %}
+                                {% for item in order_details %}
+                                    {% with total_items=total_items|add:item.qty %}
+                                    {% endwith %}
+                                {% endfor %}
+                                <h4 class="mb-0 text-success">{{ total_items }}</h4>
+                            {% endwith %}
+                            <small class="text-muted">تعداد کل اقلام</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <small class="text-muted d-block">
+                        <i class="fas fa-clock"></i> زمان ثبت: {{ order.registerDate|timesince }}
+                    </small>
+                    <small class="text-muted d-block mt-1">
+                        <i class="fas fa-history"></i> آخرین ویرایش: {{ order.updateDate|timesince }}
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- اطلاعات اضافی -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> اطلاعات اضافی</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-user text-primary me-2"></i>
+                        <strong>شناسه کاربر:</strong> {{ order.customer.id }}
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-hashtag text-primary me-2"></i>
+                        <strong>شناسه سفارش:</strong> {{ order.id }}
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-cube text-primary me-2"></i>
+                        <strong>تعداد آیتم‌ها:</strong> {{ order.details.count }}
+                    </li>
+                    {% if order.address %}
+                    <li>
+                        <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                        <strong>موقعیت:</strong>
+                        {{ order.address.city.state.name }} → {{ order.address.city.name }}
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- دکمه حذف در انتها -->
+<div class="mt-4 text-end">
+    <a href="{% url 'panelAdmin:admin_order_delete' order.id %}"
+       class="btn btn-danger"
+       onclick="return confirm('آیا از حذف سفارش {{ order.orderCode }} اطمینان دارید؟')">
+        <i class="fas fa-trash"></i> حذف سفارش
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // قالب‌بندی اعداد قیمت
+        $('.price-format').each(function() {
+            const price = parseInt($(this).text());
+            if (!isNaN(price)) {
+                $(this).text(price.toLocaleString('fa-IR'));
+            }
+        });
+
+        // تایید تغییر وضعیت نهایی
+        $('form[action*="toggle-final"]').submit(function(e) {
+            const action = $(this).find('button').text().includes('نهایی') ? 'نهایی' : 'پیش‌نویس';
+            return confirm(`آیا می‌خواهید سفارش را ${action} کنید؟`);
+        });
+
+        // نمایش تاریخ به صورت زیبا
+        $('.time-format').each(function() {
+            const date = new Date($(this).data('timestamp'));
+            $(this).text(date.toLocaleString('fa-IR'));
+        });
+    });
+</script>
+
+<style>
+    .address-box {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 10px;
+        border-right: 3px solid #4361ee;
+    }
+
+    .stat-card {
+        transition: all 0.3s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .badge {
+        font-weight: 500;
+    }
+
+    .table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+    }
+</style>
+{% endblock %}

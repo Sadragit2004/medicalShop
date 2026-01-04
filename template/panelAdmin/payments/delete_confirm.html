@@ -1,0 +1,117 @@
+<!-- templates/panelAdmin/payment/delete_confirm.html -->
+{% extends 'panelAdmin/base/base.html' %}
+{% load humanize %}
+{% block title %}حذف پرداخت - {{ payment.refId|default:payment.id }}{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_payment_list' %}">پرداخت‌ها</a></li>
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_payment_detail' payment.id %}">جزئیات پرداخت</a></li>
+<li class="breadcrumb-item active">تأیید حذف</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-trash"></i> تأیید حذف پرداخت
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-6 mx-auto">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>هشدار حذف پرداخت
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- اطلاعات پرداخت -->
+                <div class="alert alert-danger">
+                    <h6 class="alert-heading">آیا از حذف این پرداخت اطمینان دارید؟</h6>
+                    <p class="mb-0">این عملیات غیرقابل بازگشت است!</p>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th width="40%">کد پیگیری</th>
+                            <td>{{ payment.refId|default:"بدون کد پیگیری" }}</td>
+                        </tr>
+                        <tr>
+                            <th>سفارش مرتبط</th>
+                            <td>{{ payment.order.orderCode }}</td>
+                        </tr>
+                        <tr>
+                            <th>مشتری</th>
+                            <td>{{ payment.customer.name }} {{ payment.customer.family }}</td>
+                        </tr>
+                        <tr>
+                            <th>مبلغ</th>
+                            <td class="text-danger">{{ payment.amount|floatformat:0|intcomma }} تومان</td>
+                        </tr>
+                        <tr>
+                            <th>وضعیت</th>
+                            <td>
+                                {% if payment.isFinaly %}
+                                <span class="badge bg-success">موفق</span>
+                                {% else %}
+                                <span class="badge bg-danger">ناموفق</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>تاریخ ایجاد</th>
+                            <td>{{ payment.createAt|date:"Y/m/d H:i" }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- تأثیرات حذف -->
+                {% if payment.isFinaly %}
+                <div class="alert alert-warning mt-3">
+                    <h6 class="alert-heading"><i class="fas fa-exclamation-circle me-2"></i>تأثیرات حذف این پرداخت:</h6>
+                    <ul class="mb-0">
+                        <li>وضعیت سفارش <strong>{{ payment.order.orderCode }}</strong> از "در حال پردازش" به "در انتظار پرداخت" تغییر خواهد کرد</li>
+                        <li>اطلاعات مالی گزارش‌ها تحت تأثیر قرار خواهد گرفت</li>
+                        <li>این پرداخت از همه گزارش‌ها حذف می‌شود</li>
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- فرم حذف -->
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'panelAdmin:admin_payment_detail' payment.id %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>انصراف و بازگشت
+                        </a>
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('آیا مطمئن هستید؟ این عمل غیرقابل بازگشت است.')">
+                            <i class="fas fa-trash me-2"></i>حذف پرداخت
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- راهنما -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>راهکار جایگزین
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>اگر قصد حذف کامل پرداخت را ندارید، می‌توانید:</p>
+                <ol>
+                    <li>وضعیت پرداخت را به "ناموفق" تغییر دهید (در صورت موفق بودن فعلی)</li>
+                    <li>توضیحات را ویرایش کرده و دلیل عدم ثبت صحیح را ذکر کنید</li>
+                    <li>مبلغ پرداخت را به صفر تغییر دهید (در صورتی که پرداخت تستی بوده)</li>
+                </ol>
+                <div class="text-center mt-3">
+                    <a href="{% url 'panelAdmin:admin_payment_update' payment.id %}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit me-2"></i>ویرایش پرداخت به جای حذف
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

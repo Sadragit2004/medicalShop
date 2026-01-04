@@ -7,6 +7,7 @@ from django.db.models import Q, Sum, Count, F
 from django.http import JsonResponse
 from django.utils import timezone
 from datetime import datetime, timedelta
+import uuid  # اضافه شده
 from apps.order.models import (
     State, City, UserAddress,
     Order, OrderDetail, CustomUser, Product, Brand
@@ -32,7 +33,7 @@ def state_list(request):
             Q(center__icontains=search_query)
         )
 
-    return render(request, 'panelAdmin/order/state/list.html', {
+    return render(request, 'panelAdmin/orders/state/list.html', {
         'states': states,
         'search_query': search_query
     })
@@ -48,11 +49,11 @@ def state_create(request):
                 lng=request.POST.get('lng') if request.POST.get('lng') else None
             )
             messages.success(request, f'استان {state.name} با موفقیت ایجاد شد')
-            return redirect('admin_state_list')
+            return redirect('panelAdmin:admin_state_list')
         except Exception as e:
             messages.error(request, f'خطا در ایجاد استان: {str(e)}')
 
-    return render(request, 'panelAdmin/order/state/create.html')
+    return render(request, 'panelAdmin/orders/state/create.html')
 
 def state_update(request, state_id):
     """ویرایش استان"""
@@ -67,11 +68,11 @@ def state_update(request, state_id):
             state.save()
 
             messages.success(request, 'استان با موفقیت ویرایش شد')
-            return redirect('admin_state_list')
+            return redirect('panelAdmin:admin_state_list')
         except Exception as e:
             messages.error(request, f'خطا در ویرایش استان: {str(e)}')
 
-    return render(request, 'panelAdmin/order/state/update.html', {'state': state})
+    return render(request, 'panelAdmin/orders/state/update.html', {'state': state})
 
 def state_delete(request, state_id):
     """حذف استان"""
@@ -82,11 +83,11 @@ def state_delete(request, state_id):
             state_name = state.name
             state.delete()
             messages.success(request, f'استان {state_name} با موفقیت حذف شد')
-            return redirect('admin_state_list')
+            return redirect('panelAdmin:admin_state_list')
         except Exception as e:
             messages.error(request, f'خطا در حذف استان: {str(e)}')
 
-    return render(request, 'panelAdmin/order/state/delete_confirm.html', {'state': state})
+    return render(request, 'panelAdmin/orders/state/delete_confirm.html', {'state': state})
 
 def city_list(request, state_id=None):
     """لیست شهرها"""
@@ -110,7 +111,12 @@ def city_list(request, state_id=None):
         address_count=Count('useraddress', distinct=True)
     )
 
-    return render(request, 'panelAdmin/order/city/list.html', {
+    # تعیین نام تمپلیت بر اساس اینکه آیا state_id داریم یا نه
+    template_name = 'panelAdmin/orders/city/list.html'
+    if state_id:
+        template_name = 'panelAdmin/orders/city/list_by_state.html'
+
+    return render(request, template_name, {
         'cities': cities,
         'state': state,
         'search_query': search_query
@@ -122,7 +128,13 @@ def city_create(request, state_id=None):
 
     if request.method == 'POST':
         try:
-            state = get_object_or_404(State, id=request.POST.get('state'))
+            # استفاده از state_id از URL اگر وجود داشته باشد، در غیر این صورت از فرم
+            selected_state_id = state_id or request.POST.get('state')
+            if not selected_state_id:
+                messages.error(request, 'استان باید انتخاب شود')
+                return redirect('panelAdmin:admin_city_create')
+
+            state = get_object_or_404(State, id=selected_state_id)
             city = City.objects.create(
                 state=state,
                 name=request.POST.get('name'),
@@ -132,12 +144,12 @@ def city_create(request, state_id=None):
             messages.success(request, f'شهر {city.name} با موفقیت ایجاد شد')
 
             if state_id:
-                return redirect('admin_city_list', state_id=state_id)
-            return redirect('admin_city_list')
+                return redirect('panelAdmin:admin_state_city_list', state_id=state_id)
+            return redirect('panelAdmin:admin_city_list')
         except Exception as e:
             messages.error(request, f'خطا در ایجاد شهر: {str(e)}')
 
-    return render(request, 'panelAdmin/order/city/create.html', {
+    return render(request, 'panelAdmin/orders/city/create.html', {
         'states': states,
         'selected_state_id': state_id
     })
@@ -156,11 +168,11 @@ def city_update(request, city_id):
             city.save()
 
             messages.success(request, 'شهر با موفقیت ویرایش شد')
-            return redirect('admin_city_list')
+            return redirect('panelAdmin:admin_city_list')
         except Exception as e:
             messages.error(request, f'خطا در ویرایش شهر: {str(e)}')
 
-    return render(request, 'panelAdmin/order/city/update.html', {
+    return render(request, 'panelAdmin/orders/city/update.html', {
         'city': city,
         'states': states
     })
@@ -175,11 +187,11 @@ def city_delete(request, city_id):
             state_id = city.state.id
             city.delete()
             messages.success(request, f'شهر {city_name} با موفقیت حذف شد')
-            return redirect('admin_city_list', state_id=state_id)
+            return redirect('panelAdmin:admin_city_list')
         except Exception as e:
             messages.error(request, f'خطا در حذف شهر: {str(e)}')
 
-    return render(request, 'panelAdmin/order/city/delete_confirm.html', {'city': city})
+    return render(request, 'panelAdmin/orders/city/delete_confirm.html', {'city': city})
 
 
 # ========================
@@ -224,7 +236,7 @@ def user_address_list(request):
     states = State.objects.all()
     cities = City.objects.all()
 
-    return render(request, 'panelAdmin/order/address/list.html', {
+    return render(request, 'panelAdmin/orders/address/list.html', {
         'page_obj': page_obj,
         'users': users,
         'states': states,
@@ -242,7 +254,7 @@ def user_address_detail(request, address_id):
         id=address_id
     )
 
-    return render(request, 'panelAdmin/order/address/detail.html', {'address': address})
+    return render(request, 'panelAdmin/orders/address/detail.html', {'address': address})
 
 def user_address_delete(request, address_id):
     """حذف آدرس کاربر"""
@@ -253,20 +265,21 @@ def user_address_delete(request, address_id):
             user_info = f"{address.user.mobileNumber} - {address.city.name}"
             address.delete()
             messages.success(request, f'آدرس کاربر {user_info} با موفقیت حذف شد')
-            return redirect('admin_user_address_list')
+            return redirect('panelAdmin:admin_user_address_list')
         except Exception as e:
             messages.error(request, f'خطا در حذف آدرس: {str(e)}')
 
-    return render(request, 'panelAdmin/order/address/delete_confirm.html', {'address': address})
+    return render(request, 'panelAdmin/orders/address/delete_confirm.html', {'address': address})
 
 
 # ========================
 # ORDER CRUD
 # ========================
-
 def order_list(request):
     """لیست سفارشات"""
-    orders = Order.objects.select_related('customer', 'address__city__state').all()
+    orders = Order.objects.select_related(
+        'customer', 'address__city__state'
+    ).all()
 
     # فیلتر بر اساس وضعیت
     status = request.GET.get('status')
@@ -285,21 +298,36 @@ def order_list(request):
     if user_id:
         orders = orders.filter(customer_id=user_id)
 
+    # فیلتر بر اساس استان
+    state_id = request.GET.get('state')
+    if state_id:
+        orders = orders.filter(address__city__state_id=state_id)
+
+    # فیلتر بر اساس شهر
+    city_id = request.GET.get('city')
+    if city_id:
+        orders = orders.filter(address__city_id=city_id)
+
     # فیلتر بر اساس تاریخ
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
     if date_from:
         try:
-            date_from = datetime.strptime(date_from, '%Y-%m-%d')
-            orders = orders.filter(registerDate__date__gte=date_from)
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d')
+            orders = orders.filter(registerDate__date__gte=date_from_obj)
         except:
-            pass
+            date_from_obj = None
+    else:
+        date_from_obj = None
+
     if date_to:
         try:
-            date_to = datetime.strptime(date_to, '%Y-%m-%d')
-            orders = orders.filter(registerDate__date__lte=date_to)
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d')
+            orders = orders.filter(registerDate__date__lte=date_to_obj)
         except:
-            pass
+            date_to_obj = None
+    else:
+        date_to_obj = None
 
     # فیلتر بر اساس جستجو
     search_query = request.GET.get('search', '')
@@ -309,10 +337,12 @@ def order_list(request):
             Q(customer__mobileNumber__icontains=search_query) |
             Q(customer__name__icontains=search_query) |
             Q(customer__family__icontains=search_query) |
-            Q(address__addressDetail__icontains=search_query)
+            Q(address__addressDetail__icontains=search_query) |
+            Q(address__city__name__icontains=search_query) |  # جستجوی نام شهر
+            Q(address__city__state__name__icontains=search_query)  # جستجوی نام استان
         )
 
-    # محاسبه قیمت‌ها
+    # محاسبه قیمت‌ها و تعداد آیتم‌ها
     for order in orders:
         order.total_price = order.getTotalPrice()
         order.final_price = order.getFinalPrice()
@@ -333,22 +363,39 @@ def order_list(request):
     page_obj = paginator.get_page(page_number)
 
     users = CustomUser.objects.all()
+    states = State.objects.all()
 
-    return render(request, 'panelAdmin/order/order/list.html', {
+    # دریافت شهرهای مربوط به استان انتخاب شده
+    cities = City.objects.all()
+    if state_id:
+        cities = cities.filter(state_id=state_id)
+
+    return render(request, 'panelAdmin/orders/order/list.html', {
         'page_obj': page_obj,
         'users': users,
+        'states': states,
+        'cities': cities,
         'status_choices': Order.STATUS_CHOICES,
         'selected_status': status,
         'selected_user': user_id,
+        'selected_state': state_id,
+        'selected_city': city_id,
         'selected_is_finally': is_finally,
         'search_query': search_query,
-        'date_from': date_from.strftime('%Y-%m-%d') if isinstance(date_from, datetime) else date_from,
-        'date_to': date_to.strftime('%Y-%m-%d') if isinstance(date_to, datetime) else date_to,
+        'date_from': date_from_obj.strftime('%Y-%m-%d') if date_from_obj else '',
+        'date_to': date_to_obj.strftime('%Y-%m-%d') if date_to_obj else '',
         'sort_by': sort_by
     })
 
 def order_detail(request, order_id):
     """مشاهده جزئیات سفارش"""
+    # تبدیل order_id به UUID اگر لازم است
+    try:
+        if isinstance(order_id, str):
+            order_id = uuid.UUID(order_id)
+    except (ValueError, AttributeError):
+        pass
+
     order = get_object_or_404(
         Order.objects.select_related('customer', 'address__city__state')
         .prefetch_related('details__product', 'details__brand'),
@@ -362,7 +409,7 @@ def order_detail(request, order_id):
     final_price = order.getFinalPrice()
     discount_amount = total_price - final_price if order.discount else 0
 
-    return render(request, 'panelAdmin/order/order/detail.html', {
+    return render(request, 'panelAdmin/orders/order/detail.html', {
         'order': order,
         'order_details': order_details,
         'total_price': total_price,
@@ -410,12 +457,12 @@ def order_create(request):
                         )
 
                 messages.success(request, f'سفارش {order.orderCode} با موفقیت ایجاد شد')
-                return redirect('admin_order_detail', order_id=order.id)
+                return redirect('panelAdmin:admin_order_detail', order_id=order.id)
 
         except Exception as e:
             messages.error(request, f'خطا در ایجاد سفارش: {str(e)}')
 
-    return render(request, 'panelAdmin/order/order/create.html', {
+    return render(request, 'panelAdmin/orders/order/create.html', {
         'users': users,
         'products': products,
         'addresses': addresses
@@ -423,6 +470,13 @@ def order_create(request):
 
 def order_update(request, order_id):
     """ویرایش سفارش"""
+    # تبدیل order_id به UUID اگر لازم است
+    try:
+        if isinstance(order_id, str):
+            order_id = uuid.UUID(order_id)
+    except (ValueError, AttributeError):
+        pass
+
     order = get_object_or_404(
         Order.objects.select_related('customer', 'address')
         .prefetch_related('details__product'),
@@ -479,12 +533,12 @@ def order_update(request, order_id):
                             )
 
                 messages.success(request, 'سفارش با موفقیت ویرایش شد')
-                return redirect('admin_order_detail', order_id=order.id)
+                return redirect('panelAdmin:admin_order_detail', order_id=order.id)
 
         except Exception as e:
             messages.error(request, f'خطا در ویرایش سفارش: {str(e)}')
 
-    return render(request, 'panelAdmin/order/order/update.html', {
+    return render(request, 'panelAdmin/orders/order/update.html', {
         'order': order,
         'users': users,
         'addresses': addresses,
@@ -494,6 +548,13 @@ def order_update(request, order_id):
 
 def order_delete(request, order_id):
     """حذف سفارش"""
+    # تبدیل order_id به UUID اگر لازم است
+    try:
+        if isinstance(order_id, str):
+            order_id = uuid.UUID(order_id)
+    except (ValueError, AttributeError):
+        pass
+
     order = get_object_or_404(Order, id=order_id)
 
     if request.method == 'POST':
@@ -501,14 +562,21 @@ def order_delete(request, order_id):
             order_code = str(order.orderCode)
             order.delete()
             messages.success(request, f'سفارش {order_code} با موفقیت حذف شد')
-            return redirect('admin_order_list')
+            return redirect('panelAdmin:admin_order_list')
         except Exception as e:
             messages.error(request, f'خطا در حذف سفارش: {str(e)}')
 
-    return render(request, 'panelAdmin/order/order/delete_confirm.html', {'order': order})
+    return render(request, 'panelAdmin/orders/order/delete_confirm.html', {'order': order})
 
 def update_order_status(request, order_id):
     """تغییر وضعیت سفارش"""
+    # تبدیل order_id به UUID اگر لازم است
+    try:
+        if isinstance(order_id, str):
+            order_id = uuid.UUID(order_id)
+    except (ValueError, AttributeError):
+        pass
+
     order = get_object_or_404(Order, id=order_id)
 
     if request.method == 'POST':
@@ -526,10 +594,17 @@ def update_order_status(request, order_id):
         except Exception as e:
             messages.error(request, f'خطا در تغییر وضعیت سفارش: {str(e)}')
 
-    return redirect('admin_order_detail', order_id=order.id)
+    return redirect('panelAdmin:admin_order_detail', order_id=order.id)
 
 def toggle_order_final(request, order_id):
     """تغییر وضعیت نهایی بودن سفارش"""
+    # تبدیل order_id به UUID اگر لازم است
+    try:
+        if isinstance(order_id, str):
+            order_id = uuid.UUID(order_id)
+    except (ValueError, AttributeError):
+        pass
+
     order = get_object_or_404(Order, id=order_id)
 
     if request.method == 'POST':
@@ -542,7 +617,7 @@ def toggle_order_final(request, order_id):
         except Exception as e:
             messages.error(request, f'خطا در تغییر وضعیت سفارش: {str(e)}')
 
-    return redirect('admin_order_detail', order_id=order.id)
+    return redirect('panelAdmin:admin_order_detail', order_id=order.id)
 
 
 # ========================
@@ -551,6 +626,13 @@ def toggle_order_final(request, order_id):
 
 def add_order_item(request, order_id):
     """اضافه کردن آیتم به سفارش"""
+    # تبدیل order_id به UUID اگر لازم است
+    try:
+        if isinstance(order_id, str):
+            order_id = uuid.UUID(order_id)
+    except (ValueError, AttributeError):
+        pass
+
     order = get_object_or_404(Order, id=order_id)
     products = Product.objects.filter(isActive=True)
 
@@ -568,12 +650,12 @@ def add_order_item(request, order_id):
             )
 
             messages.success(request, 'محصول با موفقیت به سفارش اضافه شد')
-            return redirect('admin_order_detail', order_id=order.id)
+            return redirect('panelAdmin:admin_order_detail', order_id=order.id)
 
         except Exception as e:
             messages.error(request, f'خطا در اضافه کردن محصول: {str(e)}')
 
-    return render(request, 'panelAdmin/order/order/add_item.html', {
+    return render(request, 'panelAdmin/orders/order/add_item.html', {
         'order': order,
         'products': products
     })
@@ -590,14 +672,14 @@ def update_order_item(request, item_id):
             order_item.save()
 
             messages.success(request, 'آیتم سفارش با موفقیت ویرایش شد')
-            return redirect('admin_order_detail', order_id=order_item.order.id)
+            return redirect('panelAdmin:admin_order_detail', order_id=order_item.order.id)
 
         except Exception as e:
             messages.error(request, f'خطا در ویرایش آیتم سفارش: {str(e)}')
 
     products = Product.objects.filter(isActive=True)
 
-    return render(request, 'panelAdmin/order/order/update_item.html', {
+    return render(request, 'panelAdmin/orders/order/update_item.html', {
         'order_item': order_item,
         'products': products
     })
@@ -614,7 +696,7 @@ def delete_order_item(request, item_id):
         except Exception as e:
             messages.error(request, f'خطا در حذف آیتم: {str(e)}')
 
-    return redirect('admin_order_detail', order_id=order_id)
+    return redirect('panelAdmin:admin_order_detail', order_id=order_id)
 
 
 # ========================
@@ -660,7 +742,6 @@ def get_product_price(request):
 # ========================
 # REPORT VIEWS
 # ========================
-
 def order_report(request):
     """گزارش سفارشات"""
     # تاریخ‌های پیش‌فرض (30 روز اخیر)
@@ -690,10 +771,14 @@ def order_report(request):
 
     # آمار کلی
     total_orders = orders.count()
-    total_revenue = sum(order.getFinalPrice() for order in orders)
-    total_items = OrderDetail.objects.filter(
+
+    # محاسبه درآمد کل از OrderDetail
+    order_details_in_period = OrderDetail.objects.filter(
         order__registerDate__date__range=[start_date, end_date]
-    ).aggregate(Sum('qty'))['qty__sum'] or 0
+    )
+    total_revenue = sum(item.price * item.qty for item in order_details_in_period)
+
+    total_items = order_details_in_period.aggregate(Sum('qty'))['qty__sum'] or 0
 
     # آمار بر اساس وضعیت
     status_stats = {}
@@ -711,11 +796,16 @@ def order_report(request):
     while current_date <= end_date:
         day_orders = orders.filter(registerDate__date=current_date)
         day_count = day_orders.count()
-        day_revenue = sum(order.getFinalPrice() for order in day_orders)
+
+        # محاسبه درآمد روزانه
+        day_order_details = OrderDetail.objects.filter(
+            order__registerDate__date=current_date
+        )
+        day_revenue = sum(item.price * item.qty for item in day_order_details)
 
         daily_stats.append({
             'date': current_date.strftime('%Y-%m-%d'),
-            'date_jalali': utils.to_jalali(current_date),
+            'date_display': current_date.strftime('%d/%m/%Y'),
             'order_count': day_count,
             'revenue': day_revenue
         })
@@ -725,31 +815,74 @@ def order_report(request):
     # محصولات پرفروش
     top_products = OrderDetail.objects.filter(
         order__registerDate__date__range=[start_date, end_date]
-    ).values('product__title').annotate(
+    ).values(
+        'product__title',
+        'product__id'
+    ).annotate(
         total_qty=Sum('qty'),
         total_revenue=Sum(F('price') * F('qty'))
     ).order_by('-total_qty')[:10]
 
-    # کاربران فعال
-    top_customers = orders.values('customer__mobileNumber', 'customer__name', 'customer__family').annotate(
-        order_count=Count('id'),
-        total_spent=Sum('price')
-    ).order_by('-order_count')[:10]
+    # کاربران فعال - با محاسبه مجموع خرید از OrderDetail
+    top_customers_data = []
+    customers = orders.values(
+        'customer__id',
+        'customer__mobileNumber',
+        'customer__name',
+        'customer__family'
+    ).distinct()
+
+    for customer in customers:
+        customer_orders = orders.filter(customer_id=customer['customer__id'])
+        order_count = customer_orders.count()
+
+        # محاسبه مجموع خرید از OrderDetail
+        customer_order_details = OrderDetail.objects.filter(
+            order__customer_id=customer['customer__id'],
+            order__registerDate__date__range=[start_date, end_date]
+        )
+        total_spent = sum(item.price * item.qty for item in customer_order_details)
+
+        if order_count > 0:
+            top_customers_data.append({
+                'id': customer['customer__id'],
+                'mobileNumber': customer['customer__mobileNumber'],
+                'name': customer['customer__name'],
+                'family': customer['customer__family'],
+                'order_count': order_count,
+                'total_spent': total_spent
+            })
+
+    # مرتب‌سازی بر اساس تعداد سفارش
+    top_customers = sorted(top_customers_data, key=lambda x: x['order_count'], reverse=True)[:10]
+
+    # وضعیت‌های سفارش برای نمودار
+    status_data = []
+    colors = ['#4361ee', '#4cc9f0', '#f72585', '#7209b7', '#3a0ca3', '#f8961e']
+    for i, (status_code, status_name) in enumerate(Order.STATUS_CHOICES):
+        count = orders.filter(status=status_code).count()
+        status_data.append({
+            'name': status_name,
+            'count': count,
+            'color': colors[i % len(colors)]
+        })
 
     context = {
         # تاریخ‌ها
         'start_date': start_date.strftime('%Y-%m-%d'),
         'end_date': end_date.strftime('%Y-%m-%d'),
-        'start_date_jalali': utils.to_jalali(start_date),
-        'end_date_jalali': utils.to_jalali(end_date),
+        'start_date_display': start_date.strftime('%d/%m/%Y'),
+        'end_date_display': end_date.strftime('%d/%m/%Y'),
 
         # آمار کلی
         'total_orders': total_orders,
         'total_revenue': total_revenue,
         'total_items': total_items,
+        'avg_order_value': round(total_revenue / total_orders, 2) if total_orders > 0 else 0,
 
         # آمار وضعیت
         'status_stats': status_stats,
+        'status_data': status_data,
 
         # آمار روزانه
         'daily_stats': daily_stats,
@@ -769,4 +902,17 @@ def order_report(request):
         ]
     }
 
-    return render(request, 'panelAdmin/order/report.html', context)
+    return render(request, 'panelAdmin/orders/report.html', context)
+
+
+
+
+# در order_views.py اضافه کنید
+
+def get_cities_by_state(request):
+    """دریافت شهرهای یک استان"""
+    state_id = request.GET.get('state_id')
+    if state_id:
+        cities = City.objects.filter(state_id=state_id).values('id', 'name')
+        return JsonResponse({'cities': list(cities)})
+    return JsonResponse({'cities': []})

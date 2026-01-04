@@ -1,0 +1,435 @@
+<!-- templates/panelAdmin/payment/list.html -->
+{% extends 'panelAdmin/base/base.html' %}
+{% load humanize %}
+{% block title %}مدیریت پرداخت‌ها{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_payment_list' %}">پرداخت‌ها</a></li>
+<li class="breadcrumb-item active">لیست پرداخت‌ها</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-credit-card"></i> مدیریت پرداخت‌ها
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- آمار کلی -->
+    <div class="col-12">
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card primary">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted">مجموع پرداخت‌ها</h6>
+                                <h3>{{ total_amount|floatformat:0|intcomma }} تومان</h3>
+                            </div>
+                            <div class="avatar-sm rounded-circle bg-primary bg-opacity-10 p-3">
+                                <i class="fas fa-wallet fa-2x text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card success">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted">پرداخت‌های موفق</h6>
+                                <h3>{{ success_amount|floatformat:0|intcomma }} تومان</h3>
+                            </div>
+                            <div class="avatar-sm rounded-circle bg-success bg-opacity-10 p-3">
+                                <i class="fas fa-check-circle fa-2x text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card danger">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted">پرداخت‌های ناموفق</h6>
+                                <h3>{{ failed_amount|floatformat:0|intcomma }} تومان</h3>
+                            </div>
+                            <div class="avatar-sm rounded-circle bg-danger bg-opacity-10 p-3">
+                                <i class="fas fa-times-circle fa-2x text-danger"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card warning">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted">تعداد پرداخت</h6>
+                                <h3>{{ page_obj.paginator.count|intcomma }}</h3>
+                            </div>
+                            <div class="avatar-sm rounded-circle bg-warning bg-opacity-10 p-3">
+                                <i class="fas fa-list fa-2x text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- فیلترها -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-filter me-2"></i>فیلتر و جستجوی پرداخت‌ها
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">وضعیت پرداخت</label>
+                        <select name="status" class="form-select">
+                            <option value="">همه</option>
+                            <option value="success" {% if selected_status == 'success' %}selected{% endif %}>موفق</option>
+                            <option value="failed" {% if selected_status == 'failed' %}selected{% endif %}>ناموفق</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">کاربر</label>
+                        <select name="user" class="form-select">
+                            <option value="">همه کاربران</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}" {% if selected_user == user.id|stringformat:'i' %}selected{% endif %}>
+                                {{ user.name }} {{ user.family }} ({{ user.mobileNumber }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">کد سفارش</label>
+                        <input type="text" name="order_code" class="form-control" placeholder="جستجوی کد سفارش" value="{{ order_code }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">کد پیگیری</label>
+                        <input type="text" name="ref_id" class="form-control" placeholder="جستجوی کد پیگیری" value="{{ ref_id }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">از تاریخ</label>
+                        <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">تا تاریخ</label>
+                        <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">حداقل مبلغ</label>
+                        <input type="number" name="amount_min" class="form-control" placeholder="حداقل مبلغ" value="{{ amount_min }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">حداکثر مبلغ</label>
+                        <input type="number" name="amount_max" class="form-control" placeholder="حداکثر مبلغ" value="{{ amount_max }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">مرتب‌سازی بر اساس</label>
+                        <select name="sort_by" class="form-select">
+                            <option value="-createAt" {% if sort_by == '-createAt' %}selected{% endif %}>جدیدترین</option>
+                            <option value="createAt" {% if sort_by == 'createAt' %}selected{% endif %}>قدیمی‌ترین</option>
+                            <option value="amount" {% if sort_by == 'amount' %}selected{% endif %}>مبلغ (صعودی)</option>
+                            <option value="-amount" {% if sort_by == '-amount' %}selected{% endif %}>مبلغ (نزولی)</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-12">
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-2"></i>اعمال فیلتر
+                            </button>
+                            <a href="{% url 'panelAdmin:admin_payment_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>پاک کردن فیلترها
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- دکمه‌های اکشن -->
+    <div class="col-12 mb-3">
+        <div class="d-flex justify-content-between">
+            <div>
+                <a href="{% url 'panelAdmin:admin_payment_create' %}" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>ایجاد پرداخت جدید
+                </a>
+                <a href="{% url 'panelAdmin:admin_payment_report' %}" class="btn btn-info">
+                    <i class="fas fa-chart-bar me-2"></i>گزارش پرداخت‌ها
+                </a>
+            </div>
+            <div>
+                <button type="button" class="btn btn-success" id="bulkVerifyBtn" disabled>
+                    <i class="fas fa-check-circle me-2"></i>تأیید گروهی
+                </button>
+                <button type="button" class="btn btn-danger" id="bulkDeleteBtn" disabled>
+                    <i class="fas fa-trash me-2"></i>حذف گروهی
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- جدول پرداخت‌ها -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">لیست پرداخت‌ها</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="bulkForm" action="{% url 'panelAdmin:admin_bulk_verify_payments' %}">
+                    {% csrf_token %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th width="50">
+                                        <input type="checkbox" id="selectAll" class="form-check-input">
+                                    </th>
+                                    <th>کد پیگیری</th>
+                                    <th>کد سفارش</th>
+                                    <th>مشتری</th>
+                                    <th>مبلغ</th>
+                                    <th>تاریخ</th>
+                                    <th>وضعیت</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in page_obj %}
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" name="payment_ids" value="{{ payment.id }}" class="form-check-input payment-checkbox">
+                                    </td>
+                                    <td>
+                                        {% if payment.refId %}
+                                        <span class="badge bg-light text-dark">{{ payment.refId }}</span>
+                                        {% else %}
+                                        <span class="text-muted">بدون کد پیگیری</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="#" class="text-decoration-none">
+                                            <span class="badge bg-info">{{ payment.order.orderCode }}</span>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if payment.customer.profile_image %}
+                                            <img src="{{ payment.customer.profile_image.url }}" alt="{{ payment.customer.name }}" class="avatar me-3">
+                                            {% else %}
+                                            <div class="avatar bg-secondary me-3 d-flex align-items-center justify-content-center">
+                                                <i class="fas fa-user text-white"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <h6 class="mb-0">{{ payment.customer.name }} {{ payment.customer.family }}</h6>
+                                                <small class="text-muted">{{ payment.customer.mobileNumber }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <strong>{{ payment.amount|floatformat:0|intcomma }}</strong> تومان
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ payment.jalali_date }}</small>
+                                        <br>
+                                        <small>{{ payment.createAt|date:"H:i" }}</small>
+                                    </td>
+                                    <td>
+                                        {% if payment.isFinaly %}
+                                        <span class="badge bg-success">موفق</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">ناموفق</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="{% url 'panelAdmin:admin_payment_detail' payment.id %}" class="btn btn-sm btn-info" title="مشاهده">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'panelAdmin:admin_payment_update' payment.id %}" class="btn btn-sm btn-warning" title="ویرایش">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'panelAdmin:admin_payment_delete' payment.id %}" class="btn btn-sm btn-danger" title="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                            {% if not payment.isFinaly %}
+                                            <form method="post" action="{% url 'panelAdmin:admin_verify_payment' payment.id %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-success" title="تأیید پرداخت">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-4">
+                                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">هیچ پرداختی یافت نشد</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
+
+                <!-- صفحه‌بندی -->
+                {% if page_obj.has_other_pages %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال تأیید گروهی -->
+<div class="modal fade" id="verifyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تأیید گروهی پرداخت‌ها</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>آیا از تأیید پرداخت‌های انتخابی اطمینان دارید؟</p>
+                <p class="text-muted small">این عملیات وضعیت پرداخت‌ها را به "موفق" تغییر داده و وضعیت سفارش‌های مرتبط را به "در حال پردازش" تغییر می‌دهد.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="submit" form="bulkForm" class="btn btn-success">تأیید پرداخت‌ها</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال حذف گروهی -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">حذف گروهی پرداخت‌ها</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>آیا از حذف پرداخت‌های انتخابی اطمینان دارید؟</p>
+                <p class="text-danger small">این عملیات غیرقابل بازگشت است. وضعیت سفارش‌های مرتبط با پرداخت‌های موفق به "در انتظار پرداخت" تغییر خواهد کرد.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <form method="post" action="{% url 'panelAdmin:admin_bulk_delete_payments' %}" id="bulkDeleteForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="payment_ids" id="bulkDeleteIds">
+                    <button type="submit" class="btn btn-danger">حذف پرداخت‌ها</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // انتخاب همه
+    $('#selectAll').change(function() {
+        $('.payment-checkbox').prop('checked', this.checked);
+        updateBulkButtons();
+    });
+
+    // آپدیت دکمه‌های گروهی
+    function updateBulkButtons() {
+        const checkedCount = $('.payment-checkbox:checked').length;
+        if (checkedCount > 0) {
+            $('#bulkVerifyBtn').prop('disabled', false);
+            $('#bulkDeleteBtn').prop('disabled', false);
+        } else {
+            $('#bulkVerifyBtn').prop('disabled', true);
+            $('#bulkDeleteBtn').prop('disabled', true);
+        }
+    }
+
+    // گوش دادن به تغییرات چک‌باکس‌ها
+    $('.payment-checkbox').change(updateBulkButtons);
+
+    // کلیک بر روی دکمه تأیید گروهی
+    $('#bulkVerifyBtn').click(function() {
+        if ($('.payment-checkbox:checked').length > 0) {
+            $('#verifyModal').modal('show');
+        }
+    });
+
+    // کلیک بر روی دکمه حذف گروهی
+    $('#bulkDeleteBtn').click(function() {
+        const checkedIds = $('.payment-checkbox:checked').map(function() {
+            return this.value;
+        }).get();
+
+        if (checkedIds.length > 0) {
+            $('#bulkDeleteIds').val(checkedIds.join(','));
+            $('#deleteModal').modal('show');
+        }
+    });
+
+    // جستجوی سریع پرداخت‌ها
+    $('input[name="order_code"], input[name="ref_id"]').on('keyup', function(e) {
+        if (e.keyCode === 13) {
+            $(this).closest('form').submit();
+        }
+    });
+});
+</script>
+{% endblock %}

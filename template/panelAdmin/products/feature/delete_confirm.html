@@ -1,0 +1,103 @@
+{% extends '../../base/base.html' %}
+{% load static %}
+
+{% block title %}تأیید حذف ویژگی{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_feature_list' %}">ویژگی‌ها</a></li>
+<li class="breadcrumb-item active">تأیید حذف</li>
+{% endblock %}
+
+{% block page_title %}تأیید حذف ویژگی{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> هشدار حذف</h5>
+    </div>
+    <div class="card-body text-center py-5">
+        <div class="mb-4">
+            <i class="fas fa-trash-alt fa-4x text-danger mb-3"></i>
+            <h4>آیا از حذف این ویژگی اطمینان دارید؟</h4>
+        </div>
+
+        <div class="alert alert-warning text-start mb-4">
+            <h6><i class="fas fa-info-circle"></i> اطلاعات ویژگی:</h6>
+            <ul class="mb-0">
+                <li><strong>عنوان:</strong> {{ feature.title }}</li>
+                <li><strong>تاریخ ایجاد:</strong> {{ feature.createdAt|date:"Y/m/d" }}</li>
+                <li><strong>وضعیت:</strong> {{ feature.isActive|yesno:"فعال,غیرفعال" }}</li>
+                <li><strong>تعداد دسته‌بندی‌ها:</strong> {{ feature.categories.count }}</li>
+                <li><strong>تعداد مقادیر:</strong> {{ feature.featureValues.count }}</li>
+            </ul>
+        </div>
+
+        <div class="alert alert-danger text-start">
+            <h6><i class="fas fa-exclamation-circle"></i> هشدار مهم:</h6>
+            <ul class="mb-0">
+                <li>تمام مقادیر مرتبط با این ویژگی حذف خواهند شد</li>
+                <li>این ویژگی از دسته‌بندی‌های مرتبط حذف می‌شود</li>
+                <li>محصولاتی که از این ویژگی استفاده کرده‌اند، اطلاعات ویژگی را از دست می‌دهند</li>
+                <li>این عملیات قابل بازگشت نیست!</li>
+            </ul>
+        </div>
+
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'panelAdmin:admin_feature_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> انصراف
+                </a>
+                <button type="submit" class="btn btn-danger" onclick="return confirmDelete()">
+                    <i class="fas fa-trash"></i> بله، حذف شود
+                </button>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer text-muted text-center">
+        <small>لطفاً قبل از حذف، از پشتیبان‌گیری اطلاعات اطمینان حاصل کنید</small>
+    </div>
+</div>
+
+<!-- پیشنهاد جایگزین -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-lightbulb text-warning"></i> پیشنهاد جایگزین</h6>
+    </div>
+    <div class="card-body">
+        <p>اگر نمی‌خواهید ویژگی را حذف کنید، می‌توانید:</p>
+        <div class="row">
+            <div class="col-md-4">
+                <a href="{% url 'panelAdmin:admin_feature_update' feature.id %}"
+                   class="btn btn-outline-primary w-100 mb-2">
+                    <i class="fas fa-edit"></i> ویرایش ویژگی
+                </a>
+            </div>
+            <div class="col-md-4">
+                <form method="post" action="{% url 'panelAdmin:admin_feature_update' feature.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="isActive" value="false">
+                    <button type="submit" class="btn btn-outline-warning w-100 mb-2">
+                        <i class="fas fa-ban"></i> غیرفعال کردن
+                    </button>
+                </form>
+            </div>
+            <div class="col-md-4">
+                <a href="{% url 'panelAdmin:admin_feature_list' %}"
+                   class="btn btn-outline-secondary w-100 mb-2">
+                    <i class="fas fa-arrow-right"></i> بازگشت به لیست
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function confirmDelete() {
+        var featureTitle = "{{ feature.title }}";
+        return confirm('آیا مطمئن هستید که می‌خواهید ویژگی "' + featureTitle + '" را حذف کنید؟\n\nاین عملیات قابل بازگشت نیست!');
+    }
+</script>
+{% endblock %}

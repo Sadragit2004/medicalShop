@@ -1,0 +1,349 @@
+{% extends '../../base/base.html' %}
+
+{% load static %}
+
+{% block title %}مدیریت آدرس‌های کاربران{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_dashboard' %}">داشبورد</a></li>
+<li class="breadcrumb-item active">آدرس‌های کاربران</li>
+{% endblock %}
+
+{% block page_title %}مدیریت آدرس‌های کاربران{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-map-marker-alt"></i> آدرس‌های کاربران
+            </h5>
+            <div class="btn-group">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filterModal">
+                    <i class="fas fa-filter"></i> فیلتر
+                </button>
+                <a href="{% url 'panelAdmin:admin_order_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-right"></i> بازگشت
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-body">
+        <!-- آمار -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center py-2">
+                        <h5 class="mb-0">{{ page_obj.paginator.count }}</h5>
+                        <small class="text-muted">تعداد آدرس‌ها</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center py-2">
+                        <h5 class="mb-0">{{ users.count }}</h5>
+                        <small class="text-muted">کاربران دارای آدرس</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center py-2">
+                        <h5 class="mb-0">{{ states.count }}</h5>
+                        <small class="text-muted">استان‌های فعال</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center py-2">
+                        <h5 class="mb-0">{{ cities.count }}</h5>
+                        <small class="text-muted">شهرهای فعال</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- جدول آدرس‌ها -->
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>کاربر</th>
+                        <th>استان</th>
+                        <th>شهر</th>
+                        <th>آدرس دقیق</th>
+                        <th>کد پستی</th>
+                        <th>تاریخ ثبت</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for address in page_obj %}
+                    <tr>
+                        <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm me-2">
+                                    <i class="fas fa-user-circle fa-2x text-primary"></i>
+                                </div>
+                                <div>
+                                    <strong>{{ address.user.mobileNumber }}</strong>
+                                    {% if address.user.name or address.user.family %}
+                                    <br>
+                                    <small>{{ address.user.name|default:"" }} {{ address.user.family|default:"" }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ address.state.name }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ address.city.name }}</span>
+                        </td>
+                        <td>
+                            <div class="address-text">
+                                {{ address.addressDetail|truncatechars:50 }}
+                                {% if address.addressDetail|length > 50 %}
+                                <a href="#" class="text-primary show-more"
+                                   data-full-text="{{ address.addressDetail }}">
+                                    بیشتر
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            {% if address.postalCode %}
+                            <span class="badge bg-light text-dark">{{ address.postalCode }}</span>
+                            {% else %}
+                            <span class="text-muted">ندارد</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ address.createdAt|date:"Y/m/d" }}
+                            <br>
+                            <small class="text-muted">{{ address.createdAt|date:"H:i" }}</small>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'panelAdmin:admin_user_address_detail' address.id %}"
+                                   class="btn btn-outline-primary" title="مشاهده">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'panelAdmin:admin_user_address_delete' address.id %}"
+                                   class="btn btn-outline-danger" title="حذف"
+                                   onclick="return confirm('آیا از حذف این آدرس اطمینان دارید؟')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="fas fa-map-marker-alt fa-3x mb-3"></i>
+                                <h5>هیچ آدرسی یافت نشد</h5>
+                                <p>کاربران هنوز آدرسی ثبت نکرده‌اند</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- صفحه‌بندی -->
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="صفحه‌بندی" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if selected_user %}user={{ selected_user }}&{% endif %}{% if selected_state %}state={{ selected_state }}&{% endif %}{% if selected_city %}city={{ selected_city }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if selected_user %}user={{ selected_user }}&{% endif %}{% if selected_state %}state={{ selected_state }}&{% endif %}{% if selected_city %}city={{ selected_city }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if selected_user %}user={{ selected_user }}&{% endif %}{% if selected_state %}state={{ selected_state }}&{% endif %}{% if selected_city %}city={{ selected_city }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ page_obj.next_page_number }}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+
+    <div class="card-footer text-muted">
+        <div class="row">
+            <div class="col-md-6">
+                نمایش {{ page_obj.start_index }} تا {{ page_obj.end_index }} از {{ page_obj.paginator.count }} آدرس
+            </div>
+            <div class="col-md-6 text-end">
+                <small>آخرین بروزرسانی: {% now "H:i" %}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal فیلتر -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">فیلتر آدرس‌ها</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="get" id="filterForm">
+                    <div class="mb-3">
+                        <label class="form-label">کاربر</label>
+                        <select name="user" class="form-select">
+                            <option value="">همه کاربران</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}" {% if selected_user == user.id|stringformat:"s" %}selected{% endif %}>
+                                {{ user.mobileNumber }} - {{ user.name|default:"" }} {{ user.family|default:"" }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">استان</label>
+                        <select name="state" class="form-select" id="stateSelect">
+                            <option value="">همه استان‌ها</option>
+                            {% for state in states %}
+                            <option value="{{ state.id }}" {% if selected_state == state.id|stringformat:"s" %}selected{% endif %}>
+                                {{ state.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">شهر</label>
+                        <select name="city" class="form-select" id="citySelect">
+                            <option value="">همه شهرها</option>
+                            {% for city in cities %}
+                            <option value="{{ city.id }}" {% if selected_city == city.id|stringformat:"s" %}selected{% endif %}>
+                                {{ city.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">جستجو</label>
+                        <input type="text" name="search" class="form-control"
+                               placeholder="جستجو در آدرس یا کد پستی..."
+                               value="{{ search_query }}">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary" onclick="applyFilters()">اعمال فیلتر</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // نمایش متن کامل آدرس
+        $('.show-more').click(function(e) {
+            e.preventDefault();
+            const fullText = $(this).data('full-text');
+            $(this).parent().html(fullText);
+        });
+
+        // تغییر استان - بروزرسانی لیست شهرها
+        $('#stateSelect').change(function() {
+            const stateId = $(this).val();
+            const $citySelect = $('#citySelect');
+
+            if (stateId) {
+                $.ajax({
+                    url: '{% url "panelAdmin:admin_get_cities_by_state" %}',
+                    data: { state_id: stateId },
+                    success: function(response) {
+                        $citySelect.empty().append('<option value="">همه شهرها</option>');
+
+                        response.cities.forEach(function(city) {
+                            $citySelect.append(
+                                `<option value="${city.id}">${city.name}</option>`
+                            );
+                        });
+                    }
+                });
+            }
+        });
+
+        // اعمال فیلترها
+        function applyFilters() {
+            $('#filterForm').submit();
+        }
+
+        // جستجوی سریع در فیلتر
+        $('input[name="search"]').keypress(function(e) {
+            if (e.which === 13) {
+                applyFilters();
+            }
+        });
+    });
+</script>
+
+<style>
+    .avatar-sm {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .address-text {
+        max-width: 200px;
+        word-wrap: break-word;
+    }
+
+    .show-more {
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+
+    .badge {
+        font-weight: 500;
+    }
+
+    .table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+
+    .card.bg-light {
+        border: 1px solid #dee2e6;
+    }
+</style>
+{% endblock %}

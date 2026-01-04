@@ -1,0 +1,155 @@
+{% extends '../../base/base.html' %}
+
+{% load static %}
+
+{% block title %}تأیید حذف آدرس{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_dashboard' %}">داشبورد</a></li>
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_user_address_list' %}">آدرس‌های کاربران</a></li>
+<li class="breadcrumb-item active">تأیید حذف</li>
+{% endblock %}
+
+{% block page_title %}تأیید حذف آدرس{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> هشدار حذف آدرس
+                </h5>
+            </div>
+
+            <div class="card-body text-center py-4">
+                <div class="warning-icon mb-4">
+                    <i class="fas fa-trash-alt fa-4x text-danger"></i>
+                </div>
+
+                <h4 class="mb-3">آیا از حذف این آدرس اطمینان دارید؟</h4>
+                <p class="text-muted">این عملیات قابل بازگشت نیست!</p>
+
+                <!-- اطلاعات آدرس -->
+                <div class="alert alert-warning text-start mb-4">
+                    <h6><i class="fas fa-info-circle"></i> اطلاعات آدرس:</h6>
+                    <table class="table table-borderless mb-0">
+                        <tr>
+                            <th width="30%">کاربر:</th>
+                            <td>{{ address.user.mobileNumber }}</td>
+                        </tr>
+                        <tr>
+                            <th>آدرس:</th>
+                            <td>{{ address.state.name }} - {{ address.city.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>تاریخ ثبت:</th>
+                            <td>{{ address.createdAt|date:"Y/m/d H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <th>تعداد سفارشات:</th>
+                            <td>{{ address.orders.count }} سفارش</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- پیامدهای حذف -->
+                <div class="alert alert-danger text-start">
+                    <h6><i class="fas fa-exclamation-circle"></i> پیامدهای حذف:</h6>
+                    <ul class="mb-0">
+                        <li>این آدرس از پروفایل کاربر حذف خواهد شد</li>
+                        <li>سفارشات مرتبط با این آدرس نیاز به آدرس جدید دارند</li>
+                        <li>این عملیات در تاریخچه کاربر ثبت می‌شود</li>
+                        <li><strong>این عملیات قابل بازگشت نیست!</strong></li>
+                    </ul>
+                </div>
+
+                <!-- فرم حذف -->
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{% url 'panelAdmin:admin_user_address_detail' address.id %}"
+                           class="btn btn-secondary">
+                            <i class="fas fa-times"></i> انصراف
+                        </a>
+                        <button type="submit" class="btn btn-danger"
+                                onclick="return confirmDelete()">
+                            <i class="fas fa-trash"></i> بله، حذف شود
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card-footer text-center">
+                <small class="text-muted">
+                    <i class="fas fa-lightbulb"></i>
+                    پیشنهاد: بهتر است آدرس جدیدی اضافه کنید سپس این آدرس را حذف نمایید
+                </small>
+            </div>
+        </div>
+
+        <!-- پیشنهاد جایگزین -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-lightbulb text-warning"></i> پیشنهاد جایگزین</h6>
+            </div>
+            <div class="card-body">
+                <p>به جای حذف آدرس، می‌توانید:</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <a href="{% url 'panelAdmin:admin_user_address_detail' address.id %}"
+                           class="btn btn-outline-primary w-100 mb-2">
+                            <i class="fas fa-edit"></i> مشاهده جزئیات
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'panelAdmin:admin_user_address_list' %}"
+                           class="btn btn-outline-secondary w-100 mb-2">
+                            <i class="fas fa-list"></i> بازگشت به لیست
+                        </a>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        اگر این آدرس در سفارشات فعال استفاده شده، حذف آن ممکن است مشکلاتی ایجاد کند
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function confirmDelete() {
+        const userMobile = "{{ address.user.mobileNumber }}";
+        const addressInfo = "{{ address.state.name }} - {{ address.city.name }}";
+        return confirm(`آیا مطمئن هستید که می‌خواهید آدرس ${addressInfo} (کاربر: ${userMobile}) را حذف کنید؟\n\nاین عملیات قابل بازگشت نیست!`);
+    }
+</script>
+
+<style>
+    .warning-icon {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    .alert h6 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn {
+        min-width: 120px;
+    }
+</style>
+{% endblock %}

@@ -1,225 +1,836 @@
 <!-- templates/admin/base/sidebar.html -->
 <aside class="sidebar" id="sidebar">
-    <div class="sidebar-content">
-        <!-- User Info -->
-        <div class="user-info text-center py-3 border-bottom border-secondary">
-            <img src="https://via.placeholder.com/80" class="rounded-circle mb-2" alt="User Avatar">
-            <h6 class="text-white mb-1">
+    <!-- Sidebar Header -->
+    <div class="sidebar-header">
+        <div class="brand-logo">
+            <div class="logo-icon">
+                <i class="fas fa-capsules"></i>
+            </div>
+            <div class="logo-text">
+                <h5 class="mb-0">پنل مدیریت</h5>
+                <small class="text-muted">Medical Shop</small>
+            </div>
+        </div>
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+    <!-- User Profile Card -->
+    <div class="user-profile-card">
+        <div class="profile-avatar">
+            <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.mobileNumber }}&background=4361ee&color=fff&size=80"
+                 alt="User Avatar">
+            <span class="online-status active"></span>
+        </div>
+        <div class="profile-info">
+            <h6 class="profile-name">
                 {% if user.get_full_name %}
                     {{ user.get_full_name }}
                 {% else %}
                     {{ user.mobileNumber }}
                 {% endif %}
             </h6>
-            <small class="text-light">
+            <p class="profile-role">
                 {% if user.is_superuser %}
-                    <span class="badge bg-success">سوپر ادمین</span>
+                    <span class="role-badge super-admin">سوپر ادمین</span>
                 {% elif user.is_staff %}
-                    <span class="badge bg-primary">ادمین</span>
+                    <span class="role-badge admin">ادمین</span>
                 {% else %}
-                    <span class="badge bg-secondary">کاربر</span>
+                    <span class="role-badge user">کاربر</span>
                 {% endif %}
-            </small>
+            </p>
         </div>
-
-        <!-- Menu -->
-        <ul class="sidebar-menu mt-3">
-            <!-- Dashboard -->
-            <li>
-                <a href="{% url 'panelAdmin:admin_dashboard' %}" class="{% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
-                    <i class="fas fa-tachometer-alt"></i>
-                    داشبورد
-                </a>
-            </li>
-
-            <!-- Users -->
-            <li>
-                <a href="#" onclick="toggleSubmenu(this)">
-                    <i class="fas fa-users"></i>
-                    کاربران
-                    <i class="fas fa-chevron-left float-start mt-1"></i>
-                </a>
-                <ul class="sidebar-submenu">
-                    <li>
-                        <a href="{% url 'panelAdmin:admin_user_list' %}"
-                           class="{% if 'panelAdmin:admin_user' in request.resolver_match.url_name %}active{% endif %}">
-                            مدیریت کاربران
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#">
-                            نقش‌های کاربری
-                        </a>
-                    </li>
-                </ul>
-            </li>
-
-            <!-- Products -->
-            <li>
-                <a href="#" onclick="toggleSubmenu(this)">
-                    <i class="fas fa-box"></i>
-                    محصولات
-                    <i class="fas fa-chevron-left float-start mt-1"></i>
-                </a>
-                <ul class="sidebar-submenu">
-                    <li>
-                        <a href="{% url 'panelAdmin:admin_product_list' %}">
-                            همه محصولات
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'panelAdmin:admin_category_list' %}">
-                            دسته‌بندی‌ها
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'panelAdmin:admin_brand_list' %}">
-                            برندها
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'panelAdmin:admin_feature_list' %}">
-                            ویژگی‌ها
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#">
-                            موجودی انبار
-                        </a>
-                    </li>
-                </ul>
-            </li>
-
-            <!-- Orders -->
-            <li>
-                <a href="#" onclick="toggleSubmenu(this)">
-                    <i class="fas fa-shopping-cart"></i>
-                    سفارشات
-                    <i class="fas fa-chevron-left float-start mt-1"></i>
-                </a>
-                <ul class="sidebar-submenu">
-                    <li>
-                        <a href="{% url 'panelAdmin:admin_order_list' %}">
-                            همه سفارشات
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'panelAdmin:admin_order_list' %}?status=pending">
-                            سفارشات در انتظار
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'panelAdmin:admin_order_list' %}?status=processing">
-                            در حال پردازش
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'panelAdmin:admin_state_list' %}">
-                            استان‌ها و شهرها
-                        </a>
-                    </li>
-                </ul>
-            </li>
-
-            <!-- Payments -->
-            <li>
-                <a href="{% url 'panelAdmin:admin_payment_list' %}">
-                    <i class="fas fa-credit-card"></i>
-                    پرداخت‌ها
-                </a>
-            </li>
-
-            <!-- Discounts -->
-            <li>
-                <a href="#" onclick="toggleSubmenu(this)">
-                    <i class="fas fa-percent"></i>
-                    تخفیف‌ها
-                    <i class="fas fa-chevron-left float-start mt-1"></i>
-                </a>
-                <ul class="sidebar-submenu">
-                    <li>
-                        <a href="{% url 'panelAdmin:admin_coupon_list' %}">
-                            کوپن‌ها
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'panelAdmin:admin_discount_basket_list' %}">
-                            سبدهای تخفیف
-                        </a>
-                    </li>
-                </ul>
-            </li>
-
-            <!-- Site -->
-            <li>
-                <a href="#" onclick="toggleSubmenu(this)">
-                    <i class="fas fa-globe"></i>
-                    مدیریت سایت
-                    <i class="fas fa-chevron-left float-start mt-1"></i>
-                </a>
-                <ul class="sidebar-submenu">
-                    <li>
-                        <a href="{% url 'panelAdmin:admin_slider_site_list' %}">
-                            اسلایدر سایت
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'panelAdmin:admin_slider_main_list' %}">
-                            اسلایدر اصلی
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'panelAdmin:admin_banner_list' %}">
-                            بنرها
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'panelAdmin:admin_contact_phone_list' %}">
-                            شماره‌های تماس
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'panelAdmin:admin_shop_settings' %}">
-                            تنظیمات فروشگاه
-                        </a>
-                    </li>
-                </ul>
-            </li>
-
-            <!-- Comments -->
-            <li>
-                <a href="{% url 'panelAdmin:admin_comment_list' %}">
-                    <i class="fas fa-comments"></i>
-                    نظرات
-                    <span class="badge bg-danger float-start mt-1">12</span>
-                </a>
-            </li>
-
-            <!-- Reports -->
-            <li>
-                <a href="#">
-                    <i class="fas fa-chart-bar"></i>
-                    گزارش‌ها
-                </a>
-            </li>
-
-            <!-- Settings -->
-            <li>
-                <a href="#">
-                    <i class="fas fa-cogs"></i>
-                    تنظیمات سیستم
-                </a>
-            </li>
-        </ul>
-
-        <!-- Sidebar Footer -->
-        <div class="sidebar-footer position-absolute bottom-0 start-0 end-0 p-3 border-top border-secondary">
-            <div class="d-flex justify-content-between align-items-center">
-                <small class="text-light">نسخه ۱.۰.۰</small>
-                <a href="#" class="text-light" data-bs-toggle="tooltip" title="پشتیبانی">
-                    <i class="fas fa-life-ring"></i>
-                </a>
+        <div class="profile-stats">
+            <div class="stat-item">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="stat-count">۲۴</span>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-chart-line"></i>
+                <span class="stat-count">۹۸%</span>
             </div>
         </div>
     </div>
+
+    <!-- Search Box -->
+    <div class="sidebar-search">
+        <div class="input-group">
+            <span class="input-group-text">
+                <i class="fas fa-search"></i>
+            </span>
+            <input type="text" class="form-control" placeholder="جستجو در منو...">
+        </div>
+    </div>
+
+    <!-- Menu Sections -->
+    <div class="sidebar-menu-sections">
+        <!-- Main Navigation -->
+        <div class="menu-section">
+            <h6 class="section-title">ناوبری اصلی</h6>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a href="{% url 'panelAdmin:admin_dashboard' %}"
+                       class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                        <span class="nav-icon">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </span>
+                        <span class="nav-text">داشبورد</span>
+                        <span class="nav-badge badge bg-info">جدید</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'panelAdmin:admin_order_list' %}"
+                       class="nav-link {% if 'admin_order' in request.resolver_match.url_name %}active{% endif %}">
+                        <span class="nav-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </span>
+                        <span class="nav-text">سفارشات</span>
+                        <span class="nav-badge badge bg-danger">12</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'panelAdmin:admin_payment_list' %}"
+                       class="nav-link {% if 'admin_payment' in request.resolver_match.url_name %}active{% endif %}">
+                        <span class="nav-icon">
+                            <i class="fas fa-credit-card"></i>
+                        </span>
+                        <span class="nav-text">پرداخت‌ها</span>
+                        <span class="nav-badge badge bg-success">۵</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Products Management -->
+        <div class="menu-section">
+            <h6 class="section-title">مدیریت محصولات</h6>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a href="{% url 'panelAdmin:admin_product_list' %}"
+                       class="nav-link {% if 'admin_product' in request.resolver_match.url_name %}active{% endif %}">
+                        <span class="nav-icon">
+                            <i class="fas fa-box"></i>
+                        </span>
+                        <span class="nav-text">محصولات</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'panelAdmin:admin_category_list' %}"
+                       class="nav-link {% if 'admin_category' in request.resolver_match.url_name %}active{% endif %}">
+                        <span class="nav-icon">
+                            <i class="fas fa-tags"></i>
+                        </span>
+                        <span class="nav-text">دسته‌بندی‌ها</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'panelAdmin:admin_brand_list' %}"
+                       class="nav-link {% if 'admin_brand' in request.resolver_match.url_name %}active{% endif %}">
+                        <span class="nav-icon">
+                            <i class="fas fa-trademark"></i>
+                        </span>
+                        <span class="nav-text">برندها</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'panelAdmin:admin_feature_list' %}"
+                       class="nav-link {% if 'admin_feature' in request.resolver_match.url_name %}active{% endif %}">
+                        <span class="nav-icon">
+                            <i class="fas fa-sliders-h"></i>
+                        </span>
+                        <span class="nav-text">ویژگی‌ها</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Location Management -->
+        <div class="menu-section">
+            <h6 class="section-title">مکان‌ها و آدرس‌ها</h6>
+            <ul class="nav flex-column">
+               
+
+                <li class="nav-item">
+                    <a href="{% url 'panelAdmin:admin_user_address_list' %}"
+                       class="nav-link {% if 'admin_user_address' in request.resolver_match.url_name %}active{% endif %}">
+                        <span class="nav-icon">
+                            <i class="fas fa-address-book"></i>
+                        </span>
+                        <span class="nav-text">آدرس‌های کاربران</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Marketing & Sales -->
+        <div class="menu-section">
+            <h6 class="section-title">بازاریابی و فروش</h6>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a href="{% url 'panelAdmin:admin_coupon_list' %}"
+                       class="nav-link {% if 'admin_coupon' in request.resolver_match.url_name %}active{% endif %}">
+                        <span class="nav-icon">
+                            <i class="fas fa-ticket-alt"></i>
+                        </span>
+                        <span class="nav-text">کوپن‌ها</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'panelAdmin:admin_discount_basket_list' %}"
+                       class="nav-link {% if 'admin_discount_basket' in request.resolver_match.url_name %}active{% endif %}">
+                        <span class="nav-icon">
+                            <i class="fas fa-percentage"></i>
+                        </span>
+                        <span class="nav-text">تخفیف‌ها</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Content Management -->
+        <div class="menu-section">
+            <h6 class="section-title">مدیریت محتوا</h6>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a href="{% url 'panelAdmin:admin_slider_site_list' %}"
+                       class="nav-link {% if 'admin_slider_site' in request.resolver_match.url_name %}active{% endif %}">
+                        <span class="nav-icon">
+                            <i class="fas fa-images"></i>
+                        </span>
+                        <span class="nav-text">اسلایدر سایت</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'panelAdmin:admin_banner_list' %}"
+                       class="nav-link {% if 'admin_banner' in request.resolver_match.url_name %}active{% endif %}">
+                        <span class="nav-icon">
+                            <i class="fas fa-ad"></i>
+                        </span>
+                        <span class="nav-text">بنرها</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'panelAdmin:admin_comment_list' %}"
+                       class="nav-link {% if 'admin_comment' in request.resolver_match.url_name %}active{% endif %}">
+                        <span class="nav-icon">
+                            <i class="fas fa-comments"></i>
+                        </span>
+                        <span class="nav-text">نظرات</span>
+                        <span class="nav-badge badge bg-warning">۳</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Analytics & Reports -->
+        <div class="menu-section">
+            <h6 class="section-title">تحلیل و گزارش‌ها</h6>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a href="{% url 'panelAdmin:admin_order_report' %}"
+                       class="nav-link {% if 'admin_order_report' in request.resolver_match.url_name %}active{% endif %}">
+                        <span class="nav-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </span>
+                        <span class="nav-text">گزارش سفارشات</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </span>
+                        <span class="nav-text">آمار فروش</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">
+                            <i class="fas fa-users"></i>
+                        </span>
+                        <span class="nav-text">گزارش کاربران</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Settings -->
+        <div class="menu-section">
+            <h6 class="section-title">تنظیمات</h6>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a href="{% url 'panelAdmin:admin_shop_settings' %}"
+                       class="nav-link {% if 'admin_shop_settings' in request.resolver_match.url_name %}active{% endif %}">
+                        <span class="nav-icon">
+                            <i class="fas fa-store"></i>
+                        </span>
+                        <span class="nav-text">تنظیمات فروشگاه</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">
+                            <i class="fas fa-user-shield"></i>
+                        </span>
+                        <span class="nav-text">مدیریت کاربران</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">
+                            <i class="fas fa-cogs"></i>
+                        </span>
+                        <span class="nav-text">تنظیمات سیستم</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+        <div class="quick-actions">
+            <a href="#" class="action-item" data-bs-toggle="tooltip" title="پشتیبانی">
+                <i class="fas fa-life-ring"></i>
+            </a>
+            <a href="#" class="action-item" data-bs-toggle="tooltip" title="تنظیمات">
+                <i class="fas fa-cog"></i>
+            </a>
+            <a href="#" class="action-item" data-bs-toggle="tooltip" title="خروج">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
+        </div>
+        <div class="footer-info">
+            <small class="text-muted d-block">
+                <i class="fas fa-clock me-1"></i>
+                {% now "H:i" %}
+            </small>
+            <small class="text-muted">نسخه ۲.۰.۱</small>
+        </div>
+    </div>
 </aside>
+
+<!-- CSS Styles -->
+<style>
+    /* Sidebar Variables */
+    :root {
+        --sidebar-width: 280px;
+        --sidebar-collapsed-width: 70px;
+        --sidebar-bg: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+        --sidebar-text: #ffffff;
+        --sidebar-hover: rgba(255, 255, 255, 0.1);
+        --sidebar-active: rgba(67, 97, 238, 0.2);
+        --primary-color: #4361ee;
+        --success-color: #4cc9f0;
+        --warning-color: #f8961e;
+        --danger-color: #f72585;
+    }
+
+    /* Sidebar Base */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: var(--sidebar-width);
+        background: var(--sidebar-bg);
+        color: var(--sidebar-text);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
+        overflow-y: auto;
+        overflow-x: hidden;
+        box-shadow: 5px 0 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .sidebar.collapsed {
+        width: var(--sidebar-collapsed-width);
+    }
+
+    /* Sidebar Header */
+    .sidebar-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .brand-logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .logo-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--primary-color);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+
+    .logo-text h5 {
+        font-weight: 700;
+        margin-bottom: 2px;
+    }
+
+    .logo-text small {
+        font-size: 0.75rem;
+        opacity: 0.7;
+    }
+
+    .sidebar-toggle {
+        background: transparent;
+        border: none;
+        color: var(--sidebar-text);
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 5px;
+        transition: all 0.3s;
+    }
+
+    .sidebar-toggle:hover {
+        background: var(--sidebar-hover);
+    }
+
+    /* User Profile Card */
+    .user-profile-card {
+        padding: 1.5rem;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .profile-avatar {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1rem;
+    }
+
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--primary-color);
+    }
+
+    .online-status {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 2px solid var(--sidebar-bg);
+    }
+
+    .online-status.active {
+        background: var(--success-color);
+    }
+
+    .profile-info {
+        margin-bottom: 1rem;
+    }
+
+    .profile-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .role-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .role-badge.super-admin {
+        background: linear-gradient(135deg, #f72585, #7209b7);
+    }
+
+    .role-badge.admin {
+        background: linear-gradient(135deg, #4361ee, #4cc9f0);
+    }
+
+    .role-badge.user {
+        background: linear-gradient(135deg, #f8961e, #f9c74f);
+    }
+
+    .profile-stats {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+    }
+
+    .stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .stat-item i {
+        font-size: 1.2rem;
+        margin-bottom: 0.25rem;
+        opacity: 0.8;
+    }
+
+    .stat-count {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    /* Search Box */
+    .sidebar-search {
+        padding: 1rem 1.5rem;
+    }
+
+    .sidebar-search .input-group {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .sidebar-search .input-group-text {
+        background: transparent;
+        border: none;
+        color: var(--sidebar-text);
+    }
+
+    .sidebar-search .form-control {
+        background: transparent;
+        border: none;
+        color: var(--sidebar-text);
+        padding-right: 0.5rem;
+    }
+
+    .sidebar-search .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Menu Sections */
+    .sidebar-menu-sections {
+        padding: 0 0.5rem;
+    }
+
+    .menu-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 0 1rem;
+        margin-bottom: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+        font-weight: 600;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        border-radius: 8px;
+        margin: 0.25rem 0;
+        transition: all 0.3s;
+        position: relative;
+    }
+
+    .nav-link:hover {
+        background: var(--sidebar-hover);
+        color: var(--sidebar-text);
+        transform: translateX(-5px);
+    }
+
+    .nav-link.active {
+        background: var(--sidebar-active);
+        color: var(--sidebar-text);
+        border-right: 3px solid var(--primary-color);
+    }
+
+    .nav-icon {
+        width: 24px;
+        text-align: center;
+        margin-left: 0.5rem;
+        font-size: 1.1rem;
+        opacity: 0.8;
+    }
+
+    .nav-link.active .nav-icon,
+    .nav-link:hover .nav-icon {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+
+    .nav-text {
+        flex: 1;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .nav-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 10px;
+    }
+
+    /* Sidebar Footer */
+    .sidebar-footer {
+        padding: 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: auto;
+    }
+
+    .quick-actions {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 1rem;
+    }
+
+    .action-item {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        color: var(--sidebar-text);
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+
+    .action-item:hover {
+        background: var(--primary-color);
+        transform: translateY(-2px);
+    }
+
+    .footer-info {
+        text-align: center;
+        font-size: 0.8rem;
+    }
+
+    /* Scrollbar Styling */
+    .sidebar::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+    }
+
+    /* Collapsed State */
+    .sidebar.collapsed .logo-text,
+    .sidebar.collapsed .profile-info,
+    .sidebar.collapsed .profile-stats,
+    .sidebar.collapsed .section-title,
+    .sidebar.collapsed .nav-text,
+    .sidebar.collapsed .nav-badge,
+    .sidebar.collapsed .sidebar-search,
+    .sidebar.collapsed .footer-info {
+        display: none;
+    }
+
+    .sidebar.collapsed .user-profile-card {
+        padding: 1rem;
+    }
+
+    .sidebar.collapsed .profile-avatar {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 0;
+    }
+
+    .sidebar.collapsed .nav-link {
+        justify-content: center;
+        padding: 0.75rem;
+    }
+
+    .sidebar.collapsed .nav-icon {
+        margin-left: 0;
+        font-size: 1.2rem;
+    }
+
+    .sidebar.collapsed .quick-actions {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .sidebar {
+            width: var(--sidebar-collapsed-width);
+        }
+
+        .sidebar.show {
+            width: var(--sidebar-width);
+        }
+
+        .main-content {
+            margin-right: var(--sidebar-collapsed-width);
+        }
+
+        .main-content.expanded {
+            margin-right: 0;
+        }
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .nav-item {
+        animation: fadeIn 0.3s ease-out;
+        animation-fill-mode: both;
+    }
+
+    .nav-item:nth-child(1) { animation-delay: 0.1s; }
+    .nav-item:nth-child(2) { animation-delay: 0.2s; }
+    .nav-item:nth-child(3) { animation-delay: 0.3s; }
+    .nav-item:nth-child(4) { animation-delay: 0.4s; }
+    .nav-item:nth-child(5) { animation-delay: 0.5s; }
+
+    /* Tooltip for collapsed state */
+    .sidebar.collapsed .nav-link {
+        position: relative;
+    }
+
+    .sidebar.collapsed .nav-link::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        right: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--sidebar-bg);
+        color: var(--sidebar-text);
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s;
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .sidebar.collapsed .nav-link:hover::after {
+        opacity: 1;
+        visibility: visible;
+        right: 120%;
+    }
+</style>
+
+<!-- JavaScript -->
+<script>
+    // Toggle sidebar
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+
+        // Save state to localStorage
+        const isCollapsed = sidebar.classList.contains('collapsed');
+        localStorage.setItem('sidebarCollapsed', isCollapsed);
+    }
+
+    // Initialize sidebar state
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        // Load saved state
+        const savedState = localStorage.getItem('sidebarCollapsed');
+        if (savedState === 'true') {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('expanded');
+        }
+
+        // Add data-tooltip for collapsed state
+        document.querySelectorAll('.nav-text').forEach(item => {
+            const parentLink = item.closest('.nav-link');
+            if (parentLink) {
+                parentLink.setAttribute('data-tooltip', item.textContent.trim());
+            }
+        });
+
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Search functionality
+        const searchInput = document.querySelector('.sidebar-search input');
+        if (searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const navItems = document.querySelectorAll('.nav-item');
+
+                navItems.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    if (text.includes(searchTerm)) {
+                        item.style.display = '';
+                        item.style.animation = 'fadeIn 0.3s ease-out';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl + B to toggle sidebar
+        if (e.ctrlKey && e.key === 'b') {
+            e.preventDefault();
+            toggleSidebar();
+        }
+
+        // Escape to clear search
+        if (e.key === 'Escape') {
+            const searchInput = document.querySelector('.sidebar-search input');
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+            }
+        }
+    });
+</script>

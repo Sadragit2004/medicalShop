@@ -1,0 +1,163 @@
+<!-- templates/panelAdmin/payment/update.html -->
+{% extends 'panelAdmin/base/base.html' %}
+{% load humanize %}
+
+
+{% block title %}ویرایش پرداخت - {{ payment.refId|default:payment.id }}{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'admin_payment_list' %}">پرداخت‌ها</a></li>
+<li class="breadcrumb-item"><a href="{% url 'admin_payment_detail' payment.id %}">جزئیات پرداخت</a></li>
+<li class="breadcrumb-item active">ویرایش پرداخت</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-edit"></i> ویرایش پرداخت
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">فرم ویرایش پرداخت</h5>
+            </div>
+            <div class="card-body">
+                <!-- اطلاعات فعلی -->
+                <div class="alert alert-info mb-4">
+                    <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>اطلاعات فعلی پرداخت</h6>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted">سفارش:</small>
+                            <p class="mb-2"><strong>{{ payment.order.orderCode }}</strong></p>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">مشتری:</small>
+                            <p class="mb-2"><strong>{{ payment.customer.name }} {{ payment.customer.family }}</strong></p>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">تاریخ ایجاد:</small>
+                            <p class="mb-2"><strong>{{ payment.createAt|date:"Y/m/d H:i" }}</strong></p>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">وضعیت فعلی:</small>
+                            <p class="mb-2">
+                                {% if payment.isFinaly %}
+                                <span class="badge bg-success">موفق</span>
+                                {% else %}
+                                <span class="badge bg-danger">ناموفق</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <!-- مبلغ پرداخت -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">مبلغ پرداخت (تومان) <span class="text-danger">*</span></label>
+                            <input type="number" name="amount" class="form-control" value="{{ payment.amount }}" required min="1000" step="1000">
+                        </div>
+
+                        <!-- کد پیگیری -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">کد پیگیری</label>
+                            <input type="text" name="refId" class="form-control" value="{{ payment.refId|default:'' }}" placeholder="مثلاً: ۱۲۳۴۵۶۷۸۹">
+                        </div>
+
+                        <!-- کد وضعیت -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">کد وضعیت</label>
+                            <select name="statusCode" class="form-select">
+                                <option value="">-- انتخاب کنید --</option>
+                                <option value="200" {% if payment.statusCode == 200 %}selected{% endif %}>۲۰۰ - موفق</option>
+                                <option value="400" {% if payment.statusCode == 400 %}selected{% endif %}>۴۰۰ - ناموفق</option>
+                                <option value="500" {% if payment.statusCode == 500 %}selected{% endif %}>۵۰۰ - خطای سرور</option>
+                                <option value="0" {% if payment.statusCode == 0 %}selected{% endif %}>۰ - نامشخص</option>
+                            </select>
+                        </div>
+
+                        <!-- وضعیت پرداخت -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">وضعیت پرداخت</label>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" name="isFinaly" id="isFinalySwitch" {% if payment.isFinaly %}checked{% endif %}>
+                                <label class="form-check-label" for="isFinalySwitch">
+                                    پرداخت موفق
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- توضیحات -->
+                        <div class="col-12 mb-3">
+                            <label class="form-label">توضیحات</label>
+                            <textarea name="description" class="form-control" rows="4">{{ payment.description|default:'' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- هشدار تغییر وضعیت -->
+                    {% if payment.order %}
+                    <div class="alert alert-warning" id="statusWarning" style="display: none;">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <span id="warningText"></span>
+                        <ul class="mt-2 mb-0">
+                            <li>وضعیت سفارش به <strong id="newOrderStatus"></strong> تغییر خواهد کرد</li>
+                            <li>مبلغ پرداخت‌شده: <strong>{{ payment.order.getFinalPrice|floatformat:0|intcomma }} تومان</strong></li>
+                            <li>مبلغ این پرداخت: <strong>{{ payment.amount|floatformat:0|intcomma }} تومان</strong></li>
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <!-- دکمه‌های اقدام -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'admin_payment_detail' payment.id %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>انصراف
+                        </a>
+                        <div>
+                            <a href="{% url 'admin_payment_delete' payment.id %}" class="btn btn-outline-danger me-2">
+                                <i class="fas fa-trash me-2"></i>حذف
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-2"></i>ذخیره تغییرات
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // نمایش هشدار تغییر وضعیت
+    const originalStatus = {% if payment.isFinaly %}true{% else %}false{% endif %};
+
+    $('#isFinalySwitch').change(function() {
+        const newStatus = $(this).is(':checked');
+        const warningDiv = $('#statusWarning');
+        const warningText = $('#warningText');
+        const newOrderStatus = $('#newOrderStatus');
+
+        if (newStatus !== originalStatus) {
+            if (newStatus) {
+                warningText.text('شما در حال تغییر وضعیت پرداخت از "ناموفق" به "موفق" هستید.');
+                newOrderStatus.text('"در حال پردازش"');
+            } else {
+                warningText.text('شما در حال تغییر وضعیت پرداخت از "موفق" به "ناموفق" هستید.');
+                newOrderStatus.text('"در انتظار پرداخت"');
+            }
+            warningDiv.show();
+        } else {
+            warningDiv.hide();
+        }
+    });
+});
+</script>
+{% endblock %}

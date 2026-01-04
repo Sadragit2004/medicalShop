@@ -1,0 +1,489 @@
+{% extends '../base/base.html' %}
+
+{% load static %}
+{% load humanize %}
+
+{% block title %}گزارش سفارشات{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_order_list' %}">سفارشات</a></li>
+<li class="breadcrumb-item active">گزارشات</li>
+{% endblock %}
+
+{% block page_title %}گزارش سفارشات{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- فیلتر گزارش -->
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-filter"></i> فیلتر گزارش</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">از تاریخ</label>
+                        <input type="date" name="date_from" class="form-control"
+                               value="{{ start_date }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">تا تاریخ</label>
+                        <input type="date" name="date_to" class="form-control"
+                               value="{{ end_date }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">بازه زمانی سریع</label>
+                        <select class="form-select" id="quickRange">
+                            <option value="">انتخاب کنید</option>
+                            {% for value, label in date_range_options %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-chart-bar"></i> نمایش گزارش
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- آمار کلی -->
+    <div class="col-md-3 mb-4">
+        <div class="card stat-card bg-primary text-white">
+            <div class="card-body text-center">
+                <h1 class="display-5">{{ total_orders }}</h1>
+                <p class="mb-0">تعداد سفارشات</p>
+                <small>از {{ start_date_display }} تا {{ end_date_display }}</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card stat-card bg-success text-white">
+            <div class="card-body text-center">
+                <h1 class="display-5">{{ total_revenue|floatformat:0|intcomma }}</h1>
+                <p class="mb-0">درآمد کل</p>
+                <small>تومان</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card stat-card bg-info text-white">
+            <div class="card-body text-center">
+                <h1 class="display-5">{{ total_items }}</h1>
+                <p class="mb-0">تعداد اقلام فروخته شده</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card stat-card bg-warning text-white">
+            <div class="card-body text-center">
+                {% if total_orders > 0 %}
+                <h1 class="display-5">{{ total_revenue|floatformat:0|intcomma }}</h1>
+                {% else %}
+                <h1 class="display-5">0</h1>
+                {% endif %}
+                <p class="mb-0">میانگین ارزش سفارش</p>
+                <small>تومان</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- نمودار وضعیت سفارشات -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> توزیع وضعیت سفارشات</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" height="250"></canvas>
+
+                <div class="mt-3">
+                    <table class="table table-sm table-borderless">
+                        {% for stat in status_data %}
+                        <tr>
+                            <td width="60%">
+                                <span class="badge" style="background-color: {{ stat.color|default:'#4361ee' }}">
+                                    {{ stat.name }}
+                                </span>
+                            </td>
+                            <td class="text-end">{{ stat.count }} سفارش</td>
+                            <td class="text-end">
+                                {% if total_orders > 0 %}
+                                {{ stat.count|floatformat:0 }}%
+                                {% else %}
+                                0%
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نمودار درآمد روزانه -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> درآمد روزانه</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- محصولات پرفروش -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-star"></i> محصولات پرفروش</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>محصول</th>
+                                <th>تعداد فروش</th>
+                                <th>درآمد</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in top_products %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <strong>{{ product.product__title|default:"محصول ناشناس" }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ product.total_qty }}</span>
+                                </td>
+                                <td>
+                                    {{ product.total_revenue|floatformat:0|intcomma }} تومان
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">
+                                    هیچ داده‌ای برای نمایش وجود ندارد
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- کاربران فعال -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-users"></i> کاربران فعال</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>کاربر</th>
+                                <th>تعداد سفارش</th>
+                                <th>مجموع خرید</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer in top_customers %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <div>
+                                        <strong>{{ customer.customer__mobileNumber }}</strong>
+                                        {% if customer.customer__name or customer.customer__family %}
+                                        <br>
+                                        <small>{{ customer.customer__name|default:"" }} {{ customer.customer__family|default:"" }}</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ customer.order_count }}</span>
+                                </td>
+                                <td>
+                                    {{ customer.total_spent|floatformat:0|intcomma }} تومان
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">
+                                    هیچ داده‌ای برای نمایش وجود ندارد
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- گزارش روزانه -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-calendar-alt"></i> گزارش روزانه</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>تاریخ</th>
+                                <th>تعداد سفارش</th>
+                                <th>درآمد روز</th>
+                                <th>میانگین ارزش سفارش</th>
+                                <th>وضعیت</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for day in daily_stats %}
+                            <tr>
+                                <td>{{ day.date_display }}</td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ day.order_count }}</span>
+                                </td>
+                                <td>
+                                    <strong>{{ day.revenue|floatformat:0|intcomma }}</strong> تومان
+                                </td>
+                                <td>
+                                    {% if day.order_count > 0 %}
+                                    {{ day.revenue|floatformat:0|intcomma }} تومان
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if day.order_count > 0 %}
+                                    <span class="badge bg-success">فعال</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">بدون سفارش</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-3">
+                                    هیچ داده‌ای برای نمایش وجود ندارد
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- خلاصه گزارش -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-file-alt"></i> خلاصه گزارش</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6>بازه زمانی:</h6>
+                        <p>{{ start_date_display }} تا {{ end_date_display }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>تعداد روزهای گزارش:</h6>
+                        <p>{{ daily_stats|length }} روز</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>آخرین بروزرسانی:</h6>
+                        <p>{% now "Y/m/d H:i" %}</p>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <a href="{% url 'panelAdmin:admin_order_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list"></i> مشاهده لیست سفارشات
+                    </a>
+                    <button onclick="window.print()" class="btn btn-outline-secondary ms-2">
+                        <i class="fas fa-print"></i> چاپ گزارش
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function() {
+        // انتخاب بازه زمانی سریع
+        $('#quickRange').change(function() {
+            const value = $(this).val();
+            let startDate = new Date();
+            let endDate = new Date();
+
+            switch(value) {
+                case '7days':
+                    startDate.setDate(startDate.getDate() - 7);
+                    break;
+                case '30days':
+                    startDate.setDate(startDate.getDate() - 30);
+                    break;
+                case '90days':
+                    startDate.setDate(startDate.getDate() - 90);
+                    break;
+                default:
+                    return;
+            }
+
+            // فرمت تاریخ به YYYY-MM-DD
+            const formatDate = (date) => {
+                return date.toISOString().split('T')[0];
+            };
+
+            $('input[name="date_from"]').val(formatDate(startDate));
+            $('input[name="date_to"]').val(formatDate(endDate));
+        });
+
+        // نمودار وضعیت سفارشات
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        const statusColors = [
+            '#4361ee', '#4cc9f0', '#f72585', '#7209b7', '#3a0ca3',
+            '#f8961e', '#06d6a0', '#118ab2', '#ef476f', '#ffd166'
+        ];
+
+        const statusChart = new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    {% for stat in status_data %}
+                    '{{ stat.name }}',
+                    {% endfor %}
+                ],
+                datasets: [{
+                    data: [
+                        {% for stat in status_data %}
+                        {{ stat.count }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: statusColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        rtl: true
+                    }
+                }
+            }
+        });
+
+        // نمودار درآمد روزانه
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        const revenueChart = new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: [
+                    {% for day in daily_stats %}
+                    '{{ day.date_display }}',
+                    {% endfor %}
+                ],
+                datasets: [{
+                    label: 'درآمد روزانه',
+                    data: [
+                        {% for day in daily_stats %}
+                        {{ day.revenue }},
+                        {% endfor %}
+                    ],
+                    borderColor: '#4361ee',
+                    backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        rtl: true
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('fa-IR') + ' تومان';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // قالب‌بندی اعداد
+        $('.format-number').each(function() {
+            const num = parseInt($(this).text().replace(/,/g, ''));
+            if (!isNaN(num)) {
+                $(this).text(num.toLocaleString('fa-IR'));
+            }
+        });
+    });
+</script>
+
+<style>
+    .stat-card {
+        border: none;
+        border-radius: 10px;
+        transition: transform 0.3s;
+        height: 100%;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    .display-5 {
+        font-weight: 700;
+    }
+
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+
+        .card {
+            border: 1px solid #ddd !important;
+            box-shadow: none !important;
+        }
+
+        .stat-card {
+            page-break-inside: avoid;
+        }
+    }
+</style>
+{% endblock %}

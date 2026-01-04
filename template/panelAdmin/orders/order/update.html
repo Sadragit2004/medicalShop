@@ -1,0 +1,297 @@
+{% extends '../../base/base.html' %}
+
+{% load static %}
+
+{% block title %}ویرایش سفارش - {{ order.orderCode }}{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_order_list' %}">سفارشات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_order_detail' order.id %}">سفارش {{ order.orderCode }}</a></li>
+<li class="breadcrumb-item active">ویرایش</li>
+{% endblock %}
+
+{% block page_title %}ویرایش سفارش: {{ order.orderCode }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">فرم ویرایش سفارش</h5>
+    </div>
+
+    <div class="card-body">
+        <form method="post" id="orderForm">
+            {% csrf_token %}
+
+            <!-- اطلاعات اصلی -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">مشتری</label>
+                        <select name="customer" class="form-select" required id="customerSelect">
+                            {% for user in users %}
+                            <option value="{{ user.id }}"
+                                    {% if order.customer.id == user.id %}selected{% endif %}>
+                                {{ user.mobileNumber }} - {{ user.name }} {{ user.family }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">آدرس ارسال</label>
+                        <select name="address" class="form-select" id="addressSelect">
+                            <option value="">انتخاب آدرس</option>
+                            {% for address in addresses %}
+                            <option value="{{ address.id }}"
+                                    {% if order.address and order.address.id == address.id %}selected{% endif %}>
+                                {{ address.fullAddress }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">وضعیت</label>
+                        <select name="status" class="form-select">
+                            {% for code, name in status_choices %}
+                            <option value="{{ code }}"
+                                    {% if order.status == code %}selected{% endif %}>
+                                {{ name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- تخفیف و توضیحات -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">تخفیف (%)</label>
+                        <input type="number" name="discount" class="form-control"
+                               min="0" max="100" value="{{ order.discount }}">
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div class="mb-3">
+                        <label class="form-label">توضیحات</label>
+                        <textarea name="description" class="form-control" rows="2">{{ order.description }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- لیست محصولات -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6>محصولات سفارش</h6>
+                    <button type="button" class="btn btn-sm btn-success" id="addProductBtn">
+                        <i class="fas fa-plus"></i> افزودن محصول جدید
+                    </button>
+                </div>
+
+                <div id="productsContainer">
+                    {% for item in order_details %}
+                    <div class="product-item card mb-3">
+                        <div class="card-body">
+                            <input type="hidden" name="detail_ids[]" value="{{ item.id }}">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="form-label">محصول</label>
+                                    <select name="products[]" class="form-select product-select" required>
+                                        {% for product in products %}
+                                        <option value="{{ product.id }}"
+                                                data-price="{{ product.saleTypes.first.price|default:0 }}"
+                                                {% if item.product.id == product.id %}selected{% endif %}>
+                                            {{ product.title }}
+                                            {% if product.brand %}
+                                            - {{ product.brand.title }}
+                                            {% endif %}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">تعداد</label>
+                                    <input type="number" name="quantities[]" class="form-control quantity"
+                                           min="1" value="{{ item.qty }}" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">قیمت واحد</label>
+                                    <input type="number" name="prices[]" class="form-control price"
+                                           min="0" value="{{ item.price }}" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">ویژگی‌های انتخابی</label>
+                                    <input type="text" name="selected_options[]" class="form-control"
+                                           value="{{ item.selectedOptions|default:'' }}">
+                                </div>
+                                <div class="col-md-1">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button type="button" class="btn btn-danger w-100 remove-product">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- وضعیت نهایی -->
+            <div class="mb-4">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox"
+                           name="isFinally" id="isFinally"
+                           {% if order.isFinally %}checked{% endif %}>
+                    <label class="form-check-label" for="isFinally">
+                        سفارش نهایی باشد
+                    </label>
+                </div>
+            </div>
+
+            <!-- دکمه‌های عملیات -->
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'panelAdmin:admin_order_detail' order.id %}"
+                   class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> انصراف
+                </a>
+                <div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> ذخیره تغییرات
+                    </button>
+                    <a href="{% url 'panelAdmin:admin_order_delete' order.id %}"
+                       class="btn btn-outline-danger">
+                        <i class="fas fa-trash"></i> حذف سفارش
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- قالب محصول جدید -->
+<script id="productTemplate" type="text/html">
+    <div class="product-item card mb-3">
+        <div class="card-body">
+            <input type="hidden" name="detail_ids[]" value="">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">محصول</label>
+                    <select name="products[]" class="form-select product-select" required>
+                        <option value="">انتخاب محصول</option>
+                        {% for product in products %}
+                        <option value="{{ product.id }}"
+                                data-price="{{ product.saleTypes.first.price|default:0 }}">
+                            {{ product.title }}
+                            {% if product.brand %}
+                            - {{ product.brand.title }}
+                            {% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">تعداد</label>
+                    <input type="number" name="quantities[]" class="form-control quantity"
+                           min="1" value="1" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">قیمت واحد</label>
+                    <input type="number" name="prices[]" class="form-control price"
+                           min="0" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">ویژگی‌های انتخابی</label>
+                    <input type="text" name="selected_options[]" class="form-control">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="button" class="btn btn-danger w-100 remove-product">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // افزودن محصول جدید
+        $('#addProductBtn').click(function() {
+            const template = $('#productTemplate').html();
+            const $newProduct = $(template);
+            $('#productsContainer').append($newProduct);
+        });
+
+        // حذف محصول
+        $(document).on('click', '.remove-product', function() {
+            if ($('.product-item').length > 1) {
+                $(this).closest('.product-item').remove();
+            }
+        });
+
+        // تغییر محصول - دریافت قیمت
+        $(document).on('change', '.product-select', function() {
+            const productId = $(this).val();
+            const $priceInput = $(this).closest('.row').find('.price');
+
+            if (productId) {
+                $.ajax({
+                    url: '{% url "panelAdmin:admin_get_product_price" %}',
+                    data: { product_id: productId },
+                    success: function(response) {
+                        $priceInput.val(response.price);
+                    }
+                });
+            } else {
+                $priceInput.val(0);
+            }
+        });
+
+        // تغییر مشتری - دریافت آدرس‌ها
+        $('#customerSelect').change(function() {
+            const userId = $(this).val();
+            if (userId) {
+                $.ajax({
+                    url: '{% url "panelAdmin:admin_get_user_addresses" %}',
+                    data: { user_id: userId },
+                    success: function(response) {
+                        const $addressSelect = $('#addressSelect');
+                        $addressSelect.empty().append('<option value="">انتخاب آدرس</option>');
+
+                        response.addresses.forEach(function(address) {
+                            $addressSelect.append(
+                                `<option value="${address.id}">${address.full_address}</option>`
+                            );
+                        });
+                    }
+                });
+            }
+        });
+
+        // اعتبارسنجی فرم
+        $('#orderForm').submit(function(e) {
+            const productCount = $('.product-item').filter(function() {
+                const productId = $(this).find('.product-select').val();
+                const quantity = $(this).find('.quantity').val();
+                return productId && quantity > 0;
+            }).length;
+
+            if (productCount === 0) {
+                e.preventDefault();
+                alert('حداقل یک محصول باید اضافه شود');
+                return false;
+            }
+
+            return true;
+        });
+    });
+</script>
+{% endblock %}

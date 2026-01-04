@@ -1,0 +1,242 @@
+{% extends '../../base/base.html' %}
+{% load static %}
+
+{% block title %}ویرایش ویژگی - {{ feature.title }}{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_feature_list' %}">ویژگی‌ها</a></li>
+<li class="breadcrumb-item active">ویرایش ویژگی</li>
+{% endblock %}
+
+{% block page_title %}ویرایش ویژگی: {{ feature.title }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">فرم ویرایش ویژگی</h5>
+            <div>
+                <span class="badge bg-info">ID: {{ feature.id }}</span>
+                <span class="badge bg-{{ feature.isActive|yesno:'success,danger' }}">
+                    {{ feature.isActive|yesno:'فعال,غیرفعال' }}
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data" id="featureForm">
+            {% csrf_token %}
+
+            <div class="row">
+                <!-- عنوان ویژگی -->
+                <div class="col-md-6 mb-3">
+                    <label for="title" class="form-label">عنوان ویژگی <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="title" name="title"
+                           value="{{ feature.title }}" required maxlength="200">
+                    <div class="form-text">تاریخ ایجاد: {{ feature.createdAt|date:"Y/m/d H:i" }}</div>
+                </div>
+
+                <!-- وضعیت -->
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">وضعیت</label>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox"
+                               id="isActive" name="isActive"
+                               {% if feature.isActive %}checked{% endif %}>
+                        <label class="form-check-label" for="isActive">
+                            فعال باشد
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- دسته‌بندی‌ها -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <label class="form-label">دسته‌بندی‌های مرتبط <span class="text-danger">*</span></label>
+                    <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                        {% for category in categories %}
+                        <div class="form-check form-check-inline mb-2">
+                            <input class="form-check-input" type="checkbox"
+                                   name="categories" value="{{ category.id }}"
+                                   id="cat_{{ category.id }}"
+                                   {% if category in selected_categories %}checked{% endif %}>
+                            <label class="form-check-label" for="cat_{{ category.id }}">
+                                {{ category.title }}
+                                {% if category.parent %}
+                                    <small class="text-muted">({{ category.parent.title }})</small>
+                                {% endif %}
+                            </label>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted text-center">هیچ دسته‌بندی‌ای ایجاد نشده است</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- نمایش مقادیر موجود -->
+            {% if feature.featureValues.all %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <label class="form-label">مقادیر تعریف شده</label>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>مقدار</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for value in feature.featureValues.all %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ value.value }}</td>
+                                    <td>
+                                        <a href="#" class="btn btn-sm btn-outline-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="#" class="btn btn-sm btn-outline-danger"
+                                           onclick="return confirm('حذف این مقدار؟')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- افزودن مقادیر جدید -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <label class="form-label">افزودن مقادیر جدید (اختیاری)</label>
+                        <button type="button" class="btn btn-sm btn-outline-success" id="addValueBtn">
+                            <i class="fas fa-plus"></i> افزودن مقدار جدید
+                        </button>
+                    </div>
+
+                    <div id="featureValuesContainer">
+                        <div class="value-item input-group mb-2">
+                            <input type="text" class="form-control"
+                                   placeholder="مقدار جدید (مثال: طلایی، ۵۱۲ گیگابایت، ...)"
+                                   name="new_values[]">
+                            <button type="button" class="btn btn-outline-danger remove-value">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- دکمه‌های عملیات -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'panelAdmin:admin_feature_list' %}"
+                           class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-right"></i> بازگشت
+                        </a>
+                        <div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> ذخیره تغییرات
+                            </button>
+                            <a href="{% url 'panelAdmin:admin_feature_delete' feature.id %}"
+                               class="btn btn-outline-danger"
+                               onclick="return confirm('آیا از حذف این ویژگی اطمینان دارید؟')">
+                                <i class="fas fa-trash"></i> حذف
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- آمار استفاده -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-chart-bar text-primary"></i> آمار استفاده</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="stat-card success p-3 text-center">
+                    <h4>{{ feature.featureValues.count }}</h4>
+                    <p class="text-muted mb-0">تعداد مقادیر</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card primary p-3 text-center">
+                    <h4>{{ feature.categories.count }}</h4>
+                    <p class="text-muted mb-0">دسته‌بندی‌های مرتبط</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card warning p-3 text-center">
+                    <h4>{{ feature.productfeature_set.count }}</h4>
+                    <p class="text-muted mb-0">محصولات استفاده کننده</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // افزودن مقدار جدید
+        $('#addValueBtn').click(function() {
+            var html = `
+            <div class="value-item input-group mb-2">
+                <input type="text" class="form-control"
+                       placeholder="مقدار جدید (مثال: طلایی، ۵۱۲ گیگابایت، ...)"
+                       name="new_values[]">
+                <button type="button" class="btn btn-outline-danger remove-value">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>`;
+            $('#featureValuesContainer').append(html);
+        });
+
+        // حذف مقدار
+        $(document).on('click', '.remove-value', function() {
+            if ($('.value-item').length > 1) {
+                $(this).closest('.value-item').remove();
+            } else {
+                $(this).closest('.value-item').find('input').val('');
+            }
+        });
+
+        // اعتبارسنجی فرم
+        $('#featureForm').submit(function(e) {
+            var title = $('#title').val().trim();
+            var checkedCategories = $('input[name="categories"]:checked').length;
+
+            if (!title) {
+                e.preventDefault();
+                alert('عنوان ویژگی الزامی است');
+                $('#title').focus();
+                return false;
+            }
+
+            if (checkedCategories === 0) {
+                e.preventDefault();
+                if (!confirm('هیچ دسته‌بندی‌ای انتخاب نشده است. آیا ادامه می‌دهید؟')) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends '../../base/base.html' %}
+{% load static %}
+
+{% block title %}مدیریت ویژگی‌ها{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">ویژگی‌ها</li>
+{% endblock %}
+
+{% block page_title %}مدیریت ویژگی‌ها{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">لیست ویژگی‌ها</h5>
+        <a href="{% url 'panelAdmin:admin_feature_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> افزودن ویژگی جدید
+        </a>
+    </div>
+    <div class="card-body">
+        <!-- فیلتر و جستجو -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <input type="text" id="searchInput" class="form-control" placeholder="جستجوی ویژگی...">
+            </div>
+            <div class="col-md-3">
+                <select id="statusFilter" class="form-select">
+                    <option value="">همه وضعیت‌ها</option>
+                    <option value="active">فعال</option>
+                    <option value="inactive">غیرفعال</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button id="filterBtn" class="btn btn-outline-primary">
+                    <i class="fas fa-filter"></i> اعمال فیلتر
+                </button>
+                <button id="resetFilter" class="btn btn-outline-secondary">
+                    <i class="fas fa-redo"></i> بازنشانی
+                </button>
+            </div>
+        </div>
+
+        <!-- جدول ویژگی‌ها -->
+        <div class="table-responsive">
+            <table class="table table-hover table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>عنوان</th>
+                        <th>دسته‌بندی‌ها</th>
+                        <th>وضعیت</th>
+                        <th>تاریخ ایجاد</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for feature in features %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <strong>{{ feature.title }}</strong>
+                        </td>
+                        <td>
+                            {% if feature.categories.all %}
+                                {% for category in feature.categories.all|slice:":3" %}
+                                    <span class="badge bg-info">{{ category.title }}</span>
+                                {% endfor %}
+                                {% if feature.categories.count > 3 %}
+                                    <span class="badge bg-secondary">+{{ feature.categories.count|add:"-3" }}</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">بدون دسته‌بندی</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if feature.isActive %}
+                                <span class="status-badge status-active">
+                                    <i class="fas fa-check-circle"></i> فعال
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-inactive">
+                                    <i class="fas fa-times-circle"></i> غیرفعال
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>{{ feature.createdAt|date:"Y/m/d" }}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'panelAdmin:admin_feature_update' feature.id %}"
+                                   class="btn btn-sm btn-outline-primary"
+                                   title="ویرایش">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'panelAdmin:admin_feature_delete' feature.id %}"
+                                   class="btn btn-sm btn-outline-danger"
+                                   title="حذف"
+                                   onclick="return confirm('آیا از حذف این ویژگی اطمینان دارید؟')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="fas fa-info-circle fa-2x mb-3"></i>
+                            <p>هیچ ویژگی‌ای ثبت نشده است.</p>
+                            <a href="{% url 'panelAdmin:admin_feature_create' %}" class="btn btn-primary">
+                                افزودن ویژگی جدید
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if features.has_other_pages %}
+        <nav aria-label="صفحه‌بندی">
+            <ul class="pagination justify-content-center">
+                {% if features.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ features.previous_page_number }}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in features.paginator.page_range %}
+                    {% if features.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > features.number|add:'-3' and num < features.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if features.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ features.next_page_number }}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+    <div class="card-footer text-muted">
+        <div class="row">
+            <div class="col-md-6">
+                تعداد کل: <strong>{{ features.count }}</strong> ویژگی
+            </div>
+            <div class="col-md-6 text-end">
+                <small>آخرین بروزرسانی: {% now "H:i" %}</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // جستجوی ویژگی‌ها
+        $('#searchInput').on('keyup', function() {
+            var value = $(this).val().toLowerCase();
+            $('tbody tr').filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+            });
+        });
+
+        // فیلتر وضعیت
+        $('#filterBtn').click(function() {
+            var status = $('#statusFilter').val();
+            if (status) {
+                window.location.href = "{% url 'panelAdmin:admin_feature_list' %}?status=" + status;
+            }
+        });
+
+        // بازنشانی فیلتر
+        $('#resetFilter').click(function() {
+            window.location.href = "{% url 'panelAdmin:admin_feature_list' %}";
+        });
+
+        // نمایش جزئیات ویژگی
+        $('.show-details').click(function() {
+            var featureId = $(this).data('id');
+            // می‌توانید از Ajax برای نمایش جزئیات استفاده کنید
+            alert('نمایش جزئیات ویژگی با ID: ' + featureId);
+        });
+    });
+</script>
+{% endblock %}

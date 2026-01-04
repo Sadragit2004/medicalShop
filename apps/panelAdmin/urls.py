@@ -108,14 +108,14 @@ urlpatterns = [
     # Order URLs
     path('orders/', order_views.order_list, name='admin_order_list'),
     path('orders/create/', order_views.order_create, name='admin_order_create'),
-    path('orders/<uuid:order_id>/', order_views.order_detail, name='admin_order_detail'),
-    path('orders/<uuid:order_id>/update/', order_views.order_update, name='admin_order_update'),
-    path('orders/<uuid:order_id>/delete/', order_views.order_delete, name='admin_order_delete'),
-    path('orders/<uuid:order_id>/update-status/', order_views.update_order_status, name='admin_update_order_status'),
-    path('orders/<uuid:order_id>/toggle-final/', order_views.toggle_order_final, name='admin_toggle_order_final'),
+    path('orders/<int:order_id>/', order_views.order_detail, name='admin_order_detail'),
+    path('orders/<int:order_id>/update/', order_views.order_update, name='admin_order_update'),
+    path('orders/<int:order_id>/delete/', order_views.order_delete, name='admin_order_delete'),
+    path('orders/<int:order_id>/update-status/', order_views.update_order_status, name='admin_update_order_status'),
+    path('orders/<int:order_id>/toggle-final/', order_views.toggle_order_final, name='admin_toggle_order_final'),
 
     # Order Detail URLs
-    path('orders/<uuid:order_id>/add-item/', order_views.add_order_item, name='admin_add_order_item'),
+    path('orders/<int:order_id>/add-item/', order_views.add_order_item, name='admin_add_order_item'),
     path('order-items/<int:item_id>/update/', order_views.update_order_item, name='admin_update_order_item'),
     path('order-items/<int:item_id>/delete/', order_views.delete_order_item, name='admin_delete_order_item'),
 
@@ -180,7 +180,8 @@ urlpatterns = [
     # AJAX URLs
     path('ajax/get-order-details/', peyment_views.get_order_details, name='admin_get_order_details'),
     path('ajax/search-payments/', peyment_views.search_payments_ajax, name='admin_search_payments_ajax'),
-
+    # در urls.py اضافه کنید
+    path('ajax/get-cities-by-state/', order_views.get_cities_by_state, name='admin_get_cities_by_state'),
     # Dashboard URLs
     path('payments/dashboard-widget/', peyment_views.payment_dashboard_widget, name='admin_payment_dashboard_widget'),
 
