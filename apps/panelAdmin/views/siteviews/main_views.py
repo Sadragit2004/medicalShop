@@ -89,7 +89,7 @@ def slider_site_create(request):
             )
 
             messages.success(request, 'اسلایدر سایت با موفقیت ایجاد شد')
-            return redirect('admin_slider_site_list')
+            return redirect('panelAdmin:admin_slider_site_list')
 
         except Exception as e:
             messages.error(request, f'خطا در ایجاد اسلایدر: {str(e)}')
@@ -127,7 +127,7 @@ def slider_site_update(request, slider_id):
             slider.save()
 
             messages.success(request, 'اسلایدر سایت با موفقیت ویرایش شد')
-            return redirect('admin_slider_site_list')
+            return redirect('panelAdmin:admin_slider_site_list')
 
         except Exception as e:
             messages.error(request, f'خطا در ویرایش اسلایدر: {str(e)}')
@@ -151,7 +151,7 @@ def slider_site_delete(request, slider_id):
             slider_title = slider.textSlider
             slider.delete()
             messages.success(request, f'اسلایدر "{slider_title}" با موفقیت حذف شد')
-            return redirect('admin_slider_site_list')
+            return redirect('panelAdmin:admin_slider_site_list')
         except Exception as e:
             messages.error(request, f'خطا در حذف اسلایدر: {str(e)}')
 
@@ -171,7 +171,7 @@ def slider_site_toggle(request, slider_id):
         except Exception as e:
             messages.error(request, f'خطا در تغییر وضعیت اسلایدر: {str(e)}')
 
-    return redirect('admin_slider_site_list')
+    return redirect('panelAdmin:admin_slider_site_list')
 
 
 # ========================
@@ -647,7 +647,7 @@ def shop_settings(request):
                 )
 
             messages.success(request, 'تنظیمات فروشگاه با موفقیت ذخیره شد')
-            return redirect('admin_shop_settings')
+            return redirect('panelAdmin:admin_shop_settings')
 
         except Exception as e:
             messages.error(request, f'خطا در ذخیره تنظیمات: {str(e)}')
@@ -671,7 +671,7 @@ def delete_shop_logo(request):
     except Exception as e:
         messages.error(request, f'خطا در حذف لوگو: {str(e)}')
 
-    return redirect('admin_shop_settings')
+    return redirect('panelAdmin:admin_shop_settings')
 
 
 # ========================
@@ -809,3 +809,33 @@ def deactivate_expired_items(request):
         messages.error(request, f'خطا در غیرفعال کردن آیتم‌ها: {str(e)}')
 
     return redirect('admin_site_dashboard')
+
+
+
+def slider_main_delete(request, slider_id):
+    """حذف اسلایدر اصلی"""
+    slider = get_object_or_404(SliderMain, id=slider_id)
+
+    # محاسبه آمار
+    now = timezone.now()
+    total_active_sliders = SliderMain.objects.filter(isActive=True).count()
+    current_sliders = SliderMain.objects.filter(
+        registerData__lte=now,
+        endData__gte=now,
+        isActive=True
+    ).count()
+
+    if request.method == 'POST':
+        try:
+            slider_title = slider.textSlider
+            slider.delete()
+            messages.success(request, f'اسلایدر اصلی "{slider_title}" با موفقیت حذف شد')
+            return redirect('admin_slider_main_list')
+        except Exception as e:
+            messages.error(request, f'خطا در حذف اسلایدر: {str(e)}')
+
+    return render(request, 'panelAdmin/site/slider_main/delete_confirm.html', {
+        'slider': slider,
+        'total_active_sliders': total_active_sliders,
+        'current_sliders': current_sliders
+    })

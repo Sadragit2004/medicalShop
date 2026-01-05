@@ -105,37 +105,37 @@
                             </div>
                             {% endif %}
 
-                            {% if product.galleries.count > 0 %}
+                            {% if galleries_count > 0 %}
                             <div class="col-md-4 mb-3">
                                 <div class="p-3 bg-light rounded">
-                                    <div class="h4 text-danger mb-0">{{ product.galleries.count }}</div>
+                                    <div class="h4 text-danger mb-0">{{ galleries_count }}</div>
                                     <div class="text-muted">تصویر گالری</div>
                                 </div>
                             </div>
                             {% endif %}
 
-                            {% if product.saleTypes.count > 0 %}
+                            {% if sale_types_count > 0 %}
                             <div class="col-md-4 mb-3">
                                 <div class="p-3 bg-light rounded">
-                                    <div class="h4 text-danger mb-0">{{ product.saleTypes.count }}</div>
+                                    <div class="h4 text-danger mb-0">{{ sale_types_count }}</div>
                                     <div class="text-muted">قیمت ثبت شده</div>
                                 </div>
                             </div>
                             {% endif %}
                         </div>
 
-                        {% if comment_stats.total_comments > 0 or product.galleries.count > 0 %}
+                        {% if comment_stats.total_comments > 0 or galleries_count > 0 or sale_types_count > 0 %}
                         <div class="alert alert-warning mt-3">
                             <h6><i class="fas fa-info-circle"></i> توجه:</h6>
                             <ul class="mb-0">
                                 {% if comment_stats.total_comments > 0 %}
                                 <li>{{ comment_stats.total_comments }} نظر برای این محصول ثبت شده است</li>
                                 {% endif %}
-                                {% if product.galleries.count > 0 %}
-                                <li>{{ product.galleries.count }} تصویر در گالری محصول وجود دارد</li>
+                                {% if galleries_count > 0 %}
+                                <li>{{ galleries_count }} تصویر در گالری محصول وجود دارد</li>
                                 {% endif %}
-                                {% if product.saleTypes.count > 0 %}
-                                <li>{{ product.saleTypes.count }} قیمت برای این محصول ثبت شده است</li>
+                                {% if sale_types_count > 0 %}
+                                <li>{{ sale_types_count }} قیمت برای این محصول ثبت شده است</li>
                                 {% endif %}
                                 <li>با حذف محصول، همه این اطلاعات نیز حذف می‌شوند</li>
                             </ul>
@@ -153,26 +153,31 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <strong>دسته‌بندی‌ها:</strong><br>
-                                {% if product.category.all %}
-                                {% for cat in product.category.all %}
-                                <span class="badge bg-info">{{ cat.title }}</span>
-                                {% endfor %}
-                                {% else %}
-                                <span class="text-muted">بدون دسته‌بندی</span>
-                                {% endif %}
+                                <!-- اصلاح: استفاده از try-catch در قالب با with -->
+                                {% with product.category.all as categories %}
+                                    {% if categories %}
+                                        {% for cat in categories %}
+                                        <span class="badge bg-info">{{ cat.title }}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="text-muted">بدون دسته‌بندی</span>
+                                    {% endif %}
+                                {% endwith %}
                             </div>
                             <div class="col-md-6 mb-3">
                                 <strong>ویژگی‌ها:</strong><br>
-                                {% if product.featuresValue.all %}
-                                {% for feature in product.featuresValue.all|slice:":3" %}
-                                <small class="d-block">{{ feature.feature.title }}: {{ feature.value }}</small>
-                                {% endfor %}
-                                {% if product.featuresValue.count > 3 %}
-                                <small class="text-muted">+{{ product.featuresValue.count|add:"-3" }} ویژگی دیگر</small>
-                                {% endif %}
-                                {% else %}
-                                <span class="text-muted">بدون ویژگی</span>
-                                {% endif %}
+                                {% with product.featuresValue.all as features %}
+                                    {% if features %}
+                                        {% for feature in features|slice:":3" %}
+                                        <small class="d-block">{{ feature.feature.title }}: {{ feature.value }}</small>
+                                        {% endfor %}
+                                        {% if features.count > 3 %}
+                                        <small class="text-muted">+{{ features.count|add:"-3" }} ویژگی دیگر</small>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">بدون ویژگی</span>
+                                    {% endif %}
+                                {% endwith %}
                             </div>
                         </div>
 
@@ -225,8 +230,8 @@
 // تأیید نهایی حذف
 document.getElementById('deleteForm').addEventListener('submit', function(e) {
     const commentCount = {{ comment_stats.total_comments|default:0 }};
-    const galleryCount = {{ product.galleries.count|default:0 }};
-    const saleTypeCount = {{ product.saleTypes.count|default:0 }};
+    const galleryCount = {{ galleries_count|default:0 }};
+    const saleTypeCount = {{ sale_types_count|default:0 }};
 
     let message = '⚠️ هشدار نهایی!\n\n';
     message += 'با حذف این محصول:\n';
@@ -241,25 +246,6 @@ document.getElementById('deleteForm').addEventListener('submit', function(e) {
         e.preventDefault();
     }
 });
-
-// شمارش معکوس برای تایید
-let countdown = 5;
-const submitBtn = document.querySelector('#deleteForm button[type="submit"]');
-const originalText = submitBtn.innerHTML;
-
-function updateButton() {
-    if (countdown > 0) {
-        submitBtn.innerHTML = `(${countdown}) ${originalText}`;
-        submitBtn.disabled = true;
-        countdown--;
-        setTimeout(updateButton, 1000);
-    } else {
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-    }
-}
-
-// فعال‌سازی شمارش معکوس (اختیاری)
-// updateButton();
 </script>
+
 {% endblock %}

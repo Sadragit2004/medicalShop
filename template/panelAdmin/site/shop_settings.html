@@ -1,0 +1,380 @@
+{% extends '../base/base.html' %}
+
+{% block title %}تنظیمات فروشگاه{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">تنظیمات فروشگاه</li>
+{% endblock %}
+
+{% block page_title %}تنظیمات فروشگاه{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-store"></i> اطلاعات فروشگاه</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="shopSettingsForm">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <!-- نام فروشگاه -->
+                        <div class="col-md-8 mb-3">
+                            <label for="name_shop" class="form-label">
+                                <span class="text-danger">*</span> نام فروشگاه
+                            </label>
+                            <input type="text" class="form-control" id="name_shop" name="name_shop"
+                                   value="{{ settings.name_shop|default:'' }}" required>
+                            <div class="form-text">نام فروشگاه در بالای سایت نمایش داده می‌شود.</div>
+                        </div>
+
+                        <!-- سال تأسیس -->
+                        <div class="col-md-4 mb-3">
+                            <label for="establishment_year" class="form-label">سال تأسیس</label>
+                            <input type="number" class="form-control" id="establishment_year" name="establishment_year"
+                                   value="{{ settings.establishment_year|default:'1400' }}" min="1300" max="1500">
+                            <div class="form-text">سال شمسی</div>
+                        </div>
+
+                        <!-- لوگوی فروشگاه -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">لوگوی فعلی</label>
+                            <div class="current-logo mb-3">
+                                {% if settings.logo %}
+                                <img src="{{ settings.logo.url }}" alt="{{ settings.name_shop }}"
+                                     class="img-thumbnail" style="max-width: 200px; max-height: 150px;">
+                                <div class="mt-2">
+                                    <a href="{{ settings.logo.url }}" target="_blank"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-external-link-alt"></i> مشاهده
+                                    </a>
+                                    <a href="{% url 'panelAdmin:admin_delete_shop_logo' %}"
+                                       class="btn btn-sm btn-outline-danger"
+                                       onclick="return confirm('آیا از حذف لوگو اطمینان دارید؟')">
+                                        <i class="fas fa-trash"></i> حذف
+                                    </a>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-warning py-4 text-center">
+                                    <i class="fas fa-image fa-3x mb-3"></i>
+                                    <p class="mb-0">هیچ لوگویی آپلود نشده است</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- آپلود لوگوی جدید -->
+                        <div class="col-md-6 mb-3">
+                            <label for="logo" class="form-label">آپلود لوگوی جدید</label>
+                            <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
+                            <div class="form-text">
+                                اندازه پیشنهادی: 200×200 پیکسل<br>
+                                فرمت‌های مجاز: PNG, JPG, SVG<br>
+                                حداکثر حجم: 2MB
+                            </div>
+                            <div class="mt-2" id="logoPreview"></div>
+                        </div>
+
+                        <!-- درباره فروشگاه -->
+                        <div class="col-md-12 mb-3">
+                            <label for="about_shop" class="form-label">درباره فروشگاه</label>
+                            <textarea class="form-control" id="about_shop" name="about_shop"
+                                      rows="4" placeholder="توضیحات درباره فروشگاه...">{{ settings.about_shop|default:'' }}</textarea>
+                            <div class="form-text">این متن در صفحه درباره ما نمایش داده می‌شود.</div>
+                        </div>
+
+                        <!-- وضعیت تماس -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label d-block">وضعیت تماس</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_call"
+                                       name="is_call" {% if settings.is_call %}checked{% endif %}>
+                                <label class="form-check-label" for="is_call">
+                                    امکان تماس فعال باشد
+                                </label>
+                            </div>
+                            <div class="form-text">در صورت غیرفعال بودن، دکمه‌های تماس در سایت نمایش داده نمی‌شوند.</div>
+                        </div>
+
+                        <!-- شماره اضطراری -->
+                        <div class="col-md-6 mb-3">
+                            <label for="emergency_phone" class="form-label">شماره اضطراری</label>
+                            <select class="form-select" id="emergency_phone" name="emergency_phone">
+                                <option value="">انتخاب کنید</option>
+                                {% for phone in phones %}
+                                <option value="{{ phone.id }}"
+                                        {% if settings.emergency_phone_id == phone.id %}selected{% endif %}>
+                                    {{ phone.title }} - {{ phone.phone_number }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">این شماره در مواقع اضطراری استفاده می‌شود.</div>
+                        </div>
+                    </div>
+
+                    <!-- دکمه‌های فرم -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'panelAdmin:admin_site_dashboard' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-right"></i> بازگشت
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> ذخیره تنظیمات
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- پیش‌نمایش -->
+    <div class="col-lg-4">
+        <!-- پیش‌نمایش لوگو -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-eye"></i> پیش‌نمایش لوگو</h5>
+            </div>
+            <div class="card-body text-center">
+                <div id="logoPreviewContainer" class="mb-3">
+                    {% if settings.logo %}
+                    <img src="{{ settings.logo.url }}" alt="{{ settings.name_shop }}"
+                         class="img-fluid rounded" style="max-width: 200px;">
+                    {% else %}
+                    <div class="no-logo py-4">
+                        <i class="fas fa-store fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">بدون لوگو</p>
+                    </div>
+                    {% endif %}
+                </div>
+                <h4 id="previewName">{{ settings.name_shop|default:"نام فروشگاه" }}</h4>
+                <p class="text-muted" id="previewYear">
+                    تأسیس: {{ settings.establishment_year|default:"1400" }}
+                </p>
+            </div>
+        </div>
+
+        <!-- اطلاعات ذخیره شده -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-info-circle"></i> اطلاعات سیستم</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>تعداد شماره‌های تماس:</span>
+                        <strong>{{ phones|length }}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>شماره‌های فعال:</span>
+                        <strong>{{ phones|length }}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>وضعیت تماس:</span>
+                        <span class="badge bg-{% if settings.is_call %}success{% else %}danger{% endif %}">
+                            {% if settings.is_call %}فعال{% else %}غیرفعال{% endif %}
+                        </span>
+                    </li>
+                    {% if settings.emergency_phone %}
+                    <li class="list-group-item">
+                        <strong>شماره اضطراری:</strong><br>
+                        {{ settings.emergency_phone.title }} - {{ settings.emergency_phone.phone_number }}
+                    </li>
+                    {% endif %}
+                    <li class="list-group-item">
+                        <div class="alert alert-info py-2 mb-0">
+                            <i class="fas fa-lightbulb"></i>
+                            <small>تنظیمات فروشگاه در سراسر سایت اعمال می‌شوند.</small>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- راهنمای سریع -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-question-circle"></i> راهنمای سریع</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item">
+                        <h6><i class="fas fa-store text-primary"></i> نام فروشگاه</h6>
+                        <p class="mb-0 small">نامی که در هدر سایت نمایش داده می‌شود.</p>
+                    </div>
+                    <div class="list-group-item">
+                        <h6><i class="fas fa-image text-success"></i> لوگو</h6>
+                        <p class="mb-0 small">لوگوی فروشگاه در هدر و فاوآیکون سایت استفاده می‌شود.</p>
+                    </div>
+                    <div class="list-group-item">
+                        <h6><i class="fas fa-phone text-info"></i> وضعیت تماس</h6>
+                        <p class="mb-0 small">در صورت غیرفعال بودن، دکمه‌های تماس نمایش داده نمی‌شوند.</p>
+                    </div>
+                    <div class="list-group-item">
+                        <h6><i class="fas fa-exclamation-triangle text-warning"></i> شماره اضطراری</h6>
+                        <p class="mb-0 small">برای مواقع ضروری و خارج از ساعت کاری استفاده می‌شود.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.current-logo img {
+    width: 100%;
+    max-width: 200px;
+    height: auto;
+    border-radius: 8px;
+    border: 2px solid #dee2e6;
+}
+
+.no-logo {
+    width: 200px;
+    height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 0 auto;
+    border: 2px dashed #dee2e6;
+}
+
+#logoPreviewContainer img {
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    transition: all 0.3s;
+}
+
+.list-group-item {
+    border: none;
+    padding: 0.75rem 0;
+}
+
+.list-group-item:first-child {
+    padding-top: 0;
+}
+
+.list-group-item:last-child {
+    padding-bottom: 0;
+}
+
+.form-switch .form-check-input {
+    width: 3em;
+    height: 1.5em;
+}
+
+.form-switch .form-check-input:checked {
+    background-color: #4361ee;
+    border-color: #4361ee;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // مدیریت پیش‌نمایش لوگو
+    const logoInput = document.getElementById('logo');
+    const previewContainer = document.getElementById('logoPreviewContainer');
+    const preview = document.getElementById('logoPreview');
+    const previewName = document.getElementById('previewName');
+    const previewYear = document.getElementById('previewYear');
+
+    // به‌روزرسانی پیش‌نمایش نام
+    const nameInput = document.getElementById('name_shop');
+    nameInput.addEventListener('input', function() {
+        previewName.textContent = this.value || 'نام فروشگاه';
+    });
+
+    // به‌روزرسانی پیش‌نمایش سال
+    const yearInput = document.getElementById('establishment_year');
+    yearInput.addEventListener('input', function() {
+        previewYear.textContent = 'تأسیس: ' + (this.value || '1400');
+    });
+
+    // مدیریت آپلود لوگو
+    logoInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // بررسی حجم فایل
+            if (file.size > 2 * 1024 * 1024) {
+                alert('حجم لوگو نباید بیشتر از 2MB باشد.');
+                logoInput.value = '';
+                return;
+            }
+
+            // بررسی فرمت
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'];
+            if (!validTypes.includes(file.type)) {
+                alert('فرمت تصویر نامعتبر است. فقط PNG, JPG و SVG مجاز هستند.');
+                logoInput.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // پیش‌نمایش در کانتینر اصلی
+                previewContainer.innerHTML = `<img src="${e.target.result}" class="img-fluid rounded">`;
+
+                // پیش‌نمایش کوچک در زیر input
+                preview.innerHTML = `
+                    <div class="alert alert-success p-2">
+                        <i class="fas fa-check-circle"></i>
+                        لوگو با موفقیت انتخاب شد.
+                        <small class="d-block">حجم: ${formatFileSize(file.size)}</small>
+                        <small class="d-block">ابعاد: ${file.width || '?'}×${file.height || '?'} پیکسل</small>
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // بازگرداندن به لوگوی قبلی یا حالت پیش‌فرض
+            {% if settings.logo %}
+            previewContainer.innerHTML = `<img src="{{ settings.logo.url }}" alt="{{ settings.name_shop }}" class="img-fluid rounded">`;
+            {% else %}
+            previewContainer.innerHTML = `
+                <div class="no-logo py-4">
+                    <i class="fas fa-store fa-3x text-muted mb-3"></i>
+                    <p class="text-muted mb-0">بدون لوگو</p>
+                </div>
+            `;
+            {% endif %}
+            preview.innerHTML = '';
+        }
+    });
+
+    // اعتبارسنجی فرم
+    const form = document.getElementById('shopSettingsForm');
+    form.addEventListener('submit', function(e) {
+        // بررسی فیلدهای اجباری
+        if (!nameInput.value.trim()) {
+            e.preventDefault();
+            alert('لطفا نام فروشگاه را وارد کنید.');
+            nameInput.focus();
+            return false;
+        }
+
+        // بررسی سال تأسیس
+        const year = parseInt(yearInput.value);
+        if (year && (year < 1300 || year > 1500)) {
+            e.preventDefault();
+            alert('سال تأسیس باید بین ۱۳۰۰ تا ۱۵۰۰ باشد.');
+            yearInput.focus();
+            return false;
+        }
+
+        return true;
+    });
+});
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+</script>
+{% endblock %}

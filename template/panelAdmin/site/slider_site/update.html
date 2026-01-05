@@ -1,0 +1,303 @@
+{% extends '../../base/base.html' %}
+
+{% block title %}ویرایش اسلایدر سایت - {{ slider.textSlider }}{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_slider_site_list' %}">اسلایدرهای سایت</a></li>
+<li class="breadcrumb-item active">ویرایش {{ slider.textSlider|truncatechars:20 }}</li>
+{% endblock %}
+
+{% block page_title %}ویرایش اسلایدر سایت <small class="text-muted">{{ slider.textSlider }}</small>{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-edit"></i> ویرایش اطلاعات اسلایدر</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="sliderForm">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <!-- تصویر فعلی -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">تصویر فعلی</label>
+                            <div class="current-image mb-2">
+                                {% if slider.imageName %}
+                                <img src="{{ slider.imageName.url }}" alt="{{ slider.altSlide }}"
+                                     class="img-thumbnail" style="max-width: 200px; max-height: 150px;">
+                                {% else %}
+                                <div class="no-image-large">
+                                    <i class="fas fa-image fa-2x text-muted"></i>
+                                    <p class="mt-2">بدون تصویر</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- تغییر تصویر -->
+                        <div class="col-md-6 mb-3">
+                            <label for="imageName" class="form-label">تغییر تصویر (اختیاری)</label>
+                            <input type="file" class="form-control" id="imageName" name="imageName" accept="image/*">
+                            <div class="form-text">در صورت عدم انتخاب، تصویر قبلی حفظ می‌شود.</div>
+                            <div class="mt-2" id="imagePreview"></div>
+                        </div>
+
+                        <!-- متن اسلایدر -->
+                        <div class="col-md-6 mb-3">
+                            <label for="textSlider" class="form-label">متن اسلایدر *</label>
+                            <input type="text" class="form-control" id="textSlider" name="textSlider"
+                                   value="{{ slider.textSlider }}" required maxlength="200">
+                        </div>
+
+                        <!-- متن جایگزین -->
+                        <div class="col-md-6 mb-3">
+                            <label for="altSlide" class="form-label">متن جایگزین (Alt)</label>
+                            <input type="text" class="form-control" id="altSlide" name="altSlide"
+                                   value="{{ slider.altSlide|default:'' }}" maxlength="200">
+                        </div>
+
+                        <!-- لینک -->
+                        <div class="col-md-6 mb-3">
+                            <label for="link" class="form-label">لینک (اختیاری)</label>
+                            <input type="url" class="form-control" id="link" name="link"
+                                   value="{{ slider.link|default:'' }}" placeholder="https://example.com">
+                        </div>
+
+                        <!-- تاریخ شروع -->
+                        <div class="col-md-6 mb-3">
+                            <label for="registerData" class="form-label">تاریخ شروع *</label>
+                            <input type="datetime-local" class="form-control" id="registerData"
+                                   name="registerData" value="{{ register_date_formatted }}" required>
+                        </div>
+
+                        <!-- تاریخ پایان -->
+                        <div class="col-md-6 mb-3">
+                            <label for="endData" class="form-label">تاریخ پایان *</label>
+                            <input type="datetime-local" class="form-control" id="endData"
+                                   name="endData" value="{{ end_date_formatted }}" required>
+                        </div>
+
+                        <!-- وضعیت -->
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="isActive"
+                                       name="isActive" {% if slider.isActive %}checked{% endif %}>
+                                <label class="form-check-label" for="isActive">
+                                    اسلایدر فعال باشد
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- اطلاعات اضافی -->
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> اطلاعات:</h6>
+                        <ul class="mb-0">
+                            <li>تاریخ ایجاد: {{ slider.createdAt|date:"Y/m/d H:i" }}</li>
+                            <li>آخرین ویرایش: {{ slider.updatedAt|date:"Y/m/d H:i" }}</li>
+                            {% if slider.is_expired %}
+                            <li class="text-danger">این اسلایدر منقضی شده است.</li>
+                            {% elif slider.is_upcoming %}
+                            <li class="text-warning">این اسلایدر هنوز شروع نشده است.</li>
+                            {% else %}
+                            <li class="text-success">این اسلایدر در حال اجرا است.</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+
+                    <!-- دکمه‌های فرم -->
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <a href="{% url 'panelAdmin:admin_slider_site_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> بازگشت
+                            </a>
+                            <a href="{% url 'panelAdmin:admin_slider_site_delete' slider.id %}"
+                               class="btn btn-danger" onclick="return confirmDelete()">
+                                <i class="fas fa-trash"></i> حذف
+                            </a>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> ذخیره تغییرات
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- پیش‌نمایش -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-eye"></i> پیش‌نمایش</h5>
+            </div>
+            <div class="card-body">
+                <div class="slider-preview">
+                    {% if slider.imageName %}
+                    <img src="{{ slider.imageName.url }}" alt="{{ slider.altSlide }}"
+                         class="img-fluid rounded mb-3" id="previewImage">
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-image fa-3x mb-3"></i>
+                        <p>تصویری برای نمایش وجود ندارد</p>
+                    </div>
+                    {% endif %}
+
+                    <div class="preview-content">
+                        <h5 id="previewText">{{ slider.textSlider }}</h5>
+                        {% if slider.link %}
+                        <a href="{{ slider.link }}" class="btn btn-sm btn-outline-primary" id="previewLink">
+                            <i class="fas fa-external-link-alt"></i> مشاهده لینک
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="status-info">
+                    <h6>وضعیت فعلی:</h6>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>تاریخ شروع:</span>
+                        <strong id="previewStart">{{ slider.registerData|date:"Y/m/d H:i" }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>تاریخ پایان:</span>
+                        <strong id="previewEnd">{{ slider.endData|date:"Y/m/d H:i" }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>وضعیت:</span>
+                        <span class="badge bg-{% if slider.isActive %}success{% else %}danger{% endif %}" id="previewStatus">
+                            {% if slider.isActive %}فعال{% else %}غیرفعال{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .no-image-large {
+        width: 200px;
+        height: 150px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 2px dashed #dee2e6;
+        color: #6c757d;
+    }
+
+    .slider-preview {
+        text-align: center;
+    }
+
+    #previewImage {
+        max-height: 200px;
+        object-fit: contain;
+    }
+
+    .preview-content {
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-top: 10px;
+    }
+
+    .status-info {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        font-size: 0.9em;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // به‌روزرسانی پیش‌نمایش در حین ویرایش
+    const textSlider = document.getElementById('textSlider');
+    const altSlide = document.getElementById('altSlide');
+    const link = document.getElementById('link');
+    const startDate = document.getElementById('registerData');
+    const endDate = document.getElementById('endData');
+    const isActive = document.getElementById('isActive');
+    const imageInput = document.getElementById('imageName');
+
+    // به‌روزرسانی متن پیش‌نمایش
+    textSlider.addEventListener('input', function() {
+        document.getElementById('previewText').textContent = this.value;
+    });
+
+    // به‌روزرسانی تاریخ‌ها
+    startDate.addEventListener('change', function() {
+        const date = new Date(this.value);
+        document.getElementById('previewStart').textContent = formatDate(date);
+    });
+
+    endDate.addEventListener('change', function() {
+        const date = new Date(this.value);
+        document.getElementById('previewEnd').textContent = formatDate(date);
+    });
+
+    // به‌روزرسانی وضعیت
+    isActive.addEventListener('change', function() {
+        const statusBadge = document.getElementById('previewStatus');
+        if (this.checked) {
+            statusBadge.textContent = 'فعال';
+            statusBadge.className = 'badge bg-success';
+        } else {
+            statusBadge.textContent = 'غیرفعال';
+            statusBadge.className = 'badge bg-danger';
+        }
+    });
+
+    // به‌روزرسانی تصویر
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewImage').src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // پیش‌نمایش تصویر جدید
+    const preview = document.getElementById('imagePreview');
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.innerHTML = `<img src="${e.target.result}" class="img-thumbnail" style="max-width: 200px;">`;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            preview.innerHTML = '';
+        }
+    });
+});
+
+function formatDate(date) {
+    if (!date) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${year}/${month}/${day} ${hours}:${minutes}`;
+}
+
+function confirmDelete() {
+    return confirm('آیا از حذف این اسلایدر اطمینان دارید؟ این عمل غیرقابل بازگشت است.');
+}
+</script>
+{% endblock %}

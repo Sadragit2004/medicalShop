@@ -1,0 +1,472 @@
+{% extends '../base/base.html' %}
+
+{% block title %}داشبورد مدیریت سایت{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">داشبورد سایت</li>
+{% endblock %}
+
+{% block page_title %}داشبورد مدیریت سایت{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- آمار کلی -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-line"></i> آمار کلی</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- اسلایدرهای سایت -->
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="stat-card primary">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="text-muted mb-1">اسلایدرهای سایت</h6>
+                                            <h3 class="mb-0">{{ total_site_sliders }}</h3>
+                                        </div>
+                                        <div class="icon">
+                                            <i class="fas fa-images fa-2x text-primary"></i>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <span class="badge bg-success">فعال: {{ active_site_sliders }}</span>
+                                        <span class="badge bg-warning">جاری: {{ current_site_sliders }}</span>
+                                        <span class="badge bg-danger">منقضی: {{ expired_site_sliders }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- اسلایدرهای اصلی -->
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="stat-card success">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="text-muted mb-1">اسلایدرهای اصلی</h6>
+                                            <h3 class="mb-0">{{ total_main_sliders }}</h3>
+                                        </div>
+                                        <div class="icon">
+                                            <i class="fas fa-sliders-h fa-2x text-success"></i>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <span class="badge bg-success">فعال: {{ active_main_sliders }}</span>
+                                        <span class="badge bg-warning">جاری: {{ current_main_sliders }}</span>
+                                        <span class="badge bg-danger">منقضی: {{ expired_main_sliders }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- بنرها -->
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="stat-card warning">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="text-muted mb-1">بنرها</h6>
+                                            <h3 class="mb-0">{{ total_banners }}</h3>
+                                        </div>
+                                        <div class="icon">
+                                            <i class="fas fa-ad fa-2x text-warning"></i>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <span class="badge bg-success">فعال: {{ active_banners }}</span>
+                                        <span class="badge bg-warning">جاری: {{ current_banners }}</span>
+                                        <span class="badge bg-danger">منقضی: {{ expired_banners }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- شماره‌های تماس -->
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="stat-card info">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="text-muted mb-1">شماره‌های تماس</h6>
+                                            <h3 class="mb-0">{{ total_phones }}</h3>
+                                        </div>
+                                        <div class="icon">
+                                            <i class="fas fa-phone fa-2x text-info"></i>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <span class="badge bg-success">فعال: {{ active_phones }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- اسلایدرهای در حال اجرا -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-play-circle"></i> اسلایدرهای در حال اجرا</h5>
+            </div>
+            <div class="card-body">
+                <div class="nav nav-tabs" id="currentTab" role="tablist">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#current-site" type="button">
+                        سایت ({{ current_site_sliders }})
+                    </button>
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#current-main" type="button">
+                        اصلی ({{ current_main_sliders }})
+                    </button>
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#current-banners" type="button">
+                        بنرها ({{ current_banners }})
+                    </button>
+                </div>
+                <div class="tab-content mt-3" id="currentTabContent">
+                    <div class="tab-pane fade show active" id="current-site">
+                        {% if current_items.site_sliders %}
+                            <div class="list-group">
+                                {% for slider in current_items.site_sliders %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ slider.textSlider|truncatechars:30 }}</h6>
+                                        <small>{{ slider.registerData|date:"Y/m/d" }}</small>
+                                    </div>
+                                    <small class="text-muted">
+                                        انقضا: {{ slider.endData|date:"Y/m/d" }}
+                                        {% if slider.link %}
+                                        <span class="badge bg-info ms-2">لینک دارد</span>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info mb-0">هیچ اسلایدر سایتی در حال حاضر فعال نیست</div>
+                        {% endif %}
+                    </div>
+                    <div class="tab-pane fade" id="current-main">
+                        {% if current_items.main_sliders %}
+                            <div class="list-group">
+                                {% for slider in current_items.main_sliders %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ slider.textSlider|truncatechars:30 }}</h6>
+                                        <small>{{ slider.registerData|date:"Y/m/d" }}</small>
+                                    </div>
+                                    <small class="text-muted">
+                                        انقضا: {{ slider.endData|date:"Y/m/d" }}
+                                        {% if slider.link %}
+                                        <span class="badge bg-info ms-2">لینک دارد</span>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info mb-0">هیچ اسلایدر اصلی در حال حاضر فعال نیست</div>
+                        {% endif %}
+                    </div>
+                    <div class="tab-pane fade" id="current-banners">
+                        {% if current_items.banners %}
+                            <div class="list-group">
+                                {% for banner in current_items.banners %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ banner.nameBanner }}</h6>
+                                        <small>{{ banner.registerData|date:"Y/m/d" }}</small>
+                                    </div>
+                                    <p class="mb-1">{{ banner.textBanner|truncatechars:50 }}</p>
+                                    <small class="text-muted">انقضا: {{ banner.endData|date:"Y/m/d" }}</small>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info mb-0">هیچ بنری در حال حاضر فعال نیست</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- اسلایدرهای منقضی شده -->
+    <div class="col-lg-6 mb-4">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-exclamation-triangle"></i> اسلایدرهای منقضی شده</h5>
+            </div>
+            <div class="card-body">
+                <div class="nav nav-tabs" id="expiredTab" role="tablist">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#expired-site" type="button">
+                        سایت ({{ expired_site_sliders }})
+                    </button>
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#expired-main" type="button">
+                        اصلی ({{ expired_main_sliders }})
+                    </button>
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#expired-banners" type="button">
+                        بنرها ({{ expired_banners }})
+                    </button>
+                </div>
+                <div class="tab-content mt-3" id="expiredTabContent">
+                    <div class="tab-pane fade show active" id="expired-site">
+                        {% if expired_items.site_sliders %}
+                            <div class="list-group">
+                                {% for slider in expired_items.site_sliders %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ slider.textSlider|truncatechars:30 }}</h6>
+                                        <small class="text-danger">{{ slider.endData|date:"Y/m/d" }}</small>
+                                    </div>
+                                    <small class="text-muted">
+                                        منقضی شده
+                                        <a href="{% url 'panelAdmin:admin_slider_site_update' slider.id %}"
+                                           class="btn btn-sm btn-outline-primary ms-2">
+                                            <i class="fas fa-edit"></i> ویرایش
+                                        </a>
+                                    </small>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-success mb-0">هیچ اسلایدر سایتی منقضی نشده است</div>
+                        {% endif %}
+                    </div>
+                    <div class="tab-pane fade" id="expired-main">
+                        {% if expired_items.main_sliders %}
+                            <div class="list-group">
+                                {% for slider in expired_items.main_sliders %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ slider.textSlider|truncatechars:30 }}</h6>
+                                        <small class="text-danger">{{ slider.endData|date:"Y/m/d" }}</small>
+                                    </div>
+                                    <small class="text-muted">
+                                        منقضی شده
+                                        <a href="{% url 'panelAdmin:admin_slider_main_update' slider.id %}"
+                                           class="btn btn-sm btn-outline-primary ms-2">
+                                            <i class="fas fa-edit"></i> ویرایش
+                                        </a>
+                                    </small>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-success mb-0">هیچ اسلایدر اصلی منقضی نشده است</div>
+                        {% endif %}
+                    </div>
+                    <div class="tab-pane fade" id="expired-banners">
+                        {% if expired_items.banners %}
+                            <div class="list-group">
+                                {% for banner in expired_items.banners %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ banner.nameBanner }}</h6>
+                                        <small class="text-danger">{{ banner.endData|date:"Y/m/d" }}</small>
+                                    </div>
+                                    <small class="text-muted">
+                                        منقضی شده
+                                        <a href="{% url 'panelAdmin:admin_banner_update' banner.id %}"
+                                           class="btn btn-sm btn-outline-primary ms-2">
+                                            <i class="fas fa-edit"></i> ویرایش
+                                        </a>
+                                    </small>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-success mb-0">هیچ بنری منقضی نشده است</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if expired_site_sliders > 0 or expired_main_sliders > 0 or expired_banners > 0 %}
+                <div class="mt-3 text-center">
+                    <form method="post" action="{% url 'panelAdmin:admin_deactivate_expired' %}"
+                          onsubmit="return confirm('آیا از غیرفعال کردن تمام آیتم‌های منقضی شده اطمینان دارید؟')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-ban"></i> غیرفعال کردن همه آیتم‌های منقضی شده
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- اطلاعات فروشگاه -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-store"></i> اطلاعات فروشگاه</h5>
+            </div>
+            <div class="card-body">
+                {% if shop_settings %}
+                    <div class="text-center mb-3">
+                        {% if shop_settings.logo %}
+                        <img src="{{ shop_settings.logo.url }}" alt="{{ shop_settings.name_shop }}"
+                             class="img-fluid rounded mb-3" style="max-height: 100px;">
+                        {% else %}
+                        <div class="mb-3">
+                            <i class="fas fa-store fa-3x text-muted"></i>
+                        </div>
+                        {% endif %}
+                        <h5>{{ shop_settings.name_shop }}</h5>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>سال تأسیس:</strong>
+                        <span class="float-start">{{ shop_settings.establishment_year }}</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>وضعیت تماس:</strong>
+                        <span class="float-start">
+                            {% if shop_settings.is_call %}
+                            <span class="badge bg-success">فعال</span>
+                            {% else %}
+                            <span class="badge bg-danger">غیرفعال</span>
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>تعداد شماره‌های تماس:</strong>
+                        <span class="float-start">{{ total_phones }} ({{ active_phones }} فعال)</span>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <a href="{% url 'panelAdmin:admin_shop_settings' %}" class="btn btn-primary">
+                            <i class="fas fa-cog"></i> ویرایش تنظیمات
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <p class="mb-2">تنظیمات فروشگاه تنظیم نشده است.</p>
+                        <a href="{% url 'panelAdmin:admin_shop_settings' %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus"></i> ایجاد تنظیمات
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- نمودار توزیع شماره‌های تماس -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-pie"></i> توزیع شماره‌های تماس</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="phoneChart" height="200"></canvas>
+                <div class="mt-3">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>نوع</th>
+                                <th>تعداد</th>
+                                <th>درصد</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for type_name, count in phone_by_type.items %}
+                            <tr>
+                                <td>{{ type_name }}</td>
+                                <td>{{ count }}</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" role="progressbar"
+                                             style="width: {% widthratio count active_phones 100 %}%">
+                                            {% widthratio count active_phones 100 %}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">هیچ شماره تماس فعالی وجود ندارد</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stat-card .card:hover {
+        transform: translateY(-5px);
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #4361ee;
+        border-bottom: 2px solid #4361ee;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ایجاد نمودار دایره‌ای برای شماره‌های تماس
+    const phoneCtx = document.getElementById('phoneChart').getContext('2d');
+    const phoneLabels = [];
+    const phoneData = [];
+    const phoneColors = ['#4361ee', '#3a0ca3', '#4cc9f0', '#4895ef', '#f72585'];
+
+    {% for type_name, count in phone_by_type.items %}
+    phoneLabels.push("{{ type_name }}");
+    phoneData.push({{ count }});
+    {% endfor %}
+
+    if (phoneLabels.length > 0) {
+        new Chart(phoneCtx, {
+            type: 'doughnut',
+            data: {
+                labels: phoneLabels,
+                datasets: [{
+                    data: phoneData,
+                    backgroundColor: phoneColors.slice(0, phoneLabels.length),
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        rtl: true
+                    }
+                }
+            }
+        });
+    }
+
+    // Auto-refresh dashboard every 5 minutes
+    setTimeout(function() {
+        window.location.reload();
+    }, 300000); // 5 minutes
+});
+</script>
+{% endblock %}

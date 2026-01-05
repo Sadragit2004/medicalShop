@@ -16,6 +16,8 @@ urlpatterns = [
 
 
     path('users/', views.user_list, name='admin_user_list'),
+    # urls.py (اضافه کردن این route)
+    path('users/<uuid:user_id>/toggle-ban/', views.toggle_ban, name='admin_toggle_ban'),
     path('users/create/', views.create_user, name='admin_create_user'),
     path('users/<uuid:user_id>/', views.user_detail, name='admin_user_detail'),
     path('users/<uuid:user_id>/update/', views.update_user, name='admin_update_user'),
@@ -56,6 +58,7 @@ urlpatterns = [
     path('comments/', product_view.comment_list, name='admin_comment_list'),
     path('comments/<int:comment_id>/toggle/', product_view.comment_toggle, name='admin_comment_toggle'),
     path('comments/<int:comment_id>/delete/', product_view.comment_delete, name='admin_comment_delete'),
+    path('comments/bulk-action/', product_view.bulk_comment_action, name='admin_bulk_comment_action'),
 
     # AJAX URLs - جدید اضافه شده
     path('ajax/get-feature-values/', product_view.get_feature_values, name='admin_get_feature_values'),
@@ -128,38 +131,48 @@ urlpatterns = [
 
     # Report URLs
     path('orders/report/', order_views.order_report, name='admin_order_report'),
-    path('slider-site/', main_views.slider_site_list, name='admin_slider_site_list'),
+      path('slider-site/', main_views.slider_site_list, name='admin_slider_site_list'),
     path('slider-site/create/', main_views.slider_site_create, name='admin_slider_site_create'),
     path('slider-site/<int:slider_id>/update/', main_views.slider_site_update, name='admin_slider_site_update'),
     path('slider-site/<int:slider_id>/delete/', main_views.slider_site_delete, name='admin_slider_site_delete'),
     path('slider-site/<int:slider_id>/toggle/', main_views.slider_site_toggle, name='admin_slider_site_toggle'),
 
-    # Slider Main URLs
+    # ========================
+    # SLIDER MAIN URLs
+    # ========================
     path('slider-main/', main_views.slider_main_list, name='admin_slider_main_list'),
     path('slider-main/create/', main_views.slider_main_create, name='admin_slider_main_create'),
     path('slider-main/<int:slider_id>/update/', main_views.slider_main_update, name='admin_slider_main_update'),
     path('slider-main/<int:slider_id>/delete/', main_views.slider_main_delete, name='admin_slider_main_delete'),
     path('slider-main/<int:slider_id>/toggle/', main_views.slider_main_toggle, name='admin_slider_main_toggle'),
 
-    # Banner URLs
+    # ========================
+    # BANNER URLs
+    # ========================
     path('banners/', main_views.banner_list, name='admin_banner_list'),
     path('banners/create/', main_views.banner_create, name='admin_banner_create'),
     path('banners/<int:banner_id>/update/', main_views.banner_update, name='admin_banner_update'),
     path('banners/<int:banner_id>/delete/', main_views.banner_delete, name='admin_banner_delete'),
     path('banners/<int:banner_id>/toggle/', main_views.banner_toggle, name='admin_banner_toggle'),
 
-    # Contact Phone URLs
+    # ========================
+    # CONTACT PHONE URLs
+    # ========================
     path('contact-phones/', main_views.contact_phone_list, name='admin_contact_phone_list'),
     path('contact-phones/create/', main_views.contact_phone_create, name='admin_contact_phone_create'),
     path('contact-phones/<int:phone_id>/update/', main_views.contact_phone_update, name='admin_contact_phone_update'),
     path('contact-phones/<int:phone_id>/delete/', main_views.contact_phone_delete, name='admin_contact_phone_delete'),
     path('contact-phones/<int:phone_id>/toggle/', main_views.contact_phone_toggle, name='admin_contact_phone_toggle'),
 
-    # Shop Settings URLs
+    # ========================
+    # SHOP SETTINGS URLs
+    # ========================
     path('shop-settings/', main_views.shop_settings, name='admin_shop_settings'),
     path('shop-settings/delete-logo/', main_views.delete_shop_logo, name='admin_delete_shop_logo'),
 
-    # Dashboard & Utility URLs
+    # ========================
+    # DASHBOARD & UTILITY URLs
+    # ========================
     path('site-dashboard/', main_views.site_dashboard, name='admin_site_dashboard'),
     path('deactivate-expired/', main_views.deactivate_expired_items, name='admin_deactivate_expired'),
      path('payments/', peyment_views.payment_list, name='admin_payment_list'),

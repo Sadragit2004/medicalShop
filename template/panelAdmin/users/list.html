@@ -16,25 +16,30 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">لیست کاربران</h5>
-                <a href="{% url 'panelAdmin:admin_create_user' %}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> کاربر جدید
-                </a>
+                <div>
+                    <a href="{% url 'panelAdmin:admin_create_user' %}" class="btn btn-primary me-2">
+                        <i class="fas fa-plus"></i> کاربر جدید
+                    </a>
+                    <button type="button" class="btn btn-outline-secondary" id="toggleFilters">
+                        <i class="fas fa-filter"></i> فیلترها
+                    </button>
+                </div>
             </div>
             <div class="card-body">
                 <!-- آمار کاربران -->
                 <div class="row mb-4">
-                    <div class="col-md-3">
+                    <div class="col-md-3 col-sm-6 mb-3">
                         <div class="stat-card primary p-3 rounded">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="text-muted mb-1">کل کاربران</h6>
-                                    <h3 class="mb-0">{{ users.count }}</h3>
+                                    <h3 class="mb-0">{{ total_users }}</h3>
                                 </div>
                                 <i class="fas fa-users fa-2x text-primary"></i>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-3 col-sm-6 mb-3">
                         <div class="stat-card success p-3 rounded">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -45,7 +50,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-3 col-sm-6 mb-3">
                         <div class="stat-card warning p-3 rounded">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -56,7 +61,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-3 col-sm-6 mb-3">
                         <div class="stat-card danger p-3 rounded">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -69,7 +74,204 @@
                     </div>
                 </div>
 
-                <!-- فیلتر جستجو -->
+                <!-- فیلترهای پیشرفته (قابل جمع شدن) -->
+                <div class="card mb-4" id="filterCard" style="display: none;">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0"><i class="fas fa-filter"></i> فیلترهای پیشرفته</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="get" id="filterForm">
+                            <div class="row">
+                                <!-- جستجوی سریع -->
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">جستجوی سریع</label>
+                                    <input type="text"
+                                           class="form-control"
+                                           name="search"
+                                           placeholder="جستجو بر اساس شماره موبایل، نام، ایمیل..."
+                                           value="{{ search_query }}">
+                                </div>
+
+                                <!-- ردیف اول فیلترها -->
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">وضعیت حساب</label>
+                                    <select class="form-select" name="status">
+                                        <option value="">همه وضعیت‌ها</option>
+                                        <option value="active" {% if selected_status == 'active' %}selected{% endif %}>فعال</option>
+                                        <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>غیرفعال</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">نقش کاربر</label>
+                                    <select class="form-select" name="role">
+                                        <option value="">همه نقش‌ها</option>
+                                        <option value="superuser" {% if selected_role == 'superuser' %}selected{% endif %}>سوپر ادمین</option>
+                                        <option value="staff" {% if selected_role == 'staff' %}selected{% endif %}>ادمین</option>
+                                        <option value="user" {% if selected_role == 'user' %}selected{% endif %}>کاربر عادی</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">وضعیت مسدودی</label>
+                                    <select class="form-select" name="ban_status">
+                                        <option value="">همه</option>
+                                        <option value="banned" {% if selected_ban_status == 'banned' %}selected{% endif %}>مسدود شده</option>
+                                        <option value="not_banned" {% if selected_ban_status == 'not_banned' %}selected{% endif %}>مسدود نشده</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">جنسیت</label>
+                                    <select class="form-select" name="gender">
+                                        <option value="">همه</option>
+                                        <option value="M" {% if selected_gender == 'M' %}selected{% endif %}>مرد</option>
+                                        <option value="F" {% if selected_gender == 'F' %}selected{% endif %}>زن</option>
+                                    </select>
+                                </div>
+
+                                <!-- ردیف دوم فیلترها -->
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">تاریخ عضویت</label>
+                                    <select class="form-select" name="join_date">
+                                        <option value="">همه تاریخ‌ها</option>
+                                        <option value="today" {% if selected_join_date == 'today' %}selected{% endif %}>امروز</option>
+                                        <option value="yesterday" {% if selected_join_date == 'yesterday' %}selected{% endif %}>دیروز</option>
+                                        <option value="last_7_days" {% if selected_join_date == 'last_7_days' %}selected{% endif %}>۷ روز اخیر</option>
+                                        <option value="last_30_days" {% if selected_join_date == 'last_30_days' %}selected{% endif %}>۳۰ روز اخیر</option>
+                                        <option value="this_month" {% if selected_join_date == 'this_month' %}selected{% endif %}>این ماه</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">تعداد دستگاه‌ها</label>
+                                    <select class="form-select" name="devices_count">
+                                        <option value="">همه</option>
+                                        <option value="no_device" {% if selected_devices_count == 'no_device' %}selected{% endif %}>بدون دستگاه</option>
+                                        <option value="one_device" {% if selected_devices_count == 'one_device' %}selected{% endif %}>یک دستگاه</option>
+                                        <option value="multiple_devices" {% if selected_devices_count == 'multiple_devices' %}selected{% endif %}>چند دستگاه</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">رنج سنی</label>
+                                    <select class="form-select" name="age">
+                                        <option value="">همه سنین</option>
+                                        <option value="under_18" {% if selected_age_filter == 'under_18' %}selected{% endif %}>زیر ۱۸ سال</option>
+                                        <option value="18_30" {% if selected_age_filter == '18_30' %}selected{% endif %}>۱۸ تا ۳۰ سال</option>
+                                        <option value="30_50" {% if selected_age_filter == '30_50' %}selected{% endif %}>۳۰ تا ۵۰ سال</option>
+                                        <option value="over_50" {% if selected_age_filter == 'over_50' %}selected{% endif %}>بالای ۵۰ سال</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">تکمیل پروفایل</label>
+                                    <select class="form-select" name="profile_complete">
+                                        <option value="">همه</option>
+                                        <option value="complete" {% if selected_profile_complete == 'complete' %}selected{% endif %}>تکمیل شده</option>
+                                        <option value="incomplete" {% if selected_profile_complete == 'incomplete' %}selected{% endif %}>ناقص</option>
+                                    </select>
+                                </div>
+
+                                <!-- مرتب‌سازی -->
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">مرتب‌سازی بر اساس</label>
+                                    <select class="form-select" name="sort_by">
+                                        <option value="-createAt" {% if selected_sort_by == '-createAt' %}selected{% endif %}>جدیدترین عضو</option>
+                                        <option value="createAt" {% if selected_sort_by == 'createAt' %}selected{% endif %}>قدیمی‌ترین عضو</option>
+                                        <option value="mobileNumber" {% if selected_sort_by == 'mobileNumber' %}selected{% endif %}>شماره موبایل (صعودی)</option>
+                                        <option value="-mobileNumber" {% if selected_sort_by == '-mobileNumber' %}selected{% endif %}>شماره موبایل (نزولی)</option>
+                                        <option value="name" {% if selected_sort_by == 'name' %}selected{% endif %}>نام (صعودی)</option>
+                                        <option value="-name" {% if selected_sort_by == '-name' %}selected{% endif %}>نام (نزولی)</option>
+                                    </select>
+                                </div>
+
+                                <!-- دکمه‌های فیلتر -->
+                                <div class="col-md-8 mb-3 d-flex align-items-end">
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search"></i> اعمال فیلتر
+                                        </button>
+                                        <a href="{% url 'panelAdmin:admin_user_list' %}" class="btn btn-secondary">
+                                            <i class="fas fa-times"></i> پاک کردن فیلترها
+                                        </a>
+                                        <button type="button" class="btn btn-outline-info" id="saveFilterBtn">
+                                            <i class="fas fa-save"></i> ذخیره فیلتر
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- نمایش فیلترهای فعال -->
+                        <div class="active-filters mt-3">
+                            <h6 class="mb-2">فیلترهای فعال:</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% if search_query %}
+                                <span class="badge bg-primary">
+                                    جستجو: {{ search_query }}
+                                    <a href="?{% for key, value in request.GET.items %}{% if key != 'search' %}{{ key }}={{ value }}&{% endif %}{% endfor %}"
+                                       class="text-white ms-2">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                </span>
+                                {% endif %}
+
+                                {% if selected_status %}
+                                <span class="badge bg-info">
+                                    وضعیت: {% if selected_status == 'active' %}فعال{% else %}غیرفعال{% endif %}
+                                    <a href="?{% for key, value in request.GET.items %}{% if key != 'status' %}{{ key }}={{ value }}&{% endif %}{% endfor %}"
+                                       class="text-white ms-2">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                </span>
+                                {% endif %}
+
+                                {% if selected_role %}
+                                <span class="badge bg-warning text-dark">
+                                    نقش: {% if selected_role == 'superuser' %}سوپر ادمین{% elif selected_role == 'staff' %}ادمین{% else %}کاربر عادی{% endif %}
+                                    <a href="?{% for key, value in request.GET.items %}{% if key != 'role' %}{{ key }}={{ value }}&{% endif %}{% endfor %}"
+                                       class="text-dark ms-2">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                </span>
+                                {% endif %}
+
+                                {% if selected_ban_status %}
+                                <span class="badge bg-danger">
+                                    مسدودی: {% if selected_ban_status == 'banned' %}مسدود شده{% else %}مسدود نشده{% endif %}
+                                    <a href="?{% for key, value in request.GET.items %}{% if key != 'ban_status' %}{{ key }}={{ value }}&{% endif %}{% endfor %}"
+                                       class="text-white ms-2">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                </span>
+                                {% endif %}
+
+                                {% if selected_gender %}
+                                <span class="badge bg-success">
+                                    جنسیت: {% if selected_gender == 'M' %}مرد{% else %}زن{% endif %}
+                                    <a href="?{% for key, value in request.GET.items %}{% if key != 'gender' %}{{ key }}={{ value }}&{% endif %}{% endfor %}"
+                                       class="text-white ms-2">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                </span>
+                                {% endif %}
+
+                                {% if selected_join_date %}
+                                <span class="badge bg-secondary">
+                                    تاریخ عضویت: {{ selected_join_date }}
+                                    <a href="?{% for key, value in request.GET.items %}{% if key != 'join_date' %}{{ key }}={{ value }}&{% endif %}{% endfor %}"
+                                       class="text-white ms-2">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- فیلتر جستجوی سریع -->
                 <div class="row mb-4">
                     <div class="col-md-12">
                         <form method="get" class="search-box">
@@ -77,13 +279,39 @@
                                 <input type="text"
                                        class="form-control"
                                        name="search"
-                                       placeholder="جستجوی بر اساس شماره موبایل، نام یا ایمیل..."
-                                       value="{{ request.GET.search }}">
+                                       placeholder="جستجوی سریع بر اساس شماره موبایل، نام، ایمیل..."
+                                       value="{{ search_query }}">
                                 <button class="btn btn-outline-primary" type="submit">
                                     <i class="fas fa-search"></i> جستجو
                                 </button>
+                                {% if search_query %}
+                                <a href="{% url 'panelAdmin:admin_user_list' %}" class="btn btn-outline-danger">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                                {% endif %}
                             </div>
                         </form>
+                    </div>
+                </div>
+
+                <!-- اطلاعات نتایج -->
+                <div class="alert alert-info mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-info-circle"></i>
+                            نمایش <strong>{{ users.count }}</strong> کاربر از <strong>{{ total_users }}</strong> کاربر
+                        </div>
+                        <div>
+                            <small class="text-muted">
+                                مرتب‌سازی:
+                                {% if selected_sort_by == '-createAt' %}جدیدترین عضو{% endif %}
+                                {% if selected_sort_by == 'createAt' %}قدیمی‌ترین عضو{% endif %}
+                                {% if selected_sort_by == 'mobileNumber' %}شماره موبایل (صعودی){% endif %}
+                                {% if selected_sort_by == '-mobileNumber' %}شماره موبایل (نزولی){% endif %}
+                                {% if selected_sort_by == 'name' %}نام (صعودی){% endif %}
+                                {% if selected_sort_by == '-name' %}نام (نزولی){% endif %}
+                            </small>
+                        </div>
                     </div>
                 </div>
 
@@ -93,12 +321,11 @@
                         <thead class="table-light">
                             <tr>
                                 <th width="50">#</th>
-                                <th>شماره موبایل</th>
-                                <th>نام و نام خانوادگی</th>
+                                <th>اطلاعات کاربر</th>
                                 <th>وضعیت</th>
-                                <th>نقش</th>
+                                <th>اطلاعات تکمیلی</th>
                                 <th>تاریخ عضویت</th>
-                                <th width="150">عملیات</th>
+                                <th width="180">عملیات</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -106,81 +333,149 @@
                             <tr>
                                 <td>{{ forloop.counter }}</td>
                                 <td>
-                                    <strong class="text-primary">{{ user.mobileNumber }}</strong>
-                                    {% if user.security and user.security.isBan %}
-                                    <span class="badge bg-danger ms-2">مسدود</span>
-                                    {% endif %}
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar me-3">
+                                            <img src="https://ui-avatars.com/api/?name={{ user.name|default:user.mobileNumber }}+{{ user.family|default:'' }}&background=4361ee&color=fff&size=40"
+                                                 class="rounded-circle" width="40" height="40" alt="{{ user.mobileNumber }}">
+                                        </div>
+                                        <div>
+                                            <strong class="text-primary d-block">{{ user.mobileNumber }}</strong>
+                                            <small class="text-muted">
+                                                {% if user.name or user.family %}
+                                                    {{ user.name|default:'' }} {{ user.family|default:'' }}
+                                                {% else %}
+                                                    نامشخص
+                                                {% endif %}
+                                            </small>
+                                            {% if user.email %}
+                                            <small class="d-block text-muted">{{ user.email }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
                                 </td>
                                 <td>
-                                    {% if user.name or user.family %}
-                                        {{ user.name }} {{ user.family }}
-                                    {% else %}
-                                        <span class="text-muted">نامشخص</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if user.is_active %}
-                                        <span class="badge bg-success">
+                                    <div class="status-indicators">
+                                        {% if user.is_active %}
+                                        <span class="badge bg-success mb-1">
                                             <i class="fas fa-check-circle"></i> فعال
                                         </span>
-                                    {% else %}
-                                        <span class="badge bg-danger">
+                                        {% else %}
+                                        <span class="badge bg-danger mb-1">
                                             <i class="fas fa-times-circle"></i> غیرفعال
                                         </span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if user.is_superuser %}
-                                        <span class="badge bg-danger">سوپرادمین</span>
-                                    {% elif user.is_staff %}
+                                        {% endif %}
+
+                                        {% if user.security and user.security.isBan %}
+                                        <span class="badge bg-dark mb-1">
+                                            <i class="fas fa-ban"></i> مسدود
+                                        </span>
+                                        {% endif %}
+
+                                        {% if user.is_superuser %}
+                                        <span class="badge bg-danger">سوپر ادمین</span>
+                                        {% elif user.is_staff %}
                                         <span class="badge bg-warning text-dark">ادمین</span>
-                                    {% else %}
+                                        {% else %}
                                         <span class="badge bg-secondary">کاربر عادی</span>
-                                    {% endif %}
+                                        {% endif %}
+                                    </div>
                                 </td>
                                 <td>
-                                    <span class="text-muted">
+                                    <div class="user-info">
+                                        {% if user.gender == 'M' %}
+                                        <small class="d-block"><i class="fas fa-male text-primary"></i> مرد</small>
+                                        {% elif user.gender == 'F' %}
+                                        <small class="d-block"><i class="fas fa-female text-danger"></i> زن</small>
+                                        {% endif %}
+
+                                        {% if user.age %}
+                                        <small class="d-block"><i class="fas fa-birthday-cake"></i> {{ user.age }} سال</small>
+                                        {% endif %}
+
+                                        {% if user.device_count > 0 %}
+                                        <small class="d-block"><i class="fas fa-laptop"></i> {{ user.device_count }} دستگاه</small>
+                                        {% else %}
+                                        <small class="d-block text-muted"><i class="fas fa-laptop"></i> بدون دستگاه</small>
+                                        {% endif %}
+
+                                        <!-- درصد تکمیل پروفایل -->
+                                        <div class="progress mt-1" style="height: 6px;">
+                                            <div class="progress-bar bg-info" role="progressbar"
+                                                 style="width: {{ user.profile_complete_percent }}%"
+                                                 title="تکمیل پروفایل: {{ user.profile_complete_percent }}%">
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">{{ user.profile_complete_percent }}% تکمیل</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-muted d-block">
                                         {{ user.createAt|date:"Y/m/d" }}
                                     </span>
                                     <small class="d-block text-muted">{{ user.createAt|time }}</small>
+                                    <small class="d-block text-muted">
+                                        {{ user.createAt|timesince }} قبل
+                                    </small>
                                 </td>
                                 <td>
                                     <div class="action-buttons">
                                         <a href="{% url 'panelAdmin:admin_user_detail' user.id %}"
-                                           class="btn btn-sm btn-info"
+                                           class="btn btn-sm btn-info mb-1"
                                            data-bs-toggle="tooltip"
                                            title="مشاهده جزئیات">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <a href="{% url 'panelAdmin:admin_update_user' user.id %}"
-                                           class="btn btn-sm btn-warning"
+                                           class="btn btn-sm btn-warning mb-1"
                                            data-bs-toggle="tooltip"
                                            title="ویرایش">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <a href="{% url 'panelAdmin:admin_user_devices' user.id %}"
-                                           class="btn btn-sm btn-secondary"
+                                           class="btn btn-sm btn-secondary mb-1"
                                            data-bs-toggle="tooltip"
                                            title="دستگاه‌ها">
                                             <i class="fas fa-laptop"></i>
                                         </a>
                                         <a href="{% url 'panelAdmin:admin_delete_user' user.id %}"
-                                           class="btn btn-sm btn-danger"
+                                           class="btn btn-sm btn-danger mb-1"
                                            data-bs-toggle="tooltip"
                                            title="حذف"
                                            onclick="return confirm('آیا از حذف کاربر {{ user.mobileNumber }} اطمینان دارید؟')">
                                             <i class="fas fa-trash"></i>
                                         </a>
+                                        {% if user.security %}
+                                            {% if user.security.isBan %}
+                                            <a href="{% url 'panelAdmin:admin_toggle_ban' user.id %}"
+                                               class="btn btn-sm btn-success mb-1"
+                                               data-bs-toggle="tooltip"
+                                               title="رفع مسدودی"
+                                               onclick="return confirm('آیا از رفع مسدودی کاربر اطمینان دارید؟')">
+                                                <i class="fas fa-unlock"></i>
+                                            </a>
+                                            {% else %}
+                                            <a href="{% url 'panelAdmin:admin_toggle_ban' user.id %}"
+                                               class="btn btn-sm btn-dark mb-1"
+                                               data-bs-toggle="tooltip"
+                                               title="مسدود کردن"
+                                               onclick="return confirm('آیا از مسدود کردن کاربر اطمینان دارید؟')">
+                                                <i class="fas fa-ban"></i>
+                                            </a>
+                                            {% endif %}
+                                        {% endif %}
                                     </div>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="7" class="text-center py-5">
+                                <td colspan="6" class="text-center py-5">
                                     <div class="text-muted">
                                         <i class="fas fa-users fa-3x mb-3"></i>
                                         <h5>هیچ کاربری یافت نشد</h5>
-                                        <p class="mb-0">کاربر جدیدی اضافه کنید</p>
+                                        <p class="mb-3">با تغییر فیلترها دوباره تلاش کنید</p>
+                                        <a href="{% url 'panelAdmin:admin_user_list' %}" class="btn btn-primary">
+                                            <i class="fas fa-times"></i> پاک کردن فیلترها
+                                        </a>
                                     </div>
                                 </td>
                             </tr>
@@ -198,14 +493,148 @@
     background: white;
     border-left: 4px solid;
     transition: transform 0.3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 .stat-card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 .stat-card.primary { border-color: #4361ee; }
 .stat-card.success { border-color: #4cc9f0; }
 .stat-card.warning { border-color: #f8961e; }
 .stat-card.danger { border-color: #f72585; }
+
+.avatar img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+}
+
+.status-indicators .badge {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 0.75rem;
+}
+
+.user-info small {
+    font-size: 0.8rem;
+}
+
+.action-buttons .btn {
+    margin-left: 3px;
+    margin-right: 3px;
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.active-filters .badge {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+}
+
+.active-filters .badge a {
+    text-decoration: none;
+}
+
+.progress {
+    width: 80px;
+    margin-top: 3px;
+}
 </style>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // نمایش/مخفی کردن فیلترهای پیشرفته
+    const toggleBtn = document.getElementById('toggleFilters');
+    const filterCard = document.getElementById('filterCard');
+
+    toggleBtn.addEventListener('click', function() {
+        if (filterCard.style.display === 'none') {
+            filterCard.style.display = 'block';
+            toggleBtn.innerHTML = '<i class="fas fa-filter"></i> بستن فیلترها';
+            toggleBtn.classList.remove('btn-outline-secondary');
+            toggleBtn.classList.add('btn-primary');
+        } else {
+            filterCard.style.display = 'none';
+            toggleBtn.innerHTML = '<i class="fas fa-filter"></i> فیلترها';
+            toggleBtn.classList.remove('btn-primary');
+            toggleBtn.classList.add('btn-outline-secondary');
+        }
+    });
+
+    // ذخیره فیلترها در localStorage
+    const saveFilterBtn = document.getElementById('saveFilterBtn');
+    const filterForm = document.getElementById('filterForm');
+
+    saveFilterBtn.addEventListener('click', function() {
+        const formData = new FormData(filterForm);
+        const filterData = {};
+
+        for (let [key, value] of formData.entries()) {
+            if (value) filterData[key] = value;
+        }
+
+        localStorage.setItem('userFilters', JSON.stringify(filterData));
+        alert('فیلترها با موفقیت ذخیره شدند!');
+    });
+
+    // بارگذاری فیلترهای ذخیره شده
+    const savedFilters = localStorage.getItem('userFilters');
+    if (savedFilters) {
+        const filters = JSON.parse(savedFilters);
+
+        // اگر فیلترها ذخیره شده‌اند، پیامی نمایش دهید
+        const loadFilters = confirm('آیا می‌خواهید فیلترهای ذخیره شده را بارگذاری کنید؟');
+
+        if (loadFilters) {
+            // پر کردن فرم با فیلترهای ذخیره شده
+            Object.keys(filters).forEach(key => {
+                const input = filterForm.querySelector(`[name="${key}"]`);
+                if (input) {
+                    input.value = filters[key];
+                }
+            });
+
+            // نمایش فیلترها و ارسال فرم
+            filterCard.style.display = 'block';
+            toggleBtn.innerHTML = '<i class="fas fa-filter"></i> بستن فیلترها';
+            toggleBtn.classList.remove('btn-outline-secondary');
+            toggleBtn.classList.add('btn-primary');
+
+            // ارسال خودکار فرم بعد از 1 ثانیه
+            setTimeout(() => {
+                filterForm.submit();
+            }, 1000);
+        }
+    }
+
+    // تغییر خودکار فرم هنگام تغییر مرتب‌سازی
+    const sortSelect = document.querySelector('select[name="sort_by"]');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
+
+    // تغییر خودکار فرم هنگام تغییر سایر فیلترها (اختیاری)
+    const autoSubmitFilters = document.querySelectorAll('#filterForm select');
+    autoSubmitFilters.forEach(select => {
+        select.addEventListener('change', function() {
+            if (this.name !== 'sort_by') {
+                // می‌توانید این خط را فعال کنید تا فیلترها به صورت خودکار اعمال شوند
+                // this.form.submit();
+            }
+        });
+    });
+
+    // فعال کردن tooltip‌ها
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
 {% endblock %}

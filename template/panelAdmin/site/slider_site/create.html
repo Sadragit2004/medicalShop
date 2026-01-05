@@ -1,0 +1,178 @@
+{% extends '../../base/base.html' %}
+
+{% block title %}ایجاد اسلایدر سایت جدید{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_slider_site_list' %}">اسلایدرهای سایت</a></li>
+<li class="breadcrumb-item active">ایجاد جدید</li>
+{% endblock %}
+
+{% block page_title %}ایجاد اسلایدر سایت جدید{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-plus-circle"></i> اطلاعات اسلایدر جدید</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="sliderForm">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <!-- تصویر اسلایدر -->
+                        <div class="col-md-6 mb-3">
+                            <label for="imageName" class="form-label">تصویر اسلایدر *</label>
+                            <input type="file" class="form-control" id="imageName" name="imageName" accept="image/*" required>
+                            <div class="form-text">فرمت‌های مجاز: JPG, PNG, GIF. حجم حداکثر: 5MB</div>
+                            <div class="mt-2" id="imagePreview"></div>
+                        </div>
+
+                        <!-- متن اسلایدر -->
+                        <div class="col-md-6 mb-3">
+                            <label for="textSlider" class="form-label">متن اسلایدر *</label>
+                            <input type="text" class="form-control" id="textSlider" name="textSlider"
+                                   placeholder="متن نمایشی روی اسلایدر" required maxlength="200">
+                        </div>
+
+                        <!-- متن جایگزین -->
+                        <div class="col-md-6 mb-3">
+                            <label for="altSlide" class="form-label">متن جایگزین (Alt)</label>
+                            <input type="text" class="form-control" id="altSlide" name="altSlide"
+                                   placeholder="متن جایگزین برای تصویر" maxlength="200">
+                        </div>
+
+                        <!-- لینک -->
+                        <div class="col-md-6 mb-3">
+                            <label for="link" class="form-label">لینک (اختیاری)</label>
+                            <input type="url" class="form-control" id="link" name="link"
+                                   placeholder="https://example.com">
+                        </div>
+
+                        <!-- تاریخ شروع -->
+                        <div class="col-md-6 mb-3">
+                            <label for="registerData" class="form-label">تاریخ شروع *</label>
+                            <input type="datetime-local" class="form-control" id="registerData"
+                                   name="registerData" required>
+                        </div>
+
+                        <!-- تاریخ پایان -->
+                        <div class="col-md-6 mb-3">
+                            <label for="endData" class="form-label">تاریخ پایان *</label>
+                            <input type="datetime-local" class="form-control" id="endData"
+                                   name="endData" required>
+                        </div>
+
+                        <!-- وضعیت -->
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="isActive"
+                                       name="isActive" checked>
+                                <label class="form-check-label" for="isActive">
+                                    اسلایدر فعال باشد
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- دکمه‌های فرم -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'panelAdmin:admin_slider_site_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-right"></i> بازگشت
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> ایجاد اسلایدر
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #imagePreview {
+        min-height: 100px;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .preview-image {
+        max-width: 100%;
+        max-height: 200px;
+        object-fit: contain;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تنظیم تاریخ‌های پیش‌فرض
+    const now = new Date();
+    const startDate = new Date(now.getTime() + (60 * 60 * 1000)); // 1 ساعت بعد
+    const endDate = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 روز بعد
+
+    document.getElementById('registerData').value = formatDateTimeLocal(startDate);
+    document.getElementById('endData').value = formatDateTimeLocal(endDate);
+
+    // پیش‌نمایش تصویر
+    const imageInput = document.getElementById('imageName');
+    const preview = document.getElementById('imagePreview');
+
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert('حجم تصویر نباید بیشتر از 5MB باشد.');
+                imageInput.value = '';
+                preview.innerHTML = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.innerHTML = `<img src="${e.target.result}" class="preview-image">`;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            preview.innerHTML = '';
+        }
+    });
+
+    // اعتبارسنجی تاریخ‌ها
+    const form = document.getElementById('sliderForm');
+    form.addEventListener('submit', function(e) {
+        const start = new Date(document.getElementById('registerData').value);
+        const end = new Date(document.getElementById('endData').value);
+
+        if (end <= start) {
+            e.preventDefault();
+            alert('تاریخ پایان باید بعد از تاریخ شروع باشد.');
+            return false;
+        }
+
+        if (!document.getElementById('textSlider').value.trim()) {
+            e.preventDefault();
+            alert('لطفا متن اسلایدر را وارد کنید.');
+            return false;
+        }
+
+        return true;
+    });
+});
+
+function formatDateTimeLocal(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+</script>
+{% endblock %}

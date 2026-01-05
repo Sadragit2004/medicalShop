@@ -154,8 +154,6 @@
         <div class="menu-section">
             <h6 class="section-title">مکان‌ها و آدرس‌ها</h6>
             <ul class="nav flex-column">
-               
-
                 <li class="nav-item">
                     <a href="{% url 'panelAdmin:admin_user_address_list' %}"
                        class="nav-link {% if 'admin_user_address' in request.resolver_match.url_name %}active{% endif %}">
@@ -198,6 +196,17 @@
         <div class="menu-section">
             <h6 class="section-title">مدیریت محتوا</h6>
             <ul class="nav flex-column">
+                <!-- اسلایدرهای اصلی - اضافه شده -->
+                <li class="nav-item">
+                    <a href="{% url 'panelAdmin:admin_slider_main_list' %}"
+                       class="nav-link {% if 'admin_slider_main' in request.resolver_match.url_name %}active{% endif %}">
+                        <span class="nav-icon">
+                            <i class="fas fa-sliders-h"></i>
+                        </span>
+                        <span class="nav-text">اسلایدرهای اصلی</span>
+                    </a>
+                </li>
+
                 <li class="nav-item">
                     <a href="{% url 'panelAdmin:admin_slider_site_list' %}"
                        class="nav-link {% if 'admin_slider_site' in request.resolver_match.url_name %}active{% endif %}">
@@ -254,50 +263,12 @@
                     </a>
                 </li>
 
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <span class="nav-icon">
-                            <i class="fas fa-users"></i>
-                        </span>
-                        <span class="nav-text">گزارش کاربران</span>
-                    </a>
-                </li>
+
             </ul>
         </div>
 
         <!-- Settings -->
-        <div class="menu-section">
-            <h6 class="section-title">تنظیمات</h6>
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a href="{% url 'panelAdmin:admin_shop_settings' %}"
-                       class="nav-link {% if 'admin_shop_settings' in request.resolver_match.url_name %}active{% endif %}">
-                        <span class="nav-icon">
-                            <i class="fas fa-store"></i>
-                        </span>
-                        <span class="nav-text">تنظیمات فروشگاه</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <span class="nav-icon">
-                            <i class="fas fa-user-shield"></i>
-                        </span>
-                        <span class="nav-text">مدیریت کاربران</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <span class="nav-icon">
-                            <i class="fas fa-cogs"></i>
-                        </span>
-                        <span class="nav-text">تنظیمات سیستم</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
+        <
     </div>
 
     <!-- Sidebar Footer -->

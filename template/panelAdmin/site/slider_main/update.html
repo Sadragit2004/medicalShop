@@ -1,0 +1,338 @@
+{% extends '../../base/base.html' %}
+
+{% block title %}ویرایش اسلایدر اصلی - {{ slider.textSlider }}{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_slider_main_list' %}">اسلایدرهای اصلی</a></li>
+<li class="breadcrumb-item active">ویرایش {{ slider.textSlider|truncatechars:20 }}</li>
+{% endblock %}
+
+{% block page_title %}ویرایش اسلایدر اصلی <small class="text-muted">{{ slider.textSlider }}</small>{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-edit"></i> ویرایش اطلاعات اسلایدر
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="sliderForm">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <!-- تصویر فعلی -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">تصویر فعلی</label>
+                            <div class="current-image">
+                                {% if slider.imageName %}
+                                <img src="{{ slider.imageName.url }}" alt="{{ slider.altSlide }}"
+                                     class="img-fluid rounded border" style="max-height: 150px;">
+                                <div class="mt-2">
+                                    <a href="{{ slider.imageName.url }}" target="_blank"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-external-link-alt"></i> مشاهده کامل
+                                    </a>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    این اسلایدر تصویری ندارد.
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- تغییر تصویر -->
+                        <div class="col-md-6 mb-3">
+                            <label for="imageName" class="form-label">تغییر تصویر (اختیاری)</label>
+                            <input type="file" class="form-control" id="imageName" name="imageName" accept="image/*">
+                            <div class="form-text">
+                                در صورت عدم انتخاب، تصویر قبلی حفظ می‌شود.
+                                <br>فرمت‌های مجاز: JPG, PNG, GIF
+                            </div>
+                            <div class="mt-2" id="imagePreview"></div>
+                        </div>
+
+                        <!-- متن اسلایدر -->
+                        <div class="col-md-6 mb-3">
+                            <label for="textSlider" class="form-label">متن اسلایدر *</label>
+                            <input type="text" class="form-control" id="textSlider" name="textSlider"
+                                   value="{{ slider.textSlider }}" required maxlength="200">
+                        </div>
+
+                        <!-- متن جایگزین -->
+                        <div class="col-md-6 mb-3">
+                            <label for="altSlide" class="form-label">متن جایگزین (Alt)</label>
+                            <input type="text" class="form-control" id="altSlide" name="altSlide"
+                                   value="{{ slider.altSlide|default:'' }}" maxlength="200">
+                        </div>
+
+                        <!-- لینک -->
+                        <div class="col-md-12 mb-3">
+                            <label for="link" class="form-label">لینک (اختیاری)</label>
+                            <input type="url" class="form-control" id="link" name="link"
+                                   value="{{ slider.link|default:'' }}" placeholder="https://example.com">
+                        </div>
+
+                        <!-- تاریخ شروع -->
+                        <div class="col-md-6 mb-3">
+                            <label for="registerData" class="form-label">تاریخ شروع *</label>
+                            <input type="datetime-local" class="form-control" id="registerData"
+                                   name="registerData" value="{{ register_date_formatted }}" required>
+                        </div>
+
+                        <!-- تاریخ پایان -->
+                        <div class="col-md-6 mb-3">
+                            <label for="endData" class="form-label">تاریخ پایان *</label>
+                            <input type="datetime-local" class="form-control" id="endData"
+                                   name="endData" value="{{ end_date_formatted }}" required>
+                        </div>
+
+                        <!-- وضعیت -->
+                        <div class="col-md-12 mb-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="isActive"
+                                       name="isActive" {% if slider.isActive %}checked{% endif %}>
+                                <label class="form-check-label" for="isActive">
+                                    <strong>اسلایدر فعال باشد</strong>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- اطلاعات زمانی -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-clock"></i> وضعیت زمانی</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="text-center p-3 {% if slider.is_upcoming %}bg-warning text-dark{% else %}bg-light{% endif %} rounded">
+                                        <i class="fas fa-hourglass-start fa-2x mb-2"></i>
+                                        <h6>شروع نشده</h6>
+                                        <p class="mb-0 small">
+                                            {% if slider.is_upcoming %}
+                                            <strong>در انتظار شروع</strong>
+                                            {% else %}
+                                            قبلاً شروع شده
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-center p-3 {% if not slider.is_upcoming and not slider.is_expired %}bg-success text-white{% else %}bg-light{% endif %} rounded">
+                                        <i class="fas fa-play fa-2x mb-2"></i>
+                                        <h6>در حال اجرا</h6>
+                                        <p class="mb-0 small">
+                                            {% if not slider.is_upcoming and not slider.is_expired %}
+                                            <strong>در حال نمایش</strong>
+                                            {% else %}
+                                            در حال اجرا نیست
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-center p-3 {% if slider.is_expired %}bg-danger text-white{% else %}bg-light{% endif %} rounded">
+                                        <i class="fas fa-stop fa-2x mb-2"></i>
+                                        <h6>منقضی شده</h6>
+                                        <p class="mb-0 small">
+                                            {% if slider.is_expired %}
+                                            <strong>پایان یافته</strong>
+                                            {% else %}
+                                            هنوز منقضی نشده
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if slider.is_expired and slider.isActive %}
+                            <div class="alert alert-warning mt-3">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                این اسلایدر منقضی شده اما هنوز فعال است. بهتر است آن را غیرفعال کنید.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- دکمه‌های فرم -->
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <a href="{% url 'panelAdmin:admin_slider_main_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> بازگشت
+                            </a>
+                            <a href="{% url 'panelAdmin:admin_slider_main_delete' slider.id %}"
+                               class="btn btn-danger" onclick="return confirmDelete()">
+                                <i class="fas fa-trash"></i> حذف
+                            </a>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> ذخیره تغییرات
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- پیش‌نمایش و اطلاعات -->
+    <div class="col-lg-4">
+        <!-- پیش‌نمایش اسلایدر -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-eye"></i> پیش‌نمایش</h5>
+            </div>
+            <div class="card-body">
+                <div class="slider-preview">
+                    {% if slider.imageName %}
+                    <img src="{{ slider.imageName.url }}" alt="{{ slider.altSlide }}"
+                         class="img-fluid rounded mb-3" id="previewImage">
+                    {% else %}
+                    <div class="text-center py-4 bg-light rounded">
+                        <i class="fas fa-image fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">تصویری برای نمایش وجود ندارد</p>
+                    </div>
+                    {% endif %}
+
+                    <div class="preview-content bg-light p-3 rounded">
+                        <h5 id="previewText">{{ slider.textSlider }}</h5>
+                        {% if slider.link %}
+                        <a href="{{ slider.link }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                            <i class="fas fa-external-link-alt"></i> بازدید از لینک
+                        </a>
+                        {% else %}
+                        <span class="badge bg-secondary mt-2">بدون لینک</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- اطلاعات فنی -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-info-circle"></i> اطلاعات فنی</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>تاریخ ایجاد:</span>
+                        <strong>{{ slider.createdAt|date:"Y/m/d H:i" }}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>آخرین ویرایش:</span>
+                        <strong>{{ slider.updatedAt|date:"Y/m/d H:i" }}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>شناسه:</span>
+                        <code>{{ slider.id }}</code>
+                    </li>
+                    {% if slider.imageName %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>نام فایل:</span>
+                        <small>{{ slider.imageName.name|slice:"-30:" }}</small>
+                    </li>
+                    {% endif %}
+                    <li class="list-group-item">
+                        <div class="alert alert-info py-2 mb-0">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <small>اسلایدر اصلی در صفحه اول سایت نمایش داده می‌شود.</small>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.current-image img {
+    width: 100%;
+    height: 150px;
+    object-fit: contain;
+    background: #f8f9fa;
+}
+
+.slider-preview img {
+    width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.preview-content {
+    min-height: 80px;
+}
+
+.list-group-item {
+    border-color: rgba(0,0,0,.125);
+    padding: 0.75rem 0;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // به‌روزرسانی پیش‌نمایش
+    const textSlider = document.getElementById('textSlider');
+    const link = document.getElementById('link');
+    const isActive = document.getElementById('isActive');
+    const imageInput = document.getElementById('imageName');
+
+    // به‌روزرسانی متن
+    textSlider.addEventListener('input', function() {
+        document.getElementById('previewText').textContent = this.value;
+    });
+
+    // به‌روزرسانی تصویر
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewImage').src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+
+            // نمایش پیش‌نمایش در زیر input
+            document.getElementById('imagePreview').innerHTML = `
+                <div class="alert alert-success p-2">
+                    <i class="fas fa-check-circle"></i>
+                    تصویر جدید انتخاب شد.
+                </div>
+            `;
+        }
+    });
+
+    // اعتبارسنجی تاریخ‌ها
+    const form = document.getElementById('sliderForm');
+    form.addEventListener('submit', function(e) {
+        const start = new Date(document.getElementById('registerData').value);
+        const end = new Date(document.getElementById('endData').value);
+
+        if (end <= start) {
+            e.preventDefault();
+            alert('تاریخ پایان باید بعد از تاریخ شروع باشد.');
+            return false;
+        }
+
+        return true;
+    });
+});
+
+function confirmDelete() {
+    const message = '⚠️ آیا از حذف این اسلایدر اصلی اطمینان دارید؟\n\n' +
+                   '• این اسلایدر در صفحه اصلی سایت نمایش داده می‌شود\n' +
+                   '• حذف آن غیرقابل بازگشت است\n' +
+                   '• تصویر از سرور حذف خواهد شد\n\n' +
+                   'آیا مطمئن هستید؟';
+
+    return confirm(message);
+}
+</script>
+{% endblock %}

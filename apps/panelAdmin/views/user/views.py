@@ -1,15 +1,195 @@
 # views/user_views.py
+# views/user_views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.db.models import Q, Count, Case, When, Value, IntegerField
+from django.db.models.functions import Concat
+from django.utils import timezone
+from datetime import datetime, timedelta
 from apps.user.models.user import CustomUser
 from apps.user.models.security import UserSecurity
 from apps.user.models.device import UserDevice
-from datetime import datetime
 
-# لیست کاربران
+
 def user_list(request):
+    """لیست کاربران با فیلتر و جستجوی پیشرفته"""
     users = CustomUser.objects.select_related('security').all()
-    return render(request, 'panelAdmin/users/list.html', {'users': users})
+
+    # فیلتر بر اساس جستجو
+    search_query = request.GET.get('search', '')
+    if search_query:
+        users = users.filter(
+            Q(mobileNumber__icontains=search_query) |
+            Q(name__icontains=search_query) |
+            Q(family__icontains=search_query) |
+            Q(email__icontains=search_query)
+        )
+
+    # فیلتر بر اساس وضعیت فعال
+    status = request.GET.get('status')
+    if status == 'active':
+        users = users.filter(is_active=True)
+    elif status == 'inactive':
+        users = users.filter(is_active=False)
+
+    # فیلتر بر اساس نقش
+    role = request.GET.get('role')
+    if role == 'superuser':
+        users = users.filter(is_superuser=True)
+    elif role == 'staff':
+        users = users.filter(is_staff=True, is_superuser=False)
+    elif role == 'user':
+        users = users.filter(is_staff=False, is_superuser=False)
+
+    # فیلتر بر اساس وضعیت مسدودی
+    ban_status = request.GET.get('ban_status')
+    if ban_status == 'banned':
+        users = users.filter(security__isBan=True)
+    elif ban_status == 'not_banned':
+        users = users.filter(security__isBan=False)
+
+    # فیلتر بر اساس جنسیت
+    gender = request.GET.get('gender')
+    if gender in ['M', 'F']:
+        users = users.filter(gender=gender)
+
+    # فیلتر بر اساس تاریخ عضویت
+    join_date = request.GET.get('join_date')
+    if join_date:
+        if join_date == 'today':
+            today = timezone.now().date()
+            users = users.filter(createAt__date=today)
+        elif join_date == 'yesterday':
+            yesterday = timezone.now().date() - timedelta(days=1)
+            users = users.filter(createAt__date=yesterday)
+        elif join_date == 'last_7_days':
+            last_week = timezone.now() - timedelta(days=7)
+            users = users.filter(createAt__gte=last_week)
+        elif join_date == 'last_30_days':
+            last_month = timezone.now() - timedelta(days=30)
+            users = users.filter(createAt__gte=last_month)
+        elif join_date == 'this_month':
+            today = timezone.now().date()
+            start_of_month = today.replace(day=1)
+            users = users.filter(createAt__date__gte=start_of_month)
+
+    # فیلتر بر اساس تعداد دستگاه‌ها
+    devices_count = request.GET.get('devices_count')
+    if devices_count:
+        if devices_count == 'no_device':
+            users = users.annotate(device_count=Count('devices')).filter(device_count=0)
+        elif devices_count == 'one_device':
+            users = users.annotate(device_count=Count('devices')).filter(device_count=1)
+        elif devices_count == 'multiple_devices':
+            users = users.annotate(device_count=Count('devices')).filter(device_count__gt=1)
+
+    # مرتب‌سازی
+    sort_by = request.GET.get('sort_by', '-createAt')
+    if sort_by in ['createAt', '-createAt', 'mobileNumber', '-mobileNumber', 'name', '-name']:
+        users = users.order_by(sort_by)
+    else:
+        users = users.order_by('-createAt')
+
+    # محاسبه آمار
+    total_users = users.count()
+    active_users_count = users.filter(is_active=True).count()
+    staff_count = users.filter(is_staff=True).count()
+    banned_count = users.filter(security__isBan=True).count()
+
+    # فیلتر بر اساس رنج سنی
+    age_filter = request.GET.get('age')
+    if age_filter:
+        today = timezone.now().date()
+        if age_filter == 'under_18':
+            target_date = today.replace(year=today.year - 18)
+            users = users.filter(birth_date__gte=target_date)
+        elif age_filter == '18_30':
+            target_date_min = today.replace(year=today.year - 30)
+            target_date_max = today.replace(year=today.year - 18)
+            users = users.filter(birth_date__range=(target_date_min, target_date_max))
+        elif age_filter == '30_50':
+            target_date_min = today.replace(year=today.year - 50)
+            target_date_max = today.replace(year=today.year - 30)
+            users = users.filter(birth_date__range=(target_date_min, target_date_max))
+        elif age_filter == 'over_50':
+            target_date = today.replace(year=today.year - 50)
+            users = users.filter(birth_date__lte=target_date)
+
+    # فیلتر بر اساس تکمیل اطلاعات
+    profile_complete = request.GET.get('profile_complete')
+    if profile_complete == 'complete':
+        users = users.filter(
+            Q(name__isnull=False) & Q(family__isnull=False) &
+            Q(email__isnull=False) & Q(birth_date__isnull=False)
+        )
+    elif profile_complete == 'incomplete':
+        users = users.filter(
+            Q(name__isnull=True) | Q(family__isnull=True) |
+            Q(email__isnull=True) | Q(birth_date__isnull=True)
+        )
+
+    # اعمال annotate برای نمایش بهتر
+    users = users.annotate(
+        full_name=Concat('name', Value(' '), 'family'),
+        device_count=Count('devices'),
+        profile_complete_percent=Case(
+            When(
+                Q(name__isnull=False) & Q(family__isnull=False) &
+                Q(email__isnull=False) & Q(birth_date__isnull=False),
+                then=Value(100)
+            ),
+            When(
+                Q(name__isnull=False) & Q(family__isnull=False) &
+                Q(email__isnull=False),
+                then=Value(75)
+            ),
+            When(
+                Q(name__isnull=False) & Q(family__isnull=False),
+                then=Value(50)
+            ),
+            When(
+                Q(name__isnull=False),
+                then=Value(25)
+            ),
+            default=Value(0),
+            output_field=IntegerField()
+        )
+    )
+
+    context = {
+        'users': users,
+        'total_users': total_users,
+        'active_users_count': active_users_count,
+        'staff_count': staff_count,
+        'banned_count': banned_count,
+        'search_query': search_query,
+        'selected_status': status,
+        'selected_role': role,
+        'selected_ban_status': ban_status,
+        'selected_gender': gender,
+        'selected_join_date': join_date,
+        'selected_devices_count': devices_count,
+        'selected_sort_by': sort_by,
+        'selected_age_filter': age_filter,
+        'selected_profile_complete': profile_complete,
+    }
+
+    return render(request, 'panelAdmin/users/list.html', context)
+
+
+
+def toggle_ban(request, user_id):
+    """تغییر وضعیت مسدودی کاربر"""
+    user = get_object_or_404(CustomUser, id=user_id)
+    security, created = UserSecurity.objects.get_or_create(user=user)
+
+    security.isBan = not security.isBan
+    security.save()
+
+    status = 'مسدود' if security.isBan else 'رفع مسدودی'
+    messages.success(request, f'کاربر با موفقیت {status} شد')
+
+    return redirect('panelAdmin:admin_user_list')
 
 
 def user_detail(request, user_id):
@@ -105,7 +285,7 @@ def delete_user(request, user_id):
         mobile_number = user.mobileNumber
         user.delete()
         messages.success(request, f'کاربر با شماره {mobile_number} حذف شد')
-        return redirect('admin_user_list')
+        return redirect('panelAdmin:admin_user_list')
 
     return render(request, 'panelAdmin/users/delete_confirm.html', {'user': user})
 

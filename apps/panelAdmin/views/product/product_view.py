@@ -560,18 +560,33 @@ def product_update(request, product_id):
 
 def product_delete(request, product_id):
     """حذف محصول"""
-    product = get_object_or_404(Product, id=product_id)
+    product = get_object_or_404(
+        Product.objects.prefetch_related('galleries', 'saleTypes', 'featuresValue__feature'),
+        id=product_id
+    )
+
+    # محاسبه آمار قبل از ارسال به تمپلیت
+    galleries_count = product.galleries.count()
+    sale_types_count = product.saleTypes.count()
 
     if request.method == 'POST':
         try:
-            product_name = product.title
+            product_title = product.title
             product.delete()
-            messages.success(request, f'محصول {product_name} با موفقیت حذف شد')
-            return redirect('admin_product_list')
+            messages.success(request, f'محصول {product_title} با موفقیت حذف شد')
+            return redirect('panelAdmin:admin_product_list')
         except Exception as e:
             messages.error(request, f'خطا در حذف محصول: {str(e)}')
 
-    return render(request, 'panelAdmin/products/product/delete_confirm.html', {'product': product})
+    return render(request, 'panelAdmin/products/product/delete_confirm.html', {
+        'product': product,
+        'galleries_count': galleries_count,
+        'sale_types_count': sale_types_count,
+        'comment_stats': {
+            'total_comments': product.total_comments,
+            'average_rating': product.average_rating,
+        }
+    })
 
 @require_POST
 def delete_gallery_image(request, image_id):
@@ -710,6 +725,17 @@ def comment_list(request):
     """لیست کامنت‌ها"""
     comments = Comment.objects.select_related('user', 'product').all()
 
+    # فیلتر بر اساس جستجو
+    search_query = request.GET.get('search', '')
+    if search_query:
+        comments = comments.filter(
+            Q(text__icontains=search_query) |
+            Q(user__mobileNumber__icontains=search_query) |
+            Q(user__name__icontains=search_query) |
+            Q(user__family__icontains=search_query) |
+            Q(product__title__icontains=search_query)
+        )
+
     # فیلتر بر اساس محصول
     product_id = request.GET.get('product')
     if product_id:
@@ -727,6 +753,15 @@ def comment_list(request):
     if comment_type:
         comments = comments.filter(typeComment=comment_type)
 
+    # مرتب‌سازی
+    comments = comments.order_by('-createdAt')
+
+    # محاسبه آمار
+    active_comments_count = comments.filter(isActive=True).count()
+    recommend_count = comments.filter(typeComment='recommend', isActive=True).count()
+    not_recommend_count = comments.filter(typeComment='not_recommend', isActive=True).count()
+
+    # صفحه‌بندی
     paginator = Paginator(comments, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -738,8 +773,13 @@ def comment_list(request):
         'products': products,
         'selected_product': product_id,
         'selected_status': status,
-        'selected_type': comment_type
+        'selected_type': comment_type,
+        'search_query': search_query,
+        'active_comments_count': active_comments_count,
+        'recommend_count': recommend_count,
+        'not_recommend_count': not_recommend_count,
     })
+
 
 @require_POST
 def comment_toggle(request, comment_id):
@@ -755,7 +795,38 @@ def comment_toggle(request, comment_id):
     except Exception as e:
         messages.error(request, f'خطا در تغییر وضعیت کامنت: {str(e)}')
 
-    return redirect('admin_comment_list')
+    return redirect('panelAdmin:admin_comment_list')
+
+@require_POST
+def bulk_comment_action(request):
+    """عملیات گروهی روی کامنت‌ها"""
+    if request.method == 'POST':
+        comment_ids = request.POST.get('comment_ids', '').split(',')
+        action = request.POST.get('bulk_action')
+
+        if not comment_ids or not action:
+            messages.error(request, 'لطفا کامنت‌ها و عملیات را انتخاب کنید')
+            return redirect('panelAdmin:admin_comment_list')
+
+        try:
+            comments = Comment.objects.filter(id__in=comment_ids)
+
+            if action == 'activate':
+                comments.update(isActive=True)
+                messages.success(request, f'{comments.count()} کامنت فعال شدند')
+            elif action == 'deactivate':
+                comments.update(isActive=False)
+                messages.success(request, f'{comments.count()} کامنت غیرفعال شدند')
+            elif action == 'delete':
+                count = comments.count()
+                comments.delete()
+                messages.success(request, f'{count} کامنت حذف شدند')
+
+        except Exception as e:
+            messages.error(request, f'خطا در انجام عملیات گروهی: {str(e)}')
+
+    return redirect('panelAdmin:admin_comment_list')
+
 
 @require_POST
 def comment_delete(request, comment_id):
@@ -768,7 +839,7 @@ def comment_delete(request, comment_id):
     except Exception as e:
         messages.error(request, f'خطا در حذف کامنت: {str(e)}')
 
-    return redirect('admin_comment_list')
+    return redirect('panelAdmin:admin_comment_list')
 
 
 # ========================

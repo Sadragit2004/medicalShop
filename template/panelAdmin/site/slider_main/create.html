@@ -1,0 +1,308 @@
+{% extends '../../base/base.html' %}
+
+{% block title %}ایجاد اسلایدر اصلی جدید{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_slider_main_list' %}">اسلایدرهای اصلی</a></li>
+<li class="breadcrumb-item active">ایجاد جدید</li>
+{% endblock %}
+
+{% block page_title %}ایجاد اسلایدر اصلی جدید{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-plus-circle"></i> اطلاعات اسلایدر اصلی جدید
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="sliderForm">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <!-- تصویر اسلایدر (اجباری) -->
+                        <div class="col-md-6 mb-3">
+                            <label for="imageName" class="form-label">
+                                <span class="text-danger">*</span> تصویر اسلایدر
+                            </label>
+                            <input type="file" class="form-control" id="imageName" name="imageName"
+                                   accept="image/*" required>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle"></i>
+                                تصویر اسلایدر اصلی باید کیفیت بالایی داشته باشد.
+                                <br>اندازه پیشنهادی: 1920×600 پیکسل
+                                <br>فرمت‌های مجاز: JPG, PNG, GIF
+                                <br>حداکثر حجم: 5MB
+                            </div>
+                            <div class="mt-2" id="imagePreview"></div>
+                        </div>
+
+                        <!-- پیش‌نمایش تصویر -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">پیش‌نمایش تصویر</label>
+                            <div class="preview-container">
+                                <div id="imagePreviewContainer" class="text-center">
+                                    <i class="fas fa-image fa-3x text-muted mb-2"></i>
+                                    <p class="text-muted">تصویری انتخاب نشده</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- متن اسلایدر -->
+                        <div class="col-md-6 mb-3">
+                            <label for="textSlider" class="form-label">
+                                <span class="text-danger">*</span> متن اسلایدر
+                            </label>
+                            <input type="text" class="form-control" id="textSlider" name="textSlider"
+                                   placeholder="متن نمایشی روی اسلایدر" required maxlength="200">
+                            <div class="form-text">این متن روی تصویر اسلایدر نمایش داده می‌شود.</div>
+                        </div>
+
+                        <!-- متن جایگزین -->
+                        <div class="col-md-6 mb-3">
+                            <label for="altSlide" class="form-label">متن جایگزین (Alt)</label>
+                            <input type="text" class="form-control" id="altSlide" name="altSlide"
+                                   placeholder="متن جایگزین برای تصویر" maxlength="200">
+                            <div class="form-text">برای سئو و دسترسی‌پذیری مهم است.</div>
+                        </div>
+
+                        <!-- لینک -->
+                        <div class="col-md-12 mb-3">
+                            <label for="link" class="form-label">لینک (اختیاری)</label>
+                            <input type="url" class="form-control" id="link" name="link"
+                                   placeholder="https://example.com/page">
+                            <div class="form-text">با کلیک روی اسلایدر، کاربر به این آدرس هدایت می‌شود.</div>
+                        </div>
+
+                        <!-- تاریخ شروع -->
+                        <div class="col-md-6 mb-3">
+                            <label for="registerData" class="form-label">
+                                <span class="text-danger">*</span> تاریخ شروع
+                            </label>
+                            <input type="datetime-local" class="form-control" id="registerData"
+                                   name="registerData" required>
+                            <div class="form-text">زمان شروع نمایش اسلایدر در سایت.</div>
+                        </div>
+
+                        <!-- تاریخ پایان -->
+                        <div class="col-md-6 mb-3">
+                            <label for="endData" class="form-label">
+                                <span class="text-danger">*</span> تاریخ پایان
+                            </label>
+                            <input type="datetime-local" class="form-control" id="endData"
+                                   name="endData" required>
+                            <div class="form-text">زمان پایان نمایش اسلایدر در سایت.</div>
+                        </div>
+
+                        <!-- وضعیت -->
+                        <div class="col-md-12 mb-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="isActive"
+                                       name="isActive" checked>
+                                <label class="form-check-label" for="isActive">
+                                    <strong>اسلایدر فعال باشد</strong>
+                                    <span class="text-muted d-block">اگر غیرفعال باشد، در سایت نمایش داده نمی‌شود.</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- راهنما -->
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-lightbulb"></i> نکات مهم:</h6>
+                        <ul class="mb-0">
+                            <li>اسلایدرهای اصلی در صفحه اول سایت نمایش داده می‌شوند.</li>
+                            <li>توصیه می‌شود حداکثر 5 اسلایدر فعال همزمان داشته باشید.</li>
+                            <li>تصاویر باید کیفیت بالا و بهینه شده باشند.</li>
+                            <li>متن اسلایدر باید کوتاه و گویا باشد.</li>
+                        </ul>
+                    </div>
+
+                    <!-- دکمه‌های فرم -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'panelAdmin:admin_slider_main_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-right"></i> بازگشت
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> ایجاد اسلایدر اصلی
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- راهنمای سریع -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-question-circle"></i> راهنمای سریع</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item">
+                        <h6><i class="fas fa-image text-primary"></i> تصویر اسلایدر</h6>
+                        <p class="mb-0 small">اندازه مناسب: 1920×600 پیکسل<br>فرمت: JPG یا PNG<br>حجم: کمتر از 5MB</p>
+                    </div>
+                    <div class="list-group-item">
+                        <h6><i class="fas fa-calendar-alt text-success"></i> بازه زمانی</h6>
+                        <p class="mb-0 small">تاریخ پایان باید بعد از تاریخ شروع باشد.<br>اسلایدر در این بازه نمایش داده می‌شود.</p>
+                    </div>
+                    <div class="list-group-item">
+                        <h6><i class="fas fa-link text-info"></i> لینک</h6>
+                        <p class="mb-0 small">می‌توانید اسلایدر را به صفحات داخلی یا خارجی لینک دهید.</p>
+                    </div>
+                    <div class="list-group-item">
+                        <h6><i class="fas fa-exclamation-triangle text-warning"></i> توجه</h6>
+                        <p class="mb-0 small">اسلایدر اصلی مستقیماً در صفحه اول نمایش داده می‌شود.<br>مطمئن شوید محتوای مناسبی انتخاب کرده‌اید.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.preview-container {
+    height: 200px;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #f8f9fa;
+}
+
+#imagePreviewContainer img {
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+}
+
+.form-text {
+    font-size: 0.85em;
+}
+
+.list-group-item {
+    border: none;
+    padding: 1rem 0;
+}
+
+.list-group-item:first-child {
+    padding-top: 0;
+}
+
+.list-group-item:last-child {
+    padding-bottom: 0;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تنظیم تاریخ‌های پیش‌فرض
+    const now = new Date();
+    const startDate = new Date(now.getTime() + (60 * 60 * 1000)); // 1 ساعت بعد
+    const endDate = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 روز بعد
+
+    document.getElementById('registerData').value = formatDateTimeLocal(startDate);
+    document.getElementById('endData').value = formatDateTimeLocal(endDate);
+
+    // مدیریت تصویر
+    const imageInput = document.getElementById('imageName');
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const preview = document.getElementById('imagePreview');
+
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // بررسی حجم فایل
+            if (file.size > 5 * 1024 * 1024) {
+                alert('حجم تصویر نباید بیشتر از 5MB باشد.');
+                imageInput.value = '';
+                previewContainer.innerHTML = `
+                    <i class="fas fa-image fa-3x text-muted mb-2"></i>
+                    <p class="text-muted">تصویری انتخاب نشده</p>
+                `;
+                preview.innerHTML = '';
+                return;
+            }
+
+            // بررسی فرمت
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (!validTypes.includes(file.type)) {
+                alert('فرمت تصویر نامعتبر است. فقط JPG, PNG و GIF مجاز هستند.');
+                imageInput.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // پیش‌نمایش در کانتینر اصلی
+                previewContainer.innerHTML = `<img src="${e.target.result}" class="img-fluid rounded">`;
+
+                // پیش‌نمایش کوچک در زیر input
+                preview.innerHTML = `
+                    <div class="alert alert-success p-2">
+                        <i class="fas fa-check-circle"></i>
+                        تصویر با موفقیت انتخاب شد.
+                        <small class="d-block">حجم: ${formatFileSize(file.size)}</small>
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            previewContainer.innerHTML = `
+                <i class="fas fa-image fa-3x text-muted mb-2"></i>
+                <p class="text-muted">تصویری انتخاب نشده</p>
+            `;
+            preview.innerHTML = '';
+        }
+    });
+
+    // اعتبارسنجی فرم
+    const form = document.getElementById('sliderForm');
+    form.addEventListener('submit', function(e) {
+        // بررسی تاریخ‌ها
+        const start = new Date(document.getElementById('registerData').value);
+        const end = new Date(document.getElementById('endData').value);
+
+        if (end <= start) {
+            e.preventDefault();
+            alert('تاریخ پایان باید بعد از تاریخ شروع باشد.');
+            return false;
+        }
+
+        // بررسی فیلدهای اجباری
+        if (!document.getElementById('textSlider').value.trim()) {
+            e.preventDefault();
+            alert('لطفا متن اسلایدر را وارد کنید.');
+            return false;
+        }
+
+        return true;
+    });
+});
+
+function formatDateTimeLocal(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+</script>
+{% endblock %}

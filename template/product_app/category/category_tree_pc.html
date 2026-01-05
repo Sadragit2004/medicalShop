@@ -12,7 +12,7 @@
                 {% for data in tree_data %}
                 <li class="megamenu_category-item {% if forloop.first %}active{% endif %}"
                     onclick="showCategory('{{ data.main.id }}')">
-                    <a href="/product/category/{{ data.main.slug }}/">
+                    <a style='color:#333;' href="/product/category/{{ data.main.slug }}/">
                         {{ data.main.title }}
                     </a>
                 </li>
