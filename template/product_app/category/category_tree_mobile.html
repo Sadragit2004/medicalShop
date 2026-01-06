@@ -7,12 +7,12 @@
                     <span class="mobile-menu-category-badge">
                         {{ main_item.main.title }}
                     </span>
-                    <img src="{{ main_item.main.image.url }}" class="h-28 w-full object-cover rounded" alt="{{ main_item.main.title }}">
+                    <img loading="lazy" src="{{ main_item.main.image.url }}" class="h-28 w-full object-cover rounded" alt="{{ main_item.main.title }}">
                 {% else %}
                     <span class="mobile-menu-category-badge">
                         {{ main_item.main.title }}
                     </span>
-                    <img src="{% static 'images/category/default.webp' %}" class="h-28 w-full object-cover rounded" alt="{{ main_item.main.title }}">
+                    <img loading="lazy" src="{% static 'images/category/default.webp' %}" class="h-28 w-full object-cover rounded" alt="{{ main_item.main.title }}">
                 {% endif %}
             </a>
         </div>

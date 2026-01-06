@@ -11,9 +11,9 @@
                 </svg>
             </span>
             <div class="space-y-1 md:space-y-1">
-                <h3 class="text-xl md:text-2xl font-MorabbaMedium text-gray-800 dark:text-gray-50">جدید ترین
+                <span class="text-xl md:text-2xl font-MorabbaMedium text-gray-800 dark:text-gray-50">جدید ترین
                     <span class="text-blue-600 dark:text-blue-500">محصولات</span>
-                </h3>
+                </span>
                 <p class="text-sm text-gray-500 dark:text-gray-300">جدیدترین و بروزترین محصولات</p>
             </div>
         </div>
@@ -53,7 +53,7 @@
                 <div class="product-card_header">
                     <div class="flex items-center gap-x-2">
                         <!-- Cart Button -->
-                      
+
                     </div>
 
                     <!-- badge offer -->
@@ -65,12 +65,12 @@
                 <!-- product images -->
                 <a href="{% url 'product:product_detail' product.slug %}" class="block relative h-64 overflow-hidden bg-gray-100 dark:bg-gray-700">
                     <!-- تصویر اصلی -->
-                    <img class="w-full h-full object-contain transition-opacity duration-300 group-hover:opacity-0"
+                    <img loading="lazy" class="w-full h-full object-contain transition-opacity duration-300 group-hover:opacity-0"
                          src="{{ product.main_image|default:'/static/images/default-product.png' }}"
                          alt="{{ product.title }}">
 
                     <!-- تصویر hover (اولین تصویر گالری) -->
-                    <img class="absolute inset-0 w-full h-full object-contain opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                    <img loading="lazy" class="absolute inset-0 w-full h-full object-contain opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                          src="{{ product.hover_image|default:product.main_image|default:'/static/images/default-product.png' }}"
                          alt="{{ product.title }}">
                 </a>

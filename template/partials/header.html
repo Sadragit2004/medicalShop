@@ -52,9 +52,17 @@
 
             <!-- Logo -->
             <a href="index.html" class="flex flex-col text-center ml-20">
-                <span class="font-MorabbaMedium text-4xl flex items-center">
-                    <span class="text-blue-500">سایا مد</span> شاپ
-                </span>
+{% if request.path == '/' or request.path == '/home/' %}
+    <!-- صفحه اصلی -->
+    <h1 class="font-MorabbaMedium text-4xl flex items-center">
+        <span class="text-blue-500">سایا مد</span> شاپ
+    </h1>
+{% else %}
+    <!-- صفحات دیگر -->
+    <span class="font-MorabbaMedium text-4xl flex items-center">
+        <span class="text-blue-500">سایا مد</span> شاپ
+    </span>
+{% endif %}
                 <p class="font-DanaMedium text-gray-400">لوازم تجهیزات پزشکی و بهداشتی</p>
             </a>
 
@@ -151,7 +159,7 @@
                 <div class="cart ">
                     <!-- HEADER -->
                     <div class="flex items-center justify-between pb-2 border-b-2 border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-300">
-                        <h2 class="font-DanaMedium text-lg">سبد خرید <span class="text-sm text-gray-400 font-Dana">(0 مورد)</span></h2>
+                        <span class="font-DanaMedium text-lg">سبد خرید <span class="text-sm text-gray-400 font-Dana">(0 مورد)</span></span>
                         <svg class="size-5 cursor-pointer close-cart mb-.5">
                             <use href="#x-mark" />
                         </svg>
@@ -278,7 +286,7 @@
 
                                     {% render_partial 'product:get_category_tree_mobile' %}
 
-        
+
                                 </ul>
                             </div>
                     </li>
@@ -797,7 +805,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     data.popular_searches.forEach(item => {
                         const li = document.createElement('li');
                         li.innerHTML = `
-                            <a href="/search/?q=${encodeURIComponent(item.keyword)}">
+                            <a href="/search/search/?q=${encodeURIComponent(item.keyword)}">
                                 #${item.keyword}
                             </a>
                         `;

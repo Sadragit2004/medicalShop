@@ -9,9 +9,9 @@
                 </svg>
             </span>
             <div class="space-y-1 md:space-y-1">
-                <h3 class="text-xl md:text-2xl font-MorabbaMedium text-gray-800 dark:text-gray-50">محبوب‌ترین
+                <span class="text-xl md:text-2xl font-MorabbaMedium text-gray-800 dark:text-gray-50">محبوب‌ترین
                     <span class="text-blue-600 dark:text-blue-500">مقالات</span>
-                </h3>
+                </span>
                 <p class="text-sm text-gray-500 dark:text-gray-300">جدیدترین و بروزترین مقالات</p>
             </div>
         </div>
@@ -47,9 +47,9 @@
             <div class="swiper-slide group article-box">
                 <div class="relative overflow-hidden rounded-lg">
                     {% if blog.mainImage %}
-                        <img src="{{ blog.mainImage.url }}" class="article-box_img" alt="{{ blog.title }}" />
+                        <img loading="lazy" src="{{ blog.mainImage.url }}" class="article-box_img" alt="{{ blog.title }}" />
                     {% else %}
-                        <img src="{{ media_url }}/images/default-article.jpg" class="article-box_img" alt="{{ blog.title }}" />
+                        <img loading="lazy" src="{{ media_url }}/images/default-article.jpg" class="article-box_img" alt="{{ blog.title }}" />
                     {% endif %}
                     <div
                         class="absolute opacity-0 left-0 top-0 bottom-0 right-0 bg-black/60 flex items-center justify-center group-hover:opacity-100 duration-300 transition-all rounded-bl-3xl rounded-tr-3xl">
@@ -63,7 +63,7 @@
                     </div>
                 </div>
                 <div class="flex flex-col gap-y-1 py-5 px-1">
-                    <h2 class="font-DanaDemiBold">{{ blog.title }}</h2>
+                    <span class="font-DanaDemiBold">{{ blog.title }}</span>
                 </div>
                 <span class="flex w-full h-1 py-1 border-t border-gray-100 dark:border-white/10"></span>
                 <div class="flex items-center justify-between text-sm px-1">

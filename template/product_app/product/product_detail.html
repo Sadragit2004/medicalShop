@@ -40,12 +40,32 @@
     opacity: 1 !important;
 }
 
+/* نوار ثابت پایین برای موبایل */
+.mobile-fixed-bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    padding: 12px 16px;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: none;
+}
+
 /* برای نسخه موبایل */
 @media (max-width: 768px) {
-    .toggle-favorite-btn,
-    #heart-icon-{{ product.id }} {
-        display: block !important;
-        visibility: visible !important;
+    .mobile-fixed-bottom-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    /* تنظیم padding برای جلوگیری از همپوشانی محتوا */
+    main.container {
+        padding-bottom: 90px;
     }
 }
 
@@ -56,6 +76,181 @@
         display: block !important;
         visibility: visible !important;
     }
+}
+
+/* بهبود ظاهر input number */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* transition برای تغییرات قیمت */
+#total-price, #carton-count, #current-price {
+    transition: all 0.3s ease;
+}
+
+/* استایل tooltip بهبود یافته */
+.tooltip {
+    position: relative;
+}
+
+.tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -60px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 12px;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* استایل برای دکمه خانه */
+.home-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.home-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* استایل قیمت در نوار موبایل */
+.mobile-price-display {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.mobile-original-price {
+    font-size: 12px;
+    color: #9ca3af;
+    text-decoration: line-through;
+}
+
+.mobile-final-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ef4444;
+}
+
+.mobile-discount-badge {
+    background: #ef4444;
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-top: 2px;
+}
+
+.mobile-add-to-cart-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-weight: 600;
+    flex: 1;
+    transition: all 0.3s ease;
+}
+
+.mobile-add-to-cart-btn:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* استایل برای حالت تماس */
+.mobile-call-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-weight: 600;
+    flex: 1;
+    transition: all 0.3s ease;
+}
+
+.mobile-call-btn:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* استایل‌های عمومی برای دکمه‌ها */
+.add-to-cart-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+}
+
+.add-to-cart-btn:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
+}
+
+.call-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    text-decoration: none;
+}
+
+.call-btn:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
 }
 </style>
 
@@ -96,6 +291,47 @@
         </ol>
     </nav>
 
+    <!-- نوار ثابت پایین برای موبایل -->
+    <div class="mobile-fixed-bottom-bar">
+        <!-- دکمه خانه -->
+        <a href="{% url 'main:index' %}" class="home-btn">
+            <svg class="w-5 h-5">
+                <use href="#home" />
+            </svg>
+        </a>
+
+        <!-- نمایش قیمت -->
+        <div class="mobile-price-display">
+            {% if discount_percent > 0 and default_sale_type.final_price > 0 %}
+                <div class="mobile-original-price">{{ default_sale_type.price|intcomma }} تومان</div>
+                <div class="mobile-final-price">{{ default_sale_type.final_price|intcomma }} تومان</div>
+                <div class="mobile-discount-badge">{{ discount_percent }}% تخفیف</div>
+            {% else %}
+                <div class="mobile-final-price" style="color: #3b82f6;">{{ default_sale_type.price|intcomma }} تومان</div>
+            {% endif %}
+        </div>
+
+        <!-- دکمه‌های عملیات -->
+        {% if is_call and emergency_phone %}
+            <a href="tel:{{ emergency_phone.phone_number }}" class="mobile-call-btn">
+                <svg class="w-5 h-5">
+                    <use href="#phone"></use>
+                </svg>
+                تماس
+            </a>
+        {% else %}
+            <button class="mobile-add-to-cart-btn add-to-cart-btn-mobile"
+                    data-product-id="{{ product.id }}"
+                    data-quantity="1"
+                    data-detail="">
+                <svg class="w-5 h-5">
+                    <use href="#shopping-bag"></use>
+                </svg>
+                خرید
+            </button>
+        {% endif %}
+    </div>
+
     <!-- PRODUCT DETAILS SECTION -->
     <section class="mt-5 flex flex-col lg:flex-row items-start gap-4 child:rounded-lg child:bg-white child:dark:bg-gray-800 child:shadow child:p-4">
         <!-- IMAGE & INFO BOX Container -->
@@ -105,12 +341,12 @@
                 <div class="w-2/4 hidden md:flex flex-col justify-center items-center gap-y-4">
                     {% if galleries %}
                     <span class="open-sliderModal cursor-pointer">
-                        <img src="{{ galleries.0.image.url }}" class="object-cover" alt="{{ galleries.0.altText|default:product.title }}">
+                        <img loading="lazy" src="{{ galleries.0.image.url }}" class="object-cover" alt="{{ galleries.0.altText|default:product.title }}">
                     </span>
                     <div class="grid grid-cols-12 child:col-span-3 child:app-border gap-x-4 child:size-16 child:rounded-lg child:cursor-pointer">
                         {% for gallery in galleries|slice:":4" %}
                         <div class="p-1 open-sliderModal">
-                            <img src="{{ gallery.image.url }}" class="object-cover rounded-lg" alt="{{ gallery.altText|default:product.title }}">
+                            <img loading="lazy" src="{{ gallery.image.url }}" class="object-cover rounded-lg" alt="{{ gallery.altText|default:product.title }}">
                         </div>
                         {% endfor %}
                         {% if galleries|length > 4 %}
@@ -118,7 +354,7 @@
                             <svg class="absolute size-8 text-gray-100 top-4 left-4 z-10">
                                 <use href="#ellipsis"></use>
                             </svg>
-                            <img src="{{ galleries.4.image.url }}" class="object-cover rounded-lg blur-sm" alt="{{ galleries.4.altText|default:product.title }}">
+                            <img loading="lazy" src="{{ galleries.4.image.url }}" class="object-cover rounded-lg blur-sm" alt="{{ galleries.4.altText|default:product.title }}">
                         </div>
                         {% endif %}
                     </div>
@@ -155,7 +391,7 @@
                             <div class="swiper-wrapper w-full child:w-full child:overflow-hidden child:rounded-lg">
                                 {% for gallery in galleries %}
                                 <div class="swiper-slide">
-                                    <img src="{{ gallery.image.url }}" alt="{{ gallery.altText|default:product.title }}">
+                                    <img loading="lazy" src="{{ gallery.image.url }}" alt="{{ gallery.altText|default:product.title }}">
                                 </div>
                                 {% endfor %}
                             </div>
@@ -165,9 +401,9 @@
                     {% endif %}
 
                     <div class="flex flex-col gap-y-3">
-                        <p class="text-lg font-DanaDemiBold dark:text-gray-300">
+                        <h1 class="text-lg font-DanaDemiBold dark:text-gray-300">
                             {{ product.title }}
-                        </p>
+                        </h1>
                         <p class="text-sm text-gray-300 dark:text-gray-500">
                             {{ product.shortDescription }}
                         </p>
@@ -187,7 +423,7 @@
                     <!-- ویژگی‌های محصول -->
                   {% if product_features %}
                     <div class="w-full flex flex-col gap-y-4">
-                        <h1 class="font-DanaDemiBold text-lg dark:text-gray-200">ویژگی‌ها</h1>
+                        <span class="font-DanaDemiBold text-lg dark:text-gray-200">ویژگی‌ها</span>
                         <div class="grid grid-cols-12 gap-2 child:p-2 child:h-16 child:bg-gray-100 dark:child:bg-gray-900 child:rounded-lg child:flex child:flex-col child:gap-y-1.5">
                             {% for pf in product_features %}
                                 {% if not "سایز" in pf.feature.title %}
@@ -206,9 +442,9 @@
 
                  {% if product_features %}
 <div class="w-full flex flex-col gap-y-4">
-    <h1 class="font-DanaDemiBold text-base dark:text-gray-200">
+    <span class="font-DanaDemiBold text-base dark:text-gray-200">
         انتخاب سایز
-    </h1>
+    </span>
 
     <div class="mb-6">
         <div class="flex flex-wrap gap-2" id="size-selector">
@@ -353,7 +589,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>
 
-        <!-- PRICE & ADD TO CART BOX -->
+        <!-- PRICE & ADD TO CART BOX - این قسمت در هر دو نسخه نمایش داده می‌شود -->
         <div class="w-full lg:w-1/4 lg:sticky top-5 flex flex-col gap-y-6">
             <!-- PRICE -->
             {% if default_sale_type %}
@@ -490,7 +726,6 @@ document.addEventListener('DOMContentLoaded', function() {
                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <!-- Carton Calculation Display -->
 
-
                     <!-- Quantity Selector -->
                     <div class="flex items-center justify-between gap-x-1 rounded-lg border border-gray-200 py-2 px-3 mb-3">
                         <svg class="w-6 h-6 increment text-green-600 cursor-pointer">
@@ -564,7 +799,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <!-- Carton Sale Total & Breakdown -->
            {% if not is_call %}
 
-
             <div class="w-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
                 <!-- Calculation Breakdown -->
                 <div class="text-sm text-gray-600 mb-3 text-center" id="carton-detail">
@@ -603,44 +837,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
             <!-- دکمه افزودن به سبد -->
             {% if is_call and emergency_phone %}
-    <a style='background:red;' href="tel:{{ emergency_phone.phone_number }}"
-       class="w-full flex items-center gap-x-1 justify-center
-              bg-emerald-500 hover:bg-emerald-600
-              text-white transition-all rounded-lg shadow py-2">
-
-        <span class="font-DanaDemiBold">
-            تماس بگیرید
-        </span>
-
-        <svg class="w-5 h-5">
-            <use href="#phone"></use>
-        </svg>
-    </a>
-
-{% else %}
-
-    <button style='background-color: rgb(37 99 235 / var(--tw-bg-opacity, 1));' class="w-full flex items-center gap-x-1 justify-center {% if default_sale_type.typeSale == 1 %}bg-blue-500 hover:bg-blue-600{% elif default_sale_type.typeSale == 3 %}bg-amber-500 hover:bg-amber-600{% else %}bg-blue-600 hover:bg-blue-700{% endif %} text-white transition-all rounded-lg shadow py-2 add-to-cart-btn"
-            data-product-id="{{ product.id }}"
-            data-quantity="1"
-            data-detail="">
-
-        <span class="add-to-cart-text">
-            {% if default_sale_type.typeSale == 2 %}
-                افزودن کارتن به سبد
-            {% elif default_sale_type.typeSale == 3 %}
-                افزودن به سبد
+                <a href="tel:{{ emergency_phone.phone_number }}"
+                   class="call-btn">
+                    <span class="font-DanaDemiBold">
+                        تماس بگیرید
+                    </span>
+                    <svg class="w-5 h-5">
+                        <use href="#phone"></use>
+                    </svg>
+                </a>
             {% else %}
-                افزودن به سبد
+                <button class="add-to-cart-btn add-to-cart-desktop"
+                        data-product-id="{{ product.id }}"
+                        data-quantity="1"
+                        data-detail="">
+                    <span class="add-to-cart-text">
+                        {% if default_sale_type.typeSale == 2 %}
+                            افزودن کارتن به سبد
+                        {% elif default_sale_type.typeSale == 3 %}
+                            افزودن به سبد
+                        {% else %}
+                            افزودن به سبد
+                        {% endif %}
+                    </span>
+                    <svg class="w-5 h-5">
+                        <use href="#shopping-bag"></use>
+                    </svg>
+                </button>
             {% endif %}
-        </span>
-
-        <svg class="w-5 h-5">
-            <use href="#shopping-bag"></use>
-        </svg>
-    </button>
-
-{% endif %}
-
 
             <div class="text-sm text-gray-400 flex xl:items-center gap-x-1">
                 <svg class="w-5 h-5">
@@ -663,9 +887,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     </svg>
                 </span>
                 <div class="space-y-1 md:space-y-1">
-                    <h3 class="text-xl md:text-2xl font-MorabbaMedium text-gray-800 dark:text-gray-50">محصولات
+                    <span class="text-xl md:text-2xl font-MorabbaMedium text-gray-800 dark:text-gray-50">محصولات
                         <span class="text-blue-600 dark:text-blue-500">مرتبط</span>
-                    </h3>
+                    </span>
                     <p class="text-sm text-gray-500 dark:text-gray-300">جدیدترین و بروزترین محصولات</p>
                 </div>
             </div>
@@ -740,9 +964,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <!-- product img -->
                     <a href="{{ related.get_absolute_url }}">
-                        <img class="product-card_img group-hover:opacity-0 absolute" src="{{ related.mainImage.url }}" alt="{{ related.title }}">
+                        <img loading="lazy" class="product-card_img group-hover:opacity-0 absolute" src="{{ related.mainImage.url }}" alt="{{ related.title }}">
                         {% if related.galleries.all %}
-                        <img class="product-card_img opacity-0 group-hover:opacity-100" src="{{ related.galleries.first.image.url }}" alt="{{ related.title }}">
+                        <img loading="lazy" class="product-card_img opacity-0 group-hover:opacity-100" src="{{ related.galleries.first.image.url }}" alt="{{ related.title }}">
                         {% endif %}
                     </a>
                     <!-- product footer -->
@@ -796,7 +1020,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         <!-- TAB 1: معرفی -->
         <div class="tab-content tab1 block">
-            <h2 class="font-DanaDemiBold border-b-2 border-blue-500 w-fit p-1 text-lg">معرفی</h2>
+            <span class="font-DanaDemiBold border-b-2 border-blue-500 w-fit p-1 text-lg">معرفی</span>
             <p class="mt-4 leading-8">
                 {{ product.description|safe }}
                 {% if product.description|length > 500 %}
@@ -812,7 +1036,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         <!-- TAB 2: مشخصات -->
         <div class="tab-content tab2 hidden w-full lg:w-[50%]">
-            <h2 class="font-DanaDemiBold border-b-2 border-blue-500 w-fit p-1 text-lg">مشخصات کلی</h2>
+            <span class="font-DanaDemiBold border-b-2 border-blue-500 w-fit p-1 text-lg">مشخصات کلی</span>
             {% if product_features %}
             <div class="p-4 my-5 w-full mx-auto flex justify-center items-center gap-x-20">
                 <ul class="space-y-3 text-gray-500 dark:text-gray-300 lg:w-2/4 child:pt-2">
@@ -844,7 +1068,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <!-- TAB 3: دیدگاه‌ها -->
         <div class="tab-content tab3 hidden w-full">
             <div class="flex items-center gap-x-2 mb-6">
-                <h2 class="font-DanaMedium text-2xl">دیدگاه‌ها</h2>
+                <span class="font-DanaMedium text-2xl">دیدگاه‌ها</span>
                 <p class="text-sm text-blue-500">({{ total_comments }} دیدگاه)</p>
             </div>
 
@@ -882,25 +1106,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     <li class="comment-item child:flex py-4 border-b border-gray-200 dark:border-b-gray-200/20 {% if forloop.counter > 3 %}hidden-comment-item hidden{% endif %}">
                         <!-- TITLE -->
                         <div class="flex items-center gap-x-2">
-                            <h2 class="font-DanaMedium text-lg mb-1">{{ comment.user.family }}</h2>
+                            <span class="font-DanaMedium text-lg mb-1">{{ comment.user.family }}</span>
                             <span class="px-2 py-1 mb-2 rounded-lg bg-blue-500 text-white text-xs">خریدار</span>
                         </div>
                         <!-- COMMENT TEXT -->
                         <div class="flex-col">
                             {% if comment.typeComment == 'recommend' %}
-                            <h2 class="flex items-center gap-x-1 text-green-500 mb-4">
+                            <span class="flex items-center gap-x-1 text-green-500 mb-4">
                                 <svg class="w-4 h-4">
                                     <use href="#hand-up"></use>
                                 </svg>
                                 پیشنهاد میشود
-                            </h2>
+                            </span>
                             {% else %}
-                            <h2 class="flex items-center gap-x-1 text-red-500 mb-4">
+                            <span class="flex items-center gap-x-1 text-red-500 mb-4">
                                 <svg class="w-4 h-4">
                                     <use href="#hand-down"></use>
                                 </svg>
                                 پیشنهاد نمیشود
-                            </h2>
+                            </span>
                             {% endif %}
                             <p class="text-gray-500 dark:text-gray-200 mb-2 line-clamp-2">
                                 {{ comment.text }}
@@ -936,9 +1160,9 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- SLIDER MODAL -->
 <div class="slider-modal hidden">
     <div class="flex w-full h-fit items-center justify-between">
-        <h1 class="font-DanaMedium text-lg">
+        <span class="font-DanaMedium text-lg">
             تصاویر {{ product.title }}
-        </h1>
+        </span>
         <svg class="size-6 cursor-pointer close-sliderModal">
             <use href="#x-mark"></use>
         </svg>
@@ -948,7 +1172,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="swiper-wrapper w-[50%] child:w-full child:rounded-lg child:overflow-hidden">
             {% for gallery in galleries %}
             <div class="swiper-slide">
-                <img src="{{ gallery.image.url }}" alt="{{ gallery.altText|default:product.title }}">
+                <img loading="lazy" src="{{ gallery.image.url }}" alt="{{ gallery.altText|default:product.title }}">
             </div>
             {% endfor %}
         </div>
@@ -968,6 +1192,49 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- JavaScript for interactions -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // ========================
+    // مدیریت نوار ثابت موبایل
+    // ========================
+    const mobileBar = document.querySelector('.mobile-fixed-bottom-bar');
+
+    // بررسی نمایش نوار در موبایل
+    function checkMobileBarVisibility() {
+        if (window.innerWidth <= 768) {
+            mobileBar.style.display = 'flex';
+
+            // به‌روزرسانی قیمت در نوار موبایل
+            updateMobilePriceDisplay();
+        } else {
+            mobileBar.style.display = 'none';
+        }
+    }
+
+    // به‌روزرسانی نمایش قیمت در نوار موبایل
+    function updateMobilePriceDisplay() {
+        const priceDisplay = document.querySelector('.mobile-price-display');
+        const discountPercent = {{ discount_percent|default:0 }};
+        const price = {{ default_sale_type.price|default:0 }};
+        const finalPrice = {{ default_sale_type.final_price|default:default_sale_type.price|default:0 }};
+
+        if (priceDisplay) {
+            if (discountPercent > 0 && finalPrice > 0) {
+                priceDisplay.innerHTML = `
+                    <div class="mobile-original-price">${price.toLocaleString()} تومان</div>
+                    <div class="mobile-final-price">${finalPrice.toLocaleString()} تومان</div>
+                    <div class="mobile-discount-badge">${discountPercent}% تخفیف</div>
+                `;
+            } else {
+                priceDisplay.innerHTML = `
+                    <div class="mobile-final-price" style="color: #3b82f6;">${price.toLocaleString()} تومان</div>
+                `;
+            }
+        }
+    }
+
+    // بررسی اولیه و هنگام تغییر سایز صفحه
+    checkMobileBarVisibility();
+    window.addEventListener('resize', checkMobileBarVisibility);
+
     // ========================
     // Modal management
     // ========================
@@ -1110,56 +1377,108 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // ========================
+    // مدیریت دکمه‌های خرید
+    // ========================
+    // دکمه خرید در نوار موبایل
+    const mobileAddToCartBtn = document.querySelector('.add-to-cart-btn-mobile');
+    if (mobileAddToCartBtn) {
+        mobileAddToCartBtn.addEventListener('click', function() {
+            const productId = this.getAttribute('data-product-id');
+            const quantity = 1;
+            addToCart(productId, quantity, '');
+        });
+    }
+
+    // دکمه خرید در پنل اصلی (دسکتاپ)
+    const desktopAddToCartBtn = document.querySelector('.add-to-cart-desktop');
+    if (desktopAddToCartBtn) {
+        desktopAddToCartBtn.addEventListener('click', function() {
+            const productId = this.getAttribute('data-product-id');
+            const quantityElement = document.getElementById('quantity');
+            const quantity = quantityElement ? parseInt(quantityElement.value) : 1;
+            const selectedSize = document.getElementById('selected-size').value;
+
+            addToCart(productId, quantity, selectedSize);
+        });
+    }
 });
+
+// تابع عمومی برای افزودن به سبد خرید
+function addToCart(productId, quantity, detail) {
+    // نمایش پیام موفقیت
+    showToast('محصول به سبد خرید اضافه شد', 'success');
+
+    // در اینجا می‌توانید کد واقعی افزودن به سبد خرید را اضافه کنید
+    console.log(`افزودن به سبد: محصول ${productId}، تعداد ${quantity}، جزئیات: ${detail}`);
+
+    // مثال: ارسال درخواست به سرور
+    const formData = new FormData();
+    formData.append('product_id', productId);
+    formData.append('quantity', quantity);
+    if (detail) {
+        formData.append('detail', detail);
+    }
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+    // این بخش را با endpoint واقعی سبد خرید خود جایگزین کنید
+    fetch('/cart/add/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('محصول با موفقیت به سبد خرید اضافه شد', 'success');
+        } else {
+            showToast('خطا در افزودن به سبد خرید', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('خطا در ارتباط با سرور', 'error');
+    });
+}
+
+// تابع نمایش toast
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-5 right-5 z-50 px-4 py-3 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full ${
+        type === 'success' ? 'bg-green-500 text-white' :
+        type === 'error' ? 'bg-red-500 text-white' :
+        'bg-blue-500 text-white'
+    }`;
+
+    toast.innerHTML = `
+        <div class="flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                ${type === 'success' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>' :
+                  type === 'error' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>' :
+                  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'}
+            </svg>
+            <span>${message}</span>
+        </div>
+    `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.remove('translate-x-full');
+        toast.classList.add('translate-x-0');
+    }, 10);
+
+    setTimeout(() => {
+        toast.classList.remove('translate-x-0');
+        toast.classList.add('translate-x-full');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }, 3000);
+}
 </script>
-
-<!-- استایل‌های اضافی برای بهبود UI -->
-<style>
-    /* بهبود ظاهر input number */
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-
-    /* استایل برای دکمه‌های غیرفعال */
-    .cursor-not-allowed {
-        cursor: not-allowed !important;
-    }
-
-    /* transition برای تغییرات قیمت */
-    #total-price, #carton-count, #current-price {
-        transition: all 0.3s ease;
-    }
-
-    /* استایل tooltip بهبود یافته */
-    .tooltip {
-        position: relative;
-    }
-
-    .tooltiptext {
-        visibility: hidden;
-        width: 120px;
-        background-color: #333;
-        color: #fff;
-        text-align: center;
-        border-radius: 6px;
-        padding: 5px;
-        position: absolute;
-        z-index: 1;
-        bottom: 125%;
-        left: 50%;
-        margin-left: -60px;
-        opacity: 0;
-        transition: opacity 0.3s;
-        font-size: 12px;
-    }
-
-    .tooltip:hover .tooltiptext {
-        visibility: visible;
-        opacity: 1;
-    }
-</style>
 
 <script src='{% static "js/cart.js" %}' ></script>
 {% csrf_token %}
@@ -1224,13 +1543,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // تابع چک کردن وضعیت علاقه‌مندی برای یک محصول
         function checkFavorite(productId) {
-            fetch(`/dashboard/favorite/check-batch/${productId}/`, {  // دقت کن: product_id توی URL هست
-                method: 'POST',  // یا GET بستگی به view تو داره
+            fetch(`/dashboard/favorite/check-batch/${productId}/`, {
+                method: 'POST',
                 headers: {
                     'X-CSRFToken': csrfToken,
                     'Content-Type': 'application/json',
                 },
-                // اگر view تو نیاز به data داره:
                 body: JSON.stringify({ product_id: productId })
             })
             .then(response => response.json())
@@ -1254,44 +1572,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // تابع نمایش toast
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = `fixed top-5 right-5 z-50 px-4 py-3 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full ${
-                type === 'success' ? 'bg-green-500 text-white' :
-                type === 'error' ? 'bg-red-500 text-white' :
-                'bg-blue-500 text-white'
-            }`;
-
-            toast.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        ${type === 'success' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>' :
-                          type === 'error' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>' :
-                          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'}
-                    </svg>
-                    <span>${message}</span>
-                </div>
-            `;
-
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.classList.remove('translate-x-full');
-                toast.classList.add('translate-x-0');
-            }, 10);
-
-            setTimeout(() => {
-                toast.classList.remove('translate-x-0');
-                toast.classList.add('translate-x-full');
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        toast.parentNode.removeChild(toast);
-                    }
-                }, 300);
-            }, 3000);
-        }
-
         // اجرای اولیه: بررسی وضعیت علاقه‌مندی‌ها
         const favoriteBtns = document.querySelectorAll('.toggle-favorite-btn');
 
@@ -1301,9 +1581,6 @@ document.addEventListener('DOMContentLoaded', function() {
             checkFavorite(productId);
         });
     });
-
-
-    </script>
-
+</script>
 
 {% endblock %}

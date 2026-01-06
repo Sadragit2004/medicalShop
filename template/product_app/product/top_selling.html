@@ -11,10 +11,10 @@
                 </svg>
             </span>
             <div class="space-y-1 md:space-y-1">
-                <h3 class="text-xl md:text-2xl font-MorabbaMedium text-gray-800 dark:text-gray-50">
+                <span class="text-xl md:text-2xl font-MorabbaMedium text-gray-800 dark:text-gray-50">
                     محصولات
                     <span class="text-blue-600 dark:text-blue-500">پرفروش</span>
-                </h3>
+                </span>
                 <p class="text-sm text-gray-500 dark:text-gray-300">جدیدترین و بروزترین محصولات</p>
             </div>
         </div>
@@ -63,19 +63,19 @@
                 <a href="{{ item.product.get_absolute_url }}">
                     {% if item.product.mainImage %}
                     <!-- تصویر اول -->
-                    <img class="product-card_img group-hover:opacity-0 absolute"
+                    <img loading="lazy" class="product-card_img group-hover:opacity-0 absolute"
                          src="{{ item.product.mainImage.url }}"
                          alt="{{ item.product.title }}">
 
                     <!-- تصویر دوم از گالری (اگر وجود دارد) -->
                     {% with second_image=item.product.galleries.first %}
                     {% if second_image %}
-                    <img class="product-card_img opacity-0 group-hover:opacity-100"
+                    <img loading="lazy" class="product-card_img opacity-0 group-hover:opacity-100"
                          src="{{ second_image.image.url }}"
                          alt="{{ second_image.alt_text|default:item.product.title }}">
                     {% else %}
                     <!-- اگر تصویر دوم نداریم، همان تصویر اول را نمایش می‌دهیم -->
-                    <img class="product-card_img opacity-0 group-hover:opacity-100"
+                    <img loading="lazy" class="product-card_img opacity-0 group-hover:opacity-100"
                          src="{{ item.product.mainImage.url }}"
                          alt="{{ item.product.title }}">
                     {% endif %}

@@ -40,11 +40,11 @@
                     {% if data.children %}
                         {% for child_data in data.children %}
                         <div class="megamenu_left-menu">
-                            <h2 class="megamenu_left-title">
+                            <span class="megamenu_left-title">
                                 <a href="/product/category/{{ child_data.child.slug }}/">
                                     {{ child_data.child.title }}
                                 </a>
-                            </h2>
+                            </span>
 
                             {% if child_data.grandchildren %}
                                 {% for grandchild in child_data.grandchildren %}
@@ -65,7 +65,7 @@
                         {% endfor %}
                     {% else %}
                         <div class="megamenu_left-menu">
-                            <h2 class="megamenu_left-title">زیردسته‌ای وجود ندارد</h2>
+                            <span class="megamenu_left-title">زیردسته‌ای وجود ندارد</span>
                             <li>
                                 <a href="/product/category/{{ data.main.slug }}/">
                                     مشاهده محصولات {{ data.main.title }}
@@ -78,7 +78,7 @@
             {% else %}
                 <ul class="megamenu_left-item active">
                     <div class="megamenu_left-menu">
-                        <h2 class="megamenu_left-title">هیچ دسته‌بندی‌ای یافت نشد</h2>
+                        <span class="megamenu_left-title">هیچ دسته‌بندی‌ای یافت نشد</span>
                         <li>
                             <a href="/admin/product_app/product/category/add/">
                                 ایجاد دسته‌بندی جدید

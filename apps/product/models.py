@@ -35,6 +35,9 @@ class Category(BaseModel):
     image = models.ImageField(upload_to='category/', verbose_name="تصویر", null=True, blank=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, verbose_name="دسته‌بندی والد",
                               null=True, blank=True, related_name='children')
+    description = RichTextUploadingField(
+        verbose_name="توضیحات محصول", config_name="special", blank=True, null=True
+    )
 
     class Meta:
         verbose_name = "دسته‌بندی"

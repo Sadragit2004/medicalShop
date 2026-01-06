@@ -24,7 +24,7 @@
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="m1 9 4-4-4-4" />
                     </svg>
-                    <span class="ms-1 text-sm text-gray-500 md:ms-2 dark:text-gray-400">{{ group.title }}</span>
+                    <h1 class="ms-1 text-sm text-gray-500 md:ms-2 dark:text-gray-400">{{ group.title }}</h1>
                 </div>
             </li>
         </ol>
@@ -77,7 +77,7 @@
                     </label>
                     <label for="hs-valid-toggle-switch2"
                         class="text-gray-800 dark:text-gray-100 flex items-center gap-x-2">
-                        <img class="size-5" src="{{media_url}}/images/svg/time.png" alt="">
+                        <img loading="lazy" class="size-5" src="{{media_url}}/images/svg/time.png" alt="">
                         ارسال امروز
                     </label>
                 </div>
@@ -108,7 +108,7 @@
                     </label>
                     <label for="hs-valid-toggle-switch3"
                         class="text-gray-800 dark:text-gray-100 flex items-center gap-x-2">
-                        <img class="size-5" src="{{media_url}}/images/svg/Seller.svg" alt="">
+                        <img loading="lazy" class="size-5" src="{{media_url}}/images/svg/Seller.svg" alt="">
                         ارسال فروشنده
                     </label>
                 </div>
@@ -123,7 +123,7 @@
                     </label>
                     <label for="hs-valid-toggle-switch4"
                         class="text-gray-800 dark:text-gray-100 flex items-center gap-x-1">
-                        <img class="size-5" src="{{media_url}}/images/svg/shop.png" alt="">
+                        <img loading="lazy" class="size-5" src="{{media_url}}/images/svg/shop.png" alt="">
                         خرید حضوری در تهران
                     </label>
                 </div>
@@ -185,7 +185,7 @@
                 <div class="absolute bottom-0 w-full bg-white rounded-t-2xl shadow-xl">
                     <!-- Header -->
                     <div class="flex items-center justify-between p-4 border-b border-gray-200">
-                        <h3 class="text-lg font-medium text-gray-900">مرتب‌سازی</h3>
+                        <span class="text-lg font-medium text-gray-900">مرتب‌سازی</span>
                         <button onclick="closeSortModal()" class="p-2 rounded-lg hover:bg-gray-100">
                             <svg class="size-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -250,7 +250,7 @@
                     <!-- Header -->
                     <div class="flex items-center justify-between p-4 border-b border-gray-200">
                         <div class="flex items-center gap-3">
-                            <h3 class="text-lg font-medium text-gray-900">فیلترها</h3>
+                            <span class="text-lg font-medium text-gray-900">فیلترها</span>
                             {% if has_active_filters %}
                             <span class="px-2 py-1 text-xs bg-red-100 text-red-600 rounded-full">فعال</span>
                             {% endif %}
@@ -284,7 +284,7 @@
 
                         <!-- وضعیت موجودی -->
                         <div class="p-4 border-t border-gray-200">
-                            <h4 class="font-medium text-gray-900 mb-3">وضعیت موجودی</h4>
+                            <span class="font-medium text-gray-900 mb-3">وضعیت موجودی</span>
                             <div class="space-y-2">
                                 <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 cursor-pointer">
                                     <input type="checkbox" id="mobile-available" class="rounded text-blue-600 focus:ring-blue-500" {% if request.GET.available %}checked{% endif %}>
@@ -304,7 +304,7 @@
 
                         <!-- نوع فروشنده -->
                         <div class="p-4 border-t border-gray-200">
-                            <h4 class="font-medium text-gray-900 mb-3">نوع فروشنده</h4>
+                            <span class="font-medium text-gray-900 mb-3">نوع فروشنده</span>
                             <div class="space-y-2">
                                 <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 cursor-pointer">
                                     <input type="checkbox" id="mobile-seller-delivery" class="rounded text-blue-600 focus:ring-blue-500" {% if request.GET.seller_delivery %}checked{% endif %}>
@@ -347,7 +347,7 @@
                         <svg class="size-6 text-gray-400">
                             <use href="#sort-list"></use>
                         </svg>
-                        <h2 class="font-DanaDemiBold text-gray-400">مرتب سازی :</h2>
+                        <span class="font-DanaDemiBold text-gray-400">مرتب سازی :</span>
                     </div>
                     <ul class="flex items-center gap-x-1 lg:gap-x-4 child:transition-all child:cursor-pointer child:rounded-lg child:px-1 child:py-1 child:text-sm child:lg:text-base">
                         <li class="{% if sort_option == '1' %}text-blue-500{% else %}text-gray-400 hover:text-blue-500{% endif %}"
@@ -419,12 +419,12 @@
 
                     <!-- product img -->
                     <a href="{{ product.get_absolute_url }}">
-                        <img class="product-card_img group-hover:opacity-0 absolute"
+                        <img loading="lazy" class="product-card_img group-hover:opacity-0 absolute"
                              src="{{ product.mainImage.url }}"
                              alt="{{ product.title }}"
                              onerror="this.src='{{ media_url }}/images/default-product.jpg'">
                         <!-- تصویر دوم برای hover (می‌توانید گالری تصاویر اضافه کنید) -->
-                        <img class="product-card_img opacity-0 group-hover:opacity-100"
+                        <img loading="lazy" class="product-card_img opacity-0 group-hover:opacity-100"
                              src="{{ product.mainImage.url }}"
                              alt="{{ product.title }}"
                              onerror="this.src='{{ media_url }}/images/default-product.jpg'">
@@ -476,7 +476,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                               d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">محصولی یافت نشد</h3>
+                    <span class="mt-4 text-lg font-medium text-gray-900 dark:text-white">محصولی یافت نشد</span>
                     <p class="mt-1 text-gray-500 dark:text-gray-400">هیچ محصولی با فیلترهای انتخابی شما مطابقت ندارد.</p>
                     <a href="?page=1" class="mt-4 inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
                         حذف فیلترها

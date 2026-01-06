@@ -9,9 +9,9 @@
                 </svg>
             </span>
             <div class="space-y-1 md:space-y-1">
-                <h3 class="text-xl md:text-2xl font-MorabbaMedium text-gray-800 dark:text-gray-50">محبوب‌ترین
+                <span class="text-xl md:text-2xl font-MorabbaMedium text-gray-800 dark:text-gray-50">محبوب‌ترین
                     <span class="text-blue-600 dark:text-blue-500">برندها</span>
-                </h3>
+                </span>
                 <p class="text-sm text-gray-500 dark:text-gray-300">برندهای معتبر با بیشترین محصولات</p>
             </div>
         </div>
@@ -48,7 +48,7 @@
             <div class="swiper-slide brand-card group">
                 <a href="{% url 'product:show_brand_products' brand.slug %}" class="block">
                     {% if brand.logo %}
-                        <img src="{{ brand.logo.url }}"
+                        <img loading="lazy" src="{{ brand.logo.url }}"
                              alt="{{ brand.title }}"
                              title="{{ brand.title }}"
                              class="w-full h-auto object-contain"

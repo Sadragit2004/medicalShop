@@ -88,7 +88,7 @@
         <!-- ARTICLE MAIN -->
         <div>
             {% if blog.mainImage %}
-            <img class="rounded-lg" src="{{ blog.mainImage.url }}" alt="{{ blog.title }}">
+            <img loading="lazy" class="rounded-lg" src="{{ blog.mainImage.url }}" alt="{{ blog.title }}">
             {% endif %}
             {% if blog.description %}
             <p class="mt-3 leading-10 text-gray-600 dark:text-gray-300">
@@ -111,9 +111,9 @@
                     {% for related_blog in related_blogs %}
                     <li>
                         {% if related_blog.mainImage %}
-                        <img class="w-24 h-16 object-cover rounded-lg" src="{{ related_blog.mainImage.url }}" alt="{{ related_blog.title }}">
+                        <img loading="lazy" class="w-24 h-16 object-cover rounded-lg" src="{{ related_blog.mainImage.url }}" alt="{{ related_blog.title }}">
                         {% else %}
-                        <img class="w-24 h-16 object-cover rounded-lg bg-gray-200" src="{{ media_url }}/images/default-article.jpg" alt="{{ related_blog.title }}">
+                        <img loading="lazy" class="w-24 h-16 object-cover rounded-lg bg-gray-200" src="{{ media_url }}/images/default-article.jpg" alt="{{ related_blog.title }}">
                         {% endif %}
                         <a class="flex flex-col gap-y-2 " href="{% url 'blog:blog_detail' related_blog.slug %}">
                             <p class="line-clamp-1">{{ related_blog.title }}</p>
@@ -210,7 +210,7 @@
                     <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
                         <a href="{{ product.get_absolute_url }}" class="flex items-center gap-3">
                             {% if product.mainImage %}
-                            <img src="{{ product.mainImage.url }}" alt="{{ product.title }}" class="w-16 h-16 object-cover rounded-lg">
+                            <img loading="lazy" src="{{ product.mainImage.url }}" alt="{{ product.title }}" class="w-16 h-16 object-cover rounded-lg">
                             {% endif %}
                             <div class="flex-1">
                                 <h5 class="font-medium text-sm text-gray-900 dark:text-white mb-1">{{ product.title }}</h5>
