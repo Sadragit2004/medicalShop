@@ -1,6 +1,68 @@
 {% extends "main_template.html" %}
 {% load humanize %}
 
+
+{% block meta1 %}
+
+<!-- در بخش <head> -->
+<title>{{ group.title }} - {{ site_name }}</title>
+<meta name="description" content="{{ group.description|striptags|truncatechars:150 }}">
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph -->
+<meta property="og:title" content="{{ group.title }}">
+<meta property="og:description" content="{{ group.description|striptags|truncatechars:150 }}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+{% if group.image %}
+<meta property="og:image" content="{{ site_url }}{{ group.image.url }}">
+{% endif %}
+<meta property="og:site_name" content="{{ site_name }}">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ group.title }}">
+<meta name="twitter:description" content="{{ group.description|striptags|truncatechars:150 }}">
+{% if group.image %}
+<meta name="twitter:image" content="{{ site_url }}{{ group.image.url }}">
+{% endif %}
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "{{ group.title }}",
+  "description": "{{ group.description|striptags|truncatechars:150 }}",
+  "url": "{{ request.build_absolute_uri }}",
+  {% if group.image %}
+  "image": "{{ site_url }}{{ group.image.url }}",
+  {% endif %}
+  "numberOfItems": {{ total_products }},
+  "itemListOrder": "https://schema.org/ItemListUnordered",
+  "itemListElement": [
+    {% for product in products|slice:":10" %}
+    {
+      "@type": "ListItem",
+      "position": {{ forloop.counter }},
+      "url": "{{ site_url }}{{ product.get_absolute_url }}",
+      "name": "{{ product.title }}",
+      "image": "{{ site_url }}{{ product.mainImage.url }}",
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "IRR",
+        "price": "{{ product.final_price }}",
+        "availability": "http://schema.org/{% if product.quantity > 0 %}InStock{% else %}OutOfStock{% endif %}",
+        "url": "{{ site_url }}{{ product.get_absolute_url }}"
+      }
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
+
+{% endblock meta1 %}
+
+
 {% block content %}
 {% load render_partial %}
 
@@ -528,6 +590,40 @@
                 </ul>
             </div>
             {% endif %}
+
+            <!-- توضیحات دسته‌بندی (بعد از محصولات) -->
+            {% if group.description %}
+            <div class="mt-10">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <!-- هدر با دکمه جمع‌شونده -->
+                    <button onclick="toggleDescription()"
+                            id="toggle-description-btn"
+                            class="w-full flex items-center justify-between p-4 text-right hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <div class="flex items-center gap-2">
+                            <svg id="toggle-icon" class="w-5 h-5 transform transition-transform text-gray-500 dark:text-gray-400"
+                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                            <h2 class="text-lg font-DanaDemiBold text-gray-800 dark:text-gray-200">
+                                درباره {{ group.title }}
+                            </h2>
+                        </div>
+                        <span id="toggle-text" class="text-blue-600 dark:text-blue-400 text-sm font-DanaMedium">
+                            نمایش توضیحات
+                        </span>
+                    </button>
+
+                    <!-- محتوای توضیحات (به طور پیش‌فرض مخفی) -->
+                    <div id="description-content" class="hidden overflow-hidden transition-all duration-300">
+                        <div class="p-4 pt-0 border-t border-gray-200 dark:border-gray-700">
+                            <div class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed text-justify prose prose-sm dark:prose-invert max-w-none">
+                                {{ group.description|safe }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -626,9 +722,11 @@ input[type="range"]::-moz-range-thumb {
 @keyframes fadeIn {
     from {
         opacity: 0;
+        transform: translateY(-10px);
     }
     to {
         opacity: 1;
+        transform: translateY(0);
     }
 }
 
@@ -652,6 +750,32 @@ input[type="range"]::-moz-range-thumb {
         font-size: 13px;
     }
 }
+
+/* استایل برای توضیحات دسته‌بندی */
+#description-content.show {
+    display: block;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.prose {
+    max-width: none;
+}
+
+.prose p {
+    margin-bottom: 1rem;
+}
+
+.prose ul {
+    list-style-type: disc;
+    padding-right: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.prose ol {
+    list-style-type: decimal;
+    padding-right: 1.5rem;
+    margin-bottom: 1rem;
+}
 </style>
 
 <!-- JavaScript بهبود یافته -->
@@ -660,6 +784,44 @@ input[type="range"]::-moz-range-thumb {
 let currentMinPrice = {{ price_min|default:'0' }};
 let currentMaxPrice = {{ price_max|default:'35000' }};
 const FILTER_HISTORY_KEY = 'shopFilterHistory';
+let isDescriptionExpanded = false;
+
+// تابع نمایش/مخفی کردن توضیحات دسته‌بندی
+function toggleDescription() {
+    const content = document.getElementById('description-content');
+    const toggleIcon = document.getElementById('toggle-icon');
+    const toggleText = document.getElementById('toggle-text');
+
+    if (!content) return;
+
+    if (content.classList.contains('hidden')) {
+        // نمایش توضیحات
+        content.classList.remove('hidden');
+        content.classList.add('show');
+
+        if (toggleIcon) {
+            toggleIcon.style.transform = 'rotate(180deg)';
+        }
+        if (toggleText) {
+            toggleText.textContent = 'بستن توضیحات';
+        }
+        isDescriptionExpanded = true;
+    } else {
+        // مخفی کردن توضیحات
+        content.classList.remove('show');
+        setTimeout(() => {
+            content.classList.add('hidden');
+        }, 300);
+
+        if (toggleIcon) {
+            toggleIcon.style.transform = 'rotate(0deg)';
+        }
+        if (toggleText) {
+            toggleText.textContent = 'نمایش توضیحات';
+        }
+        isDescriptionExpanded = false;
+    }
+}
 
 function saveFilterToHistory(queryString) {
     try {
@@ -1144,4 +1306,3 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 {% endblock %}
-

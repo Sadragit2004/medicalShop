@@ -1,14 +1,279 @@
 {% extends "main_template.html" %}
 
 {% block content %}
-<main class="container mx-auto px-4 py-10">
-    <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow p-8 space-y-6">
-        <h1 class="text-2xl font-DanaDemiBold text-gray-900 dark:text-gray-100 mb-4">درباره ما</h1>
-        <p class="text-gray-700 dark:text-gray-300 leading-7">
-            این صفحه محتوای ثابت «درباره ما» است. می‌توانید متن معرفی برند، تاریخچه و اطلاعات تماس
-            کسب‌وکار خود را در این بخش قرار دهید.
+<main class="container">
+    <!-- Breadcrumb -->
+    <nav class="flex mt-8" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
+            <li class="inline-flex items-center">
+                <a href="{% url 'main:index' %}"
+                    class="inline-flex items-center text-sm gap-x-1 text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+                    <svg class="size-4 mb-0.5">
+                        <use href="#home" />
+                    </svg>
+                    صفحه اصلی
+                </a>
+            </li>
+            <li aria-current="page">
+                <div class="flex items-center">
+                    <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m1 9 4-4-4-4" />
+                    </svg>
+                    <span class="ms-1 text-sm text-gray-500 md:ms-2 dark:text-gray-400">درباره سایا مد</span>
+                </div>
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Header Section -->
+    <div class="mt-8 text-center">
+        <div class="inline-block p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl mb-6">
+            <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path fill-rule="evenodd" d="M12 2a1 1 0 011 1v1h2a1 1 0 110 2h-2v2a1 1 0 11-2 0V6H9a1 1 0 110-2h2V3a1 1 0 011-1zM5 9a1 1 0 011 1v8a1 1 0 01-1 1h14a1 1 0 01-1-1v-8a1 1 0 011-1h2a1 1 0 011 1v9a3 3 0 01-3 3H5a3 3 0 01-3-3v-9a1 1 0 011-1h2zm7 7a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+            </svg>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-MorabbaBold text-gray-900 dark:text-white">
+            درباره <span class="text-blue-600 dark:text-blue-400">سایا مد</span>
+        </h1>
+        <p class="text-lg text-gray-600 dark:text-gray-300 mt-3">
+            پیشرو در تأمین تجهیزات پزشکی با ۲۰ سال سابقه درخشان
         </p>
     </div>
-</main>
-{% endblock content %}
 
+    <!-- about us -->
+    <section class="w-full flex flex-col lg:flex-row gap-8 p-6 md:p-8 rounded-2xl shadow-xl bg-gradient-to-br from-white to-blue-50 dark:from-gray-800 dark:to-gray-900 mt-8">
+        <div class="w-full lg:w-2/4 space-y-6">
+            <!-- Logo & Tagline -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+                <a href="{% url 'main:index' %}" class="flex flex-col items-center text-center">
+                    <div class="flex items-center gap-2">
+                        <span class="font-MorabbaBold text-4xl">
+                            <span class="text-blue-500">سایا</span>
+                            <span class="text-gray-800 dark:text-white">مد</span>
+                        </span>
+                        <div class="px-3 py-1 bg-emerald-100 dark:bg-emerald-900 rounded-full">
+                            <span class="text-emerald-600 dark:text-emerald-400 font-DanaDemiBold text-sm">۲۰ سال</span>
+                        </div>
+                    </div>
+                    <p class="font-DanaMedium text-gray-500 dark:text-gray-400 mt-2">مرکز تخصصی تجهیزات پزشکی</p>
+                </a>
+            </div>
+
+            <!-- Introduction -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+                <h2 class="text-2xl font-DanaDemiBold text-gray-900 dark:text-white mb-4">
+                    <span class="text-blue-600">سایا مد</span> کیست؟
+                </h2>
+                <p class="leading-8 text-gray-700 dark:text-gray-300">
+                    مجموعه <strong class="text-blue-600 dark:text-blue-400">سایا مد</strong> با بیش از <strong>۲۰ سال تجربه</strong> در حوزه تجهیزات پزشکی،
+                    به عنوان یکی از معتبرترین و پیشروترین تأمین‌کنندگان این صنعت شناخته می‌شود.
+                    ما با تکیه بر دانش فنی، تعهد به کیفیت و پشتیبانی بی‌وقفه،
+                    در خدمت مراکز درمانی، مطب‌ها، بیمارستان‌ها و عموم مردم هستیم.
+                </p>
+            </div>
+
+            <!-- Competitive Advantage -->
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="p-2 bg-white/20 rounded-lg">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path fill-rule="evenodd" d="M12 2a1 1 0 011 1v1h2a1 1 0 110 2h-2v2a1 1 0 11-2 0V6H9a1 1 0 110-2h2V3a1 1 0 011-1zM5 9a1 1 0 011 1v8a1 1 0 01-1 1h14a1 1 0 01-1-1v-8a1 1 0 011-1h2a1 1 0 011 1v9a3 3 0 01-3 3H5a3 3 0 01-3-3v-9a1 1 0 011-1h2zm7 7a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-DanaDemiBold">مزیت رقابتی ما</h3>
+                </div>
+                <div class="space-y-2">
+                    <p class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="font-DanaMedium">کمترین قیمت بازار تجهیزات پزشکی</span>
+                    </p>
+                    <p class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="font-DanaMedium">کالاهای کاملاً اصل و دست‌اول</span>
+                    </p>
+                    <p class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="font-DanaMedium">گارانتی معتبر و خدمات پس از فروش کامل</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Section -->
+        <div class="w-full lg:w-2/4">
+            <div class="relative rounded-2xl overflow-hidden shadow-2xl h-full">
+                <img src="{{ media_url }}/images/about/saya-med-1.jpg"
+                     class="w-full h-full object-cover"
+                     alt="نمای داخلی سایا مد - مرکز تجهیزات پزشکی">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                    <div class="p-6 text-white">
+                        <p class="text-lg font-DanaDemiBold">با اطمینان خرید کنید</p>
+                        <p class="text-sm opacity-90">تضمین کیفیت و اصالت کالا</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="mt-12">
+        <div class="text-center mb-8">
+            <h2 class="text-2xl md:text-3xl font-DanaDemiBold text-gray-900 dark:text-white">
+                خدمات <span class="text-blue-600">سایا مد</span>
+            </h2>
+            <p class="text-gray-600 dark:text-gray-300 mt-2">تخصص ما در حوزه تجهیزات پزشکی</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Service 1 -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path fill-rule="evenodd" d="M12 2a1 1 0 011 1v1h2a1 1 0 110 2h-2v2a1 1 0 11-2 0V6H9a1 1 0 110-2h2V3a1 1 0 011-1zM5 9a1 1 0 011 1v8a1 1 0 01-1 1h14a1 1 0 01-1-1v-8a1 1 0 011-1h2a1 1 0 011 1v9a3 3 0 01-3 3H5a3 3 0 01-3-3v-9a1 1 0 011-1h2zm7 7a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <h3 class="font-DanaDemiBold text-gray-900 dark:text-white mb-2">فروش تخصصی</h3>
+                <p class="text-gray-600 dark:text-gray-300 text-sm">
+                    تأمین کامل تجهیزات پزشکی مورد نیاز مراکز درمانی و بیمارستان‌ها با بهترین قیمت
+                </p>
+            </div>
+
+            <!-- Service 2 -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <h3 class="font-DanaDemiBold text-gray-900 dark:text-white mb-2">تضمین کیفیت</h3>
+                <p class="text-gray-600 dark:text-gray-300 text-sm">
+                    ارائه کالاهای کاملاً اصل با گارانتی معتبر و تضمین اصالت محصول
+                </p>
+            </div>
+
+            <!-- Service 3 -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <h3 class="font-DanaDemiBold text-gray-900 dark:text-white mb-2">مشاوره رایگان</h3>
+                <p class="text-gray-600 dark:text-gray-300 text-sm">
+                    مشاوره تخصصی توسط کارشناسان مجرب برای انتخاب بهترین تجهیزات
+                </p>
+            </div>
+
+            <!-- Service 4 -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-orange-600 dark:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <h3 class="font-DanaDemiBold text-gray-900 dark:text-white mb-2">پشتیبانی</h3>
+                <p class="text-gray-600 dark:text-gray-300 text-sm">
+                    خدمات پس از فروش و پشتیبانی دائمی برای تمامی محصولات
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Vision & Mission -->
+    <section class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Vision -->
+        <div class="bg-gradient-to-br from-blue-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 shadow-xl">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="p-3 bg-blue-100 dark:bg-blue-900 rounded-xl">
+                    <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path fill-rule="evenodd" d="M12 2a1 1 0 011 1v1h2a1 1 0 110 2h-2v2a1 1 0 11-2 0V6H9a1 1 0 110-2h2V3a1 1 0 011-1zM5 9a1 1 0 011 1v8a1 1 0 01-1 1h14a1 1 0 01-1-1v-8a1 1 0 011-1h2a1 1 0 011 1v9a3 3 0 01-3 3H5a3 3 0 01-3-3v-9a1 1 0 011-1h2zm7 7a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-DanaDemiBold text-gray-900 dark:text-white">چشم‌انداز ما</h3>
+            </div>
+            <p class="text-gray-700 dark:text-gray-300 leading-8">
+                ما در <strong class="text-blue-600 dark:text-blue-400">سایا مد</strong> به دنبال تبدیل شدن به برترین مرجع تأمین تجهیزات پزشکی در سطح کشور هستیم.
+                هدف ما ارائه محصولاتی با <strong>کمترین قیمت بازار</strong>، <strong>بالاترین کیفیت</strong> و
+                <strong>بهترین خدمات پس از فروش</strong> است تا اعتماد مشتریان را جلب کرده
+                و در حوزه سلامت جامعه نقش مؤثری ایفا کنیم.
+            </p>
+        </div>
+
+        <!-- Mission -->
+        <div class="bg-gradient-to-br from-emerald-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 shadow-xl">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="p-3 bg-emerald-100 dark:bg-emerald-900 rounded-xl">
+                    <svg class="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-DanaDemiBold text-gray-900 dark:text-white">ماموریت ما</h3>
+            </div>
+            <p class="text-gray-700 dark:text-gray-300 leading-8">
+                ماموریت ما در <strong class="text-emerald-600 dark:text-emerald-400">سایا مد</strong> تأمین <strong>تجهیزات پزشکی دست‌اول</strong> با
+                <strong>قیمت استثنایی</strong> و ارائه <strong>خدمات حرفه‌ای</strong> به تمامی مراکز درمانی و هموطنان عزیز است.
+                ما متعهدیم که با شفافیت، صداقت و تعهد، نیازهای حوزه سلامت را به بهترین شکل ممکن برطرف کنیم.
+            </p>
+        </div>
+    </section>
+
+    <!-- Contact CTA -->
+    <div class="mt-12 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-2xl p-8 text-center">
+        <h3 class="text-2xl md:text-3xl font-MorabbaBold text-white mb-4">
+            ۲۰ سال اعتماد، ۲۰ سال تعهد
+        </h3>
+        <p class="text-blue-100 text-lg mb-6 max-w-2xl mx-auto">
+            با اطمینان از اصالت کالا و کمترین قیمت بازار، همراه ما باشید
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% url 'main:contact' %}" class="inline-flex items-center gap-2 bg-white text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-xl font-DanaDemiBold transition-all duration-300 hover:scale-105">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" clip-rule="evenodd"/>
+                </svg>
+                تماس با ما
+            </a>
+            <a href=" " class="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-xl font-DanaDemiBold transition-all duration-300 hover:scale-105">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"/>
+                </svg>
+                مشاهده محصولات
+            </a>
+        </div>
+    </div>
+</main>
+
+<style>
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    section, .grid > div {
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    .hover-scale:hover {
+        transform: scale(1.02);
+        transition: transform 0.3s ease;
+    }
+
+    .shadow-soft {
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    }
+</style>
+
+{% endblock content %}

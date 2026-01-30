@@ -5,29 +5,135 @@
 
 {% block title %}{{ meta.title }}{% endblock %}
 
-{% block meta %}
-    <!-- متا تگ‌ها -->
-    <meta name="description" content="{{ meta.description }}">
-    <meta name="robots" content="{{ meta.robots }}">
+{% block meta1 %}
 
-    <!-- Open Graph -->
-    <meta property="og:type" content="{{ meta.og_type }}">
-    <meta property="og:site_name" content="{{ meta.og_site_name }}">
-    <meta property="og:title" content="{{ meta.og_title }}">
-    <meta property="og:description" content="{{ meta.og_description }}">
-    {% if meta.og_image %}
-    <meta property="og:image" content="{{ meta.og_image }}">
-    {% endif %}
-    <meta property="og:url" content="{{ meta.og_url }}">
+{% load static %}
+{% load humanize %}
 
-    <!-- Twitter -->
-    <meta name="twitter:card" content="{{ meta.twitter_card }}">
-    <meta name="twitter:title" content="{{ meta.twitter_title }}">
-    <meta name="twitter:description" content="{{ meta.twitter_description }}">
-    {% if meta.twitter_image %}
-    <meta name="twitter:image" content="{{ meta.twitter_image }}">
+<title>{{ product.title }} - {{ product.brand.title|default:"فروشگاه" }} | {{ site_name }}</title>
+<meta name="description" content="{{ product.description|striptags|truncatechars:160|default:product.title }}">
+<meta name="keywords" content="{{ product.title }}, {{ product.brand.title|default:'' }}, {{ product.category.first.title|default:'' }}">
+
+<!-- Open Graph -->
+<meta property="og:type" content="product">
+<meta property="og:title" content="{{ product.title }} - {{ site_name }}">
+<meta property="og:description" content="{{ product.description|striptags|truncatechars:160|default:product.title }}">
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+<meta property="og:image" content="{{ site_url }}{{ product.mainImage.url }}">
+<meta property="og:site_name" content="{{ site_name }}">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ product.title }} - {{ site_name }}">
+<meta name="twitter:description" content="{{ product.description|striptags|truncatechars:160|default:product.title }}">
+<meta name="twitter:image" content="{{ site_url }}{{ product.mainImage.url }}">
+
+<!-- Product Meta -->
+<meta property="product:brand" content="{{ product.brand.title|default:'' }}">
+<meta property="product:availability" content="{% if product.quantity > 0 %}instock{% else %}out of stock{% endif %}">
+<meta property="product:condition" content="new">
+<meta property="product:retailer_item_id" content="{{ product.id }}">
+{% if default_sale_type %}
+<meta property="product:price:amount" content="{{ default_sale_type.final_price|default:default_sale_type.price }}">
+{% else %}
+<meta property="product:price:amount" content="{{ product.get_base_price }}">
+{% endif %}
+<meta property="product:price:currency" content="IRR">
+
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "{{ product.title }}",
+    "description": "{{ product.description|striptags|truncatechars:300|default:product.title }}",
+    "url": "{{ request.build_absolute_uri }}",
+    {% if product.mainImage %}
+    "image": "{{ site_url }}{{ product.mainImage.url }}",
     {% endif %}
-{% endblock %}
+    {% if galleries %}
+    "image": [
+        {% for gallery in galleries %}
+        "{{ site_url }}{{ gallery.image.url }}"{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ],
+    {% endif %}
+    {% if product.sku %}
+    "sku": "{{ product.sku }}",
+    {% endif %}
+    {% if product.mpn %}
+    "mpn": "{{ product.mpn }}",
+    {% endif %}
+    {% if product.brand %}
+    "brand": {
+        "@type": "Brand",
+        "name": "{{ product.brand.title }}"
+    },
+    {% endif %}
+    "category": "{{ product.category.first.title|default:'دسته‌بندی نشده' }}",
+    "offers": {
+        "@type": "Offer",
+        "url": "{{ request.build_absolute_uri }}",
+        "priceCurrency": "IRR",
+        "price": "{% if default_sale_type %}{{ default_sale_type.final_price|default:default_sale_type.price }}{% else %}{{ product.get_base_price|default:'0' }}{% endif %}",
+        "priceValidUntil": "{{ product.updated_at|date:'Y-m-d'|default:'2024-12-31' }}",
+        "availability": "https://schema.org/{% if product.quantity > 0 %}InStock{% else %}OutOfStock{% endif %}",
+        "itemCondition": "https://schema.org/NewCondition",
+        "seller": {
+            "@type": "Organization",
+            "name": "{{ site_name }}"
+        }
+        {% if discount_percent > 0 %}
+        ,"hasMerchantReturnPolicy": {
+            "@type": "MerchantReturnPolicy",
+            "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow"
+        }
+        {% endif %}
+    },
+    {% if average_rating > 0 %}
+    "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "{{ average_rating|floatformat:1 }}",
+        "reviewCount": "{{ total_comments }}",
+        "bestRating": "5",
+        "worstRating": "1"
+    },
+    {% endif %}
+    {% if comments %}
+    "review": [
+        {% for comment in comments|slice:":3" %}
+        {
+            "@type": "Review",
+            "author": {
+                "@type": "Person",
+                "name": "{{ comment.user.family|default:'کاربر' }}"
+            },
+            "datePublished": "{{ comment.createdAt|date:'Y-m-d' }}",
+            "reviewBody": "{{ comment.text|truncatechars:200 }}",
+            "name": "دیدگاه {{ comment.user.family|default:'کاربر' }}",
+            "reviewRating": {
+                "@type": "Rating",
+                "ratingValue": "{% if comment.typeComment == 'recommend' %}5{% else %}1{% endif %}",
+                "bestRating": "5"
+            }
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ],
+    {% endif %}
+    {% if product_features %}
+    "additionalProperty": [
+        {% for feature in product_features|slice:":10" %}
+        {
+            "@type": "PropertyValue",
+            "name": "{{ feature.feature.title }}",
+            "value": "{{ feature.value }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+    {% endif %}
+}
+</script>
+
+{% endblock meta1 %}
 
 {% block content %}
 
