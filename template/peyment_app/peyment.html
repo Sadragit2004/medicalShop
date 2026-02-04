@@ -1,0 +1,13 @@
+{% extends 'main_template.html' %}
+{% block content %}
+<div class="container mt-5">
+    <div class="alert alert-success text-center">
+        <h4>پرداخت موفق</h4>
+        <p>{{ message }}</p>
+        <p>شماره سفارش: {{ order.id }}</p>
+        <p>مبلغ: {{ order.get_order_total_price|floatformat:0 }} تومان</p>
+        <a href="{% url 'order:order_detail' order.id %}" class="btn btn-primary mt-3">مشاهده سفارش</a>
+        <a href="{% url 'main:index' %}" class="btn btn-outline-primary mt-3">بازگشت به صفحه اصلی</a>
+    </div>
+</div>
+{% endblock %}
