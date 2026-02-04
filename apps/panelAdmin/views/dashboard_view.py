@@ -6,7 +6,7 @@ from django.db.models import Count, Sum, Q, F, Value, DecimalField, Subquery, Ou
 import json
 from decimal import Decimal
 
-from apps.user.models import CustomUser
+from apps.user.models.user import CustomUser
 from apps.order.models import Order, OrderDetail
 from apps.product.models import Product
 from apps.peyment.models import Peyment

@@ -8,7 +8,7 @@ import requests
 
 from apps.order.models import Order
 from apps.peyment.models import Peyment
-from apps.user.models import CustomUser
+from apps.user.models.user import CustomUser
 import utils
 from .zarinpal import ZarinPal
 

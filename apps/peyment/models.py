@@ -1,5 +1,5 @@
 from django.db import models
-from apps.user.models import CustomUser
+from apps.user.models.user import CustomUser
 from django.utils import timezone
 from apps.order.models import Order
 import utils

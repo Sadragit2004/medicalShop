@@ -11,11 +11,11 @@ def send_mobile(request):
             mobile = form.cleaned_data['mobileNumber']
             user = AuthService.get_or_create_user(mobile)
             security = AuthService.get_or_create_security(user)
-            AuthService.send_activation_code(security)
+            AuthService.send_activation_code(security,mobile)
             request.session["mobileNumber"] = mobile
             if next_url:
                 request.session["next_url"] = next_url
-            messages.success(request, "کد فعال‌سازی ارسال شد ✅")
+            messages.success(request, "کد فعال‌سازی ارسال شد ")
             return redirect("account:verify_code")
     else:
         form = MobileForm()

@@ -12,7 +12,7 @@ class UserSecurity(models.Model):
     expireCode = models.DateTimeField(blank=True, null=True)
     isBan = models.BooleanField(default=False)
     isInfoFiled = models.BooleanField(default=False)
-    createdAt = models.DateTimeField(auto_now_add=True)
+    createdAt = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return f"Security for {self.user.mobileNumber}"

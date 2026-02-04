@@ -2,7 +2,7 @@ from django.db import models
 from django.utils import timezone
 import uuid
 from apps.product.models import Product, Brand
-from apps.user.models import CustomUser
+from apps.user.models.user import CustomUser
 import utils
 
 
@@ -160,7 +160,7 @@ class Order(models.Model):
         return int(final_price * 10)
 
 
-    
+
 
 
     class Meta:

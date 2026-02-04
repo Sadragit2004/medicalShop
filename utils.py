@@ -153,3 +153,28 @@ def price_by_delivery_tax(price, discount=0):
     total_sum = total_sum - (total_sum * Decimal(str(discount)) / Decimal('100'))
 
     return int(total_sum), int(tax)
+
+
+
+
+
+
+
+from sms_ir import SmsIr
+def send_sms(number,code):
+
+    pass
+    sms_ir = SmsIr('he4QV5RJiXYsfgjHBpgjpJ2GMFtemy28GSEcDlCpEweK9q0ahroGcmgT5kexuJUR')
+
+    result = sms_ir.send_verify_code(
+        number=str(number),
+        template_id=172582,
+        parameters=[
+            {
+
+                "name" : "CODE",
+                "value": str(code)
+
+            }
+        ],
+    )

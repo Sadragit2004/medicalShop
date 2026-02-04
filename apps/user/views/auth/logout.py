@@ -4,5 +4,5 @@ from django.contrib import messages
 
 def user_logout(request):
     logout(request)
-    messages.success(request, "✅ شما با موفقیت خارج شدید.")
+    messages.success(request, " شما با موفقیت خارج شدید.")
     return redirect("main:index")
