@@ -6,7 +6,6 @@ __pycache__/
 
 # Django
 db.sqlite3
-static/
 *.log
 
 # Environments

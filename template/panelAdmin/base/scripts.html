@@ -1,22 +1,30 @@
+{% load static %}
 <!-- templates/admin/base/scripts.html -->
 <!-- Bootstrap Bundle with Popper -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+{% comment %} <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script> {% endcomment %}
+       <link rel="stylesheet" href="{% static 'panel/bundle.min.js' %}">
+       <link rel="stylesheet" href="{% static 'panel/jquery-3.6.4.min.js' %}">
+       <link rel="stylesheet" href="{% static 'panel/select2.min.js' %}">
+       <link rel="stylesheet" href="{% static 'panel/select2.min.css' %}">
+       <link rel="stylesheet" href="{% static 'panel/fa.js' %}">
+       <link rel="stylesheet" href="{% static 'panel/persian-datepicker.min.css' %}">
+       <link rel="stylesheet" href="{% static 'panel/persian-date.min.js' %}">
+       <link rel="stylesheet" href="{% static 'panel/persian-datepicker.min.js' %}">
 
 <!-- jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+{% comment %} <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script> {% endcomment %}
 
 <!-- Select2 (برای select های چندگزینه‌ای) -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/fa.js"></script>
+{% comment %} <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /> {% endcomment %}
+{% comment %} <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script> {% endcomment %}
+{% comment %} <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/fa.js"></script> {% endcomment %}
 
 <!-- Persian Datepicker -->
-<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@latest/dist/css/persian-datepicker.min.css">
-<script src="https://unpkg.com/persian-date@latest/dist/persian-date.min.js"></script>
-<script src="https://unpkg.com/persian-datepicker@latest/dist/js/persian-datepicker.min.js"></script>
+{% comment %} <link rel="stylesheet" href="https://unpkg.com/persian-datepicker@latest/dist/css/persian-datepicker.min.css"> {% endcomment %}
+{% comment %} <script src="https://unpkg.com/persian-date@latest/dist/persian-date.min.js"></script> {% endcomment %}
+{% comment %} <script src="https://unpkg.com/persian-datepicker@latest/dist/js/persian-datepicker.min.js"></script> {% endcomment %}
 
 <!-- CKEditor -->
-<script src="https://cdn.ckeditor.com/ckeditor5/36.0.1/classic/ckeditor.js"></script>
 
 <!-- Custom JS -->
 <script>
