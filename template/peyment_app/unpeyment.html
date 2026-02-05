@@ -4,7 +4,7 @@
     <div class="alert alert-danger text-center">
         <h4>پرداخت ناموفق</h4>
         <p>{{ message }}</p>
-        <a href="{% url 'order:cart' %}" class="btn btn-primary mt-3">بازگشت به سبد خرید</a>
+        {% comment %} <a href="{% url 'order:cart' %}" class="btn btn-primary mt-3">بازگشت به سبد خرید</a> {% endcomment %}
         <a href="{% url 'main:index' %}" class="btn btn-outline-primary mt-3">بازگشت به صفحه اصلی</a>
     </div>
 </div>
