@@ -50,7 +50,7 @@
                     <use href="#check-circle" />
                 </svg>
             </span>
-            <h2 class="text-green-500 text-xl font-DanaMedium">پرداخت شما موفقیت آمیز بود.</h2>
+            <h2 class="text-green-500 text-xl font-DanaMedium text-center">پرداخت با موفقیت انجام شد</h2>
             <span>جزئیات تراکنش :</span>
             <span class="w-full border-b-2 border-gray-200 dark:border-gray-600"></span>
             <ul class="w-full flex flex-col gap-y-5 child:flex child:items-center child:justify-between">
@@ -60,23 +60,17 @@
                 </li>
                 <li>
                     <span class="">تاریخ تراکنش :</span>
-                    <span class="text-gray-400">{{ payment.createAt|date:"Y/m/d" }}</span>
+                    <span class="text-gray-400">{% now "Y/m/d" %}</span>
                 </li>
                 <li>
-                    <span class="">شماره پیگیری :</span>
-                    <span class="text-gray-400">{{ payment.refId|default:"-" }}</span>
+                    <span class="">کد پیگیری :</span>
+                    <span class="text-gray-400 font-medium">
+                        {{ ref_id|default:"-" }}
+                    </span>
                 </li>
                 <li>
                     <span class="">وضعیت :</span>
                     <span class="text-green-500">پرداخت موفق</span>
-                </li>
-                <li>
-                    <span class="">شماره سفارش :</span>
-                    <span class="text-gray-400">{{ order.orderCode }}</span>
-                </li>
-                <li>
-                    <span class="">مبلغ پرداخت :</span>
-                    <span class="text-gray-400">{{ payment.amount|intcomma }} تومان</span>
                 </li>
             </ul>
             <div class="w-full mt-4 flex items-center justify-center gap-x-2">
@@ -93,10 +87,10 @@
 
 <script>
 function copyRefId() {
-    const refId = "{{ payment.refId }}";
+    const refId = "{{ ref_id|default:'' }}";
     if (refId && refId !== "-") {
         navigator.clipboard.writeText(refId).then(function() {
-            alert('کد رهگیری کپی شد!');
+            alert('کد پیگیری کپی شد!');
         }, function(err) {
             console.error('خطا در کپی: ', err);
         });

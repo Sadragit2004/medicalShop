@@ -344,21 +344,46 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
             return redirect("peyment:show_verfiy_unmessage",
                           message=f"خطا در پرداخت: {error_message}")
 
-
 def show_verfiy_message(request, message):
     """نمایش صفحه موفقیت پرداخت"""
     try:
+        # استخراج کد رهگیری از پیام
+        ref_id = ""
+        if message:
+            if "کد رهگیری:" in message:
+                ref_id = message.split("کد رهگیری:")[1].strip()
+            elif "کد رهگیری" in message:
+                # اگر کلمه "کد رهگیری" هست اما دونقطه نداره
+                parts = message.split("کد رهگیری")
+                if len(parts) > 1:
+                    ref_id = parts[1].strip()
+                    # حذف کاراکترهای غیر عددی از ابتدا
+                    ref_id = ref_id.lstrip(": ").strip()
+
+        # پیدا کردن آخرین سفارش پرداخت شده
         last_order = Order.objects.filter(
             customer=request.user,
             isFinally=True
         ).order_by('-registerDate').first()
 
+        # اگر پیام کامل نیست، یک پیام استاندارد بساز
+        if not message or "پرداخت" not in message:
+            if ref_id:
+                message = f"پرداخت با موفقیت انجام شد. کد رهگیری: {ref_id}"
+            else:
+                message = "پرداخت با موفقیت انجام شد."
+
         return render(request, "peyment_app/peyment.html", {
             "message": message,
-            "order": last_order
+            "order": last_order,
+            "ref_id": ref_id
         })
-    except:
-        return render(request, "peyment_app/peyment.html", {"message": message})
+    except Exception as e:
+        print(f"Error in show_verfiy_message: {e}")
+        return render(request, "peyment_app/peyment.html", {
+            "message": "پرداخت با موفقیت انجام شد.",
+            "ref_id": ""
+        })
 
 
 def show_verfiy_unmessage(request, message):
