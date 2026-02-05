@@ -27,7 +27,7 @@ def send_request(request, order_id):
 
     if not utils.has_internet_connection():
         messages.error(request, "اتصال اینترنت شما قابل تایید نیست", "danger")
-        return redirect("order:cart_page")
+        return redirect("order:cart")
 
     try:
         # بررسی احراز هویت
@@ -35,12 +35,12 @@ def send_request(request, order_id):
             messages.error(request, "لطفا ابتدا وارد حساب کاربری خود شوید")
             return redirect("user:login")
 
-        # دریافت سفارش
+        # دریافت سفارش - تغییر: استفاده از customer به جای user
         try:
-            order = Order.objects.get(id=order_id, user=request.user)
+            order = Order.objects.get(id=order_id, customer=request.user)
         except Order.DoesNotExist:
             messages.error(request, "سفارش یافت نشد")
-            return redirect("order:cart_page")
+            return redirect("order:cart")
 
         # بررسی اینکه آیا سفارش قبلا پرداخت شده
         if order.isFinally:
@@ -112,17 +112,17 @@ def send_request(request, order_id):
                 peyment.save()
 
                 messages.error(request, f"خطا از سمت زرین‌پال: {error_message}")
-                return redirect("order:cart_page")
+                return redirect("order:cart")
         else:
             messages.error(request, "خطا در ارتباط با درگاه پرداخت")
-            return redirect("order:cart_page")
+            return redirect("order:cart")
 
     except requests.exceptions.RequestException as e:
         messages.error(request, f"خطا در ارتباط با سرور پرداخت: {str(e)}")
-        return redirect("order:cart_page")
+        return redirect("order:cart")
     except Exception as e:
         messages.error(request, f"خطای غیرمنتظره: {str(e)}")
-        return redirect("order:cart_page")
+        return redirect("order:cart")
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -145,24 +145,23 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
 
         # روش 2: تلاش برای پیدا کردن پرداخت با authority
         try:
-            payment = Peyment.objects.get(authority=t_authority)
-            order = payment.order
+            # فرض می‌کنیم فیلد authority در مدل Peyment وجود دارد
+            # اگر ندارید، باید یکی از این راه‌حل‌ها را انتخاب کنید:
+            # 1. فیلد authority را به مدل اضافه کنید
+            # 2. از session استفاده کنید
+            # 3. از یک فیلد موقت دیگر استفاده کنید
 
-            # بررسی مالکیت سفارش
-            if order.customer != request.user:
-                messages.error(request, "دسترسی غیرمجاز")
+            # برای حال حاضر، از session استفاده می‌کنیم
+            if session_data:
+                payment = Peyment.objects.get(id=session_data["peyment_id"], customer=request.user)
+                order = payment.order
+            else:
+                # اگر session نداریم و authority در مدل نیست، خطا می‌دهیم
+                messages.error(request, "اطلاعات پرداخت یافت نشد. لطفا با پشتیبانی تماس بگیرید.")
                 return redirect("order:orders")
 
-            # اگر session وجود ندارد اما payment پیدا شد
-            if not session_data:
-                session_data = {
-                    "order_id": order.id,
-                    "peyment_id": payment.id,
-                    "amount": str(payment.amount * 10 if payment.amount else order.get_order_total_price() * 10)
-                }
-
         except Peyment.DoesNotExist:
-            # اگر پرداخت با authority پیدا نشد و session هم نداریم
+            # اگر پرداخت پیدا نشد و session هم نداریم
             if not session_data:
                 messages.error(request, "اطلاعات پرداخت یافت نشد. لطفا با پشتیبانی تماس بگیرید.")
                 return redirect("order:orders")
@@ -256,7 +255,6 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
             # استفاده از refId به جای ref_id - این مهمترین تغییر است
             if 'data' in data and 'ref_id' in data['data']:
                 payment.refId = str(data['data']['ref_id'])
-            payment.statusCode = 100  # کد موفقیت زرین‌پال
             payment.save()
 
             # بروزرسانی وضعیت ثبت نام
