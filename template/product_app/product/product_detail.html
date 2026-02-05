@@ -426,23 +426,15 @@ input[type="number"]::-webkit-outer-spin-button {
                 تماس
             </a>
         {% else %}
-             <button class="add-to-cart-btn add-to-cart-desktop"
-                        data-product-id="{{ product.id }}"
-                        data-quantity="1"
-                        data-detail="">
-                    <span class="add-to-cart-text">
-                        {% if default_sale_type.typeSale == 2 %}
-                            افزودن کارتن به سبد
-                        {% elif default_sale_type.typeSale == 3 %}
-                            افزودن به سبد
-                        {% else %}
-                            افزودن به سبد
-                        {% endif %}
-                    </span>
-                    <svg class="w-5 h-5">
-                        <use href="#shopping-bag"></use>
-                    </svg>
-                </button>
+            <button class="mobile-add-to-cart-btn add-to-cart-btn-mobile"
+                    data-product-id="{{ product.id }}"
+                    data-quantity="1"
+                    data-detail="">
+                <svg class="w-5 h-5">
+                    <use href="#shopping-bag"></use>
+                </svg>
+                خرید
+            </button>
         {% endif %}
     </div>
 
