@@ -426,22 +426,19 @@ input[type="number"]::-webkit-outer-spin-button {
                 تماس
             </a>
         {% else %}
-            <button class="mobile-add-to-cart-btn add-to-cart-btn-mobile"
-                    data-product-id="{{ product.id }}"
-                    data-quantity="1"
-                    data-detail="">
+            <a href='#arv22' class="mobile-add-to-cart-btn">
                 <svg class="w-5 h-5">
                     <use href="#shopping-bag"></use>
                 </svg>
                 خرید
-            </button>
+            </a>
         {% endif %}
     </div>
 
     <!-- PRODUCT DETAILS SECTION -->
     <section class="mt-5 flex flex-col lg:flex-row items-start gap-4 child:rounded-lg child:bg-white child:dark:bg-gray-800 child:shadow child:p-4">
         <!-- IMAGE & INFO BOX Container -->
-        <div class="w-full lg:w-3/4">
+        <div  class="w-full lg:w-3/4">
             <div class="flex flex-col md:flex-row justify-start gap-x-8 xl:gap-x-2 items-start">
                 <!-- IMAGE SLIDER -->
                 <div class="w-2/4 hidden md:flex flex-col justify-center items-center gap-y-4">
@@ -696,7 +693,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
 
         <!-- PRICE & ADD TO CART BOX - این قسمت در هر دو نسخه نمایش داده می‌شود -->
-        <div class="w-full lg:w-1/4 lg:sticky top-5 flex flex-col gap-y-6">
+        <div id='arv22'  class="w-full lg:w-1/4 lg:sticky top-5 flex flex-col gap-y-6">
             <!-- PRICE -->
             {% if default_sale_type %}
             <div class="space-y-2">
@@ -953,7 +950,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     </svg>
                 </a>
             {% else %}
-                <button class="add-to-cart-btn add-to-cart-desktop"
+               <div id='arv-btn'>
+                 <button class="add-to-cart-btn add-to-cart-desktop"
                         data-product-id="{{ product.id }}"
                         data-quantity="1"
                         data-detail="">
@@ -970,6 +968,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <use href="#shopping-bag"></use>
                     </svg>
                 </button>
+               </div>
             {% endif %}
 
             <div class="text-sm text-gray-400 flex xl:items-center gap-x-1">

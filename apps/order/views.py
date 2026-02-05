@@ -27,7 +27,6 @@ def cart_summary(request):
     })
 
 
-@login_required
 def cart_page(request):
     """صفحه نمایش سبد خرید"""
     shop_cart = ShopCart(request)
