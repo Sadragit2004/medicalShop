@@ -33,7 +33,7 @@ def send_request(request, order_id):
             order = Order.objects.get(id=order_id, customer=request.user)
         except Order.DoesNotExist:
             messages.error(request, "سفارش یافت نشد")
-            return redirect("order:cart")
+            return redirect("order:cart_page")
 
         # بررسی اینکه سفارش قبلا پرداخت نشده باشد
         if order.isFinally:
@@ -47,7 +47,7 @@ def send_request(request, order_id):
         # بررسی مبلغ
         if amount_rials < 1000:
             messages.error(request, "مبلغ پرداخت کافی نیست")
-            return redirect("order:cart")
+            return redirect("order:cart_page")
 
         # ایجاد رکورد پرداخت
         peyment = Peyment.objects.create(
@@ -96,11 +96,11 @@ def send_request(request, order_id):
         except requests.exceptions.Timeout:
             peyment.delete()  # حذف رکورد ناموفق
             messages.error(request, "زمان ارتباط با درگاه پرداخت به پایان رسید")
-            return redirect("order:cart")
+            return redirect("order:cart_page")
         except requests.exceptions.RequestException as e:
             peyment.delete()  # حذف رکورد ناموفق
             messages.error(request, f"خطا در ارتباط با درگاه پرداخت: {str(e)}")
-            return redirect("order:cart")
+            return redirect("order:cart_page")
 
         if response.status_code == 200:
             data = response.json()
@@ -112,7 +112,7 @@ def send_request(request, order_id):
 
                 peyment.delete()  # حذف رکورد ناموفق
                 messages.error(request, f"خطا از سمت زرین‌پال: {error_message}")
-                return redirect("order:cart")
+                return redirect("order:cart_page")
 
             # دریافت authority
             authority = data['data']['authority']
@@ -132,11 +132,11 @@ def send_request(request, order_id):
         else:
             peyment.delete()  # حذف رکورد ناموفق
             messages.error(request, f"خطا از زرین‌پال - کد: {response.status_code}")
-            return redirect("order:cart")
+            return redirect("order:cart_page")
 
     except Exception as e:
         messages.error(request, f"خطای غیرمنتظره: {str(e)}")
-        return redirect("order:cart")
+        return redirect("order:cart_page")
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -197,7 +197,7 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
             if 'payment_data' in request.session:
                 del request.session['payment_data']
 
-            return redirect("order:cart")
+            return redirect("order:cart_page")
 
         except Exception as e:
             messages.error(request, f"خطا در مدیریت پرداخت لغو شده: {str(e)}")
