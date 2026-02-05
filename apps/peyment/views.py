@@ -57,19 +57,22 @@ def send_request(request, order_id):
             isFinaly=False
         )
 
-        # ذخیره اطلاعات در session
-        request.session["peyment_session"] = {
+        # ذخیره اطلاعات در session با کلید منحصر به فرد
+        session_key = f"peyment_{order_id}_{int(time.time())}"
+        request.session[session_key] = {
             "order_id": order.id,
             "peyment_id": peyment.id,
-            "amount": str(order.get_order_total_price() ),
+            "amount": str(order.get_order_total_price() * 10),
             "timestamp": str(time.time())
         }
-        request.session.set_expiry(1800)  # 30 دقیقه
+        # ذخیره کلید session اصلی برای استفاده بعدی
+        request.session["current_peyment_key"] = session_key
+        request.session.set_expiry(3600)  # 1 ساعت
 
         # آماده‌سازی داده‌ها برای ارسال به زرین‌پال
         req_data = {
             "merchant_id": MERCHANT_ID,
-            "amount": int(order.get_order_total_price() ),  # تبدیل به ریال و int
+            "amount": int(order.get_order_total_price() * 10),
             "callback_url": CALLBACK_URL,
             "description": f"پرداخت سفارش شماره {order.id} - سایت سایا مدیکال",
             "metadata": {
@@ -94,42 +97,29 @@ def send_request(request, order_id):
         if response.status_code == 200:
             data = response.json()
 
-            # دیباگ: چاپ پاسخ برای بررسی ساختار
-            print("ZarinPal Request Response:", json.dumps(data, indent=2, ensure_ascii=False))
-
-            # بررسی ساختار پاسخ
             if 'data' in data and data['data'] and 'authority' in data['data']:
                 authority = data['data']['authority']
 
-                # ذخیره authority در session
-                request.session["peyment_session"]["authority"] = authority
+                # ذخیره authority در session و مدل
+                request.session[session_key]["authority"] = authority
                 request.session.modified = True
+
+                # ذخیره authority در یک session جداگانه برای بازیابی آسان
+                request.session["last_authority"] = authority
 
                 # ریدایرکت به درگاه پرداخت
                 return redirect(ZP_API_STARTPAY.format(authority=authority))
             else:
-                # خطا از سمت زرین‌پال
                 error_message = "خطا از سمت درگاه پرداخت"
-                if 'errors' in data and data['errors']:
-                    # errors ممکن است لیست باشد
-                    if isinstance(data['errors'], list) and len(data['errors']) > 0:
-                        error_message = data['errors'][0].get('message', 'خطای نامشخص')
-                    elif isinstance(data['errors'], dict):
-                        error_message = data['errors'].get('message', 'خطای نامشخص')
-
                 peyment.statusCode = -2
                 peyment.isFinaly = False
                 peyment.save()
-
                 messages.error(request, f"خطا: {error_message}")
                 return redirect("order:cart_page")
         else:
             messages.error(request, "خطا در ارتباط با درگاه پرداخت")
             return redirect("order:cart_page")
 
-    except requests.exceptions.RequestException as e:
-        messages.error(request, f"خطا در ارتباط با سرور پرداخت: {str(e)}")
-        return redirect("order:cart_page")
     except Exception as e:
         messages.error(request, f"خطای غیرمنتظره: {str(e)}")
         import traceback
@@ -150,9 +140,45 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
             messages.error(request, "پارامترهای لازم ارسال نشده است")
             return redirect("main:index")
 
-        # استفاده از session برای پیدا کردن پرداخت
-        session_data = request.session.get("peyment_session")
+        # روش 1: جستجو در تمام session‌ها برای یافتن authority
+        session_data = None
+        session_key = None
 
+        # بررسی همه کلیدهای session که با peyment شروع می‌شوند
+        for key in list(request.session.keys()):
+            if key.startswith("peyment_"):
+                data = request.session.get(key)
+                if data and data.get("authority") == t_authority:
+                    session_data = data
+                    session_key = key
+                    break
+
+        # روش 2: اگر پیدا نشد، از last_authority استفاده کن
+        if not session_data and request.session.get("last_authority") == t_authority:
+            # سعی کن پرداخت را از دیتابیس پیدا کنی
+            pass
+
+        # روش 3: اگر باز هم پیدا نشد، خطا بده
+        if not session_data:
+            # تلاش نهایی: پیدا کردن آخرین پرداخت کاربر که authority ندارد
+            try:
+                # آخرین پرداخت کاربر را پیدا کن
+                payment = Peyment.objects.filter(
+                    customer=request.user,
+                    isFinaly=False
+                ).order_by('-createAt').first()
+
+                if payment:
+                    order = payment.order
+                    session_data = {
+                        "order_id": order.id,
+                        "peyment_id": payment.id,
+                        "amount": str(payment.amount * 10 if payment.amount else order.get_order_total_price() * 10)
+                    }
+            except Exception as e:
+                print(f"Error finding payment: {e}")
+
+        # اگر هنوز session_data نداریم، خطا بده
         if not session_data:
             messages.error(request, "اطلاعات پرداخت یافت نشد. لطفا با پشتیبانی تماس بگیرید.")
             return redirect("main:index")
@@ -175,18 +201,28 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
 
         # بررسی وضعیت پرداخت
         if t_status == "OK":
-            return self.verify_payment(request, payment, order, t_authority, session_data)
+            result = self.verify_payment(request, payment, order, t_authority, session_data)
+            # پاک کردن session بعد از پرداخت
+            if session_key and session_key in request.session:
+                del request.session[session_key]
+            if "current_peyment_key" in request.session:
+                del request.session["current_peyment_key"]
+            if "last_authority" in request.session:
+                del request.session["last_authority"]
+            return result
         else:
             # پرداخت ناموفق یا لغو شده
-            return self.handle_payment_failure(request, order, payment, "لغو شده توسط کاربر")
+            result = self.handle_payment_failure(request, order, payment, "لغو شده توسط کاربر")
+            # پاک کردن session
+            if session_key and session_key in request.session:
+                del request.session[session_key]
+            return result
 
     def verify_payment(self, request, payment, order, authority, session_data):
         """تایید پرداخت با زرین‌پال"""
-
-        # دریافت amount از session
         amount = session_data.get("amount")
         if not amount:
-            amount = order.get_order_total_price()
+            amount = order.get_order_total_price() * 10
 
         req_data = {
             "merchant_id": MERCHANT_ID,
@@ -210,86 +246,48 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
             if response.status_code == 200:
                 data = response.json()
 
-                # دیباگ: چاپ پاسخ برای بررسی ساختار
-                print("ZarinPal Verify Response:", json.dumps(data, indent=2, ensure_ascii=False))
-
-                # بررسی ساختار پاسخ
                 if 'data' in data and data['data']:
                     code = data['data'].get('code')
 
-                    if code == 100:  # پرداخت موفق
+                    if code == 100:
                         return self.handle_successful_payment(request, order, payment, data)
-                    elif code == 101:  # پرداخت قبلا موفق بوده
+                    elif code == 101:
                         return self.handle_already_verified_payment(request, order, payment, data)
                     else:
-                        # کدهای خطا
                         error_message = data['data'].get('message', 'خطای نامشخص')
                         return self.handle_payment_error(request, order, payment, code, error_message)
                 else:
-                    # خطای زرین‌پال
                     error_message = "خطای نامشخص از زرین‌پال"
-                    if 'errors' in data and data['errors']:
-                        if isinstance(data['errors'], list) and len(data['errors']) > 0:
-                            error_item = data['errors'][0]
-                            error_code = error_item.get('code', 'نامشخص')
-                            error_message = error_item.get('message', 'خطای نامشخص')
-                            return self.handle_payment_error(request, order, payment, error_code, error_message)
-                        elif isinstance(data['errors'], dict):
-                            error_code = data['errors'].get('code', 'نامشخص')
-                            error_message = data['errors'].get('message', 'خطای نامشخص')
-                            return self.handle_payment_error(request, order, payment, error_code, error_message)
-
-                    return self.handle_payment_error(request, order, payment,
-                                                   "UNKNOWN_ERROR", error_message)
+                    return self.handle_payment_error(request, order, payment, "UNKNOWN_ERROR", error_message)
             else:
                 return self.handle_payment_error(request, order, payment,
                                                "CONNECTION_ERROR",
                                                "خطا در ارتباط با زرین‌پال")
 
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             return self.handle_payment_error(request, order, payment,
                                            "REQUEST_EXCEPTION",
                                            f"خطا در درخواست: {str(e)}")
-        except Exception as e:
-            import traceback
-            print(traceback.format_exc())
-            return self.handle_payment_error(request, order, payment,
-                                           "UNKNOWN_EXCEPTION",
-                                           f"خطای غیرمنتظره: {str(e)}")
 
     def handle_successful_payment(self, request, order, payment, data):
         """مدیریت پرداخت موفق"""
         try:
-            # بروزرسانی سفارش
             order.isFinally = True
             order.status = "paid"
             order.save()
 
-            # بروزرسانی پرداخت
             payment.isFinaly = True
             payment.statusCode = 100
 
-            # ذخیره refId از پاسخ زرین‌پال
             if 'data' in data and data['data'] and 'ref_id' in data['data']:
                 payment.refId = str(data['data']['ref_id'])
             payment.save()
 
-            # بروزرسانی وضعیت ثبت نام
-            self.update_enrollment_status(order)
-
-            # پاک کردن session
-            if "peyment_session" in request.session:
-                del request.session["peyment_session"]
-
-            # ریدایرکت به صفحه موفقیت
-            ref_id = payment.refId or ""
             return redirect("peyment:show_sucess",
-                          message=f"پرداخت با موفقیت انجام شد. کد رهگیری: {ref_id}")
+                          message=f"پرداخت با موفقیت انجام شد. کد رهگیری: {payment.refId or ''}")
 
         except Exception as e:
             print(f"Error in handle_successful_payment: {e}")
-            import traceback
-            print(traceback.format_exc())
             return redirect("peyment:show_verfiy_unmessage",
                           message="خطا در بروزرسانی اطلاعات پرداخت")
 
@@ -298,8 +296,6 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
         if not payment.isFinaly:
             payment.isFinaly = True
             payment.statusCode = 101
-
-            # ذخیره refId
             if 'data' in data and data['data'] and 'ref_id' in data['data']:
                 payment.refId = str(data['data']['ref_id'])
             payment.save()
@@ -309,13 +305,8 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
                 order.status = "paid"
                 order.save()
 
-        # پاک کردن session
-        if "peyment_session" in request.session:
-            del request.session["peyment_session"]
-
-        ref_id = payment.refId or ""
         return redirect("peyment:show_sucess",
-                      message=f"این تراکنش قبلا تایید شده است. کد رهگیری: {ref_id}")
+                      message=f"این تراکنش قبلا تایید شده است. کد رهگیری: {payment.refId or ''}")
 
     def handle_payment_failure(self, request, order, payment, message):
         """مدیریت پرداخت ناموفق"""
@@ -327,14 +318,9 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
             payment.isFinaly = False
             payment.save()
 
-            # پاک کردن session
-            if "peyment_session" in request.session:
-                del request.session["peyment_session"]
-
             return redirect("peyment:show_verfiy_unmessage", message=message)
 
         except Exception as e:
-            print(f"Error in handle_payment_failure: {e}")
             return redirect("peyment:show_verfiy_unmessage",
                           message="خطا در بروزرسانی وضعیت سفارش")
 
@@ -348,26 +334,12 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
             order.status = "canceled"
             order.save()
 
-            # پاک کردن session
-            if "peyment_session" in request.session:
-                del request.session["peyment_session"]
-
             return redirect("peyment:show_verfiy_unmessage",
                           message=f"خطا در پرداخت: {error_message} (کد: {error_code})")
 
         except Exception as e:
-            print(f"Error in handle_payment_error: {e}")
             return redirect("peyment:show_verfiy_unmessage",
                           message=f"خطا در پرداخت: {error_message}")
-
-    def update_enrollment_status(self, order):
-        """بروزرسانی وضعیت isPay در Enrollment مربوط به این سفارش"""
-        try:
-            # این بخش بستگی به ساختار مدل‌های شما دارد
-            # اگر Enrollment مربوطه را دارید، اینجا آن را آپدیت کنید
-            pass
-        except Exception as e:
-            print(f"Error updating enrollment status: {e}")
 
 
 def show_verfiy_message(request, message):
@@ -382,8 +354,7 @@ def show_verfiy_message(request, message):
             "message": message,
             "order": last_order
         })
-    except Exception as e:
-        print(f"Error in show_verfiy_message: {e}")
+    except:
         return render(request, "peyment_app/peyment.html", {"message": message})
 
 
