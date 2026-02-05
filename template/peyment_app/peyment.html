@@ -1,13 +1,119 @@
 {% extends 'main_template.html' %}
+{% load static %}
+
 {% block content %}
-<div class="container mt-5">
-    <div class="alert alert-success text-center">
-        <h4>پرداخت موفق</h4>
-        <p>{{ message }}</p>
-        <p>شماره سفارش: {{ order.id }}</p>
-        <p>مبلغ: {{ order.get_order_total_price|floatformat:0 }} تومان</p>
-        <a href="{% url 'order:order_detail' order.id %}" class="btn btn-primary mt-3">مشاهده سفارش</a>
-        <a href="{% url 'main:index' %}" class="btn btn-outline-primary mt-3">بازگشت به صفحه اصلی</a>
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+        <!-- هدر -->
+        <div class="bg-green-100 p-6 text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-green-500 rounded-full mb-4">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">پرداخت موفق</h1>
+            <p class="text-gray-600 mt-2">{{ message }}</p>
+        </div>
+
+        <!-- محتوا -->
+        <div class="p-6">
+            <!-- کد رهگیری -->
+            {% if ref_id %}
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">کد رهگیری پرداخت:</p>
+                        <p class="text-lg font-bold text-blue-700 mt-1">{{ ref_id }}</p>
+                    </div>
+                    <button onclick="copyToClipboard('{{ ref_id }}')"
+                            class="text-blue-600 hover:text-blue-800 text-sm">
+                        کپی
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- اطلاعات سفارش -->
+            <div class="border border-gray-200 rounded-lg p-4 mb-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">مشخصات سفارش</h3>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">شماره سفارش:</span>
+                        <span class="font-bold">{{ order.orderCode }}</span>
+                    </div>
+
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">مبلغ پرداخت:</span>
+                        <span class="font-bold">{{ payment.amount|floatformat:0 }} تومان</span>
+                    </div>
+
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">تاریخ پرداخت:</span>
+                        <span class="font-bold" dir="ltr">{{ payment.updated_at|date:"Y/m/d - H:i" }}</span>
+                    </div>
+
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">وضعیت:</span>
+                        <span class="font-bold text-green-600">پرداخت شده</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- نکات مهم -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <h4 class="font-bold text-yellow-800 mb-2">نکات مهم:</h4>
+                <ul class="text-sm text-yellow-700 space-y-1 list-disc pr-4">
+                    <li>کد رهگیری را نزد خود نگه دارید</li>
+                    <li>در صورت هرگونه سوال با کد رهگیری مراجعه کنید</li>
+                    <li>سفارش شما در حال پردازش است</li>
+                </ul>
+            </div>
+
+            <!-- دکمه‌ها -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <a href="{% url 'order:orders' %}"
+                   class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg text-center transition duration-300">
+                    مشاهده سفارش‌های من
+                </a>
+
+                <a href="{% url 'main:index' %}"
+                   class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-lg text-center transition duration-300">
+                    بازگشت به صفحه اصلی
+                </a>
+            </div>
+
+            <!-- پیام پایانی -->
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <p class="text-center text-sm text-gray-500">
+                    با تشکر از خرید شما 🙏
+                    <br>
+                    تیم پشتیبانی سایا مدیکال
+                </p>
+            </div>
+        </div>
     </div>
 </div>
+
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        alert('کد رهگیری کپی شد!');
+    }, function(err) {
+        console.error('خطا در کپی: ', err);
+    });
+}
+</script>
+
+<style>
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    a {
+        text-decoration: none !important;
+        color: black !important;
+    }
+}
+</style>
 {% endblock %}

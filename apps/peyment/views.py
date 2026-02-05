@@ -1,20 +1,18 @@
-from django.shortcuts import render, redirect, HttpResponse
-from django.views import View
-from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
 import json
 import requests
-import time  # اضافه شده
-
+import time
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.db import transaction
 from apps.order.models import Order
 from apps.peyment.models import Peyment
-from apps.user.models.user import CustomUser
-import utils
 
-# تنظیمات ZarinPal
+
+# تنظیمات زرین‌پال
 MERCHANT_ID = "6fe93958-6832-4fbc-be2f-aa85e63233bd"
 ZP_API_REQUEST = "https://api.zarinpal.com/pg/v4/payment/request.json"
 ZP_API_VERIFY = "https://api.zarinpal.com/pg/v4/payment/verify.json"
@@ -23,12 +21,7 @@ CALLBACK_URL = "https://sayamedical.com/peyment/verify/"
 
 
 def send_request(request, order_id):
-    """Create payment and redirect user to ZarinPal gateway."""
-
-    if not utils.has_internet_connection():
-        messages.error(request, "اتصال اینترنت شما قابل تایید نیست", "danger")
-        return redirect("order:cart")
-
+    """ایجاد درخواست پرداخت و هدایت به درگاه زرین‌پال"""
     try:
         # بررسی احراز هویت
         if not request.user.is_authenticated:
@@ -37,38 +30,53 @@ def send_request(request, order_id):
 
         # دریافت سفارش
         try:
-            order = Order.objects.get(id=order_id, user=request.user)
+            order = Order.objects.get(id=order_id, customer=request.user)
         except Order.DoesNotExist:
             messages.error(request, "سفارش یافت نشد")
             return redirect("order:cart")
 
-        # ایجاد رکورد پرداخت
+        # بررسی اینکه سفارش قبلا پرداخت نشده باشد
+        if order.isFinally:
+            messages.warning(request, "این سفارش قبلا پرداخت شده است")
+            return redirect("order:orders")
+
+        # محاسبه مبلغ پرداخت (با استفاده از تابع شما)
+        amount_tomans = order.get_order_total_price()  # تومان
+        amount_rials = int(amount_tomans)  # ریال
+
+        # بررسی مبلغ
+        if amount_rials < 1000:  # حداقل مبلغ زرین‌پال
+            messages.error(request, "مبلغ پرداخت کافی نیست")
+            return redirect("order:cart")
+
+        # ایجاد رکورد پرداخت (با استفاده از فیلدهای مدل شما)
         peyment = Peyment.objects.create(
             order=order,
             customer=request.user,
-            amount=order.get_order_total_price(),
-            description="پرداخت سفارش",
+            amount=amount_tomans,  # تومان
+            description=f"پرداخت سفارش {order.orderCode}",
             status="pending"
         )
 
-        # ذخیره اطلاعات در session
-        request.session["peyment_session"] = {
-            "order_id": order.id,
-            "peyment_id": peyment.id,
-            "amount": str(order.get_order_total_price() * 10),  # ذخیره به ریال
-            "timestamp": str(time.time())  # زمان ایجاد
+        # ذخیره اطلاعات در session برای تایید
+        request.session['payment_data'] = {
+            'order_id': order.id,
+            'payment_id': peyment.id,
+            'amount_rials': amount_rials,
+            'authority_expected': True,
+            'timestamp': time.time()
         }
-        request.session.set_expiry(1800)  # 30 دقیقه
+        request.session.modified = True
 
-        # آماده‌سازی داده‌ها برای ارسال به زرین‌پال
+        # آماده‌سازی داده‌ها برای زرین‌پال
         req_data = {
             "merchant_id": MERCHANT_ID,
-            "amount": int(order.get_order_total_price() * 10),  # تبدیل به ریال و اطمینان از int
+            "amount": amount_rials,
             "callback_url": CALLBACK_URL,
-            "description": f"پرداخت سفارش شماره {order.id} - سایت سایا مدیکال",
+            "description": f"پرداخت سفارش {order.orderCode} - سایا مدیکال",
             "metadata": {
-                "email": request.user.email if hasattr(request.user, 'email') and request.user.email else "",
-                "mobile": getattr(request.user, "mobileNumber", "")
+                "email": request.user.email or "",
+                "mobile": request.user.phone if hasattr(request.user, 'phone') else ""
             }
         }
 
@@ -78,26 +86,29 @@ def send_request(request, order_id):
         }
 
         # ارسال درخواست به زرین‌پال
-        response = requests.post(
-            ZP_API_REQUEST,
-            data=json.dumps(req_data),
-            headers=headers,
-            timeout=30
-        )
+        try:
+            response = requests.post(
+                ZP_API_REQUEST,
+                data=json.dumps(req_data),
+                headers=headers,
+                timeout=30
+            )
+        except requests.exceptions.Timeout:
+            peyment.status = "failed"
+            peyment.save()
+            messages.error(request, "زمان ارتباط با درگاه پرداخت به پایان رسید")
+            return redirect("order:cart")
+        except requests.exceptions.RequestException as e:
+            peyment.status = "failed"
+            peyment.save()
+            messages.error(request, f"خطا در ارتباط با درگاه پرداخت: {str(e)}")
+            return redirect("order:cart")
 
         if response.status_code == 200:
             data = response.json()
 
-            if data.get('errors') is None:
-                authority = data['data']['authority']
-                # ذخیره authority در رکورد پرداخت
-                peyment.authority = authority
-                peyment.save()
-
-                # ریدایرکت به درگاه پرداخت
-                return redirect(ZP_API_STARTPAY.format(authority=authority))
-            else:
-                # خطا از سمت زرین‌پال
+            # بررسی خطاهای زرین‌پال
+            if data.get('errors'):
                 error_code = data['errors'].get('code', 'نامشخص')
                 error_message = data['errors'].get('message', 'خطای نامشخص')
 
@@ -107,199 +118,245 @@ def send_request(request, order_id):
 
                 messages.error(request, f"خطا از سمت زرین‌پال: {error_message}")
                 return redirect("order:cart")
+
+            # دریافت authority
+            authority = data['data']['authority']
+
+            # ذخیره authority در رکورد پرداخت
+            peyment.authority = authority
+            peyment.save()
+
+            # ذخیره authority در session
+            request.session['payment_data']['authority'] = authority
+            request.session.modified = True
+
+            # هدایت به درگاه پرداخت
+            return redirect(ZP_API_STARTPAY.format(authority=authority))
         else:
-            messages.error(request, "خطا در ارتباط با درگاه پرداخت")
+            peyment.status = "failed"
+            peyment.save()
+            messages.error(request, f"خطا از زرین‌پال - کد: {response.status_code}")
             return redirect("order:cart")
 
-    except requests.exceptions.RequestException as e:
-        messages.error(request, f"خطا در ارتباط با سرور پرداخت: {str(e)}")
-        return redirect("order:cart")
     except Exception as e:
         messages.error(request, f"خطای غیرمنتظره: {str(e)}")
         return redirect("order:cart")
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
+class ZarinPalVerifyView(LoginRequiredMixin, View):
     """کلاس بررسی و تایید پرداخت"""
 
     def get(self, request):
-        t_status = request.GET.get("Status")
-        t_authority = request.GET.get("Authority")
+        status = request.GET.get('Status')
+        authority = request.GET.get('Authority')
 
-        # چک کردن وجود پارامترهای لازم
-        if not t_status or not t_authority:
+        # لاگ برای دیباگ
+        print(f"🟡 Verify called - Status: {status}, Authority: {authority}")
+
+        # بررسی وجود پارامترهای لازم
+        if not status or not authority:
             messages.error(request, "پارامترهای لازم ارسال نشده است")
             return redirect("order:orders")
 
-        # روش 1: تلاش برای بازیابی از session
-        session_data = None
-        if "peyment_session" in request.session:
-            session_data = request.session.get("peyment_session")
+        # پرداخت لغو شده
+        if status != "OK":
+            return self.handle_cancelled_payment(request, authority)
 
-        # روش 2: تلاش برای پیدا کردن پرداخت با authority
+        # پرداخت موفق (وضعیت OK)
+        return self.verify_payment(request, authority)
+
+    def handle_cancelled_payment(self, request, authority):
+        """مدیریت پرداخت لغو شده"""
         try:
-            payment = Peyment.objects.get(authority=t_authority)
-            order = payment.order
+            # پیدا کردن پرداخت با authority
+            payment = Peyment.objects.get(authority=authority, customer=request.user)
 
-            # بررسی مالکیت سفارش
-            if order.user != request.user:
-                messages.error(request, "دسترسی غیرمجاز")
-                return redirect("order:orders")
+            # به‌روزرسانی وضعیت
+            payment.status = "cancelled"
+            payment.save()
 
-            # اگر session وجود ندارد اما payment پیدا شد
-            if not session_data:
-                session_data = {
-                    "order_id": order.id,
-                    "peyment_id": payment.id,
-                    "amount": str(payment.amount * 10 if payment.amount else order.get_order_total_price() * 10)
-                }
+            # پاک کردن session
+            if 'payment_data' in request.session:
+                del request.session['payment_data']
+
+            messages.warning(request, "پرداخت توسط شما لغو شد")
+            return redirect("order:cart")
 
         except Peyment.DoesNotExist:
-            # اگر پرداخت با authority پیدا نشد و session هم نداریم
-            if not session_data:
-                messages.error(request, "اطلاعات پرداخت یافت نشد. لطفا با پشتیبانی تماس بگیرید.")
-                return redirect("order:orders")
+            messages.error(request, "اطلاعات پرداخت یافت نشد")
+            return redirect("order:orders")
+        except Exception as e:
+            messages.error(request, f"خطا در لغو پرداخت: {str(e)}")
+            return redirect("order:orders")
+
+    def verify_payment(self, request, authority):
+        """تایید پرداخت با زرین‌پال"""
+        print(f"🟢 Starting verification for authority: {authority}")
+
+        try:
+            # پیدا کردن پرداخت
+            payment = Peyment.objects.get(authority=authority, customer=request.user)
+            order = payment.order
+
+            print(f"📦 Found payment: {payment.id}, order: {order.id}")
+
+            # اگر قبلا تایید شده
+            if payment.isFinaly:
+                print(f"ℹ️ Payment already finalized")
+                messages.info(request, "این پرداخت قبلاً تایید شده است")
+                return self.show_success_page(request, order, payment, "این پرداخت قبلاً تأیید شده است")
+
+            # دریافت مبلغ از session یا payment
+            session_data = request.session.get('payment_data', {})
+            amount_rials = session_data.get('amount_rials', payment.amount * 10)
+
+            # درخواست تایید به زرین‌پال
+            req_data = {
+                "merchant_id": MERCHANT_ID,
+                "amount": int(amount_rials),
+                "authority": authority
+            }
+
+            print(f"📤 Sending verification request: {req_data}")
+
+            headers = {
+                "accept": "application/json",
+                "content-type": "application/json"
+            }
 
             try:
-                order_id = session_data["order_id"]
-                peyment_id = session_data["peyment_id"]
+                response = requests.post(
+                    ZP_API_VERIFY,
+                    data=json.dumps(req_data),
+                    headers=headers,
+                    timeout=30
+                )
+                print(f"📥 Response status: {response.status_code}")
+            except requests.exceptions.RequestException as e:
+                print(f"❌ Request exception: {str(e)}")
+                return self.handle_verification_error(
+                    request,
+                    payment,
+                    order,
+                    f"خطا در ارتباط با زرین‌پال: {str(e)}"
+                )
 
-                order = Order.objects.get(id=order_id, user=request.user)
-                payment = Peyment.objects.get(id=peyment_id, customer=request.user)
+            if response.status_code != 200:
+                print(f"❌ HTTP error: {response.status_code}")
+                return self.handle_verification_error(
+                    request,
+                    payment,
+                    order,
+                    f"خطا در ارتباط با زرین‌پال - کد وضعیت: {response.status_code}"
+                )
 
-            except (KeyError, Order.DoesNotExist, Peyment.DoesNotExist) as e:
-                messages.error(request, "اطلاعات پرداخت نامعتبر است")
-                print(f"Error: {e}")
-                return redirect("order:orders")
+            data = response.json()
+            print(f"📊 Response data: {data}")
 
-        # بررسی وضعیت پرداخت
-        if t_status == "OK":
-            return self.verify_payment(request, payment, order, t_authority, session_data)
-        else:
-            # پرداخت ناموفق یا لغو شده
-            return self.handle_payment_failure(request, order, payment, "لغو شده توسط کاربر")
+            # بررسی خطاهای زرین‌پال
+            if data.get('errors'):
+                error_code = data['errors'].get('code', 'نامشخص')
+                error_message = data['errors'].get('message', 'خطای نامشخص')
+                print(f"❌ ZarinPal error: {error_code} - {error_message}")
+                return self.handle_verification_error(
+                    request,
+                    payment,
+                    order,
+                    f"{error_message} (کد خطا: {error_code})"
+                )
 
-    def verify_payment(self, request, payment, order, authority, session_data):
-        """تایید پرداخت با زرین‌پال"""
+            # پردازش کد وضعیت
+            code = data['data'].get('code')
+            print(f"🔢 Response code: {code}")
 
-        # دریافت amount از session یا order
-        amount = session_data.get("amount")
-        if not amount:
-            amount = order.get_order_total_price() * 10
-
-        req_data = {
-            "merchant_id": MERCHANT_ID,
-            "amount": int(float(amount)),  # اطمینان از int بودن
-            "authority": authority
-        }
-
-        headers = {
-            "accept": "application/json",
-            "content-type": "application/json"
-        }
-
-        try:
-            response = requests.post(
-                ZP_API_VERIFY,
-                data=json.dumps(req_data),
-                headers=headers,
-                timeout=30
-            )
-
-            if response.status_code == 200:
-                data = response.json()
-
-                # بررسی خطاها
-                if data.get('errors'):
-                    error_code = data['errors'].get('code', 'نامشخص')
-                    error_message = data['errors'].get('message', 'خطای نامشخص')
-                    return self.handle_payment_error(request, order, payment, error_code, error_message)
-
-                # بررسی وجود data در پاسخ
-                if not data.get('data'):
-                    return self.handle_payment_error(request, order, payment,
-                                                   "NO_DATA",
-                                                   "داده‌ای از زرین‌پال دریافت نشد")
-
-                code = data['data'].get('code')
-
-                if code == 100:  # پرداخت موفق
-                    return self.handle_successful_payment(request, order, payment, data)
-                elif code == 101:  # پرداخت قبلا موفق بوده
-                    return self.handle_already_verified_payment(request, order, payment, data)
-                else:
-                    # کدهای خطا
-                    return self.handle_payment_error(request, order, payment,
-                                                   code or "UNKNOWN_CODE",
-                                                   f"کد خطا از زرین‌پال: {code}")
+            if code == 100:  # پرداخت موفق
+                print(f"✅ Payment successful")
+                return self.handle_successful_payment(request, payment, order, data)
+            elif code == 101:  # قبلا تایید شده
+                print(f"ℹ️ Payment already verified")
+                return self.handle_already_verified(request, payment, order, data)
             else:
-                return self.handle_payment_error(request, order, payment,
-                                               "CONNECTION_ERROR",
-                                               f"خطا در ارتباط با زرین‌پال - کد وضعیت: {response.status_code}")
+                print(f"❌ Unknown code: {code}")
+                return self.handle_verification_error(
+                    request,
+                    payment,
+                    order,
+                    f"کد خطا از زرین‌پال: {code}"
+                )
 
-        except requests.exceptions.RequestException as e:
-            return self.handle_payment_error(request, order, payment,
-                                           "REQUEST_EXCEPTION",
-                                           f"خطا در درخواست: {str(e)}")
-        except json.JSONDecodeError as e:
-            return self.handle_payment_error(request, order, payment,
-                                           "JSON_ERROR",
-                                           f"خطا در پردازش پاسخ زرین‌پال: {str(e)}")
+        except Peyment.DoesNotExist:
+            print(f"❌ Payment not found for authority: {authority}")
+            messages.error(request, "پرداخت یافت نشد")
+            return redirect("order:orders")
+        except Exception as e:
+            print(f"❌ Unexpected error: {str(e)}")
+            return self.handle_verification_error(request, None, None, f"خطای غیرمنتظره: {str(e)}")
 
-    def handle_successful_payment(self, request, order, payment, data):
+    @transaction.atomic
+    def handle_successful_payment(self, request, payment, order, data):
         """مدیریت پرداخت موفق"""
         try:
-            # بروزرسانی سفارش
+            print(f"🔄 Processing successful payment...")
+
+            # ذخیره ref_id (اگر وجود دارد)
+            ref_id = data['data'].get('ref_id')
+            print(f"📝 Ref ID: {ref_id}")
+
+            # به‌روزرسانی پرداخت
+            payment.isFinaly = True
+            payment.statusCode = 100
+            payment.status = "completed"
+            if ref_id:
+                payment.refId = str(ref_id)
+            else:
+                print("⚠️ No ref_id received from ZarinPal")
+            payment.save()
+
+            print(f"✅ Payment updated: {payment.id}")
+
+            # به‌روزرسانی سفارش
             order.isFinally = True
             order.status = "paid"
             order.save()
 
-            # بروزرسانی پرداخت
-            payment.isFinaly = True
-            payment.statusCode = 100
-
-            # گرفتن ref_id با احتیاط
-            ref_id = data['data'].get('ref_id')
-            if ref_id:
-                payment.refId = str(ref_id)
-
-            payment.status = "completed"
-            payment.save()
-
-            # بروزرسانی وضعیت ثبت نام
-            self.update_enrollment_status(order)
+            print(f"✅ Order updated: {order.id}")
 
             # پاک کردن session
-            if "peyment_session" in request.session:
-                del request.session["peyment_session"]
+            if 'payment_data' in request.session:
+                del request.session['payment_data']
 
-            # ریدایرکت به صفحه موفقیت
-            if ref_id:
-                return redirect("peyment:show_sucess",
-                              message=f"پرداخت با موفقیت انجام شد. کد رهگیری: {ref_id}")
-            else:
-                return redirect("peyment:show_sucess",
-                              message="پرداخت با موفقیت انجام شد.")
+            print(f"✅ Session cleaned")
+
+            # نمایش صفحه موفقیت
+            return self.show_success_page(
+                request,
+                order,
+                payment,
+                "پرداخت با موفقیت انجام شد",
+                ref_id
+            )
 
         except Exception as e:
-            print(f"Error in handle_successful_payment: {e}")
-            return redirect("peyment:show_verfiy_unmessage",
-                          message="خطا در بروزرسانی اطلاعات پرداخت")
+            print(f"❌ Error in handle_successful_payment: {str(e)}")
+            messages.error(request, f"خطا در به‌روزرسانی اطلاعات: {str(e)}")
+            return redirect("order:orders")
 
-    def handle_already_verified_payment(self, request, order, payment, data):
+    @transaction.atomic
+    def handle_already_verified(self, request, payment, order, data):
         """مدیریت پرداخت قبلا تایید شده"""
         try:
+            print(f"🔄 Processing already verified payment...")
+
+            # اگر هنوز تایید نشده، تاییدش کن
             if not payment.isFinaly:
                 payment.isFinaly = True
                 payment.statusCode = 101
+                payment.status = "completed"
 
-                # گرفتن ref_id با احتیاط - ممکن است در کد 101 وجود نداشته باشد
                 ref_id = data['data'].get('ref_id')
                 if ref_id:
                     payment.refId = str(ref_id)
-
-                payment.status = "completed"
                 payment.save()
 
             if not order.isFinally:
@@ -308,101 +365,68 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
                 order.save()
 
             # پاک کردن session
-            if "peyment_session" in request.session:
-                del request.session["peyment_session"]
+            if 'payment_data' in request.session:
+                del request.session['payment_data']
 
-            # استفاده از ref_id ذخیره شده یا از data
-            ref_id_to_show = payment.refId or data['data'].get('ref_id')
-            if ref_id_to_show:
-                return redirect("peyment:show_sucess",
-                              message=f"این تراکنش قبلا تایید شده است. کد رهگیری: {ref_id_to_show}")
-            else:
-                return redirect("peyment:show_sucess",
-                              message="این تراکنش قبلا تایید شده است.")
+            return self.show_success_page(
+                request,
+                order,
+                payment,
+                "این پرداخت قبلاً تأیید شده بود"
+            )
 
         except Exception as e:
-            print(f"Error in handle_already_verified_payment: {e}")
-            return redirect("peyment:show_sucess",
-                          message="تراکنش قبلا تایید شده است.")
+            print(f"❌ Error in handle_already_verified: {str(e)}")
+            messages.error(request, f"خطا در به‌روزرسانی: {str(e)}")
+            return redirect("order:orders")
 
-    def handle_payment_failure(self, request, order, payment, message):
-        """مدیریت پرداخت ناموفق"""
+    def handle_verification_error(self, request, payment, order, error_message):
+        """مدیریت خطای تایید"""
         try:
-            order.status = "canceled"
-            order.save()
+            print(f"❌ Verification error: {error_message}")
 
-            payment.status = "failed"
-            payment.save()
+            if payment:
+                payment.status = "failed"
+                payment.save()
+
+            if order:
+                order.status = "failed"
+                order.save()
 
             # پاک کردن session
-            if "peyment_session" in request.session:
-                del request.session["peyment_session"]
+            if 'payment_data' in request.session:
+                del request.session['payment_data']
 
-            return redirect("peyment:show_verfiy_unmessage", message=message)
-
-        except Exception as e:
-            print(f"Error in handle_payment_failure: {e}")
-            return redirect("peyment:show_verfiy_unmessage",
-                          message="خطا در بروزرسانی وضعیت سفارش")
-
-    def handle_payment_error(self, request, order, payment, error_code, error_message):
-        """مدیریت خطای پرداخت"""
-        try:
-            payment.statusCode = error_code
-            payment.status = "failed"
-            payment.save()
-
-            # پاک کردن session
-            if "peyment_session" in request.session:
-                del request.session["peyment_session"]
-
-            return redirect("peyment:show_verfiy_unmessage",
-                          message=f"خطا در پرداخت: {error_message} (کد: {error_code})")
+            messages.error(request, error_message)
+            return render(request, 'peyment_app/error.html', {
+                'error': error_message,
+                'order': order
+            })
 
         except Exception as e:
-            print(f"Error in handle_payment_error: {e}")
-            return redirect("peyment:show_verfiy_unmessage",
-                          message=f"خطا در پرداخت: {error_message}")
+            print(f"❌ Error in handle_verification_error: {str(e)}")
+            messages.error(request, f"خطا در مدیریت خطا: {str(e)}")
+            return redirect("order:orders")
 
-    def update_enrollment_status(self, order):
-        """بروزرسانی وضعیت isPay در Enrollment مربوط به این سفارش"""
-        try:
-            order_details = order.details.filter(enrollment__isnull=False)
-            for order_detail in order_details:
-                if order_detail.enrollment:
-                    order_detail.enrollment.isPay = True
-                    order_detail.enrollment.save()
-                    print(f"Enrollment {order_detail.enrollment.id} updated to isPay=True")
-        except Exception as e:
-            print(f"Error updating enrollment status: {e}")
+    def show_success_page(self, request, order, payment, message, ref_id=None):
+        """نمایش صفحه موفقیت پرداخت"""
+        print(f"🎉 Showing success page - Ref ID: {ref_id}")
 
-
-def show_verfiy_message(request, message):
-    """نمایش صفحه موفقیت پرداخت"""
-    try:
-        # اصلاح: نام تابع تغییر کرده
-        return show_sucess(request, message)
-    except:
-        return render(request, "peyment_app/peyment.html", {"message": message})
+        context = {
+            'success': True,
+            'order': order,
+            'payment': payment,
+            'ref_id': ref_id,
+            'message': message
+        }
+        return render(request, 'peyment_app/peyment.html', context)
 
 
-def show_sucess(request, message):
-    """نمایش صفحه موفقیت پرداخت"""
-    try:
-        # تلاش برای دریافت آخرین سفارش پرداخت شده کاربر
-        last_order = Order.objects.filter(
-            user=request.user,
-            isFinally=True
-        ).order_by('-created_at').first()
-
-        return render(request, "peyment_app/peyment.html", {
-            "message": message,
-            "order": last_order
-        })
-    except:
-        return render(request, "peyment_app/peyment.html", {"message": message})
+def payment_success(request):
+    """صفحه موفقیت پرداخت"""
+    return render(request, 'peyment_app/peyment.html')
 
 
-def show_verfiy_unmessage(request, message):
-    """نمایش صفحه خطای پرداخت"""
-    return render(request, "peyment_app/unpeyment.html", {"message": message})
+def payment_error(request):
+    """صفحه خطای پرداخت"""
+    return render(request, 'peyment_app/unpeyment.html')

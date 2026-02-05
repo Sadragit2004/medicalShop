@@ -66,12 +66,14 @@ class UserAddress(models.Model):
             self.lng or self.city.lng,
         )
 
+
 from django.db import models
 from django.utils import timezone
 import uuid
 from apps.user.models.user import CustomUser
 from apps.order.models import UserAddress
 import utils
+
 
 
 class Order(models.Model):
