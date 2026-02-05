@@ -27,7 +27,7 @@ def send_request(request, order_id):
 
     if not utils.has_internet_connection():
         messages.error(request, "اتصال اینترنت شما قابل تایید نیست", "danger")
-        return redirect("order:cart")
+        return redirect("order:cart_page")
 
     try:
         # بررسی احراز هویت
@@ -40,7 +40,7 @@ def send_request(request, order_id):
             order = Order.objects.get(id=order_id, customer=request.user)
         except Order.DoesNotExist:
             messages.error(request, "سفارش یافت نشد")
-            return redirect("order:cart")
+            return redirect("order:cart_page")
 
         # بررسی اینکه آیا سفارش قبلا پرداخت شده
         if order.isFinally:
@@ -112,17 +112,17 @@ def send_request(request, order_id):
                 peyment.save()
 
                 messages.error(request, f"خطا از سمت زرین‌پال: {error_message}")
-                return redirect("order:cart")
+                return redirect("order:cart_page")
         else:
             messages.error(request, "خطا در ارتباط با درگاه پرداخت")
-            return redirect("order:cart")
+            return redirect("order:cart_page")
 
     except requests.exceptions.RequestException as e:
         messages.error(request, f"خطا در ارتباط با سرور پرداخت: {str(e)}")
-        return redirect("order:cart")
+        return redirect("order:cart_page")
     except Exception as e:
         messages.error(request, f"خطای غیرمنتظره: {str(e)}")
-        return redirect("order:cart")
+        return redirect("order:cart_page")
 
 
 @method_decorator(csrf_exempt, name='dispatch')
