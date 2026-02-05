@@ -47,11 +47,14 @@ def send_request(request, order_id):
             messages.error(request, "این سفارش قبلا پرداخت شده است")
             return redirect("main:index")
 
+        # محاسبه مبلغ به ریال
+        amount_in_rial = order.get_order_total_price()  # این تابع باید مبلغ را به ریال برگرداند
+
         # ایجاد رکورد پرداخت
         peyment = Peyment.objects.create(
             order=order,
             customer=request.user,
-            amount=order.get_order_total_price(),
+            amount=amount_in_rial,
             description="پرداخت سفارش",
             statusCode=0,
             isFinaly=False
@@ -62,7 +65,7 @@ def send_request(request, order_id):
         request.session[session_key] = {
             "order_id": order.id,
             "peyment_id": peyment.id,
-            "amount": str(order.get_order_total_price() * 10),
+            "amount": str(amount_in_rial),  # ذخیره به ریال
             "timestamp": str(time.time())
         }
         # ذخیره کلید session اصلی برای استفاده بعدی
@@ -72,7 +75,7 @@ def send_request(request, order_id):
         # آماده‌سازی داده‌ها برای ارسال به زرین‌پال
         req_data = {
             "merchant_id": MERCHANT_ID,
-            "amount": int(order.get_order_total_price() * 10),
+            "amount": amount_in_rial,  # ارسال به ریال
             "callback_url": CALLBACK_URL,
             "description": f"پرداخت سفارش شماره {order.id} - سایت سایا مدیکال",
             "metadata": {
@@ -173,7 +176,7 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
                     session_data = {
                         "order_id": order.id,
                         "peyment_id": payment.id,
-                        "amount": str(payment.amount * 10 if payment.amount else order.get_order_total_price() * 10)
+                        "amount": str(payment.amount if payment.amount else order.get_order_total_price())
                     }
             except Exception as e:
                 print(f"Error finding payment: {e}")
@@ -222,11 +225,11 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
         """تایید پرداخت با زرین‌پال"""
         amount = session_data.get("amount")
         if not amount:
-            amount = order.get_order_total_price() * 10
+            amount = order.get_order_total_price()
 
         req_data = {
             "merchant_id": MERCHANT_ID,
-            "amount": int(float(amount)),
+            "amount": int(float(amount)),  # اطمینان از int بودن
             "authority": authority
         }
 
