@@ -1,0 +1,496 @@
+
+    <style>
+        /* Your CSS from the previous response goes here. No changes needed. */
+        /* Paste all your CSS code here. */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --success-primary: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.08);
+            --success-border: rgba(16, 185, 129, 0.2);
+            --success-text: #065f46;
+
+            --error-primary: #ef4444;
+            --error-bg: rgba(239, 68, 68, 0.08);
+            --error-border: rgba(239, 68, 68, 0.2);
+            --error-text: #991b1b;
+
+            --warning-primary: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.08);
+            --warning-border: rgba(245, 158, 11, 0.2);
+            --warning-text: #92400e;
+
+            --info-primary: #3b82f6;
+            --info-bg: rgba(59, 130, 246, 0.08);
+            --info-border: rgba(59, 130, 246, 0.2);
+            --info-text: #1e3a8a;
+
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-dark: rgba(15, 23, 42, 0.95);
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+
+        #notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+            max-width: 420px;
+            width: calc(100vw - 40px);
+        }
+
+        .notification {
+            display: flex;
+            align-items: flex-start;
+            padding: 16px;
+            border-radius: 12px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            pointer-events: all;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            animation: slideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transform-origin: top right;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .notification:hover {
+            transform: translateX(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .notification.hiding {
+            animation: slideOut 0.4s cubic-bezier(0.4, 0, 1, 1) forwards;
+        }
+
+        .notification::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            width: 100%;
+            background: currentColor;
+            opacity: 0.3;
+            animation: progress 5s linear forwards;
+        }
+
+        .notification.no-auto-close::before {
+            display: none;
+        }
+
+        .notification-icon {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .notification-icon::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: currentColor;
+            opacity: 0.1;
+            border-radius: inherit;
+        }
+
+        .notification-icon svg {
+            width: 24px;
+            height: 24px;
+            z-index: 1;
+            position: relative;
+        }
+
+        .notification-icon::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: inherit;
+            background: currentColor;
+            opacity: 0;
+            animation: pulse 2s infinite;
+        }
+
+        .notification-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notification-message {
+            font-size: 14px;
+            line-height: 1.5;
+            opacity: 0.9;
+            word-wrap: break-word;
+        }
+
+        .notification-time {
+            font-size: 11px;
+            opacity: 0.6;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .notification-close {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.2s ease;
+        }
+
+        .notification:hover .notification-close {
+            opacity: 0.6;
+        }
+
+        .notification-close:hover {
+            opacity: 1 !important;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .notification-close svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .notification-success {
+            color: var(--success-text);
+            background: linear-gradient(135deg, var(--glass-bg) 0%, rgba(16, 185, 129, 0.05) 100%);
+            border-right: 4px solid var(--success-primary);
+        }
+
+        .notification-success .notification-icon {
+            color: var(--success-primary);
+        }
+
+        .notification-error {
+            color: var(--error-text);
+            border-right: 4px solid var(--error-primary);
+        }
+
+        .notification-error .notification-icon {
+            color: var(--error-primary);
+        }
+
+        .notification-warning {
+            color: var(--warning-text);
+            background: linear-gradient(135deg, var(--glass-bg) 0%, rgba(245, 158, 11, 0.05) 100%);
+            border-right: 4px solid var(--warning-primary);
+        }
+
+        .notification-warning .notification-icon {
+            color: var(--warning-primary);
+        }
+
+        .notification-info {
+            color: var(--info-text);
+            background: linear-gradient(135deg, var(--glass-bg) 0%, rgba(59, 130, 246, 0.05) 100%);
+            border-right: 4px solid var(--info-primary);
+        }
+
+        .notification-info .notification-icon {
+            color: var(--info-primary);
+        }
+
+        .notification-action {
+            margin-top: 8px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid currentColor;
+            background: transparent;
+            color: inherit;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            opacity: 0.8;
+        }
+
+        .notification-action:hover {
+            opacity: 1;
+            background: currentColor;
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%) scale(0.8);
+            }
+        }
+
+        @keyframes progress {
+            from {
+                transform: scaleX(1);
+            }
+            to {
+                transform: scaleX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.2;
+                transform: scale(1.05);
+            }
+        }
+
+        @media (max-width: 640px) {
+            #notification-container {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+                width: auto;
+            }
+
+            .notification {
+                padding: 14px;
+            }
+
+            .notification-icon {
+                width: 36px;
+                height: 36px;
+            }
+
+            .notification-title {
+                font-size: 14px;
+            }
+
+            .notification-message {
+                font-size: 13px;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --glass-bg: rgba(30, 41, 59, 0.95);
+            }
+
+            .notification {
+                color: #e2e8f0;
+            }
+
+            .notification-success {
+                color: #86efac;
+            }
+
+            .notification-error {
+                color: #fca5a5;
+            }
+
+            .notification-warning {
+                color: #fcd34d;
+            }
+
+            .notification-info {
+                color: #93c5fd;
+            }
+
+            .notification-close:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="notification-container"></div>
+
+    <div id="backend-messages" style="display:none;">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message-data" data-tag="{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <script>
+        class NotificationSystem {
+            constructor() {
+                this.container = document.getElementById('notification-container');
+                this.notifications = new Map();
+                this.icons = {
+                    success: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+                    error: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+                    warning: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
+                    info: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+                };
+            }
+
+            create(type, title, message, options = {}) {
+                const id = Date.now() + Math.random();
+                const notification = document.createElement('div');
+                notification.className = `notification notification-${type}`;
+                notification.dataset.id = id;
+
+                const currentTime = new Date().toLocaleTimeString('fa-IR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const actionButton = options.action ?
+                    `<button class="notification-action" onclick="window.notificationSystem.handleAction()">${options.actionText || 'مشاهده'}</button>` :
+                    '';
+
+                notification.innerHTML = `
+                    <div class="notification-icon">
+                        ${this.icons[type] || this.icons.info}
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-title">
+                            ${title}
+                        </div>
+                        <div class="notification-message">
+                            ${message}
+                        </div>
+                        ${actionButton}
+                        <div class="notification-time">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            ${currentTime}
+                        </div>
+                    </div>
+                    <button class="notification-close" onclick="window.notificationSystem.close(${id})">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                `;
+
+                if (options.persistent) {
+                    notification.classList.add('no-auto-close');
+                }
+
+                notification.addEventListener('click', (e) => {
+                    if (!e.target.closest('.notification-close') && !e.target.closest('.notification-action')) {
+                        this.close(id);
+                    }
+                });
+
+                this.container.appendChild(notification);
+                this.notifications.set(id, notification);
+
+                if (!options.persistent) {
+                    setTimeout(() => this.close(id), options.duration || 5000);
+                }
+
+                return id;
+            }
+
+            close(id) {
+                const notification = this.notifications.get(id);
+                if (notification && !notification.classList.contains('hiding')) {
+                    notification.classList.add('hiding');
+                    setTimeout(() => {
+                        notification.remove();
+                        this.notifications.delete(id);
+                    }, 400);
+                }
+            }
+
+            clearAll() {
+                this.notifications.forEach((notification, id) => {
+                    this.close(id);
+                });
+            }
+
+            handleAction() {
+                alert('دکمه عملیات کلیک شد!');
+            }
+        }
+
+        window.notificationSystem = new NotificationSystem();
+
+        window.addEventListener('load', () => {
+            const messageElements = document.querySelectorAll('#backend-messages .message-data');
+            messageElements.forEach(el => {
+                const message = el.textContent.trim();
+                const tags = el.dataset.tag;
+                let type = 'info';
+                let title = 'پیام';
+                let options = {};
+
+                // Map Django message tags to our notification types and titles
+                if (tags.includes('success')) {
+                    type = 'success';
+                    title = 'عملیات موفقیت‌آمیز';
+                } else if (tags.includes('error')) {
+                    type = 'error';
+                    title = 'خطا';
+                    options.persistent = true; // Make error notifications permanent
+                } else if (tags.includes('warning')) {
+                    type = 'warning';
+                    title = 'هشدار';
+                } else if (tags.includes('info')) {
+                    type = 'info';
+                    title = 'اطلاع‌رسانی';
+                }
+
+                notificationSystem.create(type, title, message, options);
+            });
+        });
+    </script>
