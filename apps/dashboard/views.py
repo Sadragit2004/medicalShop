@@ -17,7 +17,7 @@ def loadDashboard(request):
 
     context = {
         "order_count": orders.count(),
-        "recent_orders": orders[:5],
+        "recent_orders": orders[:20],
         "addresses": UserAddress.objects.filter(user=request.user).select_related("state", "city"),
         "states": State.objects.all().order_by("name"),
     }

@@ -78,6 +78,8 @@
                                 <span class="text-green-500 font-DanaDemiBold">تحویل داده شده</span>
                             {% elif order.status == "shipped" %}
                                 <span class="text-blue-500 font-DanaDemiBold">ارسال شده</span>
+                            {% elif order.status == "paid" %}
+                                <span class="text-blue-500 font-DanaDemiBold">پرداخت شده </span>
                             {% elif order.status == "processing" %}
                                 <span class="text-amber-500 font-DanaDemiBold">در حال پردازش</span>
                             {% elif order.status == "pending" %}
