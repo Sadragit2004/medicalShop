@@ -143,11 +143,11 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
             messages.error(request, "پارامترهای لازم ارسال نشده است")
             return redirect("main:index")
 
-        # روش 1: جستجو در تمام session‌ها برای یافتن authority
+        # پیدا کردن session مربوط به این authority
         session_data = None
         session_key = None
 
-        # بررسی همه کلیدهای session که با peyment شروع می‌شوند
+        # روش 1: جستجو در session‌ها
         for key in list(request.session.keys()):
             if key.startswith("peyment_"):
                 data = request.session.get(key)
@@ -156,32 +156,29 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
                     session_key = key
                     break
 
-        # روش 2: اگر پیدا نشد، از last_authority استفاده کن
-        if not session_data and request.session.get("last_authority") == t_authority:
-            # سعی کن پرداخت را از دیتابیس پیدا کنی
-            pass
-
-        # روش 3: اگر باز هم پیدا نشد، خطا بده
+        # روش 2: اگر session پیدا نشد، از دیتابیس پرداخت را پیدا کن
         if not session_data:
-            # تلاش نهایی: پیدا کردن آخرین پرداخت کاربر که authority ندارد
             try:
-                # آخرین پرداخت کاربر را پیدا کن
-                payment = Peyment.objects.filter(
+                # پیدا کردن پرداخت با این authority (اگر در session ذخیره شده بود)
+                payments = Peyment.objects.filter(
                     customer=request.user,
                     isFinaly=False
-                ).order_by('-createAt').first()
+                ).order_by('-createAt')
 
-                if payment:
+                # سعی کن آخرین پرداخت کاربر را پیدا کنی
+                if payments.exists():
+                    payment = payments.first()
                     order = payment.order
                     session_data = {
                         "order_id": order.id,
                         "peyment_id": payment.id,
                         "amount": str(payment.amount if payment.amount else order.get_order_total_price())
                     }
+                    print(f"پرداخت از دیتابیس پیدا شد: {payment.id}")
             except Exception as e:
-                print(f"Error finding payment: {e}")
+                print(f"Error finding payment from DB: {e}")
 
-        # اگر هنوز session_data نداریم، خطا بده
+        # اگر باز هم session_data نداریم، خطا بده
         if not session_data:
             messages.error(request, "اطلاعات پرداخت یافت نشد. لطفا با پشتیبانی تماس بگیرید.")
             return redirect("main:index")
@@ -202,23 +199,22 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
             print(f"Error: {e}")
             return redirect("main:index")
 
+        # حتماً قبل از هر کاری session را پاک کن
+        if session_key and session_key in request.session:
+            del request.session[session_key]
+        if "current_peyment_key" in request.session:
+            del request.session["current_peyment_key"]
+        if "last_authority" in request.session:
+            del request.session["last_authority"]
+        request.session.modified = True
+
         # بررسی وضعیت پرداخت
         if t_status == "OK":
             result = self.verify_payment(request, payment, order, t_authority, session_data)
-            # پاک کردن session بعد از پرداخت
-            if session_key and session_key in request.session:
-                del request.session[session_key]
-            if "current_peyment_key" in request.session:
-                del request.session["current_peyment_key"]
-            if "last_authority" in request.session:
-                del request.session["last_authority"]
             return result
         else:
             # پرداخت ناموفق یا لغو شده
-            result = self.handle_payment_failure(request, order, payment, "لغو شده توسط کاربر")
-            # پاک کردن session
-            if session_key and session_key in request.session:
-                del request.session[session_key]
+            result = self.handle_payment_cancellation(request, order, payment, "پرداخت لغو شد")
             return result
 
     def verify_payment(self, request, payment, order, authority, session_data):
@@ -286,6 +282,9 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
                 payment.refId = str(data['data']['ref_id'])
             payment.save()
 
+            # پاک کردن session بعد از پرداخت موفق
+            self.cleanup_session(request)
+
             return redirect("peyment:show_sucess",
                           message=f"پرداخت با موفقیت انجام شد. کد رهگیری: {payment.refId or ''}")
 
@@ -296,36 +295,48 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
 
     def handle_already_verified_payment(self, request, order, payment, data):
         """مدیریت پرداخت قبلا تایید شده"""
-        if not payment.isFinaly:
-            payment.isFinaly = True
-            payment.statusCode = 101
-            if 'data' in data and data['data'] and 'ref_id' in data['data']:
-                payment.refId = str(data['data']['ref_id'])
-            payment.save()
+        try:
+            if not payment.isFinaly:
+                payment.isFinaly = True
+                payment.statusCode = 101
+                if 'data' in data and data['data'] and 'ref_id' in data['data']:
+                    payment.refId = str(data['data']['ref_id'])
+                payment.save()
 
             if not order.isFinally:
                 order.isFinally = True
                 order.status = "paid"
                 order.save()
 
-        return redirect("peyment:show_sucess",
-                      message=f"این تراکنش قبلا تایید شده است. کد رهگیری: {payment.refId or ''}")
+            # پاک کردن session
+            self.cleanup_session(request)
 
-    def handle_payment_failure(self, request, order, payment, message):
-        """مدیریت پرداخت ناموفق"""
+            return redirect("peyment:show_sucess",
+                          message=f"این تراکنش قبلا تایید شده است. کد رهگیری: {payment.refId or ''}")
+        except Exception as e:
+            return redirect("peyment:show_verfiy_unmessage",
+                          message="خطا در بروزرسانی اطلاعات")
+
+    def handle_payment_cancellation(self, request, order, payment, message):
+        """مدیریت لغو پرداخت توسط کاربر"""
         try:
-            order.status = "canceled"
-            order.save()
-
-            payment.statusCode = -1
+            # فقط وضعیت پرداخت را تغییر بده، وضعیت سفارش را تغییر نده
+            payment.statusCode = -10  # کد خاص برای لغو توسط کاربر
             payment.isFinaly = False
             payment.save()
+
+            # وضعیت سفارش را تغییر نده، بگذار همان pending باشد
+            # order.status = "pending"  # این خط حذف شد
+            # order.save()  # این خط حذف شد
+
+            # پاک کردن session
+            self.cleanup_session(request)
 
             return redirect("peyment:show_verfiy_unmessage", message=message)
 
         except Exception as e:
             return redirect("peyment:show_verfiy_unmessage",
-                          message="خطا در بروزرسانی وضعیت سفارش")
+                          message="خطا در بروزرسانی وضعیت پرداخت")
 
     def handle_payment_error(self, request, order, payment, error_code, error_message):
         """مدیریت خطای پرداخت"""
@@ -334,8 +345,13 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
             payment.isFinaly = False
             payment.save()
 
-            order.status = "canceled"
-            order.save()
+            # فقط در صورت خطای واقعی وضعیت را تغییر بده
+            if error_code not in [-10, "UNKNOWN_ERROR"]:
+                order.status = "pending"  # برگشت به حالت انتظار
+                order.save()
+
+            # پاک کردن session
+            self.cleanup_session(request)
 
             return redirect("peyment:show_verfiy_unmessage",
                           message=f"خطا در پرداخت: {error_message} (کد: {error_code})")
@@ -343,6 +359,19 @@ class Zarin_pal_view_verfiy(LoginRequiredMixin, View):
         except Exception as e:
             return redirect("peyment:show_verfiy_unmessage",
                           message=f"خطا در پرداخت: {error_message}")
+
+    def cleanup_session(self, request):
+        """پاک کردن session‌های مرتبط با پرداخت"""
+        keys_to_remove = []
+        for key in list(request.session.keys()):
+            if key.startswith("peyment_") or key in ["current_peyment_key", "last_authority"]:
+                keys_to_remove.append(key)
+
+        for key in keys_to_remove:
+            del request.session[key]
+
+        request.session.modified = True
+
 
 def show_verfiy_message(request, message):
     """نمایش صفحه موفقیت پرداخت"""
