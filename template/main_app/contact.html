@@ -1,278 +1,608 @@
-{% extends "main_template.html" %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تماس با سایا مد | تجهیزات پزشکی</title>
+    <style>
+        /* Reset و فونت فارسی */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block content %}
-<main class="container mx-auto px-4 py-8 md:py-12">
-    <!-- هدر صفحه -->
-    <div class="text-center mb-12">
-        <div class="inline-block p-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl mb-6">
-            <svg class="w-16 h-16 text-white mx-auto" fill="currentColor" viewBox="0 0 24 24">
-                <path fill-rule="evenodd" d="M12 2a1 1 0 011 1v1h2a1 1 0 110 2h-2v2a1 1 0 11-2 0V6H9a1 1 0 110-2h2V3a1 1 0 011-1zM5 9a1 1 0 011 1v8a1 1 0 01-1 1h14a1 1 0 01-1-1v-8a1 1 0 011-1h2a1 1 0 011 1v9a3 3 0 01-3 3H5a3 3 0 01-3-3v-9a1 1 0 011-1h2zm7 7a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
-            </svg>
-        </div>
-        <h1 class="text-3xl md:text-4xl font-MorabbaBold text-gray-900 dark:text-white mb-4">
-            تماس با <span class="text-blue-600 dark:text-blue-400">سایا مد</span>
-        </h1>
-        <p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            مرکز تخصصی تجهیزات پزشکی - در خدمت سلامتی شما
-        </p>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* استایل‌های اصلی */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: #1e40af;
+            margin-bottom: 10px;
+        }
+
+        .header span {
+            color: #3b82f6;
+        }
+
+        .header p {
+            font-size: 18px;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* کارت‌ها */
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border: 1px solid #e5e7eb;
+        }
+
+        .manager-card {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-right: 5px solid #3b82f6;
+        }
+
+        .address-card {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border-right: 5px solid #ef4444;
+        }
+
+        .hours-card {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border-right: 5px solid #f59e0b;
+        }
+
+        .services-card {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-right: 5px solid #0ea5e9;
+        }
+
+        .contact-card {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            border-right: 5px solid #60a5fa;
+        }
+
+        .main-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 2px solid #3b82f6;
+        }
+
+        /* دکمه‌ها */
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn-whatsapp {
+            background: #25D366;
+            color: white;
+        }
+
+        .btn-whatsapp:hover {
+            background: #128C7E;
+            transform: translateY(-3px);
+        }
+
+        .btn-phone {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-phone:hover {
+            background: #047857;
+            transform: translateY(-3px);
+        }
+
+        .btn-home {
+            background: white;
+            color: #3b82f6;
+            border: 2px solid #3b82f6;
+            padding: 10px 20px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-home:hover {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-call {
+            background: white;
+            color: #1e40af;
+            font-size: 18px;
+            padding: 15px 30px;
+        }
+
+        .btn-call:hover {
+            background: #f8fafc;
+            transform: scale(1.05);
+        }
+
+        /* دکمه‌های شناور */
+        .floating-btn {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 24px;
+            color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .floating-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .floating-phone {
+            bottom: 20px;
+            left: 20px;
+            background: #10b981;
+        }
+
+        .floating-whatsapp {
+            bottom: 20px;
+            right: 20px;
+            background: #25D366;
+        }
+
+        /* گرید */
+        .grid {
+            display: grid;
+            gap: 25px;
+        }
+
+        .grid-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .grid-3 {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        /* آیتم‌های خدماتی */
+        .service-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-right: 4px solid #10b981;
+        }
+
+        .service-icon {
+            width: 40px;
+            height: 40px;
+            background: #d1fae5;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #10b981;
+            font-size: 20px;
+        }
+
+        /* شماره تلفن */
+        .phone-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e40af;
+            direction: ltr;
+            text-align: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #dbeafe;
+        }
+
+        /* آیکون‌ها با Unicode */
+        .icon {
+            font-size: 24px;
+            margin-left: 10px;
+        }
+
+        /* مینی فوتتر */
+        .mini-footer {
+            text-align: center;
+            padding: 30px 0;
+            color: #666;
+            font-size: 14px;
+            border-top: 1px solid #e5e7eb;
+            margin-top: 40px;
+        }
+
+        /* انیمیشن‌های ساده */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* رسپانسیو */
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .phone-number {
+                font-size: 20px;
+            }
+
+            .floating-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+        }
+
+        /* استایل برای اطلاعات تماس */
+        .contact-info {
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 10px;
+            border-right: 4px solid #3b82f6;
+        }
+
+        .contact-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1e40af;
+            margin-bottom: 5px;
+        }
+
+        .contact-role {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        /* بخش پایانی */
+        .final-section {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .final-title {
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .final-text {
+            font-size: 18px;
+            margin-bottom: 30px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* دکمه بازگشت */
+        .home-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <!-- دکمه‌های تماس شناور -->
+    <a href="tel:09149308005" class="floating-btn floating-phone pulse" title="تماس تلفنی">
+        📞
+    </a>
+
+    <a href="https://wa.me/989149308005" target="_blank" class="floating-btn floating-whatsapp" title="واتساپ">
+        💬
+    </a>
+
+    <!-- دکمه بازگشت به خانه -->
+    <div class="home-btn">
+        <a href="/" class="btn-home">
+            🏠 بازگشت
+        </a>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- ستون سمت چپ - اطلاعات تماس -->
-        <div class="lg:col-span-2 space-y-8">
-            <!-- کارت اطلاعات شرکت -->
-            <div class="bg-gradient-to-br from-white to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-xl p-8">
-                <div class="flex items-start gap-4 mb-6">
-                    <div class="p-3 bg-blue-100 dark:bg-blue-900 rounded-xl">
-                        <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path fill-rule="evenodd" d="M12 2a1 1 0 011 1v1h2a1 1 0 110 2h-2v2a1 1 0 11-2 0V6H9a1 1 0 110-2h2V3a1 1 0 011-1zM5 9a1 1 0 011 1v8a1 1 0 01-1 1h14a1 1 0 01-1-1v-8a1 1 0 011-1h2a1 1 0 011 1v9a3 3 0 01-3 3H5a3 3 0 01-3-3v-9a1 1 0 011-1h2zm7 7a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
-                        </svg>
+    <div class="container">
+        <!-- هدر -->
+        <div class="header fade-in">
+            <div style="font-size: 48px; margin-bottom: 20px;">🏥</div>
+            <h1>ارتباط با <span>سایا مد</span></h1>
+            <p>مرکز تخصصی تجهیزات پزشکی • ۱۵ سال تجربه • خدمات سراسر کشور</p>
+        </div>
+
+        <div class="grid grid-2">
+            <!-- ستون اصلی -->
+            <div>
+                <!-- مدیران -->
+                <div class="card main-card fade-in">
+                    <h2 style="font-size: 24px; color: #1e40af; margin-bottom: 25px; display: flex; align-items: center;">
+                        <span style="margin-left: 10px;">👥</span>
+                        مدیران فروش و پشتیبانی
+                    </h2>
+
+                    <!-- مدیر ۱ -->
+                    <div class="contact-info">
+                        <div class="contact-title">وحید دباغی</div>
+                        <div class="contact-role">مدیر فروش</div>
+
+                        <div style="margin: 15px 0;">
+                            <div style="color: #666; font-size: 14px; margin-bottom: 5px;">موبایل:</div>
+                            <a href="tel:09149308005" class="phone-number">
+                                ۰۹۱۴۹۳۰۸۰۰۵
+                            </a>
+                        </div>
+
+                        <div>
+                            <div style="color: #666; font-size: 14px; margin-bottom: 5px;">تلفن دفتر:</div>
+                            <a href="tel:04133252067" class="phone-number">
+                                ۰۴۱-۳۳۲۵۲۰۶۷
+                            </a>
+                        </div>
                     </div>
-                    <div>
-                        <h2 class="text-2xl font-DanaDemiBold text-gray-900 dark:text-white mb-2">سایا مد تجهیزات پزشکی</h2>
-                        <p class="text-gray-600 dark:text-gray-300">مرکز تخصصی فروش و خدمات تجهیزات پزشکی با بیش از 15 سال سابقه درخشان</p>
+
+                    <!-- مدیر ۲ -->
+                    <div class="contact-info">
+                        <div class="contact-title">ژاله فرید</div>
+                        <div class="contact-role">مدیر فنی</div>
+
+                        <div style="margin: 15px 0;">
+                            <div style="color: #666; font-size: 14px; margin-bottom: 5px;">موبایل:</div>
+                            <a href="tel:09140917401" class="phone-number">
+                                ۰۹۱۴۰۹۱۷۴۰۱
+                            </a>
+                        </div>
+
+                        <div>
+                            <div style="color: #666; font-size: 14px; margin-bottom: 5px;">تلفن دفتر:</div>
+                            <a href="tel:04133359946" class="phone-number">
+                                ۰۴۱-۳۳۳۵۹۹۴۶
+                            </a>
+                        </div>
                     </div>
                 </div>
 
-                <!-- اطلاعات تماس -->
-                <div class="space-y-6">
-                    <!-- بخش مدیران -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- مدیر 1 -->
-                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                            <div class="flex items-center gap-3 mb-4">
-                                <div class="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                                    <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 24 24">
-                                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="font-DanaDemiBold text-gray-900 dark:text-white">وحید دباغی</h3>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">مدیر فروش</p>
-                                </div>
-                            </div>
-                            <div class="space-y-3">
-                                <a href="tel:09149308005" class="flex items-center gap-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                        <path fill-rule="evenodd" d="M2 4a2 2 0 012-2h3a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V4zm5 0H4v2h3V4zm8 0a2 2 0 012-2h3a2 2 0 012 2v2a2 2 0 01-2 2h-3a2 2 0 01-2-2V4zm5 0h-3v2h3V4zM2 14a2 2 0 012-2h3a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm5 0H4v2h3v-2zm8 0a2 2 0 012-2h3a2 2 0 012 2v2a2 2 0 01-2 2h-3a2 2 0 01-2-2v-2zm5 0h-3v2h3v-2z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <span>۰۹۱۴۹۳۰۸۰۰۵</span>
-                                </a>
-                                <a href="tel:04133252067" class="flex items-center gap-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                        <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <span>۰۴۱-۳۳۲۵۲۰۶۷</span>
-                                </a>
-                            </div>
-                        </div>
+                <!-- آدرس -->
+                <div class="card address-card fade-in" style="animation-delay: 0.1s">
+                    <h2 style="font-size: 24px; color: #dc2626; margin-bottom: 20px; display: flex; align-items: center;">
+                        <span style="margin-left: 10px;">📍</span>
+                        آدرس دفتر مرکزی
+                    </h2>
+                    <p style="font-size: 18px; line-height: 1.8; padding: 10px 0;">
+                        <strong>آدرس:</strong><br>
+                        تبریز، میدان شهید بهشتی (چهارراه منصور)<br>
+                        مجتمع تجاری اطلس، طبقه منفی یک، واحد ۳۰
+                    </p>
+                    <a href="https://maps.google.com/?q=تبریز، میدان شهید بهشتی، مجتمع تجاری اطلس"
+                       target="_blank"
+                       style="display: inline-block; margin-top: 15px; background: #ef4444; color: white; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                        🗺️ مشاهده روی نقشه
+                    </a>
+                </div>
+            </div>
 
-                        <!-- مدیر 2 -->
-                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                            <div class="flex items-center gap-3 mb-4">
-                                <div class="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                                    <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 24 24">
-                                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="font-DanaDemiBold text-gray-900 dark:text-white">ژاله فرید</h3>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">مدیر فنی</p>
-                                </div>
-                            </div>
-                            <div class="space-y-3">
-                                <a href="tel:09140917401" class="flex items-center gap-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                        <path fill-rule="evenodd" d="M2 4a2 2 0 012-2h3a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V4zm5 0H4v2h3V4zm8 0a2 2 0 012-2h3a2 2 0 012 2v2a2 2 0 01-2 2h-3a2 2 0 01-2-2V4zm5 0h-3v2h3V4zM2 14a2 2 0 012-2h3a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm5 0H4v2h3v-2zm8 0a2 2 0 012-2h3a2 2 0 012 2v2a2 2 0 01-2 2h-3a2 2 0 01-2-2v-2zm5 0h-3v2h3v-2z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <span>۰۹۱۴۰۹۱۷۴۰۱</span>
-                                </a>
-                                <a href="tel:04133359946" class="flex items-center gap-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                        <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <span>۰۴۱-۳۳۳۵۹۹۴۶</span>
-                                </a>
-                            </div>
+            <!-- ستون کناری -->
+            <div>
+                <!-- ساعات کاری -->
+                <div class="card hours-card fade-in" style="animation-delay: 0.2s">
+                    <h2 style="font-size: 24px; color: #d97706; margin-bottom: 25px; display: flex; align-items: center;">
+                        <span style="margin-left: 10px;">⏰</span>
+                        ساعات کاری
+                    </h2>
+
+                    <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 15px; text-align: center;">
+                        <div style="font-size: 20px; font-weight: bold; color: #1e40af; margin-bottom: 10px;">
+                            شنبه تا چهارشنبه
+                        </div>
+                        <div style="font-size: 18px; color: #3b82f6;">
+                            ۹:۳۰ صبح تا ۱۸:۰۰ عصر
                         </div>
                     </div>
 
-                    <!-- آدرس -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
-                                <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 24 24">
-                                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <h3 class="font-DanaDemiBold text-gray-900 dark:text-white">آدرس دفتر مرکزی</h3>
+                    <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 15px; text-align: center;">
+                        <div style="font-size: 20px; font-weight: bold; color: #059669; margin-bottom: 10px;">
+                            پنج‌شنبه‌ها
                         </div>
-                        <p class="text-gray-700 dark:text-gray-300 leading-7">
-                            تبریز، میدان شهید بهشتی (چهارراه منصور)،
-                            مجتمع تجاری اطلس، طبقه منفی یک، واحد ۳۰
+                        <div style="font-size: 18px; color: #10b981;">
+                            ۹:۳۰ صبح تا ۱۴:۰۰ بعدازظهر
+                        </div>
+                    </div>
+
+                    <div style="background: #fef3c7; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #f59e0b;">
+                        <p style="color: #92400e; font-weight: bold;">
+                            ⚠️ جمعه‌ها و تعطیلات رسمی تعطیل هستیم
                         </p>
                     </div>
                 </div>
-            </div>
 
-            <!-- ساعات کاری -->
-            <div class="bg-gradient-to-br from-white to-emerald-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-xl p-8">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="p-3 bg-emerald-100 dark:bg-emerald-900 rounded-xl">
-                        <svg class="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
-                        </svg>
-                    </div>
-                    <h2 class="text-2xl font-DanaDemiBold text-gray-900 dark:text-white">ساعات کاری</h2>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-white dark:bg-gray-800 rounded-xl p-5">
-                        <div class="text-center">
-                            <div class="text-3xl font-DanaDemiBold text-emerald-600 mb-2">شنبه تا چهارشنبه</div>
-                            <div class="text-xl text-gray-700 dark:text-gray-300">۸:۰۰ صبح - ۱۸:۰۰ عصر</div>
+                <!-- خدمات -->
+                <div class="card services-card fade-in" style="animation-delay: 0.3s">
+                    <h2 style="font-size: 24px; color: #0c4a6e; margin-bottom: 20px; display: flex; align-items: center;">
+                        <span style="margin-left: 10px;">✅</span>
+                        خدمات ما
+                    </h2>
+
+                    <div class="service-item">
+                        <div class="service-icon">🛡️</div>
+                        <div>
+                            <div style="font-weight: bold; color: #1e40af;">گارانتی معتبر</div>
+                            <div style="font-size: 14px; color: #666;">با ضمانت اصالت کالا</div>
                         </div>
                     </div>
-                    <div class="bg-white dark:bg-gray-800 rounded-xl p-5">
-                        <div class="text-center">
-                            <div class="text-3xl font-DanaDemiBold text-blue-600 mb-2">پنج‌شنبه‌ها</div>
-                            <div class="text-xl text-gray-700 dark:text-gray-300">۸:۰۰ صبح - ۱۴:۰۰ بعدازظهر</div>
+
+                    <div class="service-item">
+                        <div class="service-icon">🚚</div>
+                        <div>
+                            <div style="font-weight: bold; color: #1e40af;">ارسال سریع</div>
+                            <div style="font-size: 14px; color: #666;">به سراسر کشور</div>
+                        </div>
+                    </div>
+
+                    <div class="service-item">
+                        <div class="service-icon">👨‍⚕️</div>
+                        <div>
+                            <div style="font-weight: bold; color: #1e40af;">مشاوره رایگان</div>
+                            <div style="font-size: 14px; color: #666;">تخصصی و کارشناسی</div>
+                        </div>
+                    </div>
+
+                    <div class="service-item">
+                        <div class="service-icon">🔧</div>
+                        <div>
+                            <div style="font-weight: bold; color: #1e40af;">خدمات پس از فروش</div>
+                            <div style="font-size: 14px; color: #666;">تضمین کیفیت و پشتیبانی</div>
                         </div>
                     </div>
                 </div>
-                <div class="mt-6 bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 text-center">
-                    <p class="text-amber-700 dark:text-amber-300 font-DanaMedium">
-                        ⚠️ جمعه‌ها و تعطیلات رسمی مرکز تعطیل است
-                    </p>
-                </div>
-            </div>
-        </div>
 
-        <!-- ستون سمت راست - نقشه و فرم -->
-        <div class="lg:col-span-1 space-y-8">
-            <!-- نقشه -->
-            <div class="rounded-2xl shadow-xl overflow-hidden">
-                <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3104.348345455198!2d46.3052759!3d38.0713255!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x401a1b007c71ce8f%3A0x51dcbf795fd07d63!2z2YXYuti12YjYjCDYp9mF2LnYqNmK2K8!5e0!3m2!1sfa!2s!4v1704543200000!5m2!1sfa!2s"
-                    width="100%"
-                    height="300"
-                    style="border:0;"
-                    allowfullscreen=""
-                    loading="lazy"
-                    referrerpolicy="no-referrer-when-downgrade"
-                    class="w-full">
-                </iframe>
-                <div class="bg-white dark:bg-gray-800 p-6">
-                    <h3 class="font-DanaDemiBold text-gray-900 dark:text-white mb-2">موقعیت ما روی نقشه</h3>
-                    <p class="text-gray-600 dark:text-gray-300 text-sm">
-                        برای مسیریابی دقیق‌تر، روی نقشه کلیک کنید
-                    </p>
-                </div>
-            </div>
+                <!-- تماس سریع -->
+                <div class="card contact-card fade-in" style="animation-delay: 0.4s">
+                    <h2 style="font-size: 24px; margin-bottom: 25px; text-align: center;">
+                        تماس سریع
+                    </h2>
 
-            <!-- دکمه‌های ارتباط سریع -->
-            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-8">
-                <h3 class="text-xl font-DanaDemiBold text-white mb-6 text-center">ارتباط سریع</h3>
-                <div class="space-y-4">
-                    <a href="https://wa.me/989149308005" target="_blank" class="flex items-center justify-center gap-3 bg-white text-blue-600 hover:bg-blue-50 rounded-xl p-4 font-DanaDemiBold transition-all duration-300 hover:scale-[1.02]">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-                        </svg>
-                        پیام در واتساپ
+                    <a href="https://wa.me/989149308005" target="_blank" class="btn btn-whatsapp" style="width: 100%; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        💬 گفتگو در واتساپ
                     </a>
-                    <a href="tel:09149308005" class="flex items-center justify-center gap-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl p-4 font-DanaDemiBold transition-all duration-300 hover:scale-[1.02]">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                            <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" clip-rule="evenodd"/>
-                        </svg>
-                        تماس تلفنی
+
+                    <a href="tel:09149308005" class="btn btn-phone" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        📞 تماس تلفنی
                     </a>
                 </div>
             </div>
+        </div>
 
-            <!-- اطلاعات اضافی -->
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
-                <h3 class="font-DanaDemiBold text-gray-900 dark:text-white mb-4">خدمات ما</h3>
-                <ul class="space-y-3">
-                    <li class="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-                        <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
-                        <span>فروش تجهیزات پزشکی اصل</span>
-                    </li>
-                    <li class="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-                        <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
-                        <span>گارانتی و خدمات پس از فروش</span>
-                    </li>
-                    <li class="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-                        <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
-                        <span>مشاوره تخصصی رایگان</span>
-                    </li>
-                    <li class="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-                        <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
-                        <span>ارسال به سراسر کشور</span>
-                    </li>
-                </ul>
+        <!-- بخش پایانی -->
+        <div class="final-section fade-in" style="animation-delay: 0.5s">
+            <div style="font-size: 48px; margin-bottom: 20px;">❤️</div>
+            <h2 class="final-title">سلامتی شما، سرمایه ماست</h2>
+            <p class="final-text">
+                با بیش از ۱۵ سال تجربه در زمینه تجهیزات پزشکی،
+                آماده ارائه بهترین خدمات و مشاوره تخصصی به شما هستیم.
+            </p>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;">
+                <a href="tel:09149308005" class="btn btn-call" style="display: flex; align-items: center; gap: 10px;">
+                    📞 تماس فوری
+                </a>
+
+                <a href="https://wa.me/989149308005" target="_blank" class="btn btn-call" style="background: #25D366; color: white; display: flex; align-items: center; gap: 10px;">
+                    💬 مشاوره در واتساپ
+                </a>
             </div>
         </div>
-    </div>
 
-    <!-- Banner پایین -->
-    <div class="mt-12 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-2xl p-8 text-center">
-        <h3 class="text-2xl font-MorabbaBold text-white mb-4">سلامتی شما، اولویت ماست</h3>
-        <p class="text-blue-100 text-lg mb-6 max-w-2xl mx-auto">
-            با بیش از ۱۵ سال تجربه در زمینه تجهیزات پزشکی، آماده ارائه بهترین خدمات به شما هستیم.
-        </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="tel:09149308005" class="inline-flex items-center gap-2 bg-white text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-xl font-DanaDemiBold transition-all duration-300 hover:scale-105">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" clip-rule="evenodd"/>
-                </svg>
-                تماس فوری
-            </a>
-            <a href="https://wa.me/989149308005" target="_blank" class="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-DanaDemiBold transition-all duration-300 hover:scale-105">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-                </svg>
-                مشاوره در واتساپ
-            </a>
+        <!-- مینی فوتتر -->
+        <div class="mini-footer">
+            <p>© کلیه حقوق برای فروشگاه تجهیزات پزشکی سایا مد محفوظ می‌باشد</p>
+            <p style="margin-top: 10px; color: #999; font-size: 13px;">
+                آخرین به‌روزرسانی: ۱۴۰۳/۰۱/۲۱
+            </p>
         </div>
     </div>
-</main>
 
-<style>
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
+    <script>
+        // اسکرول نرم (اختیاری)
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    window.scrollTo({
+                        top: target.offsetTop - 20,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
 
-    main > * {
-        animation: fadeInUp 0.6s ease-out;
-    }
+        // انیمیشن برای عناصر هنگام اسکرول
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
 
-    a[href^="tel:"] {
-        direction: ltr;
-        unicode-bidi: embed;
-        text-align: right;
-    }
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in');
+                }
+            });
+        }, observerOptions);
 
-    .hover-scale:hover {
-        transform: scale(1.02);
-    }
+        document.querySelectorAll('.card, .final-section').forEach(el => {
+            observer.observe(el);
+        });
 
-    .shadow-soft {
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-    }
-</style>
-
-{% endblock content %}
+        // تشخیص کلیک روی شماره تلفن (برای نمایش پیام)
+        document.querySelectorAll('.phone-number').forEach(phone => {
+            phone.addEventListener('click', function() {
+                console.log('شماره تلفن انتخاب شد:', this.textContent.trim());
+            });
+        });
+    </script>
+</body>
+</html>
