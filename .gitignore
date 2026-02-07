@@ -4,15 +4,20 @@ __pycache__/
 *.pyo
 *.pyd
 
+# Django migrations - حذف شده: migrations/ و __pycache__/ داخل آن شامل نمی‌شود
+
 # Django
 db.sqlite3
 *.log
 /web/setting.py
+*/migrations/__pycache__/
 # Environments
 venv/
 .env
 
 # Static files
+# staticfiles/  # اگر می‌خواهید static جمع‌آوری شده را نادیده بگیرید
+# media/        # اگر می‌خواهید media آپلود شده را نادیده بگیرید
 
 # IDEs and editors
 .vscode/

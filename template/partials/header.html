@@ -14,7 +14,7 @@
                             </svg>
                         </button>
                         <input
-                            placeholder="جستجو در سایا مد..."
+                            placeholder="جستجو در  سایا مِد..."
                             type="text"
                             name="q"
                             class="search-input bg-transparent outline-none w-full"
@@ -51,16 +51,16 @@
             </div>
 
             <!-- Logo -->
-            <a href="index.html" class="flex flex-col text-center ml-20">
+            <a href="/" class="flex flex-col text-center ml-20">
 {% if request.path == '/' or request.path == '/home/' %}
     <!-- صفحه اصلی -->
     <h1 class="font-MorabbaMedium text-4xl flex items-center">
-        <span class="text-blue-500">سایا مد</span> شاپ
+        <span class="text-blue-500"> سایا مِد</span>
     </h1>
 {% else %}
     <!-- صفحات دیگر -->
     <span class="font-MorabbaMedium text-4xl flex items-center">
-        <span class="text-blue-500">سایا مد</span> شاپ
+        <span class="text-blue-500"> سایا مِد</span>
     </span>
 {% endif %}
                 <p class="font-DanaMedium text-gray-400">لوازم تجهیزات پزشکی و بهداشتی</p>
@@ -253,8 +253,8 @@
             <div class="mobile-menu z-50 flex flex-col">
                 <!-- MENU MOBILE header -->
                 <div class="flex w-full items-center justify-between border-b-normal pb-4">
-                    <a href="index.html" class="text-xl font-MorabbaMedium">
-                        <span class="text-blue-500">سایا مد</span> شاپ
+                    <a href="/" class="text-xl font-MorabbaMedium">
+                        <span class="text-blue-500"> سایا مِد</span>
                     </a>
                     <button class="close-menu-mobile">
                         <svg class="size-5 text-gray-500 dark:text-gray-200">
@@ -303,7 +303,7 @@
                         <svg class="size-5">
                             <use href="#user" />
                         </svg>
-                        <a href="dashboard.html">حساب کاربری</a>
+                        <a href="/dashboard">حساب کاربری</a>
                     </li>
                     {% else %}
                     <li class="mobile-menu-item">
@@ -317,13 +317,13 @@
                         <svg class="size-5">
                             <use href="#heart" />
                         </svg>
-                        <a href="dashboard-favorite.html">علاقه‌مندی‌ها</a>
+                        <a href="dashboard/list_favorit/">علاقه‌مندی‌ها</a>
                     </li>
                     <li class="mobile-menu-item">
                         <svg class="size-5">
                             <use href="#shopping-cart" />
                         </svg>
-                        <a href="shopping-cart.html">سبد خرید</a>
+                        <a href="/order/cart">سبد خرید</a>
                     </li>
                     <li class="mobile-menu-item">
                         <svg class="size-5">
@@ -335,15 +335,15 @@
                         <svg class="size-5">
                             <use href="#phone" />
                         </svg>
-                        <a href="contact-us.html">تماس با ما</a>
+                        <a href="/contact">تماس با ما</a>
                     </li>
                 </ul>
             </div>
 
             <!-- Logo -->
-            <a href="index.html" class="flex flex-col text-center">
+            <a href="/" class="flex flex-col text-center">
                 <span class="font-MorabbaMedium text-3xl flex items-center">
-                    <span class="text-blue-500">سایا مد</span> شاپ
+                    <span class="text-blue-500"> سایا مِد</span>
                 </span>
             </a>
 
@@ -377,7 +377,7 @@
             <svg class="size-6">
                 <use href="#search" />
             </svg>
-            <p>جستجو در <span class="font-MorabbaMedium">سایا مد شاپ</span></p>
+            <p>جستجو در <span class="font-MorabbaMedium"> سایا مِد  </span></p>
         </button>
 
         <!-- Search Modal -->
@@ -478,7 +478,7 @@
                 </a >
                 {% empty %}
                 <!-- اسلایدر پیش‌فرض اگر هیچ اسلایدی وجود ندارد -->
-                <a href="shop.html" class="swiper-slide">
+                <a href="/" class="swiper-slide">
                     <img src="{{ media_url }}/images/banner/default-slider.webp" class="rounded-xl" alt="فروشگاه">
                 </a >
                 {% endfor %}

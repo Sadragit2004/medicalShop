@@ -1,0 +1,174 @@
+{% extends "main_template.html" %}
+{% load static %}
+
+{% block meta1 %}
+    <title>قوانین و مقررات | فروشگاه اینترنتی</title>
+    <meta name="description" content="قوانین و مقررات استفاده از فروشگاه اینترنتی، شرایط خرید و مقررات قطعی">
+    <meta property="og:title" content="قوانین و مقررات | فروشگاه اینترنتی">
+    <meta property="og:description" content="مقررات کامل و قطعی استفاده از خدمات فروشگاه اینترنتی">
+{% endblock meta1 %}
+
+{% block content %}
+<main class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- هدر صفحه -->
+        <div class="text-center mb-12">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                ⚖️ قوانین و مقررات فروشگاه
+            </h1>
+            <p class="text-lg text-gray-600 dark:text-gray-300">
+                لطفاً قبل از خرید، این قوانین را به دقت مطالعه فرمایید
+            </p>
+            <div class="w-24 h-1 bg-red-600 mx-auto mt-6 rounded-full"></div>
+        </div>
+
+        <!-- کارت اصلی محتوا -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sm:p-8 mb-8">
+            <!-- هشدار مهم -->
+            <div class="bg-red-50 dark:bg-red-900/20 border-r-4 border-red-500 p-5 mb-8 rounded-lg">
+                <div class="flex items-start">
+                    <svg class="w-7 h-7 text-red-600 dark:text-red-400 mt-1 ml-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    <div>
+                        <h3 class="font-bold text-red-800 dark:text-red-300 text-lg">⚠️ توجه مهم:</h3>
+                        <p class="text-red-700 dark:text-red-400 mt-2 font-semibold">
+                            این فروشگاه <span class="underline">بدون مرجوعی</span> و <span class="underline">بدون بازگشت وجه</span> می‌باشد.
+                        </p>
+                        <p class="text-sm text-gray-700 dark:text-gray-300 mt-3">
+                            پس از تکمیل فرآیند خرید، امکان بازگرداندن کالا یا استرداد وجه وجود ندارد.
+                            لطفاً قبل از خرید از تصمیم خود اطمینان حاصل فرمایید.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- بخش اطلاعات به روزرسانی -->
+            <div class="bg-blue-50 dark:bg-blue-900/20 border-r-4 border-blue-500 p-4 mb-8 rounded-lg">
+                <div class="flex items-start">
+                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400 mt-1 ml-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                    </svg>
+                    <div>
+                        <h3 class="font-semibold text-blue-800 dark:text-blue-300">تاریخ آخرین به‌روزرسانی:</h3>
+                        <p class="text-blue-700 dark:text-blue-400 mt-1">۲۰ فروردین ۱۴۰۳</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">توصیه می‌شود کاربران محترم به صورت دوره‌ای این صفحه را بررسی نمایند.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- محتوای قوانین -->
+            <div class="prose prose-lg dark:prose-invert max-w-none">
+                <!-- ماده ۱ -->
+                <div class="mb-10 pb-8 border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                        <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 w-10 h-10 rounded-full flex items-center justify-center ml-3">۱</span>
+                        شرایط عمومی
+                    </h2>
+                    <ul class="list-disc pr-6 space-y-3 text-gray-700 dark:text-gray-300">
+                        <li>استفاده از خدمات این فروشگاه به منزله پذیرش کامل کلیه قوانین و مقررات ذکر شده در این صفحه می‌باشد.</li>
+                        <li>کاربران باید حداقل ۱۸ سال سن داشته یا با اجازه والدین یا قیم قانونی اقدام به خرید نمایند.</li>
+                        <li>تمامی محتوای سایت (متون، تصاویر، لوگوها) تحت قانون کپی‌رایت محافظت می‌شوند.</li>
+                        <li>فروشگاه مجاز است در هر زمان این قوانین را اصلاح یا تکمیل نماید.</li>
+                    </ul>
+                </div>
+
+                <!-- ماده ۲ -->
+                <div class="mb-10 pb-8 border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                        <span class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 w-10 h-10 rounded-full flex items-center justify-center ml-3">۲</span>
+                        فرآیند خرید و پرداخت
+                    </h2>
+                    <ul class="list-disc pr-6 space-y-3 text-gray-700 dark:text-gray-300">
+                        <li>قیمت‌های درج شده به ریال ایران بوده و شامل مالیات بر ارزش افزوده می‌باشد.</li>
+                        <li>پس از تکمیل سفارش، ایمیل تایید برای شما ارسال خواهد شد.</li>
+                        <li>پرداخت از طریق درگاه‌های بانکی معتبر و به صورت آنلاین انجام می‌پذیرد.</li>
+                        <li>تا زمانی که پرداخت تأیید نشده باشد، سفارش در وضعیت "در انتظار پرداخت" باقی می‌ماند.</li>
+                    </ul>
+                </div>
+
+                <!-- ماده ۳ -->
+                <div class="mb-10 pb-8 border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                        <span class="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 w-10 h-10 rounded-full flex items-center justify-center ml-3">۳</span>
+                        سیاست بدون بازگشت
+                    </h2>
+                    <div class="bg-red-50 dark:bg-red-900/20 p-5 rounded-xl my-4">
+                        <h3 class="font-bold text-lg text-red-800 dark:text-red-300 mb-3">🚫 سیاست قطعی فروشگاه:</h3>
+                        <ul class="list-disc pr-6 space-y-2 text-red-700 dark:text-red-400">
+                            <li class="font-semibold">فروشگاه ما <u>بدون مرجوعی</u> می‌باشد.</li>
+                            <li class="font-semibold">پس از تکمیل خرید، <u>هیچ گونه بازگشت وجهی</u> انجام نمی‌شود.</li>
+                            <li>کلیه خریدها قطعی و نهایی محسوب می‌شوند.</li>
+                            <li>هیچ استثنایی برای بازگرداندن کالا یا استرداد وجه وجود ندارد.</li>
+                        </ul>
+                    </div>
+                    <p class="text-gray-700 dark:text-gray-300 mt-4">
+                        لطفاً قبل از نهایی کردن خرید، از تصمیم خود کاملاً مطمئن شوید. مسئولیت بررسی مشخصات کالا به عهده خریدار می‌باشد.
+                    </p>
+                </div>
+
+                <!-- ماده ۴ -->
+                <div class="mb-10 pb-8 border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                        <span class="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 w-10 h-10 rounded-full flex items-center justify-center ml-3">۴</span>
+                        ارسال و تحویل کالا
+                    </h2>
+                    <ul class="list-disc pr-6 space-y-3 text-gray-700 dark:text-gray-300">
+                        <li>زمان تحویل سفارشات بستگی به آدرس مقصد و روش ارسال انتخابی دارد.</li>
+                        <li>هزینه ارسال بر اساس وزن، ابعاد و مسافت محاسبه می‌شود.</li>
+                        <li>در صورت عدم حضور گیرنده در زمان تحویل، کالا به انبار بازگردانده می‌شود.</li>
+                        <li>تحویل گیرنده باید کارت شناسایی معتبر به همراه داشته باشد.</li>
+                    </ul>
+                </div>
+
+                <!-- ماده ۵ -->
+                <div class="mb-10 pb-8 border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                        <span class="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 w-10 h-10 rounded-full flex items-center justify-center ml-3">۵</span>
+                        ضمانت و گارانتی
+                    </h2>
+                    <ul class="list-disc pr-6 space-y-3 text-gray-700 dark:text-gray-300">
+                        <li>گارانتی محصولات بر اساس قوانین سازنده و واردکننده اعمال می‌شود.</li>
+                        <li>در صورت وجود مشکل فنی در کالا، تنها از طریق گارانتی رسمی پیگیری خواهد شد.</li>
+                        <li>ضمانت بازگشت وجه برای مشکلات فنی وجود ندارد.</li>
+                    </ul>
+                </div>
+
+                <!-- ماده ۶ -->
+                <div class="mb-10">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                        <span class="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 w-10 h-10 rounded-full flex items-center justify-center ml-3">۶</span>
+                        حریم خصوصی و امنیت
+                    </h2>
+                    <ul class="list-disc pr-6 space-y-3 text-gray-700 dark:text-gray-300">
+                        <li>کلیه اطلاعات شخصی کاربران مطابق با قانون جرایم رایانه‌ای محافظت می‌شود.</li>
+                        <li>اطلاعات بانکی کاربران در سیستم ما ذخیره نمی‌شود.</li>
+                        <li>اطلاعات شما به هیچ شخص ثالثی فروخته یا اجاره داده نمی‌شود.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- تاییدیه کاربر -->
+            <div class="mt-12 p-6 bg-gray-100 dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-gray-900 dark:text-white text-lg">تایید قوانین</h3>
+                        <p class="text-gray-700 dark:text-gray-400 mt-1">
+                            با خرید از این فروشگاه، تمامی قوانین فوق را پذیرفته‌اید.
+                        </p>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="ml-3 text-sm text-gray-600 dark:text-gray-400">تاریخ: ۱۴۰۳/۰۱/۲۰</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- نکته پایانی -->
+        <div class="text-center text-gray-600 dark:text-gray-400 text-sm">
+            <p>در صورت هرگونه سوال، با پشتیبانی فروشگاه تماس بگیرید.</p>
+            <p class="mt-2">© کلیه حقوق برای این فروشگاه محفوظ می‌باشد.</p>
+        </div>
+    </div>
+</main>
+{% endblock content %}

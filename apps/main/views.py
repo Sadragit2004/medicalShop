@@ -68,3 +68,9 @@ def contact(request):
 
 def faq(request):
     return render(request, "main_app/faq.html")
+
+
+
+def law(request):
+
+    return render(request,'main_app/law.html')
