@@ -820,7 +820,7 @@ img {
 .tooltiptext:is(.dark *) {
   --tw-bg-opacity: 1;
   background-color: rgb(59 130 246 / var(--tw-bg-opacity, 1));
-  --tw-gradient-to: #60a5fa var(--tw-gradient-to-position);
+  --tw-gradient-to: #22adbd var(--tw-gradient-to-position);
 }
 
 .tooltiptext:is(.dark *)::after {
@@ -837,7 +837,7 @@ img {
   margin-left: -5px;
   border-width: 5px;
   border-style: solid;
-  border-color: #60a5fa transparent transparent transparent;
+  border-color: #22adbd transparent transparent transparent;
 }
 
 .container {
@@ -2046,7 +2046,7 @@ img {
 
 .border-blue-500 {
   --tw-border-opacity: 1;
-  border-color: rgb(59 130 246 / var(--tw-border-opacity, 1));
+  border-color: #22adbd
 }
 
 .border-gray-100 {
@@ -2098,7 +2098,7 @@ img {
 
 .bg-blue-500 {
   --tw-bg-opacity: 1;
-  background-color: rgb(59 130 246 / var(--tw-bg-opacity, 1));
+  background-color: #22adbd
 }
 
 .bg-blue-500\/10 {
@@ -2107,7 +2107,7 @@ img {
 
 .bg-blue-600 {
   --tw-bg-opacity: 1;
-  background-color: rgb(37 99 235 / var(--tw-bg-opacity, 1));
+  background-color: #22adbd
 }
 
 .bg-gray-100 {
@@ -2440,17 +2440,17 @@ img {
 
 .text-blue-400 {
   --tw-text-opacity: 1;
-  color: rgb(96 165 250 / var(--tw-text-opacity, 1));
+  color: #22adbd
 }
 
 .text-blue-500 {
   --tw-text-opacity: 1;
-  color: rgb(59 130 246 / var(--tw-text-opacity, 1));
+  color: #22adbd
 }
 
 .text-blue-600 {
   --tw-text-opacity: 1;
-  color: rgb(37 99 235 / var(--tw-text-opacity, 1));
+  color: #22adbd
 }
 
 .text-gray-100 {
@@ -2638,7 +2638,7 @@ img {
 
 .ring-blue-400 {
   --tw-ring-opacity: 1;
-  --tw-ring-color: rgb(96 165 250 / var(--tw-ring-opacity, 1));
+  --tw-ring-color: #22adbd
 }
 
 .ring-gray-400 {

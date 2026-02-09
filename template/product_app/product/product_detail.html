@@ -315,7 +315,7 @@ input[type="number"]::-webkit-outer-spin-button {
 
 /* استایل‌های عمومی برای دکمه‌ها */
 .add-to-cart-btn {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    background: linear-gradient(135deg, #22adbd 0%, #22adbd 100%);
     color: white;
     border-radius: 10px;
     padding: 12px 20px;
@@ -718,7 +718,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     {% else %}
                         <p class="text-2xl font-DanaDemiBold text-blue-600" id="current-price">{{ default_sale_type.price|intcomma }}</p>
                     {% endif %}
-                    <p class="">تومان</p>
+                     <span style='background:#22adbd;'>تومان</span>
                 </div>
                {% endif %}
                 {% if default_sale_type.typeSale == 2 %}
@@ -1030,38 +1030,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="swiper-slide product-card group">
                     <!-- product header -->
                     <div class="product-card_header">
-                        <div class="flex items-center gap-x-2">
-                            <div class="tooltip">
-                                <button class="rounded-full p-1.5 app-border app-hover add-to-cart-mini" data-product-id="{{ related.id }}" data-quantity="1" data-detail="">
-                                    <svg class="size-4">
-                                        <use href="#shopping-cart"></use>
-                                    </svg>
-                                </button>
-                                <div class="tooltiptext">
-                                    سبد خرید
-                                </div>
-                            </div>
-                            <div class="tooltip">
-                                <button class="rounded-full p-1.5 app-border app-hover">
-                                    <svg class="size-4">
-                                        <use href="#heart"></use>
-                                    </svg>
-                                </button>
-                                <div class="tooltiptext">
-                                    علاقه مندی
-                                </div>
-                            </div>
-                            <div class="tooltip">
-                                <button class="rounded-full p-1.5 app-border app-hover">
-                                    <svg class="size-4">
-                                        <use href="#arrows-up-down"></use>
-                                    </svg>
-                                </button>
-                                <div class="tooltiptext">
-                                    مقایسه
-                                </div>
-                            </div>
-                        </div>
+                      
                         <!-- badge offer -->
                         {% if related.discount_percent %}
                         <span class="product-card_badge">{{ related.discount_percent }}% تخفیف‌</span>
@@ -1104,7 +1073,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 {% else %}
                                 <p>{{ related.price|intcomma }}</p>
                                 {% endif %}
-                                <span>تومان</span>
+                                 <span style='background:#22adbd;'>تومان</span>
                             </div>
                         </div>
                     </div>
