@@ -4,7 +4,6 @@ import datetime
 import django.core.validators
 from django.db import migrations, models
 import django.db.models.deletion
-from django.utils.timezone import utc
 
 
 class Migration(migrations.Migration):
@@ -20,8 +19,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('copon', models.CharField(max_length=10, unique=True, verbose_name='کد تخفیف')),
-                ('startDate', models.DateTimeField(default=datetime.datetime(2026, 2, 4, 13, 36, 50, 730277, tzinfo=utc), verbose_name='تاریخ شروع')),
-                ('endDate', models.DateTimeField(default=datetime.datetime(2026, 2, 4, 13, 36, 50, 730277, tzinfo=utc), verbose_name='تاریخ پایان')),
+                ('startDate', models.DateTimeField(default=datetime.datetime(2026, 2, 4, 13, 36, 50, 730277, tzinfo=datetime.timezone.utc), verbose_name='تاریخ شروع')),
+                ('endDate', models.DateTimeField(default=datetime.datetime(2026, 2, 4, 13, 36, 50, 730277, tzinfo=datetime.timezone.utc), verbose_name='تاریخ پایان')),
                 ('discount', models.IntegerField(verbose_name='درصد تخفیف')),
                 ('isActive', models.BooleanField(default=False, verbose_name='فعال')),
             ],
@@ -35,8 +34,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('discountTitle', models.CharField(max_length=100, verbose_name='وضوع تخفیف')),
-                ('startDate', models.DateTimeField(default=datetime.datetime(2026, 2, 4, 13, 36, 50, 730277, tzinfo=utc), verbose_name='تاریخ شروع')),
-                ('endDate', models.DateTimeField(default=datetime.datetime(2026, 2, 4, 13, 36, 50, 730277, tzinfo=utc), verbose_name='تاریخ پایان')),
+                ('startDate', models.DateTimeField(default=datetime.datetime(2026, 2, 4, 13, 36, 50, 730277, tzinfo=datetime.timezone.utc), verbose_name='تاریخ شروع')),
+                ('endDate', models.DateTimeField(default=datetime.datetime(2026, 2, 4, 13, 36, 50, 730277, tzinfo=datetime.timezone.utc), verbose_name='تاریخ پایان')),
                 ('discount', models.IntegerField(validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(100)], verbose_name='درصد تخفیف')),
                 ('isActive', models.BooleanField(default=False, verbose_name='وضعیت')),
                 ('isamzing', models.BooleanField(default=False, verbose_name='شگفت انگیز')),

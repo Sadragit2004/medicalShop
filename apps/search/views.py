@@ -1,19 +1,84 @@
 # apps/search/views.py
+
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.db.models import Q
-from apps.product.models import Product, Category, Brand
-from apps.search.models import PopularSearch
+from django.db.models import (
+    Q, OuterRef, Subquery, Min, Max, F, Value
+)
+from django.core.paginator import Paginator
 from django.utils import timezone
-import json
+from django.db.models.expressions import ExpressionWrapper
+from django.db.models.fields import PositiveIntegerField
+from django.db.models.functions import Coalesce, Floor
 
+from apps.product.models import Product, Category, Brand, ProductSaleType
+from apps.discount.models import DiscountBasket
+from apps.search.models import PopularSearch
+
+
+# ======================================================
+# 🔒 لیست کامل کلمات و الگوهای مخرب (Attack Keywords)
+# ======================================================
+
+ATTACK_KEYWORDS = [
+    # SQL Injection
+    "select ", "insert ", "update ", "delete ", "drop ",
+    "truncate ", "alter ", "create ",
+    "union ", "union all ",
+    " or ", " and ",
+    "--", ";--", ";", "/*", "*/",
+    "@@", "@",
+    "char(", "nchar(", "varchar(", "nvarchar(",
+    "cast(", "convert(",
+    "information_schema",
+    "xp_", "sp_",
+
+    # XSS
+    "<script", "</script",
+    "<iframe", "<img", "<svg",
+    "onerror=", "onload=", "onclick=",
+    "javascript:", "alert(", "document.", "window.",
+
+    # Command Injection
+    "&&", "||", "|", "`",
+    "$(", "${",
+    "wget ", "curl ",
+    "rm -", "chmod ", "chown ",
+
+    # Path Traversal
+    "../", "..\\",
+    "/etc/passwd", "boot.ini",
+
+    # NoSQL Injection
+    "$ne", "$gt", "$lt", "$or", "$and",
+    "{\"", "\"}",
+
+    # Template Injection
+    "{{", "}}", "{%", "%}",
+]
+
+
+def is_malicious_query(query: str) -> bool:
+    query = query.lower()
+    for keyword in ATTACK_KEYWORDS:
+        if keyword in query:
+            return True
+    return False
+
+
+# ======================================================
+# 🔍 API پیشنهادات جستجو
+# ======================================================
 
 def search_suggestions(request):
-    """API برای پیشنهادات جستجو"""
     query = request.GET.get('q', '').strip()
 
     if not query or len(query) < 2:
         return JsonResponse({'suggestions': []})
+
+    # ✅ بررسی امنیت
+    if is_malicious_query(query):
+        return JsonResponse({'suggestions': [], 'blocked': True})
 
     # ذخیره یا افزایش تعداد جستجو
     popular_search, created = PopularSearch.objects.get_or_create(
@@ -24,29 +89,24 @@ def search_suggestions(request):
         popular_search.search_count += 1
         popular_search.save()
 
-    # جستجو در محصولات
     product_suggestions = Product.objects.filter(
         Q(title__icontains=query) |
         Q(shortDescription__icontains=query),
         isActive=True
     ).distinct()[:5]
 
-    # جستجو در دسته‌بندی‌ها
     category_suggestions = Category.objects.filter(
         title__icontains=query,
         isActive=True
     ).distinct()[:5]
 
-    # جستجو در برندها
     brand_suggestions = Brand.objects.filter(
         title__icontains=query,
         isActive=True
     ).distinct()[:5]
 
-    # ترکیب پیشنهادات
     suggestions = []
 
-    # محصولات
     for product in product_suggestions:
         suggestions.append({
             'type': 'product',
@@ -55,16 +115,14 @@ def search_suggestions(request):
             'image': product.mainImage.url if product.mainImage else None
         })
 
-    # دسته‌بندی‌ها
     for category in category_suggestions:
         suggestions.append({
             'type': 'category',
             'title': category.title,
-            'url': f"/category/{category.slug}/",
+            'url': f"/product/category/{category.slug}/",
             'image': category.image.url if category.image else None
         })
 
-    # برندها
     for brand in brand_suggestions:
         suggestions.append({
             'type': 'brand',
@@ -76,29 +134,27 @@ def search_suggestions(request):
     return JsonResponse({'suggestions': suggestions})
 
 
+# ======================================================
+# 🔥 جستجوهای پرطرفدار
+# ======================================================
 
 def popular_searches(request):
-    """API برای جستجوهای پرطرفدار"""
-    # 10 جستجوی پرطرفدار اخیر
     popular_searches = PopularSearch.objects.filter(
         last_searched__gte=timezone.now() - timezone.timedelta(days=30)
     ).order_by('-search_count')[:10]
 
-    popular_list = []
-    for search in popular_searches:
-        popular_list.append({
-            'keyword': search.keyword,
-            'count': search.search_count
-        })
-
-    return JsonResponse({'popular_searches': popular_list})
+    return JsonResponse({
+        'popular_searches': [
+            {'keyword': s.keyword, 'count': s.search_count}
+            for s in popular_searches
+        ]
+    })
 
 
 def increment_click(request):
-    """افزایش تعداد کلیک روی پیشنهاد"""
     query = request.GET.get('q', '')
     if query:
-        popular_search, created = PopularSearch.objects.get_or_create(
+        popular_search, _ = PopularSearch.objects.get_or_create(
             keyword__iexact=query,
             defaults={'keyword': query}
         )
@@ -107,25 +163,29 @@ def increment_click(request):
 
     return JsonResponse({'status': 'success'})
 
-# apps/search/views.py
-from django.shortcuts import render
-from django.db.models import Q, OuterRef, Subquery, Min, Max, F
-from django.core.paginator import Paginator
-from django.utils import timezone
-from django.db.models.expressions import ExpressionWrapper
-from django.db.models.fields import PositiveIntegerField
-from django.db.models.functions import Coalesce, Floor
-from django.db.models import Value
-from apps.product.models import Product, Category, Brand, ProductSaleType
-from apps.discount.models import DiscountBasket
-from apps.search.models import PopularSearch
 
+# ======================================================
+# 📄 صفحه نتایج جستجو
+# ======================================================
 
 def search_results(request):
-    """صفحه نتایج جستجو"""
     query = request.GET.get('q', '').strip()
 
-    # ذخیره جستجو برای پرطرفدارها
+    # ✅ بررسی امنیت
+    if query and is_malicious_query(query):
+        return render(request, 'search_app/results.html', {
+            'query': query,
+            'products': [],
+            'categories': [],
+            'brands': [],
+            'total_results': 0,
+            'product_count': 0,
+            'category_count': 0,
+            'brand_count': 0,
+            'has_results': False,
+            'blocked': True,
+        })
+
     if query:
         popular_search, created = PopularSearch.objects.get_or_create(
             keyword__iexact=query,
@@ -135,7 +195,6 @@ def search_results(request):
             popular_search.search_count += 1
             popular_search.save()
 
-    # جستجو در محصولات
     products_qs = Product.objects.filter(
         Q(title__icontains=query) |
         Q(shortDescription__icontains=query) |
@@ -143,7 +202,6 @@ def search_results(request):
         isActive=True
     ).distinct()
 
-    # زیرکوئری قیمت
     price_subquery = ProductSaleType.objects.filter(
         product=OuterRef('pk'),
         isActive=True
@@ -153,7 +211,6 @@ def search_results(request):
         price=Subquery(price_subquery)
     ).filter(price__isnull=False)
 
-    # تخفیف فعال
     now = timezone.now()
     discount_subquery = DiscountBasket.objects.filter(
         isActive=True,
@@ -165,24 +222,23 @@ def search_results(request):
     products_qs = products_qs.annotate(
         discount_percent=Subquery(discount_subquery),
         final_price=ExpressionWrapper(
-            Floor(F('price') * (100 - Coalesce(Subquery(discount_subquery), Value(0))) / Value(100)),
+            Floor(
+                F('price') * (100 - Coalesce(Subquery(discount_subquery), Value(0))) / Value(100)
+            ),
             output_field=PositiveIntegerField()
         )
     )
 
-    # جستجو در دسته‌بندی‌ها
     categories = Category.objects.filter(
         title__icontains=query,
         isActive=True
     ).distinct()
 
-    # جستجو در برندها
     brands = Brand.objects.filter(
         title__icontains=query,
         isActive=True
     ).distinct()
 
-    # فیلترها
     price_min = request.GET.get('price_min')
     price_max = request.GET.get('price_max')
 
@@ -202,7 +258,6 @@ def search_results(request):
     if category_filter:
         products_qs = products_qs.filter(category__slug=category_filter)
 
-    # مرتب‌سازی
     sort = request.GET.get('sort', '1')
 
     if sort in ['3', 'cheap']:
@@ -210,12 +265,10 @@ def search_results(request):
     elif sort in ['2', 'expensive']:
         products_qs = products_qs.order_by('-price')
     elif sort in ['5', 'popular']:
-        # بر اساس تعداد فروش - بعداً کاملش کن
         products_qs = products_qs.order_by('?')
     else:
         products_qs = products_qs.order_by('-createdAt')
 
-    # قیمت‌ها برای فیلتر
     price_stats = products_qs.aggregate(
         min_price=Min('price'),
         max_price=Max('price')
@@ -224,29 +277,15 @@ def search_results(request):
     min_price = price_stats['min_price'] or 0
     max_price = price_stats['max_price'] or 0
 
-    # صفحه‌بندی
     paginator = Paginator(products_qs, 20)
     page = request.GET.get('page', 1)
     products_page = paginator.get_page(page)
 
-    # برندها و دسته‌بندی‌های موجود برای فیلتر
-    available_brands = Brand.objects.filter(
-        products__in=products_qs
-    ).distinct()
+    available_brands = Brand.objects.filter(products__in=products_qs).distinct()
+    available_categories = Category.objects.filter(products__in=products_qs).distinct()
 
-    available_categories = Category.objects.filter(
-        products__in=products_qs
-    ).distinct()
-
-    # برای نمایش برند و دسته‌بندی انتخاب‌شده در فیلترهای فعال
-    selected_brand = None
-    selected_category = None
-
-    if brand_filter:
-        selected_brand = available_brands.filter(slug=brand_filter).first()
-
-    if category_filter:
-        selected_category = available_categories.filter(slug=category_filter).first()
+    selected_brand = available_brands.filter(slug=brand_filter).first() if brand_filter else None
+    selected_category = available_categories.filter(slug=category_filter).first() if category_filter else None
 
     context = {
         'query': query,
