@@ -27,76 +27,213 @@
         <div class="megamenu_left">
             {% if tree_data %}
                 {% for data in tree_data %}
-                <ul class="megamenu_left-item {% if forloop.first %}active{% endif %}"
+                <div class="megamenu_left-item {% if forloop.first %}active{% endif %}"
                     id="content-{{ data.main.id }}">
-                    <a href="/product/category/{{ data.main.slug }}/"
-                       class="text-blue-400 flex items-center gap-x-0.5 text-sm mb-4">
-                        مشاهده همه {{ data.main.title }}
-                        <svg class="size-4 rotate-90">
-                            <use href="#chevron" />
-                        </svg>
-                    </a>
+                    <!-- لینک مشاهده همه -->
+                    <div class="mb-4">
+                        <a href="/product/category/{{ data.main.slug }}/"
+                           class="text-blue-400 flex items-center gap-x-0.5 text-sm">
+                            مشاهده همه {{ data.main.title }}
+                            <svg class="size-4 rotate-90">
+                                <use href="#chevron" />
+                            </svg>
+                        </a>
+                    </div>
 
+                    <!-- کانتینر افقی برای زیردسته‌ها -->
                     {% if data.children %}
+                    <div class="megamenu_horizontal-scroll">
                         {% for child_data in data.children %}
-                        <div class="megamenu_left-menu">
-                            <span class="megamenu_left-title">
-                                <a href="/product/category/{{ child_data.child.slug }}/">
-                                    {{ child_data.child.title }}
-                                </a>
-                            </span>
-
-                            {% if child_data.grandchildren %}
-                                {% for grandchild in child_data.grandchildren %}
-                                <li>
-                                    <a href="/product/category/{{ grandchild.slug }}/">
-                                        {{ grandchild.title }}
-                                    </a>
-                                </li>
-                                {% endfor %}
-                            {% else %}
-                                <li>
+                        <div class="megamenu_left-column">
+                            <div class="megamenu_left-menu">
+                                <span class="megamenu_left-title">
                                     <a href="/product/category/{{ child_data.child.slug }}/">
-                                        مشاهده همه {{ child_data.child.title }}
+                                        {{ child_data.child.title }}
                                     </a>
-                                </li>
-                            {% endif %}
+                                </span>
+
+                                {% if child_data.grandchildren %}
+                                    <ul class="megamenu_submenu">
+                                        {% for grandchild in child_data.grandchildren %}
+                                        <li class="megamenu_submenu-item">
+                                            <a href="/product/category/{{ grandchild.slug }}/">
+                                                {{ grandchild.title }}
+                                            </a>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <ul class="megamenu_submenu">
+                                        <li class="megamenu_submenu-item">
+                                            <a href="/product/category/{{ child_data.child.slug }}/">
+                                                مشاهده همه {{ child_data.child.title }}
+                                            </a>
+                                        </li>
+                                    </ul>
+                                {% endif %}
+                            </div>
                         </div>
                         {% endfor %}
+                    </div>
                     {% else %}
+                    <div class="megamenu_no-children">
                         <div class="megamenu_left-menu">
                             <span class="megamenu_left-title">زیردسته‌ای وجود ندارد</span>
-                            <li>
-                                <a href="/product/category/{{ data.main.slug }}/">
-                                    مشاهده محصولات {{ data.main.title }}
-                                </a>
-                            </li>
+                            <ul class="megamenu_submenu">
+                                <li class="megamenu_submenu-item">
+                                    <a href="/product/category/{{ data.main.slug }}/">
+                                        مشاهده محصولات {{ data.main.title }}
+                                    </a>
+                                </li>
+                            </ul>
                         </div>
+                    </div>
                     {% endif %}
-                </ul>
+                </div>
                 {% endfor %}
             {% else %}
-                <ul class="megamenu_left-item active">
-                    <div class="megamenu_left-menu">
-                        <span class="megamenu_left-title">هیچ دسته‌بندی‌ای یافت نشد</span>
-                        <li>
-                            <a href="/admin/product_app/product/category/add/">
-                                ایجاد دسته‌بندی جدید
-                            </a>
-                        </li>
+                <div class="megamenu_left-item active">
+                    <div class="megamenu_no-children">
+                        <div class="megamenu_left-menu">
+                            <span class="megamenu_left-title">هیچ دسته‌بندی‌ای یافت نشد</span>
+                            <ul class="megamenu_submenu">
+                                <li class="megamenu_submenu-item">
+                                    <a href="/admin/product_app/product/category/add/">
+                                        ایجاد دسته‌بندی جدید
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
-                </ul>
+                </div>
             {% endif %}
         </div>
     </div>
 </li>
 
-<!-- نمایش اطلاعات دیباگ -->
-<div style="display: none;">
-    <p>Total Categories: {{ debug.total_categories }}</p>
-    <p>Active Categories: {{ debug.active_categories }}</p>
-    <p>Main Categories: {{ debug.main_categories|join:", " }}</p>
-</div>
+<style>
+/* استایل‌های موجود */
+.megamenu_left-item {
+    display: none;
+}
+
+.megamenu_left-item.active {
+    display: block;
+}
+
+.megamenu_category-item.active {
+    background-color: #f3f4f6;
+}
+
+/* استایل‌های جدید برای نمایش افقی */
+.megamenu_horizontal-scroll {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 24px;
+    padding: 8px 0 16px 0;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.megamenu_horizontal-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+
+.megamenu_horizontal-scroll::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+.megamenu_horizontal-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.megamenu_horizontal-scroll::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.megamenu_left-column {
+    flex: 0 0 auto;
+    min-width: 200px;
+    max-width: 250px;
+}
+
+.megamenu_left-menu {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.megamenu_left-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.megamenu_left-title a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.megamenu_left-title a:hover {
+    color: #3b82f6;
+}
+
+.megamenu_submenu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex: 1;
+}
+
+.megamenu_submenu-item {
+    margin-bottom: 8px;
+}
+
+.megamenu_submenu-item a {
+    display: block;
+    padding: 6px 0;
+    font-size: 13px;
+    color: #666;
+    text-decoration: none;
+    transition: color 0.2s, padding-right 0.2s;
+    white-space: nowrap;
+}
+
+.megamenu_submenu-item a:hover {
+    color: #3b82f6;
+    padding-right: 8px;
+}
+
+/* برای زمانی که زیردسته‌ای وجود ندارد */
+.megamenu_no-children {
+    padding: 20px 0;
+    text-align: center;
+}
+
+.megamenu_no-children .megamenu_left-menu {
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+/* استایل برای نمایش بهتر روی موبایل */
+@media (max-width: 768px) {
+    .megamenu_horizontal-scroll {
+        gap: 16px;
+    }
+
+    .megamenu_left-column {
+        min-width: 180px;
+    }
+}
+</style>
 
 <script>
 function showCategory(categoryId) {
@@ -131,17 +268,3 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-
-<style>
-.megamenu_left-item {
-    display: none;
-}
-
-.megamenu_left-item.active {
-    display: block;
-}
-
-.megamenu_category-item.active {
-    background-color: #f3f4f6;
-}
-</style>
