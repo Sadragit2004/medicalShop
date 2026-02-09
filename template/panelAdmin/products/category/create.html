@@ -33,7 +33,7 @@
                                    autofocus>
                         </div>
 
-                        <!-- اسلاگ (اصلاح شده) -->
+                        <!-- اسلاگ -->
                         <div class="col-md-6 mb-3">
                             <label for="slug" class="form-label required">اسلاگ (Slug)</label>
                             <input type="text"
@@ -41,19 +41,28 @@
                                    id="slug"
                                    name="slug"
                                    required
-                                   placeholder="مثال: mobile-phones یا گوشی-موبایل">
-                            <div class="form-text text-danger">وارد کردن این فیلد دستی است. از فاصله (Space) استفاده نکنید، به جای آن خط تیره (-) بگذارید.</div>
+                                   placeholder="مثال: mobile-phones">
+                            <div class="form-text text-danger">وارد کردن این فیلد دستی است. از خط تیره (-) استفاده کنید.</div>
                         </div>
 
-                        <!-- والد -->
+                        <!-- والد (بخش تغییر کرده) -->
                         <div class="col-md-6 mb-3">
                             <label for="parent" class="form-label">دسته‌بندی والد</label>
-                            <select class="form-select" id="parent" name="parent">
-                                <option value="">بدون والد (دسته‌بندی اصلی)</option>
+
+                            <!-- اینپوت جستجو -->
+                            <input type="text"
+                                   id="searchParent"
+                                   class="form-control mb-2 form-control-sm"
+                                   placeholder="جستجو در والدین..."
+                                   autocomplete="off">
+
+                            <select class="form-select" id="parent" name="parent" size="5">
+                                <option value="">--- بدون والد (دسته‌بندی اصلی) ---</option>
                                 {% for category in categories %}
                                     <option value="{{ category.id }}">{{ category.title }}</option>
                                 {% endfor %}
                             </select>
+                            <div class="form-text">برای انتخاب آسان‌تر، نام والد را در کادر بالا جستجو کنید.</div>
                         </div>
 
                         <!-- تصویر -->
@@ -108,15 +117,14 @@
         </div>
     </div>
 
-    <!-- راهنما (بخش کناری) -->
+    <!-- راهنما -->
     <div class="col-lg-4">
         <div class="card bg-light">
             <div class="card-body">
-                <h6>نکات اسلاگ (URL):</h6>
+                <h6>نکات:</h6>
                 <ul>
-                    <li>بهتر است به انگلیسی باشد (برای سئو).</li>
-                    <li>اگر فارسی می‌نویسید، مشکلی نیست.</li>
-                    <li>حتما بین کلمات خط تیره (-) بگذارید.</li>
+                    <li>اگر والد انتخاب نکنید، این یک دسته‌بندی اصلی خواهد بود.</li>
+                    <li>می‌توانید در کادر جستجو نام والد مورد نظر را تایپ کنید تا لیست فیلتر شود.</li>
                 </ul>
             </div>
         </div>
@@ -124,7 +132,46 @@
 </div>
 
 <script>
-// 1. پیش‌نمایش تصویر
+// --- اسکریپت جستجوی والدین (بخش جدید) ---
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchParent');
+    const selectBox = document.getElementById('parent');
+
+    // ذخیره تمام آپشن‌های اولیه در یک آرایه
+    // ما متن و مقدار هر آپشن را نگه می‌داریم تا بعداً بازسازی کنیم
+    const allOptions = Array.from(selectBox.options).map(option => ({
+        value: option.value,
+        text: option.text
+    }));
+
+    searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+
+        // پاک کردن تمام آپشن‌های فعلی
+        selectBox.innerHTML = '';
+
+        // فیلتر کردن و بازگرداندن آپشن‌های منطبق
+        const filteredOptions = allOptions.filter(option => {
+            // همیشه گزینه "بدون والد" را نشان بده یا اگر متن شامل جستجو بود
+            return option.value === "" || option.text.toLowerCase().includes(searchTerm);
+        });
+
+        // ساخت مجدد آپشن‌ها در HTML
+        filteredOptions.forEach(optData => {
+            const option = document.createElement('option');
+            option.value = optData.value;
+            option.text = optData.text;
+            selectBox.appendChild(option);
+        });
+
+        // اگر هیچ نتیجه‌ای نبود، "بدون والد" که همیشه هست انتخاب می‌شود
+        if (selectBox.options.length === 1 && selectBox.options[0].value === "") {
+             // اختیاری: می‌توانید پیامی نشان دهید یا کاری نکنید
+        }
+    });
+});
+
+// --- اسکریپت‌های قبلی ---
 const imageInput = document.getElementById('image');
 const imagePreview = document.getElementById('imagePreview');
 const previewImage = document.getElementById('previewImage');
@@ -140,13 +187,11 @@ imageInput.addEventListener('change', function(e) {
     }
 });
 
-// 2. حذف تصویر
 document.getElementById('removeImage').addEventListener('click', function() {
     imageInput.value = '';
     imagePreview.classList.add('d-none');
 });
 
-// 3. اعتبارسنجی فرم قبل از ارسال
 document.getElementById('categoryForm').addEventListener('submit', function(e) {
     const title = document.getElementById('title').value.trim();
     const slug = document.getElementById('slug').value.trim();
@@ -163,7 +208,6 @@ document.getElementById('categoryForm').addEventListener('submit', function(e) {
         return;
     }
 
-    // چک کردن اینکه اسلاگ فاصله نداشته باشد (فقط خط تیره مجاز است)
     if (slug.includes(' ')) {
         e.preventDefault();
         alert('اسلاگ نباید دارای فاصله (Space) باشد. لطفا از خط تیره (-) استفاده کنید.');

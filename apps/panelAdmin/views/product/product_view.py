@@ -28,31 +28,35 @@ def category_list(request):
 
 from django.utils.text import slugify
 
+# در فایل views.py
+
 def category_create(request):
     """ایجاد دسته‌بندی جدید"""
-    categories = Category.objects.filter(parent=None)
+
+    # --- تغییر این خط ---
+    # قبلاً: فقط دسته‌بندی‌های اصلی (parent=None) بود
+    # categories = Category.objects.filter(parent=None)
+
+    # الان: دریافت همه دسته‌بندی‌ها برای نمایش در لیست والدین
+    categories = Category.objects.all().order_by('title')
+    # -------------------
 
     if request.method == 'POST':
         try:
-            # دریافت داده‌ها
             title = request.POST.get('title')
-            manual_slug = request.POST.get('slug') # دریافت اسلاگ دستی
+            manual_slug = request.POST.get('slug')
             parent_id = request.POST.get('parent')
             image = request.FILES.get('image')
             is_active = request.POST.get('isActive') == 'on'
 
-            # منطق اسلاگ:
-            # اگر کاربر اسلاگ را دستی وارد کرده بود، همان را تمیز و استفاده کن
             if manual_slug:
                 final_slug = slugify(manual_slug, allow_unicode=True)
             else:
-                # اگر خالی گذاشت، از روی عنوان بساز (به عنوان حالت پشتیبان)
                 final_slug = slugify(title, allow_unicode=True)
 
-            # ساخت رکورد
             category = Category.objects.create(
                 title=title,
-                slug=final_slug,  # <--- پاس دادن اسلاگ نهایی
+                slug=final_slug,
                 parent_id=parent_id if parent_id else None,
                 image=image,
                 isActive=is_active
@@ -63,6 +67,7 @@ def category_create(request):
             messages.error(request, f'خطا در ایجاد دسته‌بندی: {str(e)}')
 
     return render(request, 'panelAdmin/products/category/create.html', {'categories': categories})
+
 
 
 
