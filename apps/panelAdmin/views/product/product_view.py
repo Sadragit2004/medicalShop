@@ -26,17 +26,36 @@ def category_list(request):
     categories = Category.objects.all()
     return render(request, 'panelAdmin/products/category/list.html', {'categories': categories})
 
+from django.utils.text import slugify
+
 def category_create(request):
     """ایجاد دسته‌بندی جدید"""
     categories = Category.objects.filter(parent=None)
 
     if request.method == 'POST':
         try:
+            # دریافت داده‌ها
+            title = request.POST.get('title')
+            manual_slug = request.POST.get('slug') # دریافت اسلاگ دستی
+            parent_id = request.POST.get('parent')
+            image = request.FILES.get('image')
+            is_active = request.POST.get('isActive') == 'on'
+
+            # منطق اسلاگ:
+            # اگر کاربر اسلاگ را دستی وارد کرده بود، همان را تمیز و استفاده کن
+            if manual_slug:
+                final_slug = slugify(manual_slug, allow_unicode=True)
+            else:
+                # اگر خالی گذاشت، از روی عنوان بساز (به عنوان حالت پشتیبان)
+                final_slug = slugify(title, allow_unicode=True)
+
+            # ساخت رکورد
             category = Category.objects.create(
-                title=request.POST.get('title'),
-                parent_id=request.POST.get('parent') if request.POST.get('parent') else None,
-                image=request.FILES.get('image'),
-                isActive=request.POST.get('isActive') == 'on'
+                title=title,
+                slug=final_slug,  # <--- پاس دادن اسلاگ نهایی
+                parent_id=parent_id if parent_id else None,
+                image=image,
+                isActive=is_active
             )
             messages.success(request, 'دسته‌بندی با موفقیت ایجاد شد')
             return redirect('panelAdmin:admin_category_list')
@@ -44,6 +63,9 @@ def category_create(request):
             messages.error(request, f'خطا در ایجاد دسته‌بندی: {str(e)}')
 
     return render(request, 'panelAdmin/products/category/create.html', {'categories': categories})
+
+
+
 
 def category_update(request, category_id):
     """ویرایش دسته‌بندی"""
