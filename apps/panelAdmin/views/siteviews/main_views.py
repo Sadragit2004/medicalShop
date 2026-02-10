@@ -247,7 +247,7 @@ def slider_main_create(request):
             )
 
             messages.success(request, 'اسلایدر اصلی با موفقیت ایجاد شد')
-            return redirect('admin_slider_main_list')
+            return redirect('panelAdmin:admin_slider_main_list')
 
         except Exception as e:
             messages.error(request, f'خطا در ایجاد اسلایدر: {str(e)}')
@@ -285,7 +285,7 @@ def slider_main_update(request, slider_id):
             slider.save()
 
             messages.success(request, 'اسلایدر اصلی با موفقیت ویرایش شد')
-            return redirect('admin_slider_main_list')
+            return redirect('panelAdmin:admin_slider_main_list')
 
         except Exception as e:
             messages.error(request, f'خطا در ویرایش اسلایدر: {str(e)}')
@@ -309,7 +309,7 @@ def slider_main_delete(request, slider_id):
             slider_title = slider.textSlider
             slider.delete()
             messages.success(request, f'اسلایدر اصلی "{slider_title}" با موفقیت حذف شد')
-            return redirect('admin_slider_main_list')
+            return redirect('panelAdmin:admin_slider_main_list')
         except Exception as e:
             messages.error(request, f'خطا در حذف اسلایدر: {str(e)}')
 
@@ -329,7 +329,7 @@ def slider_main_toggle(request, slider_id):
         except Exception as e:
             messages.error(request, f'خطا در تغییر وضعیت اسلایدر: {str(e)}')
 
-    return redirect('admin_slider_main_list')
+    return redirect('panelAdmin:admin_slider_main_list')
 
 
 # ========================
@@ -830,7 +830,7 @@ def slider_main_delete(request, slider_id):
             slider_title = slider.textSlider
             slider.delete()
             messages.success(request, f'اسلایدر اصلی "{slider_title}" با موفقیت حذف شد')
-            return redirect('admin_slider_main_list')
+            return redirect('panelAdmin:admin_slider_main_list')
         except Exception as e:
             messages.error(request, f'خطا در حذف اسلایدر: {str(e)}')
 
