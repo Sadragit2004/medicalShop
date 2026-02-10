@@ -906,12 +906,12 @@ def get_category_tree(request):
 
     for main_cat in main_categories:
         # فرزندان سطح دوم (قدیمی‌ترین‌ها اول)
-        children_l2 = main_cat.children.filter(isActive=True).order_by('createdAt')[:3]
+        children_l2 = main_cat.children.filter(isActive=True).order_by('createdAt')
 
         children_data = []
         for child_l2 in children_l2:
             # فرزندان سطح سوم (قدیمی‌ترین‌ها اول)
-            children_l3 = child_l2.children.filter(isActive=True).order_by('createdAt')[:7]
+            children_l3 = child_l2.children.filter(isActive=True).order_by('createdAt')
 
             children_data.append({
                 'child': child_l2,
