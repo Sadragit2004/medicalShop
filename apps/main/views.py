@@ -15,19 +15,21 @@ def media_admin(request):
     return context
 
 
-
 def main(request):
     # دریافت پست‌های اخیر بلاگ برای صفحه اصلی
     latest_blogs = get_latest_blogs()[:6]
 
-    # دریافت اسلایدرهای هدر فعال
+    # دریافت اسلایدرهای هدر فعال و غیر منقضی
     from .models import SliderSite
     from django.utils import timezone
 
-    head_sliders = SliderSite.objects.all().order_by('-registerData')
-    # Temporarily show all sliders for debugging
-    print(f"DEBUG: Total SliderSite objects: {head_sliders.count()}")
+    # فقط اسلایدرهایی که هم active هستن و هم تاریخ پایانشون از الان بزرگتره
+    head_sliders = SliderSite.objects.filter(
+        isActive=True,
+        endData__gte=timezone.now()  # تاریخ پایان >= الان
+    ).order_by('-registerData')
 
+    print(f"DEBUG: Active and non-expired sliders: {head_sliders.count()}")
 
     context = {
         'media_url': sett.MEDIA_URL,
@@ -35,7 +37,7 @@ def main(request):
         'head_sliders': head_sliders,
     }
 
-    return render(request,'main_app/main.html', context)
+    return render(request, 'main_app/main.html', context)
 
 
 def mainSlider(request):
