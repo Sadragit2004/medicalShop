@@ -68,19 +68,21 @@ def slider_site_list(request):
     })
 
 def slider_site_create(request):
-    """ایجاد اسلایدر سایت جدید"""
     if request.method == 'POST':
         try:
-            # تبدیل تاریخ‌ها به datetime
-            start_date_str = request.POST.get('registerData')
-            end_date_str = request.POST.get('endData')
+            register_date = datetime.strptime(
+                request.POST.get('registerData'),
+                '%Y-%m-%dT%H:%M'
+            )
+            end_date = datetime.strptime(
+                request.POST.get('endData'),
+                '%Y-%m-%dT%H:%M'
+            )
 
-            register_date = datetime.strptime(start_date_str, '%Y-%m-%dT%H:%M')
-            end_date = datetime.strptime(end_date_str, '%Y-%m-%dT%H:%M')
-
-            slider = SliderSite.objects.create(
+            SliderSite.objects.create(
                 textSlider=request.POST.get('textSlider'),
                 imageName=request.FILES.get('imageName'),
+                imageMobile=request.FILES.get('imageMobile'),
                 altSlide=request.POST.get('altSlide'),
                 isActive=request.POST.get('isActive') == 'on',
                 registerData=register_date,
@@ -88,13 +90,14 @@ def slider_site_create(request):
                 link=request.POST.get('link')
             )
 
-            messages.success(request, 'اسلایدر سایت با موفقیت ایجاد شد')
+            messages.success(request, 'اسلایدر با موفقیت ایجاد شد')
             return redirect('panelAdmin:admin_slider_site_list')
 
         except Exception as e:
-            messages.error(request, f'خطا در ایجاد اسلایدر: {str(e)}')
+            messages.error(request, f'خطا: {e}')
 
     return render(request, 'panelAdmin/site/slider_site/create.html')
+
 
 def slider_site_update(request, slider_id):
     """ویرایش اسلایدر سایت"""
@@ -102,15 +105,19 @@ def slider_site_update(request, slider_id):
 
     if request.method == 'POST':
         try:
-            # آپدیت اطلاعات
+            # آپدیت اطلاعات متنی و وضعیت
             slider.textSlider = request.POST.get('textSlider', slider.textSlider)
             slider.altSlide = request.POST.get('altSlide', slider.altSlide)
             slider.isActive = request.POST.get('isActive') == 'on'
             slider.link = request.POST.get('link', slider.link)
 
-            # آپدیت تصویر
+            # --- بخش تغییر تصاویر (دسکتاپ و موبایل) ---
             if 'imageName' in request.FILES:
                 slider.imageName = request.FILES['imageName']
+
+            if 'imageMobile' in request.FILES:
+                slider.imageMobile = request.FILES['imageMobile']
+            # -------------------------------------------
 
             # آپدیت تاریخ‌ها
             start_date_str = request.POST.get('registerData')
@@ -141,6 +148,7 @@ def slider_site_update(request, slider_id):
         'register_date_formatted': register_date_formatted,
         'end_date_formatted': end_date_formatted
     })
+
 
 def slider_site_delete(request, slider_id):
     """حذف اسلایدر سایت"""

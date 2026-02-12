@@ -21,12 +21,20 @@
                     {% csrf_token %}
 
                     <div class="row">
-                        <!-- تصویر اسلایدر -->
+                        <!-- تصویر اسلایدر (دسکتاپ) -->
                         <div class="col-md-6 mb-3">
-                            <label for="imageName" class="form-label">تصویر اسلایدر *</label>
+                            <label for="imageName" class="form-label">تصویر اسلایدر (دسکتاپ) *</label>
                             <input type="file" class="form-control" id="imageName" name="imageName" accept="image/*" required>
-                            <div class="form-text">فرمت‌های مجاز: JPG, PNG, GIF. حجم حداکثر: 5MB</div>
-                            <div class="mt-2" id="imagePreview"></div>
+                            <div class="form-text">فرمت‌های مجاز: JPG, PNG. افقی</div>
+                            <div class="mt-2 img-preview-box" id="imagePreview"></div>
+                        </div>
+
+                        <!-- تصویر اسلایدر (موبایل) - جدید -->
+                        <div class="col-md-6 mb-3">
+                            <label for="imageMobile" class="form-label">تصویر اسلایدر (موبایل)</label>
+                            <input type="file" class="form-control" id="imageMobile" name="imageMobile" accept="image/*">
+                            <div class="form-text">اختیاری. ابعاد عمودی (Portrait)</div>
+                            <div class="mt-2 img-preview-box" id="imageMobilePreview"></div>
                         </div>
 
                         <!-- متن اسلایدر -->
@@ -92,7 +100,7 @@
 </div>
 
 <style>
-    #imagePreview {
+    .img-preview-box {
         min-height: 100px;
         border: 2px dashed #dee2e6;
         border-radius: 8px;
@@ -100,6 +108,7 @@
         align-items: center;
         justify-content: center;
         overflow: hidden;
+        background-color: #f8f9fa;
     }
 
     .preview-image {
@@ -119,31 +128,39 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('registerData').value = formatDateTimeLocal(startDate);
     document.getElementById('endData').value = formatDateTimeLocal(endDate);
 
-    // پیش‌نمایش تصویر
-    const imageInput = document.getElementById('imageName');
-    const preview = document.getElementById('imagePreview');
+    // تابع عمومی برای پیش‌نمایش تصاویر
+    function setupImagePreview(inputId, previewId) {
+        const imageInput = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
 
-    imageInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            if (file.size > 5 * 1024 * 1024) {
-                alert('حجم تصویر نباید بیشتر از 5MB باشد.');
-                imageInput.value = '';
+        if (!imageInput) return; // اگر اینپوت وجود نداشت ادامه نده
+
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('حجم تصویر نباید بیشتر از 5MB باشد.');
+                    imageInput.value = '';
+                    preview.innerHTML = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `<img src="${e.target.result}" class="preview-image">`;
+                };
+                reader.readAsDataURL(file);
+            } else {
                 preview.innerHTML = '';
-                return;
             }
+        });
+    }
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                preview.innerHTML = `<img src="${e.target.result}" class="preview-image">`;
-            };
-            reader.readAsDataURL(file);
-        } else {
-            preview.innerHTML = '';
-        }
-    });
+    // فعال‌سازی پیش‌نمایش برای هر دو فیلد
+    setupImagePreview('imageName', 'imagePreview');
+    setupImagePreview('imageMobile', 'imageMobilePreview');
 
-    // اعتبارسنجی تاریخ‌ها
+    // اعتبارسنجی تاریخ‌ها و فرم
     const form = document.getElementById('sliderForm');
     form.addEventListener('submit', function(e) {
         const start = new Date(document.getElementById('registerData').value);

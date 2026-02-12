@@ -464,25 +464,42 @@
     </div>
 
     <!-- Slider -->
+       <!-- Slider -->
     {% if head_sliders %}
     <div class="px-3 lg:container group w-full mt-4 lg:mt-10">
+        <!-- ارتفاع اسلایدر: در موبایل h-52 و در دسکتاپ h-96 -->
         <div dir="rtl" class="swiper header-slider h-52 md:h-96 cursor-pointer">
             <div class="swiper-wrapper">
                 {% for slider in head_sliders %}
-                <a href="{% if slider.link %}{{ slider.link }}{% else %}#{% endif %}" class="swiper-slide">
+                <a href="{% if slider.link %}{{ slider.link }}{% else %}#{% endif %}" class="swiper-slide block w-full h-full">
                     {% if slider.imageName %}
-                    <img src="{{ slider.imageName.url }}" class="rounded-xl" alt="{{ slider.altSlide }}">
+
+                        <picture class="w-full h-full block">
+                            <!-- 1. اگر عکس موبایل وجود دارد، برای عرض کمتر از 768px نمایش بده -->
+                            {% if slider.imageMobile %}
+                                <source media="(max-width: 768px)" srcset="{{ slider.imageMobile.url }}">
+                            {% endif %}
+
+                            <!-- 2. عکس اصلی (دسکتاپ) - این عکس به عنوان پیش‌فرض و برای سایزهای بزرگتر لود می‌شود -->
+                            <!-- کلاس object-cover باعث می‌شود عکس در باکس فیکس شود و دفرمه نشود -->
+                            <img src="{{ slider.imageName.url }}"
+                                 class="w-full h-full object-cover rounded-xl"
+                                 alt="{{ slider.altSlide }}">
+                        </picture>
+
                     {% else %}
-                    <img src="{{ media_url }}/images/default-slider.jpg" class="rounded-xl" alt="{{ slider.altSlide }}">
+                        <!-- اگر عکسی آپلود نشده بود -->
+                        <img src="{{ media_url }}/images/default-slider.jpg" class="w-full h-full object-cover rounded-xl" alt="Default">
                     {% endif %}
-                </a >
+                </a>
                 {% empty %}
-                <!-- اسلایدر پیش‌فرض اگر هیچ اسلایدی وجود ندارد -->
-                <a href="/" class="swiper-slide">
-                    <img src="{{ media_url }}/images/banner/default-slider.webp" class="rounded-xl" alt="فروشگاه">
-                </a >
+                <!-- اسلایدر پیش‌فرض اگر لیست خالی باشد -->
+                <a href="/" class="swiper-slide block w-full h-full">
+                    <img src="{{ media_url }}/images/banner/default-slider.webp" class="w-full h-full object-cover rounded-xl" alt="فروشگاه">
+                </a>
                 {% endfor %}
             </div>
+
             <div class="swiper-pagination-wrapper">
                 <div class="swiper-pagination"></div>
             </div>

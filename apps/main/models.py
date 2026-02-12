@@ -8,10 +8,11 @@ import utils
 
 # Create your models here.
 class SliderSite(models.Model):
-    
+
     textSlider = models.CharField(max_length=100, verbose_name='متن اسلایدر')
     imageFile = utils.FileUpload('images', 'slider')
     imageName = models.ImageField(upload_to=imageFile.upload_to, verbose_name='عکس اسلایدر', blank=True, null=True)
+    imageMobile = models.ImageField(upload_to=imageFile.upload_to, verbose_name='عکس برای موبایل', blank=True, null=True)
     altSlide = models.CharField(verbose_name='نوشتار عکس', max_length=100, blank=True, null=True)
     isActive = models.BooleanField(verbose_name='فعال', default=True)
     registerData = models.DateTimeField(verbose_name='تاریخ شروع', default=timezone.now)
