@@ -1,8 +1,10 @@
 <!-- ===================== HTML ===================== -->
 <li class="menu-item megamenu-link">
+    <!-- لینک اصلی دسته بندی ها -->
     <a href="" class="menu-item_link flex items-center justify-center gap-x-1">
         دسته بندی ها
-        <svg class="size-4">
+        <!-- کلاس transition برای اطمینان از اعمال شدن در صورت تداخل با Tailwind -->
+        <svg class="size-4" style="transition: transform 0.3s ease;">
             <use href="#chevron" />
         </svg>
     </a>
@@ -36,6 +38,7 @@
                         <a href="/product/category/{{ data.main.slug }}/"
                            class="text-blue-400 flex items-center gap-x-0.5 text-sm">
                             مشاهده همه {{ data.main.title }}
+                            <!-- فلش آبی داخل مگامنو (این نیازی به چرخش ندارد چون ثابت است) -->
                             <svg class="size-4 rotate-90">
                                 <use href="#chevron" />
                             </svg>
@@ -102,6 +105,20 @@
 
 <!-- ===================== CSS (PC Only) ===================== -->
 <style>
+/* ============ بخش جدید برای چرخش فلش ============ */
+/* 1. تعریف انیمیشن نرم برای آیکون داخل لینک اصلی */
+.menu-item_link svg {
+    transition: transform 0.3s ease; /* سرعت 0.3 ثانیه */
+    transform-origin: center; /* چرخش از مرکز */
+}
+
+/* 2. وقتی موس روی li اصلی (کلاس megamenu-link) رفت، فلش داخل آن بچرخد */
+.megamenu-link:hover .menu-item_link svg {
+    transform: rotate(180deg);
+}
+/* ============ پایان بخش جدید ============ */
+
+
 .megamenu_left-item {
     display: none;
 }
@@ -174,12 +191,12 @@
     text-align: center;
 }
 
-
+/* اصلاح اسکرول برای ظاهر زیباتر */
 .megamenu {
-    overflow: scroll;
+    /* overflow: scroll;  <-- کد قبلی شما */
+    overflow-y: auto; /* فقط اسکرول عمودی در صورت نیاز */
+    overflow-x: hidden;
 }
-
-
 </style>
 
 <!-- ===================== JS ===================== -->

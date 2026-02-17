@@ -2983,7 +2983,7 @@ img {
   height: 2px;
   bottom: -3px;
   left: 50%;
-  background-color: #3b82f6;
+  background-color: #22adbd;
   transition: width 0.4s, left 0.4s;
 }
 
@@ -3178,7 +3178,7 @@ img {
   width: 0.125rem;
   border-radius: 0.25rem;
   --tw-bg-opacity: 1;
-  background-color: rgb(96 165 250 / var(--tw-bg-opacity, 1))
+  background-color: #22adbd
 }
 
 /* Solid */
@@ -3490,7 +3490,7 @@ img {
   width: 5rem;
   border-bottom-left-radius: 0.25rem;
   --tw-bg-opacity: 1;
-  background-color: rgb(37 99 235 / var(--tw-bg-opacity, 1));
+  background-color: #22adbd;
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
   font-family: Dana Medium;

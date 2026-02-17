@@ -23,3 +23,23 @@ venv/
 .vscode/
 .idea/
 *.swp
+
+
+
+# Images & uploads
+*.jpg
+*.jpeg
+*.png
+*.webp
+media/
+uploads/
+static/uploads/
+
+# Django
+db.sqlite3
+__pycache__/
+*.pyc
+venv/
+
+# Env
+.env
