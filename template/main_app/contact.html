@@ -1,3 +1,9 @@
+{% extends "account_template.html" %}
+
+
+
+{% block content %}
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -13,7 +19,8 @@
         }
 
         body {
-            font-family: Tahoma, Arial, sans-serif;
+
+
             background-color: #f5f7fa;
             color: #333;
             line-height: 1.6;
@@ -34,12 +41,12 @@
 
         .header h1 {
             font-size: 32px;
-            color: #1e40af;
+            color: #22adbd;
             margin-bottom: 10px;
         }
 
         .header span {
-            color: #3b82f6;
+            color: #22adbd;
         }
 
         .header p {
@@ -61,7 +68,7 @@
 
         .manager-card {
             background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-            border-right: 5px solid #3b82f6;
+            border-right: 5px solid #22adbd;
         }
 
         .address-card {
@@ -76,18 +83,18 @@
 
         .services-card {
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            border-right: 5px solid #0ea5e9;
+            border-right: 5px solid #22adbd;
         }
 
         .contact-card {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, #22adbd 0%, #22adbd 100%);
             color: white;
-            border-right: 5px solid #60a5fa;
+            border-right: 5px solid #22adbd;
         }
 
         .main-card {
             background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            border: 2px solid #3b82f6;
+            border: 2px solid #22adbd;
         }
 
         /* دکمه‌ها */
@@ -126,8 +133,8 @@
 
         .btn-home {
             background: white;
-            color: #3b82f6;
-            border: 2px solid #3b82f6;
+            color: #22adbd;
+            border: 2px solid #22adbd;
             padding: 10px 20px;
             border-radius: 8px;
             display: inline-flex;
@@ -136,13 +143,13 @@
         }
 
         .btn-home:hover {
-            background: #3b82f6;
+            background: #22adbd;
             color: white;
         }
 
         .btn-call {
             background: white;
-            color: #1e40af;
+            color: #22adbd
             font-size: 18px;
             padding: 15px 30px;
         }
@@ -228,7 +235,7 @@
         .phone-number {
             font-size: 24px;
             font-weight: bold;
-            color: #1e40af;
+            color: #22adbd;
             direction: ltr;
             text-align: center;
             margin: 10px 0;
@@ -301,13 +308,13 @@
             margin: 10px 0;
             background: white;
             border-radius: 10px;
-            border-right: 4px solid #3b82f6;
+            border-right: 4px solid #22adbd;
         }
 
         .contact-title {
             font-size: 18px;
             font-weight: bold;
-            color: #1e40af;
+            color: #22adbd;
             margin-bottom: 5px;
         }
 
@@ -319,7 +326,7 @@
 
         /* بخش پایانی */
         .final-section {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, #22adbd 0%, #22adbd 100%);
             color: white;
             padding: 40px;
             border-radius: 20px;
@@ -379,7 +386,7 @@
             <div>
                 <!-- مدیران -->
                 <div class="card main-card fade-in">
-                    <h2 style="font-size: 24px; color: #1e40af; margin-bottom: 25px; display: flex; align-items: center;">
+                    <h2 style="font-size: 24px; color: #22adbd; margin-bottom: 25px; display: flex; align-items: center;">
                         <span style="margin-left: 10px;">👥</span>
                     </h2>
 
@@ -451,10 +458,10 @@
                     </h2>
 
                     <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 15px; text-align: center;">
-                        <div style="font-size: 20px; font-weight: bold; color: #1e40af; margin-bottom: 10px;">
+                        <div style="font-size: 20px; font-weight: bold; color: #22adbd; margin-bottom: 10px;">
                             شنبه تا چهارشنبه
                         </div>
-                        <div style="font-size: 18px; color: #3b82f6;">
+                        <div style="font-size: 18px; color: #22adbd;">
                             9:30 صبح تا 19:00 عصر
                         </div>
                     </div>
@@ -485,7 +492,7 @@
                     <div class="service-item">
                         <div class="service-icon">🛡️</div>
                         <div>
-                            <div style="font-weight: bold; color: #1e40af;">گارانتی معتبر</div>
+                            <div style="font-weight: bold; color: #22adbd;">گارانتی معتبر</div>
                             <div style="font-size: 14px; color: #666;">با ضمانت اصالت کالا</div>
                         </div>
                     </div>
@@ -493,7 +500,7 @@
                     <div class="service-item">
                         <div class="service-icon">🚚</div>
                         <div>
-                            <div style="font-weight: bold; color: #1e40af;">ارسال سریع</div>
+                            <div style="font-weight: bold; color: #22adbd;">ارسال سریع</div>
                             <div style="font-size: 14px; color: #666;">به سراسر کشور</div>
                         </div>
                     </div>
@@ -501,7 +508,7 @@
                     <div class="service-item">
                         <div class="service-icon">👨‍⚕️</div>
                         <div>
-                            <div style="font-weight: bold; color: #1e40af;">مشاوره رایگان</div>
+                            <div style="font-weight: bold; color: #22adbd;">مشاوره رایگان</div>
                             <div style="font-size: 14px; color: #666;">تخصصی و کارشناسی</div>
                         </div>
                     </div>
@@ -509,7 +516,7 @@
                     <div class="service-item">
                         <div class="service-icon">🔧</div>
                         <div>
-                            <div style="font-weight: bold; color: #1e40af;">خدمات پس از فروش</div>
+                            <div style="font-weight: bold; color: #22adbd;">خدمات پس از فروش</div>
                             <div style="font-size: 14px; color: #666;">تضمین کیفیت و پشتیبانی</div>
                         </div>
                     </div>
@@ -553,12 +560,7 @@
         </div>
 
         <!-- مینی فوتتر -->
-        <div class="mini-footer">
-            <p>© کلیه حقوق برای فروشگاه تجهیزات پزشکی بحد محفوظ می‌باشد</p>
-            <p style="margin-top: 10px; color: #999; font-size: 13px;">
-                آخرین به‌روزرسانی: ۱۴۰۳/۰۱/۲۱
-            </p>
-        </div>
+
     </div>
 
     <script>
@@ -603,3 +605,7 @@
     </script>
 </body>
 </html>
+
+
+
+{% endblock content %}

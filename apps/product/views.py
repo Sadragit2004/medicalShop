@@ -967,7 +967,7 @@ def get_category_tree_mobile(request):
         children_count = cat.children.filter(isActive=True).count()
         print(f"  Children: {children_count}")
 
-        for child in cat.children.filter(isActive=True)[:3]:
+        for child in cat.children.filter(isActive=True)[:50]:
             grandchildren_count = child.children.filter(isActive=True).count()
             print(f"    Child: {child.title} - Grandchildren: {grandchildren_count}")
 
@@ -976,12 +976,12 @@ def get_category_tree_mobile(request):
 
     for main_cat in main_categories:
         # فرزندان سطح دوم
-        children_l2 = main_cat.children.filter(isActive=True).order_by('title')[:3]
+        children_l2 = main_cat.children.filter(isActive=True).order_by('title')
 
         children_data = []
         for child_l2 in children_l2:
             # فرزندان سطح سوم
-            children_l3 = child_l2.children.filter(isActive=True).order_by('title')[:7]
+            children_l3 = child_l2.children.filter(isActive=True).order_by('title')
             children_data.append({
                 'child': child_l2,
                 'grandchildren': children_l3
