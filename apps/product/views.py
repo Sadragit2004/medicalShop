@@ -959,7 +959,7 @@ def get_category_tree_mobile(request):
     main_categories = Category.objects.filter(
         parent=None,
         isActive=True
-    ).order_by('title')[:6]
+    ).order_by('createdAt')[:6]
 
     # دیباگ: نام دسته‌بندی‌های اصلی
     for cat in main_categories:
@@ -976,12 +976,12 @@ def get_category_tree_mobile(request):
 
     for main_cat in main_categories:
         # فرزندان سطح دوم
-        children_l2 = main_cat.children.filter(isActive=True).order_by('title')
+        children_l2 = main_cat.children.filter(isActive=True).order_by('createdAt')
 
         children_data = []
         for child_l2 in children_l2:
             # فرزندان سطح سوم
-            children_l3 = child_l2.children.filter(isActive=True).order_by('title')
+            children_l3 = child_l2.children.filter(isActive=True).order_by('createdAt')
             children_data.append({
                 'child': child_l2,
                 'grandchildren': children_l3
