@@ -164,11 +164,11 @@ from sms_ir import SmsIr
 def send_sms(number,code):
 
     pass
-    sms_ir = SmsIr('he4QV5RJiXYsfgjHBpgjpJ2GMFtemy28GSEcDlCpEweK9q0ahroGcmgT5kexuJUR')
+    sms_ir = SmsIr('aOdP7bVrffnd5D56iRlaYbtKs6Cm4zIcsaxhoe3aQXLT04u8')
 
     result = sms_ir.send_verify_code(
         number=str(number),
-        template_id=172582,
+        template_id=143712,
         parameters=[
             {
 
