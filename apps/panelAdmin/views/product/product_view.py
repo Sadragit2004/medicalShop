@@ -128,12 +128,13 @@ def brand_create(request):
         try:
             brand = Brand.objects.create(
                 title=request.POST.get('title'),
+                slug=request.POST.get('slug'),  # ذخیره مستقیم slug
                 description=request.POST.get('description'),
                 logo=request.FILES.get('logo'),
                 isActive=request.POST.get('isActive') == 'on'
             )
             messages.success(request, 'برند با موفقیت ایجاد شد')
-            return redirect('admin_brand_list')
+            return redirect('panelAdmin:admin_brand_list')
         except Exception as e:
             messages.error(request, f'خطا در ایجاد برند: {str(e)}')
 
@@ -146,20 +147,27 @@ def brand_update(request, brand_id):
     if request.method == 'POST':
         try:
             brand.title = request.POST.get('title', brand.title)
+            brand.slug = request.POST.get('slug', brand.slug)  # ذخیره مستقیم slug
             brand.description = request.POST.get('description', brand.description)
 
             if 'logo' in request.FILES:
                 brand.logo = request.FILES['logo']
 
+            # بررسی حذف لوگو
+            if request.POST.get('delete_logo') == 'true':
+                brand.logo = None
+
             brand.isActive = request.POST.get('isActive') == 'on'
             brand.save()
 
             messages.success(request, 'برند با موفقیت ویرایش شد')
-            return redirect('admin_brand_list')
+            return redirect('panelAdmin:admin_brand_list')
         except Exception as e:
             messages.error(request, f'خطا در ویرایش برند: {str(e)}')
 
     return render(request, 'panelAdmin/products/brand/update.html', {'brand': brand})
+
+
 
 def brand_delete(request, brand_id):
     """حذف برند"""
@@ -169,7 +177,7 @@ def brand_delete(request, brand_id):
         try:
             brand.delete()
             messages.success(request, 'برند با موفقیت حذف شد')
-            return redirect('admin_brand_list')
+            return redirect('panelAdmin:admin_brand_list')
         except Exception as e:
             messages.error(request, f'خطا در حذف برند: {str(e)}')
 

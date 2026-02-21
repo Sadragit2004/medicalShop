@@ -1,7 +1,6 @@
 <!-- templates/panelAdmin/products/brand/update.html -->
 {% extends '../../base/base.html' %}
 
-
 {% block title %}ویرایش برند - {{ brand.title }}{% endblock %}
 
 {% block breadcrumb_items %}
@@ -32,7 +31,6 @@
                                    name="title"
                                    value="{{ brand.title }}"
                                    required>
-                            <div class="invalid-feedback">لطفاً عنوان برند را وارد کنید</div>
                         </div>
 
                         <!-- اسلاگ -->
@@ -42,8 +40,9 @@
                                    class="form-control"
                                    id="slug"
                                    name="slug"
-                                   value="{{ brand.slug }}">
-                            <div class="form-text">تغییر اسلاگ ممکن است لینک‌های قبلی را بشکند</div>
+                                   value="{{ brand.slug }}"
+                                   dir="ltr">
+                            <div class="form-text">برای URL استفاده می‌شود</div>
                         </div>
 
                         <!-- توضیحات -->
@@ -53,7 +52,6 @@
                                       id="description"
                                       name="description"
                                       rows="3">{{ brand.description|default:'' }}</textarea>
-                            <div class="form-text">توضیح اختیاری درباره برند</div>
                         </div>
 
                         <!-- لوگوی فعلی -->
@@ -87,7 +85,6 @@
                                    id="logo"
                                    name="logo"
                                    accept="image/*">
-                            <div class="form-text">لوگوی جدید جایگزین لوگوی فعلی می‌شود</div>
                         </div>
 
                         <!-- پیش‌نمایش لوگو جدید -->
@@ -117,7 +114,6 @@
                                         <label class="form-check-label fw-bold" for="isActive">
                                             <i class="fas fa-toggle-on text-success"></i> برند فعال
                                         </label>
-                                        <div class="form-text">برندهای غیرفعال در سایت نمایش داده نمی‌شوند</div>
                                     </div>
                                 </div>
                             </div>
@@ -144,23 +140,6 @@
                                             <span class="badge bg-primary">{{ brand.products.count }}</span>
                                         </div>
                                     </div>
-                                    {% if brand.products.all %}
-                                    <div class="mt-3">
-                                        <strong>آخرین محصولات:</strong>
-                                        <div class="row mt-2">
-                                            {% for product in brand.products.all|slice:":4" %}
-                                            <div class="col-6 col-md-3 mb-2">
-                                                <div class="border rounded p-2 text-center">
-                                                    <small>{{ product.title|truncatechars:15 }}</small>
-                                                    <div>
-                                                        <span class="badge bg-secondary">{{ product.saleTypes.first.price|default:"-" }} تومان</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -179,9 +158,6 @@
                                     </a>
                                 </div>
                                 <div>
-                                    <button type="reset" class="btn btn-outline-secondary me-2">
-                                        <i class="fas fa-redo"></i> بازنشانی
-                                    </button>
                                     <button type="submit" class="btn btn-warning">
                                         <i class="fas fa-save"></i> ذخیره تغییرات
                                     </button>
@@ -196,7 +172,6 @@
 
     <!-- سایدبار -->
     <div class="col-lg-4">
-        <!-- اطلاعات کلی -->
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
                 <h5 class="card-title mb-0"><i class="fas fa-tag"></i> خلاصه برند</h5>
@@ -227,10 +202,6 @@
                         </span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>تعداد محصولات</span>
-                        <span class="badge bg-primary rounded-pill">{{ brand.products.count }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
                         <span>لوگو</span>
                         <span>
                             {% if brand.logo %}
@@ -240,76 +211,7 @@
                             {% endif %}
                         </span>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>توضیحات</span>
-                        <span>
-                            {% if brand.description %}
-                            <span class="badge bg-info">دارد</span>
-                            {% else %}
-                            <span class="badge bg-warning">ندارد</span>
-                            {% endif %}
-                        </span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>تاریخ ایجاد</span>
-                        <span class="text-muted">{{ brand.createdAt|date:"Y/m/d" }}</span>
-                    </li>
                 </ul>
-            </div>
-        </div>
-
-        <!-- آمار محصولات -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="card-title mb-0"><i class="fas fa-chart-pie"></i> آمار محصولات</h5>
-            </div>
-            <div class="card-body">
-                {% if brand.products.count > 0 %}
-                <div class="row text-center">
-                    <div class="col-6 mb-3">
-                        <div class="p-3 bg-light rounded">
-                            <div class="h4 mb-0">{{ active_products }}</div>
-                            <div class="text-muted">محصولات فعال</div>
-                        </div>
-                    </div>
-                    <div class="col-6 mb-3">
-                        <div class="p-3 bg-light rounded">
-                            <div class="h4 mb-0">{{ inactive_products }}</div>
-                            <div class="text-muted">محصولات غیرفعال</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="progress mb-2">
-                    <div class="progress-bar bg-success" style="width: {{ active_percentage }}%">
-                        {{ active_percentage }}%
-                    </div>
-                </div>
-                <small class="text-muted">درصد محصولات فعال</small>
-                {% else %}
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    هنوز هیچ محصولی برای این برند ثبت نشده است
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- هشدارها -->
-        <div class="card">
-            <div class="card-header bg-warning text-dark">
-                <h5 class="card-title mb-0"><i class="fas fa-exclamation-triangle"></i> هشدارهای مهم</h5>
-            </div>
-            <div class="card-body">
-                <div class="alert alert-warning">
-                    <h6><i class="fas fa-lightbulb"></i> توجه:</h6>
-                    <ul class="mb-0 small">
-                        <li class="mb-2">غیرفعال کردن برند، محصولات آن را مخفی می‌کند</li>
-                        <li class="mb-2">تغییر اسلاگ، لینک‌های قدیمی را می‌شکند</li>
-                        <li class="mb-2">حذف لوگو، تصویر پیش‌فرض نمایش داده می‌شود</li>
-                        <li class="mb-2">حذف برند، محصولات آن را حذف نمی‌کند</li>
-                        <li>پس از ذخیره، تغییرات بلافاصله اعمال می‌شود</li>
-                    </ul>
-                </div>
             </div>
         </div>
     </div>
@@ -343,12 +245,10 @@ document.getElementById('logo').addEventListener('change', function(e) {
 
     if (this.files && this.files[0]) {
         const reader = new FileReader();
-
         reader.onload = function(e) {
             previewLogo.src = e.target.result;
             preview.classList.remove('d-none');
         }
-
         reader.readAsDataURL(this.files[0]);
     } else {
         preview.classList.add('d-none');
@@ -357,10 +257,6 @@ document.getElementById('logo').addEventListener('change', function(e) {
 
 // حذف لوگوی فعلی
 function deleteCurrentLogo() {
-    const logoInput = document.getElementById('logo');
-    const currentLogo = document.querySelector('.current-logo');
-
-    // ایجاد فیلد مخفی برای حذف لوگو
     let hiddenInput = document.querySelector('input[name="delete_logo"]');
     if (!hiddenInput) {
         hiddenInput = document.createElement('input');
@@ -370,66 +266,23 @@ function deleteCurrentLogo() {
         document.getElementById('brandForm').appendChild(hiddenInput);
     }
 
-    // پاک کردن پیش‌نمایش
-    currentLogo.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> لوگو حذف شد</div>';
-
-    // بستن مودال
     const modal = bootstrap.Modal.getInstance(document.getElementById('deleteLogoModal'));
     modal.hide();
+    alert('لوگو پس از ذخیره تغییرات حذف خواهد شد');
 }
 
 // اعتبارسنجی فرم
 document.getElementById('brandForm').addEventListener('submit', function(e) {
     const title = document.getElementById('title').value.trim();
-    const slug = document.getElementById('slug').value.trim();
-
     if (!title) {
         e.preventDefault();
         alert('عنوان برند الزامی است');
         return;
     }
-
-    if (slug && !/^[a-z0-9\-]+$/.test(slug)) {
-        e.preventDefault();
-        alert('اسلاگ فقط می‌تواند شامل حروف کوچک، اعداد و خط تیره باشد');
-        return;
-    }
-
-    // بررسی حداقل 2 کاراکتر برای عنوان
     if (title.length < 2) {
         e.preventDefault();
         alert('عنوان برند باید حداقل 2 کاراکتر باشد');
         return;
-    }
-});
-
-// شمارش کاراکترهای توضیحات
-document.getElementById('description').addEventListener('input', function(e) {
-    const maxLength = 500;
-    const currentLength = e.target.value.length;
-
-    if (currentLength > maxLength) {
-        e.target.value = e.target.value.substring(0, maxLength);
-        alert(`حداکثر ${maxLength} کاراکتر مجاز است`);
-    }
-
-    // نمایش تعداد کاراکتر
-    let counter = document.getElementById('charCounter');
-    if (!counter) {
-        counter = document.createElement('div');
-        counter.id = 'charCounter';
-        counter.className = 'form-text text-end';
-        this.parentNode.appendChild(counter);
-    }
-
-    counter.textContent = `${currentLength}/${maxLength} کاراکتر`;
-});
-
-// بارگذاری اولیه شمارشگر
-document.addEventListener('DOMContentLoaded', function() {
-    const description = document.getElementById('description');
-    if (description) {
-        description.dispatchEvent(new Event('input'));
     }
 });
 </script>
@@ -439,7 +292,6 @@ document.addEventListener('DOMContentLoaded', function() {
     content: " *";
     color: red;
 }
-
 .no-logo-circle {
     width: 120px;
     height: 120px;
@@ -450,19 +302,6 @@ document.addEventListener('DOMContentLoaded', function() {
     justify-content: center;
     margin: 0 auto;
     border: 2px dashed #dee2e6;
-}
-
-.current-logo {
-    text-align: center;
-}
-
-.progress {
-    height: 25px;
-    border-radius: 5px;
-}
-
-.progress-bar {
-    font-weight: bold;
 }
 </style>
 {% endblock %}

@@ -1,7 +1,6 @@
 <!-- templates/panelAdmin/products/brand/create.html -->
 {% extends '../../base/base.html' %}
 
-
 {% block title %}ایجاد برند جدید{% endblock %}
 
 {% block breadcrumb_items %}
@@ -43,9 +42,9 @@
                                    class="form-control"
                                    id="slug"
                                    name="slug"
-                                   placeholder="به صورت خودکار ایجاد می‌شود"
-                                   pattern="[a-z0-9\-]+">
-                            <div class="form-text">برای URL استفاده می‌شود - فقط حروف کوچک، اعداد و خط تیره</div>
+                                   placeholder="مثال: samsung"
+                                   dir="ltr">
+                            <div class="form-text">برای URL استفاده می‌شود - می‌توانید خالی بگذارید</div>
                         </div>
 
                         <!-- توضیحات -->
@@ -141,7 +140,7 @@
                     <h6><i class="fas fa-lightbulb"></i> نکات مهم:</h6>
                     <ul class="mb-0">
                         <li class="mb-2"><strong>عنوان:</strong> باید منحصر به فرد و واضح باشد</li>
-                        <li class="mb-2"><strong>اسلاگ:</strong> برای URL استفاده می‌شود</li>
+                        <li class="mb-2"><strong>اسلاگ:</strong> برای URL استفاده می‌شود - می‌توانید خالی بگذارید</li>
                         <li class="mb-2"><strong>لوگو:</strong> بهتر است لوگوی با کیفیت آپلود شود</li>
                         <li class="mb-2"><strong>توضیحات:</strong> برای SEO مفید است</li>
                         <li><strong>وضعیت:</strong> برندهای غیرفعال نمایش داده نمی‌شوند</li>
@@ -153,44 +152,8 @@
                     <ul class="mb-0">
                         <li>عنوان تکراری مجاز نیست</li>
                         <li>لوگو باید مربع یا نزدیک به مربع باشد</li>
-                        <li>تغییر اسلاگ ممکن است لینک‌های قبلی را بشکند</li>
                         <li>حذف برند، محصولات آن را حذف نمی‌کند</li>
                     </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- نمونه لوگوها -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0"><i class="fas fa-image"></i> نمونه لوگوهای مناسب</h5>
-            </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-6 mb-3">
-                        <div class="p-3 border rounded">
-                            <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
-                            <div class="small">لوگوی شفاف (PNG)</div>
-                        </div>
-                    </div>
-                    <div class="col-6 mb-3">
-                        <div class="p-3 border rounded">
-                            <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
-                            <div class="small">لوگوی مربع</div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="p-3 border rounded">
-                            <i class="fas fa-times-circle text-danger fa-2x mb-2"></i>
-                            <div class="small">لوگوی بزرگ (بالای 1MB)</div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="p-3 border rounded">
-                            <i class="fas fa-times-circle text-danger fa-2x mb-2"></i>
-                            <div class="small">لوگوی مستطیلی</div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -198,19 +161,6 @@
 </div>
 
 <script>
-// ایجاد اسلاگ از عنوان
-document.getElementById('title').addEventListener('input', function(e) {
-    const slugField = document.getElementById('slug');
-    if (!slugField.value || slugField.value === slugField.defaultValue) {
-        const slug = e.target.value
-            .replace(/[^\u0600-\u06FF\w\s]/g, '')
-            .replace(/\s+/g, '-')
-            .toLowerCase()
-            .replace(/[^a-z0-9\-]/g, '');
-        slugField.value = slug;
-    }
-});
-
 // پیش‌نمایش لوگو
 const logoInput = document.getElementById('logo');
 const logoPreview = document.getElementById('logoPreview');
@@ -219,7 +169,7 @@ const previewLogo = document.getElementById('previewLogo');
 logoInput.addEventListener('change', function(e) {
     if (this.files && this.files[0]) {
         // بررسی حجم فایل
-        const fileSize = this.files[0].size / 1024 / 1024; // MB
+        const fileSize = this.files[0].size / 1024 / 1024;
         if (fileSize > 1) {
             alert('حجم فایل باید کمتر از 1 مگابایت باشد');
             this.value = '';
@@ -235,15 +185,11 @@ logoInput.addEventListener('change', function(e) {
         }
 
         const reader = new FileReader();
-
         reader.onload = function(e) {
             previewLogo.src = e.target.result;
             logoPreview.classList.remove('d-none');
         }
-
         reader.readAsDataURL(this.files[0]);
-    } else {
-        logoPreview.classList.add('d-none');
     }
 });
 
@@ -256,48 +202,16 @@ document.getElementById('removeLogo').addEventListener('click', function() {
 // اعتبارسنجی فرم
 document.getElementById('brandForm').addEventListener('submit', function(e) {
     const title = document.getElementById('title').value.trim();
-    const slug = document.getElementById('slug').value.trim();
-
     if (!title) {
         e.preventDefault();
         alert('عنوان برند الزامی است');
         return;
     }
-
-    if (slug && !/^[a-z0-9\-]+$/.test(slug)) {
-        e.preventDefault();
-        alert('اسلاگ فقط می‌تواند شامل حروف کوچک، اعداد و خط تیره باشد');
-        return;
-    }
-
-    // بررسی حداقل 2 کاراکتر برای عنوان
     if (title.length < 2) {
         e.preventDefault();
         alert('عنوان برند باید حداقل 2 کاراکتر باشد');
         return;
     }
-});
-
-// محدودیت کاراکتر برای توضیحات
-document.getElementById('description').addEventListener('input', function(e) {
-    const maxLength = 500;
-    const currentLength = e.target.value.length;
-
-    if (currentLength > maxLength) {
-        e.target.value = e.target.value.substring(0, maxLength);
-        alert(`حداکثر ${maxLength} کاراکتر مجاز است`);
-    }
-
-    // نمایش تعداد کاراکتر
-    const counter = document.getElementById('charCounter') || (function() {
-        const counter = document.createElement('div');
-        counter.id = 'charCounter';
-        counter.className = 'form-text text-end';
-        e.target.parentNode.appendChild(counter);
-        return counter;
-    })();
-
-    counter.textContent = `${currentLength}/${maxLength} کاراکتر`;
 });
 </script>
 
@@ -305,16 +219,6 @@ document.getElementById('description').addEventListener('input', function(e) {
 .required:after {
     content: " *";
     color: red;
-}
-
-#logoPreview img {
-    max-width: 100%;
-    height: auto;
-}
-
-.char-counter {
-    font-size: 0.875rem;
-    color: #6c757d;
 }
 </style>
 {% endblock %}

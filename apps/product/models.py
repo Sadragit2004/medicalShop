@@ -11,7 +11,7 @@ from ckeditor_uploader.fields import RichTextUploadingField
 # ========================
 class BaseModel(models.Model):
     title = models.CharField(max_length=200, verbose_name="عنوان")
-    slug = models.SlugField(max_length=200, unique=True, verbose_name="اسلاگ", allow_unicode=True)
+    slug = models.SlugField(max_length=200,verbose_name="اسلاگ")
     createdAt = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
     updatedAt = models.DateTimeField(auto_now=True, verbose_name="تاریخ بروزرسانی")
     isActive = models.BooleanField(default=True, verbose_name="فعال")
@@ -19,10 +19,6 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.title, allow_unicode=True)
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
