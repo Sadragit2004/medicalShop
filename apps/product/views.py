@@ -180,7 +180,6 @@ def product_detail(request, slug):
         discountOfBasket__product=product
     ).order_by('-discount').values_list('discount', flat=True).first() or 0
 
-
     sale_types = ProductSaleType.objects.filter(
         product=product,
         isActive=True
@@ -190,7 +189,6 @@ def product_detail(request, slug):
     default_sale_type = sale_types.filter(typeSale=SaleType.SINGLE).first()
     if not default_sale_type and sale_types.exists():
         default_sale_type = sale_types.first()
-
 
     # محاسبه finalPrice برای هر نوع فروش
     for sale in sale_types:
@@ -220,8 +218,40 @@ def product_detail(request, slug):
         default_base_price = 0
         default_final_price = 0
 
+    # ========== محاسبات مربوط به موجودی و محدودیت‌ها ==========
+
+    # محاسبه مقادیر مربوط به کارتن
+    max_cartons = 0
+    total_units = 0
+    if default_sale_type and default_sale_type.typeSale == SaleType.CARTON:
+        if default_sale_type.memberCarton and default_sale_type.memberCarton > 0:
+            max_cartons = product.stock // default_sale_type.memberCarton
+            total_units = default_sale_type.memberCarton
+        else:
+            max_cartons = 0
+            total_units = 0
+
+    # محاسبه حداکثر تعداد برای limited sale
+    max_limited = 0
+    step_limited = 0
+    if default_sale_type and default_sale_type.typeSale == SaleType.LIMITED:
+        max_limited = product.stock
+        step_limited = default_sale_type.limitedSale or 1
+
+    # بررسی اینکه آیا کاربر این محصول را قبلاً کامنت کرده است
+    user_has_commented = False
+    if request.user.is_authenticated:
+        user_has_commented = Comment.objects.filter(
+            user=request.user,
+            product=product
+        ).exists()
+
+    # بررسی اینکه آیا محصول در لیست علاقه‌مندی‌های کاربر هست
+    is_favorite = False
+    if request.user.is_authenticated:
+        is_favorite = request.user.favorites.filter(id=product.id).exists()
+
     # 7. محصولات مرتبط (از همان دسته‌بندی‌ها) + تخفیف
-    now = timezone.now()
     discount_subquery = DiscountBasket.objects.filter(
         isActive=True,
         startDate__lte=now,
@@ -232,6 +262,8 @@ def product_detail(request, slug):
     related_products = Product.objects.filter(
         isActive=True,
         category__in=product.category.all()
+    ).exclude(
+        id=product.id  # محصول فعلی رو حذف کن
     ).annotate(
         price=Subquery(
             ProductSaleType.objects.filter(
@@ -275,13 +307,13 @@ def product_detail(request, slug):
     is_call = shop_setting.is_call if shop_setting else False
     emergency_phone = shop_setting.emergency_phone if shop_setting else None
 
-
-
+    # 11. context نهایی
     context = {
         # اطلاعات اصلی محصول
         'product': product,
         'is_call': is_call,
-         'emergency_phone': emergency_phone,
+        'emergency_phone': emergency_phone,
+
         # گالری
         'galleries': galleries,
 
@@ -316,15 +348,22 @@ def product_detail(request, slug):
         'specifications': specifications,
 
         # برای فرم کامنت
-        'user_has_commented': False,
-    }
+        'user_has_commented': user_has_commented,
 
-    # بررسی اگر کاربر لاگین کرده، آیا قبلاً کامنت داده است؟
-    if request.user.is_authenticated:
-        context['user_has_commented'] = Comment.objects.filter(
-            user=request.user,
-            product=product
-        ).exists()
+        # وضعیت علاقه‌مندی
+        'is_favorite': is_favorite,
+
+        # ========== مقادیر محاسبه شده برای موجودی و محدودیت‌ها ==========
+        'max_cartons': max_cartons,
+        'total_units': total_units,
+        'max_limited': max_limited,
+        'step_limited': step_limited,
+
+        # اطلاعات اضافی برای استفاده در جاوااسکریپت
+        'product_stock': product.stock,
+        'member_carton': default_sale_type.memberCarton if default_sale_type and default_sale_type.typeSale == SaleType.CARTON else 0,
+        'limited_sale': default_sale_type.limitedSale if default_sale_type and default_sale_type.typeSale == SaleType.LIMITED else 0,
+    }
 
     return render(request, 'product_app/product/product_detail.html', context)
 

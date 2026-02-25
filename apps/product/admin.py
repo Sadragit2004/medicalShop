@@ -216,7 +216,7 @@ class ProductAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('اطلاعات اصلی', {
-            'fields': ('title', 'slug', 'brand', 'category', 'isActive')
+            'fields': ('title', 'slug', 'brand', 'category', 'isActive','stock')
         }),
         ('تصاویر', {
             'fields': ('mainImage', 'main_image_preview'),
