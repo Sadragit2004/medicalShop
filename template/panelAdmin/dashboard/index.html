@@ -1,156 +1,251 @@
 <!-- templates/admin/dashboard/index.html -->
 {% extends '../base/base.html' %}
+{% load humanize %}
+{% block title %}داشبورد مدیریت | فروشگاه{% endblock %}
 
-{% block title %}داشبورد مدیریت{% endblock %}
-
-{% block page_title %}داشبورد مدیریت{% endblock %}
+{% block page_title %}
+<i class="fas fa-chart-pie ms-2 text-primary"></i>
+داشبورد مدیریت
+{% endblock %}
 
 {% block breadcrumb_items %}
-<li class="breadcrumb-item active" aria-current="page">داشبورد</li>
+<li class="breadcrumb-item"><a href="{% url 'panelAdmin:admin_dashboard' %}">داشبورد</a></li>
+<li class="breadcrumb-item active" aria-current="page">خلاصه گزارشات</li>
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    <!-- Stats Cards -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stat-card primary h-100">
+<!-- Welcome Section -->
+<div class="welcome-section bg-gradient-primary text-white rounded-4 p-4 mb-4 shadow-lg">
+    <div class="d-flex flex-wrap align-items-center justify-content-between">
+        <div>
+            <h2 class="fw-bold mb-2">
+                خوش آمدید، {{ user.get_full_name|default:user.mobileNumber }}! 👋
+            </h2>
+            <p class="mb-0 opacity-75">
+                <i class="fas fa-calendar-alt me-2"></i>
+                امروز {% now "l، d F Y" %} |
+                <i class="fas fa-clock me-2 ms-2"></i>
+                آخرین بروزرسانی: {{ last_update|time:"H:i" }}
+            </p>
+        </div>
+        <div class="mt-3 mt-md-0">
+            <button class="btn btn-light me-2" onclick="location.reload()">
+                <i class="fas fa-sync-alt ms-2"></i>
+                بروزرسانی
+            </button>
+            <button class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#reportModal">
+                <i class="fas fa-download ms-2"></i>
+                دریافت گزارش
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards with Animation -->
+<div class="row g-4 mb-4">
+    <!-- Users Card -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card card border-0 shadow-sm h-100" data-aos="fade-up" data-aos-delay="100">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <h6 class="text-muted mb-2">کاربران</h6>
-                        <h3 class="mb-0">{{ stats.total_users }}</h3>
-                        <small class="text-success">
-                            <i class="fas fa-arrow-up me-1"></i>
-                            {{ stats.new_users_today }} جدید امروز
-                        </small>
+                        <div class="stat-label text-muted mb-2">
+                            <i class="fas fa-users me-1"></i>
+                            کاربران
+                        </div>
+                        <div class="d-flex align-items-baseline">
+                            <h2 class="stat-number mb-0">{{ stats.total_users|default:'۰'|intcomma:False }}</h2>
+                            <span class="stat-change text-success me-3">
+                                <i class="fas fa-arrow-up"></i>
+                                +{{ stats.new_users_today|default:'۰' }}
+                            </span>
+                        </div>
+                        <small class="text-muted">تعداد کل کاربران</small>
                     </div>
-                    <div class="bg-primary rounded-circle p-3">
-                        <i class="fas fa-users fa-2x text-white"></i>
+                    <div class="stat-icon-wrapper bg-primary-soft rounded-circle p-3">
+                        <i class="fas fa-users fa-2x text-primary"></i>
                     </div>
+                </div>
+                <div class="progress mt-3" style="height: 6px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: 75%"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stat-card success h-100">
+    <!-- Orders Card -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card card border-0 shadow-sm h-100" data-aos="fade-up" data-aos-delay="200">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <h6 class="text-muted mb-2">سفارشات</h6>
-                        <h3 class="mb-0">{{ stats.total_orders }}</h3>
-                        <small class="text-success">
-                            <i class="fas fa-arrow-up me-1"></i>
-                            {{ stats.today_orders }} امروز
-                        </small>
+                        <div class="stat-label text-muted mb-2">
+                            <i class="fas fa-shopping-cart me-1"></i>
+                            سفارشات
+                        </div>
+                        <div class="d-flex align-items-baseline">
+                            <h2 class="stat-number mb-0">{{ stats.total_orders|default:'۰'|intcomma:False }}</h2>
+                            <span class="stat-change text-success me-3">
+                                <i class="fas fa-arrow-up"></i>
+                                +{{ stats.today_orders|default:'۰' }}
+                            </span>
+                        </div>
+                        <small class="text-muted">تعداد کل سفارشات</small>
                     </div>
-                    <div class="bg-success rounded-circle p-3">
-                        <i class="fas fa-shopping-cart fa-2x text-white"></i>
+                    <div class="stat-icon-wrapper bg-success-soft rounded-circle p-3">
+                        <i class="fas fa-shopping-cart fa-2x text-success"></i>
                     </div>
+                </div>
+                <div class="progress mt-3" style="height: 6px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: 65%"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stat-card warning h-100">
+    <!-- Products Card -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card card border-0 shadow-sm h-100" data-aos="fade-up" data-aos-delay="300">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <h6 class="text-muted mb-2">محصولات</h6>
-                        <h3 class="mb-0">{{ stats.total_products }}</h3>
-                        <small class="text-success">
+                        <div class="stat-label text-muted mb-2">
                             <i class="fas fa-box me-1"></i>
-                            {{ stats.active_products }} فعال
-                        </small>
+                            محصولات
+                        </div>
+                        <div class="d-flex align-items-baseline">
+                            <h2 class="stat-number mb-0">{{ stats.total_products|default:'۰'|intcomma:False }}</h2>
+                            <span class="stat-change text-info me-3">
+                                <i class="fas fa-check-circle"></i>
+                                {{ stats.active_products|default:'۰' }} فعال
+                            </span>
+                        </div>
+                        <small class="text-muted">تعداد کل محصولات</small>
                     </div>
-                    <div class="bg-warning rounded-circle p-3">
-                        <i class="fas fa-box fa-2x text-white"></i>
+                    <div class="stat-icon-wrapper bg-info-soft rounded-circle p-3">
+                        <i class="fas fa-box fa-2x text-info"></i>
                     </div>
+                </div>
+                <div class="progress mt-3" style="height: 6px;">
+                    <div class="progress-bar bg-info" role="progressbar" style="width: 85%"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stat-card danger h-100">
+    <!-- Revenue Card -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card card border-0 shadow-sm h-100" data-aos="fade-up" data-aos-delay="400">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <h6 class="text-muted mb-2">درآمد</h6>
-                        <h3 class="mb-0">{{ stats.total_revenue|floatformat:0 }}</h3>
-                        <small class="text-success">
-                            <i class="fas fa-money-bill-wave me-1"></i>
-                            {{ stats.today_revenue|floatformat:0 }} امروز
-                        </small>
+                        <div class="stat-label text-muted mb-2">
+                            <i class="fas fa-dollar-sign me-1"></i>
+                            درآمد
+                        </div>
+                        <div class="d-flex align-items-baseline">
+                            <h2 class="stat-number mb-0">{{ stats.total_revenue|default:'۰'|intcomma:False }}</h2>
+                            <span class="stat-change text-warning me-3">
+                                <i class="fas fa-chart-line"></i>
+                                {{ stats.revenue_growth|default:'۰' }}%
+                            </span>
+                        </div>
+                        <small class="text-muted">درآمد کل (تومان)</small>
                     </div>
-                    <div class="bg-danger rounded-circle p-3">
-                        <i class="fas fa-dollar-sign fa-2x text-white"></i>
+                    <div class="stat-icon-wrapper bg-warning-soft rounded-circle p-3">
+                        <i class="fas fa-chart-line fa-2x text-warning"></i>
                     </div>
+                </div>
+                <div class="progress mt-3" style="height: 6px;">
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: 45%"></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <!-- Chart -->
-    <div class="col-xl-8 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">آمار فروش ۷ روز اخیر</h6>
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                        این هفته
+<!-- Charts and Recent Orders Row -->
+<div class="row g-4 mb-4">
+    <!-- Sales Chart -->
+    <div class="col-xl-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center py-3">
+                <div>
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line ms-2 text-primary"></i>
+                        آمار فروش
+                    </h5>
+                    <small class="text-muted">۷ روز اخیر</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm" id="chartPeriod" style="width: 120px;">
+                        <option value="week" selected>این هفته</option>
+                        <option value="month">این ماه</option>
+                        <option value="year">امسال</option>
+                    </select>
+                    <button class="btn btn-sm btn-outline-primary" onclick="exportChart()">
+                        <i class="fas fa-download"></i>
                     </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#">امروز</a></li>
-                        <li><a class="dropdown-item" href="#">این هفته</a></li>
-                        <li><a class="dropdown-item" href="#">این ماه</a></li>
-                        <li><a class="dropdown-item" href="#">این سال</a></li>
-                    </ul>
                 </div>
             </div>
             <div class="card-body">
-                <canvas id="salesChart"></canvas>
+                <canvas id="salesChart" height="300"></canvas>
             </div>
         </div>
     </div>
 
     <!-- Recent Orders -->
-    <div class="col-xl-4 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">آخرین سفارشات</h6>
-                <a href="{% url 'panelAdmin:admin_order_list' %}" class="btn btn-sm btn-outline-primary">
+    <div class="col-xl-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock ms-2 text-warning"></i>
+                    آخرین سفارشات
+                </h5>
+                <a href="{% url 'panelAdmin:admin_order_list' %}" class="btn btn-sm btn-link text-decoration-none">
                     مشاهده همه
+                    <i class="fas fa-arrow-left me-1"></i>
                 </a>
             </div>
             <div class="card-body p-0">
                 <div class="list-group list-group-flush">
                     {% for order in recent_orders %}
-                    <div class="list-group-item border-0">
+                    <div class="list-group-item border-0 px-4 py-3">
                         <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">سفارش #{{ order.orderCode|slice:":8" }}</h6>
-                                <small class="text-muted">
-                                    {{ order.customer.mobileNumber }}
-                                </small>
+                            <div class="d-flex align-items-center">
+                                <div class="order-icon ms-3">
+                                    <i class="fas fa-receipt text-muted"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-bold">سفارش #{{ order.orderCode|slice:":8" }}</h6>
+                                    <small class="text-muted">
+                                        <i class="fas fa-user ms-1"></i>
+                                        {{ order.customer.name|default:order.customer.mobileNumber }}
+                                    </small>
+                                </div>
                             </div>
                             <div class="text-end">
-                                <strong>{{ order.get_final_price|floatformat:0 }}</strong>
+                                <span class="fw-bold text-primary">{{ order.get_final_price|floatformat:0|intcomma:False }}</span>
                                 <div>
-                                    <span class="badge
-                                        {% if order.status == 'delivered' %}bg-success
-                                        {% elif order.status == 'pending' %}bg-warning
-                                        {% elif order.status == 'canceled' %}bg-danger
-                                        {% else %}bg-info{% endif %}">
-                                        {{ order.get_status_display }}
-                                    </span>
+                                    {% if order.status == 'delivered' %}
+                                        <span class="badge bg-success-soft text-success">تحویل شده</span>
+                                    {% elif order.status == 'pending' %}
+                                        <span class="badge bg-warning-soft text-warning">در انتظار</span>
+                                    {% elif order.status == 'canceled' %}
+                                        <span class="badge bg-danger-soft text-danger">لغو شده</span>
+                                    {% elif order.status == 'processing' %}
+                                        <span class="badge bg-info-soft text-info">در حال پردازش</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary-soft text-secondary">{{ order.get_status_display }}</span>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">سفارشی یافت نشد</p>
                     </div>
                     {% endfor %}
                 </div>
@@ -159,48 +254,73 @@
     </div>
 </div>
 
-<div class="row">
+<!-- Tables Row -->
+<div class="row g-4 mb-4">
     <!-- Recent Users -->
-    <div class="col-xl-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">کاربران جدید</h6>
-                <a href="{% url 'panelAdmin:admin_user_list' %}" class="btn btn-sm btn-outline-primary">
+    <div class="col-xl-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-plus ms-2 text-success"></i>
+                    کاربران جدید
+                </h5>
+                <a href="{% url 'panelAdmin:admin_user_list' %}" class="btn btn-sm btn-link text-decoration-none">
                     مشاهده همه
+                    <i class="fas fa-arrow-left me-1"></i>
                 </a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead>
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <th>نام</th>
+                                <th class="px-4">کاربر</th>
                                 <th>موبایل</th>
                                 <th>تاریخ عضویت</th>
                                 <th>وضعیت</th>
+                                <th class="px-4">عملیات</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for user in recent_users %}
                             <tr>
-                                <td>
+                                <td class="px-4">
                                     <div class="d-flex align-items-center">
-                                        <img src="https://via.placeholder.com/40" class="avatar me-2" alt="...">
+                                        <img src="https://ui-avatars.com/api/?name={{ user.name|default:user.mobileNumber }}&background=4361ee&color=fff&size=40&bold=true"
+                                             class="rounded-circle ms-3"
+                                             width="40"
+                                             height="40"
+                                             alt="{{ user.name }}">
                                         <div>
-                                            <strong>{{ user.name }} {{ user.family }}</strong>
+                                            <strong>{{ user.name|default:user.mobileNumber }} {{ user.family }}</strong>
                                             <br>
-                                            <small class="text-muted">{{ user.email|default:"-" }}</small>
+                                            <small class="text-muted">{{ user.email|default:"-"|truncatechars:20 }}</small>
                                         </div>
                                     </div>
                                 </td>
                                 <td>{{ user.mobileNumber }}</td>
-                                <td>{{ user.date_joined|date:"Y/m/d" }}</td>
+                                <td>
+                                    <i class="fas fa-calendar-alt ms-1 text-muted small"></i>
+                                    {{ user.date_joined|date:"Y/m/d" }}
+                                </td>
                                 <td>
                                     {% if user.is_active %}
-                                    <span class="badge bg-success">فعال</span>
+                                    <span class="badge bg-success-soft text-success px-3 py-2">فعال</span>
                                     {% else %}
-                                    <span class="badge bg-danger">غیرفعال</span>
+                                    <span class="badge bg-danger-soft text-danger px-3 py-2">غیرفعال</span>
                                     {% endif %}
+                                </td>
+                                <td class="px-4">
+                                    <a href="#" class="btn btn-sm btn-outline-primary" title="ویرایش">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5">
+                                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">کاربری یافت نشد</p>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -212,50 +332,78 @@
     </div>
 
     <!-- Top Products -->
-    <div class="col-xl-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">محصولات پرفروش</h6>
-                <a href="{% url 'panelAdmin:admin_product_list' %}" class="btn btn-sm btn-outline-primary">
+    <div class="col-xl-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-star ms-2 text-warning"></i>
+                    محصولات پرفروش
+                </h5>
+                <a href="{% url 'panelAdmin:admin_product_list' %}" class="btn btn-sm btn-link text-decoration-none">
                     مشاهده همه
+                    <i class="fas fa-arrow-left me-1"></i>
                 </a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead>
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <th>محصول</th>
+                                <th class="px-4">محصول</th>
                                 <th>دسته‌بندی</th>
-                                <th>فروش</th>
+                                <th>تعداد فروش</th>
                                 <th>درآمد</th>
+                                <th class="px-4">موجودی</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for product in top_products %}
                             <tr>
-                                <td>
+                                <td class="px-4">
                                     <div class="d-flex align-items-center">
                                         {% if product.mainImage %}
-                                        <img src="{{ product.mainImage.url }}" class="img-thumbnail me-2" alt="..." style="width: 50px; height: 50px;">
+                                        <img src="{{ product.mainImage.url }}"
+                                             class="rounded-3 ms-3 object-fit-cover"
+                                             alt="{{ product.title }}"
+                                             style="width: 50px; height: 50px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="bg-light rounded-3 ms-3 d-flex align-items-center justify-content-center"
+                                             style="width: 50px; height: 50px;">
+                                            <i class="fas fa-image text-muted"></i>
+                                        </div>
                                         {% endif %}
                                         <div>
-                                            <strong>{{ product.title }}</strong>
-                                            <br>
+                                            <strong class="d-block">{{ product.title|truncatechars:30 }}</strong>
                                             <small class="text-muted">{{ product.brand.title|default:"بدون برند" }}</small>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
                                     {% for cat in product.category.all|slice:":2" %}
-                                    <span class="badge bg-light text-dark">{{ cat.title }}</span>
+                                    <span class="badge bg-light text-dark me-1">{{ cat.title }}</span>
                                     {% endfor %}
                                 </td>
                                 <td>
-                                    <strong>{{ product.total_sold|default:0 }}</strong>
+                                    <span class="fw-bold">{{ product.total_sold|default:'۰' }}</span>
                                 </td>
                                 <td>
-                                    <strong class="text-success">{{ product.total_revenue|floatformat:0 }}</strong>
+                                    <span class="text-success fw-bold">{{ product.total_revenue|floatformat:0|intcomma:False }}</span>
+                                </td>
+                                <td class="px-4">
+                                    {% if product.stock > 10 %}
+                                    <span class="badge bg-success-soft text-success">{{ product.stock }} عدد</span>
+                                    {% elif product.stock > 0 %}
+                                    <span class="badge bg-warning-soft text-warning">{{ product.stock }} عدد</span>
+                                    {% else %}
+                                    <span class="badge bg-danger-soft text-danger">ناموجود</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5">
+                                    <i class="fas fa-box fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">محصولی یافت نشد</p>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -270,30 +418,49 @@
 <!-- Quick Actions -->
 <div class="row">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="mb-0">اقدامات سریع</h6>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-bottom py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt ms-2 text-warning"></i>
+                    اقدامات سریع
+                </h5>
             </div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-3 col-6">
-                        <a href="{% url 'panelAdmin:admin_product_create' %}" class="btn btn-primary w-100">
-                            <i class="fas fa-plus me-2"></i>محصول جدید
+                    <div class="col-lg-3 col-md-6">
+                        <a href="{% url 'panelAdmin:admin_product_create' %}" class="quick-action-card text-decoration-none">
+                            <div class="card border-0 bg-gradient-primary text-white text-center p-4">
+                                <i class="fas fa-plus-circle fa-3x mb-3"></i>
+                                <h6 class="mb-0">محصول جدید</h6>
+                                <small>افزودن محصول به فروشگاه</small>
+                            </div>
                         </a>
                     </div>
-                    <div class="col-md-3 col-6">
-                        <a href="{% url 'panelAdmin:admin_order_create' %}" class="btn btn-success w-100">
-                            <i class="fas fa-shopping-cart me-2"></i>سفارش جدید
+                    <div class="col-lg-3 col-md-6">
+                        <a href="{% url 'panelAdmin:admin_order_create' %}" class="quick-action-card text-decoration-none">
+                            <div class="card border-0 bg-gradient-success text-white text-center p-4">
+                                <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                                <h6 class="mb-0">سفارش جدید</h6>
+                                <small>ثبت سفارش جدید</small>
+                            </div>
                         </a>
                     </div>
-                    <div class="col-md-3 col-6">
-                        <a href="{% url 'panelAdmin:admin_coupon_create' %}" class="btn btn-warning w-100">
-                            <i class="fas fa-percent me-2"></i>کوپن جدید
+                    <div class="col-lg-3 col-md-6">
+                        <a href="{% url 'panelAdmin:admin_coupon_create' %}" class="quick-action-card text-decoration-none">
+                            <div class="card border-0 bg-gradient-warning text-white text-center p-4">
+                                <i class="fas fa-ticket-alt fa-3x mb-3"></i>
+                                <h6 class="mb-0">کوپن جدید</h6>
+                                <small>ایجاد کد تخفیف</small>
+                            </div>
                         </a>
                     </div>
-                    <div class="col-md-3 col-6">
-                        <a href="{% url 'panelAdmin:admin_slider_site_create' %}" class="btn btn-info w-100">
-                            <i class="fas fa-sliders-h me-2"></i>اسلایدر جدید
+                    <div class="col-lg-3 col-md-6">
+                        <a href="{% url 'panelAdmin:admin_slider_site_create' %}" class="quick-action-card text-decoration-none">
+                            <div class="card border-0 bg-gradient-info text-white text-center p-4">
+                                <i class="fas fa-images fa-3x mb-3"></i>
+                                <h6 class="mb-0">اسلایدر جدید</h6>
+                                <small>افزودن به صفحه اصلی</small>
+                            </div>
                         </a>
                     </div>
                 </div>
@@ -301,54 +468,356 @@
         </div>
     </div>
 </div>
+
+<!-- Report Modal -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">دریافت گزارش</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reportForm">
+                    <div class="mb-3">
+                        <label class="form-label">نوع گزارش</label>
+                        <select class="form-select">
+                            <option value="daily">گزارش روزانه</option>
+                            <option value="weekly">گزارش هفتگی</option>
+                            <option value="monthly">گزارش ماهانه</option>
+                            <option value="yearly">گزارش سالانه</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">فرمت فایل</label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="format" id="pdf" checked>
+                                <label class="form-check-label" for="pdf">PDF</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="format" id="excel">
+                                <label class="form-check-label" for="excel">Excel</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="format" id="csv">
+                                <label class="form-check-label" for="csv">CSV</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary" onclick="downloadReport()">
+                    <i class="fas fa-download ms-2"></i>
+                    دریافت
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Custom Dashboard Styles */
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #4361ee, #3a56d4);
+    }
+
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #06d6a0, #05b586);
+    }
+
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, #ff9f1c, #f48c06);
+    }
+
+    .bg-gradient-info {
+        background: linear-gradient(135deg, #4cc9f0, #3aa8d4);
+    }
+
+    .bg-primary-soft { background-color: rgba(67, 97, 238, 0.1); }
+    .bg-success-soft { background-color: rgba(6, 214, 160, 0.1); }
+    .bg-info-soft { background-color: rgba(76, 201, 240, 0.1); }
+    .bg-warning-soft { background-color: rgba(255, 159, 28, 0.1); }
+    .bg-danger-soft { background-color: rgba(239, 71, 111, 0.1); }
+    .bg-secondary-soft { background-color: rgba(108, 117, 125, 0.1); }
+
+    .stat-card {
+        transition: all 0.3s ease;
+        cursor: default;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+        transform: rotate(45deg);
+        transition: all 0.6s;
+        opacity: 0;
+    }
+
+    .stat-card:hover::before {
+        animation: shine 1.5s;
+    }
+
+    @keyframes shine {
+        0% { transform: translateX(-100%) rotate(45deg); opacity: 0; }
+        50% { opacity: 0.5; }
+        100% { transform: translateX(100%) rotate(45deg); opacity: 0; }
+    }
+
+    .stat-icon-wrapper {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .stat-number {
+        font-size: 2.2rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .stat-change {
+        font-size: 0.9rem;
+        font-weight: 500;
+        padding: 3px 8px;
+        border-radius: 20px;
+        background: rgba(6, 214, 160, 0.1);
+    }
+
+    .welcome-section {
+        background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .welcome-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.3; }
+        50% { transform: scale(1.2); opacity: 0.5; }
+    }
+
+    .quick-action-card {
+        transition: all 0.3s ease;
+        display: block;
+    }
+
+    .quick-action-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .quick-action-card .card {
+        transition: all 0.3s ease;
+    }
+
+    .quick-action-card:hover .card {
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .table th {
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+    }
+
+    .badge {
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+    }
+
+    /* Loading Animation */
+    .loading-skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+    }
+
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+
+    /* RTL Fixes */
+    .me-1 { margin-left: 0.25rem !important; margin-right: 0 !important; }
+    .me-2 { margin-left: 0.5rem !important; margin-right: 0 !important; }
+    .me-3 { margin-left: 1rem !important; margin-right: 0 !important; }
+    .ms-1 { margin-right: 0.25rem !important; margin-left: 0 !important; }
+    .ms-2 { margin-right: 0.5rem !important; margin-left: 0 !important; }
+    .ms-3 { margin-right: 1rem !important; margin-left: 0 !important; }
+
+    @media (max-width: 768px) {
+        .stat-number {
+            font-size: 1.8rem;
+        }
+
+        .welcome-section h2 {
+            font-size: 1.5rem;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Sales Chart
-    const ctx = document.getElementById('salesChart').getContext('2d');
-    const salesChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: {{ chart_labels|safe }},
-            datasets: [{
-                label: 'فروش روزانه',
-                data: {{ chart_data|safe }},
-                borderColor: '#4361ee',
-                backgroundColor: 'rgba(67, 97, 238, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        font: {
-                            family: 'Vazirmatn'
+    // Initialize Chart
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('salesChart').getContext('2d');
+
+        // Sample data - replace with actual data from backend
+        const labels = {{ chart_labels|safe|default:'["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنج‌شنبه", "جمعه"]' }};
+        const data = {{ chart_data|safe|default:'[1200000, 1900000, 1500000, 2500000, 2200000, 3000000, 2800000]' }};
+
+        window.salesChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'فروش (تومان)',
+                    data: data,
+                    borderColor: '#4361ee',
+                    backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#4361ee',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let value = context.raw;
+                                return value.toLocaleString('fa-IR') + ' تومان';
+                            }
                         }
                     }
-                }
-            },
-            scales: {
-                x: {
-                    grid: {
-                        display: false
-                    }
                 },
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return value.toLocaleString('fa-IR');
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return (value / 1000000).toFixed(1) + 'M';
+                            }
                         }
                     }
                 }
             }
+        });
+    });
+
+    // Chart period change handler
+    document.getElementById('chartPeriod')?.addEventListener('change', function(e) {
+        const period = e.target.value;
+        // AJAX call to update chart data
+        console.log('Changing chart period to:', period);
+        // Implement your AJAX logic here
+    });
+
+    // Export chart as image
+    function exportChart() {
+        const canvas = document.getElementById('salesChart');
+        const link = document.createElement('a');
+        link.download = 'sales-chart.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }
+
+    // Download report function
+    function downloadReport() {
+        const format = document.querySelector('input[name="format"]:checked').value;
+        const type = document.querySelector('select').value;
+
+        // Show loading
+        Swal.fire({
+            title: 'در حال آماده‌سازی گزارش...',
+            html: 'لطفاً صبر کنید',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Simulate download (replace with actual AJAX)
+        setTimeout(() => {
+            Swal.fire({
+                icon: 'success',
+                title: 'گزارش آماده شد',
+                text: 'فایل با موفقیت دانلود شد',
+                timer: 2000,
+                showConfirmButton: false
+            });
+
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('reportModal'));
+            modal.hide();
+        }, 2000);
+    }
+
+    // Auto refresh data every 5 minutes
+    setInterval(function() {
+        // Reload data via AJAX without page refresh
+        console.log('Auto-refreshing dashboard data...');
+        // Implement your AJAX refresh logic here
+    }, 300000);
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+R to refresh
+        if (e.ctrlKey && e.key === 'r') {
+            e.preventDefault();
+            location.reload();
+        }
+
+        // Ctrl+P to print
+        if (e.ctrlKey && e.key === 'p') {
+            e.preventDefault();
+            window.print();
         }
     });
 </script>

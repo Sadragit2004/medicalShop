@@ -1,5 +1,6 @@
 <!-- templates/admin/base/sidebar.html -->
-<aside class="sidebar" id="sidebar">
+{% load static %}
+<aside class="sidebar" id="sidebar" data-collapsed="false">
     <!-- Sidebar Header -->
     <div class="sidebar-header">
         <div class="brand-logo">
@@ -8,10 +9,10 @@
             </div>
             <div class="logo-text">
                 <h5 class="mb-0">پنل مدیریت</h5>
-                <small class="text-muted">Medical Shop</small>
+                <small class="text-muted">داروخانه آنلاین</small>
             </div>
         </div>
-        <button class="sidebar-toggle" onclick="toggleSidebar()">
+        <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="تغییر وضعیت سایدبار">
             <i class="fas fa-bars"></i>
         </button>
     </div>
@@ -19,34 +20,28 @@
     <!-- User Profile Card -->
     <div class="user-profile-card">
         <div class="profile-avatar">
-            <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.mobileNumber }}&background=4361ee&color=fff&size=80"
-                 alt="User Avatar">
-            <span class="online-status active"></span>
+            <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.mobileNumber }}&background=4361ee&color=fff&size=80&bold=true"
+                 alt="{{ user.get_full_name|default:'کاربر' }}">
+            <span class="online-status active" title="آنلاین"></span>
         </div>
         <div class="profile-info">
-            <h6 class="profile-name">
-                {% if user.get_full_name %}
-                    {{ user.get_full_name }}
-                {% else %}
-                    {{ user.mobileNumber }}
-                {% endif %}
-            </h6>
-            <p class="profile-role">
+            <h6 class="profile-name">{{ user.get_full_name|default:user.mobileNumber|truncatechars:20 }}</h6>
+            <div class="profile-role">
                 {% if user.is_superuser %}
                     <span class="role-badge super-admin">سوپر ادمین</span>
                 {% elif user.is_staff %}
-                    <span class="role-badge admin">ادمین</span>
+                    <span class="role-badge admin">مدیر سیستم</span>
                 {% else %}
-                    <span class="role-badge user">کاربر</span>
+                    <span class="role-badge user">کاربر عادی</span>
                 {% endif %}
-            </p>
+            </div>
         </div>
         <div class="profile-stats">
-            <div class="stat-item">
+            <div class="stat-item" title="سفارشات امروز">
                 <i class="fas fa-shopping-cart"></i>
                 <span class="stat-count">۲۴</span>
             </div>
-            <div class="stat-item">
+            <div class="stat-item" title="نرخ تبدیل">
                 <i class="fas fa-chart-line"></i>
                 <span class="stat-count">۹۸%</span>
             </div>
@@ -55,23 +50,29 @@
 
     <!-- Search Box -->
     <div class="sidebar-search">
-        <div class="input-group">
-            <span class="input-group-text">
-                <i class="fas fa-search"></i>
-            </span>
-            <input type="text" class="form-control" placeholder="جستجو در منو...">
+        <div class="search-wrapper">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" placeholder="جستجو در منو..." id="menuSearch">
+            <button class="search-clear" id="clearSearch" aria-label="پاک کردن جستجو">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
     </div>
 
     <!-- Menu Sections -->
-    <div class="sidebar-menu-sections">
+    <div class="sidebar-menu-sections" id="menuContainer">
         <!-- Main Navigation -->
         <div class="menu-section">
-            <h6 class="section-title">ناوبری اصلی</h6>
+            <h6 class="section-title">
+                <i class="fas fa-compass me-1"></i>
+                ناوبری اصلی
+            </h6>
             <ul class="nav flex-column">
+                <!-- داشبورد -->
                 <li class="nav-item">
                     <a href="{% url 'panelAdmin:admin_dashboard' %}"
-                       class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                       class="nav-link {% if 'admin_dashboard' in request.resolver_match.url_name %}active{% endif %}"
+                       data-tooltip="داشبورد">
                         <span class="nav-icon">
                             <i class="fas fa-tachometer-alt"></i>
                         </span>
@@ -80,25 +81,27 @@
                     </a>
                 </li>
 
+                <!-- سفارشات -->
                 <li class="nav-item">
                     <a href="{% url 'panelAdmin:admin_order_list' %}"
-                       class="nav-link {% if 'admin_order' in request.resolver_match.url_name %}active{% endif %}">
+                       class="nav-link {% if 'admin_order' in request.resolver_match.url_name %}active{% endif %}"
+                       data-tooltip="سفارشات">
                         <span class="nav-icon">
                             <i class="fas fa-shopping-cart"></i>
                         </span>
                         <span class="nav-text">سفارشات</span>
-                        <span class="nav-badge badge bg-danger">12</span>
                     </a>
                 </li>
 
+                <!-- پرداخت‌ها -->
                 <li class="nav-item">
                     <a href="{% url 'panelAdmin:admin_payment_list' %}"
-                       class="nav-link {% if 'admin_payment' in request.resolver_match.url_name %}active{% endif %}">
+                       class="nav-link {% if 'admin_payment' in request.resolver_match.url_name %}active{% endif %}"
+                       data-tooltip="پرداخت‌ها">
                         <span class="nav-icon">
                             <i class="fas fa-credit-card"></i>
                         </span>
                         <span class="nav-text">پرداخت‌ها</span>
-                        <span class="nav-badge badge bg-success">۵</span>
                     </a>
                 </li>
             </ul>
@@ -106,11 +109,16 @@
 
         <!-- Products Management -->
         <div class="menu-section">
-            <h6 class="section-title">مدیریت محصولات</h6>
+            <h6 class="section-title">
+                <i class="fas fa-package me-1"></i>
+                مدیریت محصولات
+            </h6>
             <ul class="nav flex-column">
+                <!-- محصولات -->
                 <li class="nav-item">
                     <a href="{% url 'panelAdmin:admin_product_list' %}"
-                       class="nav-link {% if 'admin_product' in request.resolver_match.url_name %}active{% endif %}">
+                       class="nav-link {% if 'admin_product' in request.resolver_match.url_name %}active{% endif %}"
+                       data-tooltip="محصولات">
                         <span class="nav-icon">
                             <i class="fas fa-box"></i>
                         </span>
@@ -118,9 +126,11 @@
                     </a>
                 </li>
 
+                <!-- دسته‌بندی‌ها -->
                 <li class="nav-item">
                     <a href="{% url 'panelAdmin:admin_category_list' %}"
-                       class="nav-link {% if 'admin_category' in request.resolver_match.url_name %}active{% endif %}">
+                       class="nav-link {% if 'admin_category' in request.resolver_match.url_name %}active{% endif %}"
+                       data-tooltip="دسته‌بندی‌ها">
                         <span class="nav-icon">
                             <i class="fas fa-tags"></i>
                         </span>
@@ -128,9 +138,11 @@
                     </a>
                 </li>
 
+                <!-- برندها -->
                 <li class="nav-item">
                     <a href="{% url 'panelAdmin:admin_brand_list' %}"
-                       class="nav-link {% if 'admin_brand' in request.resolver_match.url_name %}active{% endif %}">
+                       class="nav-link {% if 'admin_brand' in request.resolver_match.url_name %}active{% endif %}"
+                       data-tooltip="برندها">
                         <span class="nav-icon">
                             <i class="fas fa-trademark"></i>
                         </span>
@@ -138,9 +150,11 @@
                     </a>
                 </li>
 
+                <!-- ویژگی‌ها -->
                 <li class="nav-item">
                     <a href="{% url 'panelAdmin:admin_feature_list' %}"
-                       class="nav-link {% if 'admin_feature' in request.resolver_match.url_name %}active{% endif %}">
+                       class="nav-link {% if 'admin_feature' in request.resolver_match.url_name %}active{% endif %}"
+                       data-tooltip="ویژگی‌ها">
                         <span class="nav-icon">
                             <i class="fas fa-sliders-h"></i>
                         </span>
@@ -152,11 +166,16 @@
 
         <!-- Location Management -->
         <div class="menu-section">
-            <h6 class="section-title">مکان‌ها و آدرس‌ها</h6>
+            <h6 class="section-title">
+                <i class="fas fa-location-dot me-1"></i>
+                مکان‌ها و آدرس‌ها
+            </h6>
             <ul class="nav flex-column">
+                <!-- آدرس‌های کاربران -->
                 <li class="nav-item">
                     <a href="{% url 'panelAdmin:admin_user_address_list' %}"
-                       class="nav-link {% if 'admin_user_address' in request.resolver_match.url_name %}active{% endif %}">
+                       class="nav-link {% if 'admin_user_address' in request.resolver_match.url_name %}active{% endif %}"
+                       data-tooltip="آدرس‌های کاربران">
                         <span class="nav-icon">
                             <i class="fas fa-address-book"></i>
                         </span>
@@ -168,11 +187,16 @@
 
         <!-- Marketing & Sales -->
         <div class="menu-section">
-            <h6 class="section-title">بازاریابی و فروش</h6>
+            <h6 class="section-title">
+                <i class="fas fa-bullhorn me-1"></i>
+                بازاریابی و فروش
+            </h6>
             <ul class="nav flex-column">
+                <!-- کوپن‌ها -->
                 <li class="nav-item">
                     <a href="{% url 'panelAdmin:admin_coupon_list' %}"
-                       class="nav-link {% if 'admin_coupon' in request.resolver_match.url_name %}active{% endif %}">
+                       class="nav-link {% if 'admin_coupon' in request.resolver_match.url_name %}active{% endif %}"
+                       data-tooltip="کوپن‌ها">
                         <span class="nav-icon">
                             <i class="fas fa-ticket-alt"></i>
                         </span>
@@ -180,13 +204,15 @@
                     </a>
                 </li>
 
+                <!-- تخفیف‌های سبد خرید -->
                 <li class="nav-item">
                     <a href="{% url 'panelAdmin:admin_discount_basket_list' %}"
-                       class="nav-link {% if 'admin_discount_basket' in request.resolver_match.url_name %}active{% endif %}">
+                       class="nav-link {% if 'admin_discount_basket' in request.resolver_match.url_name %}active{% endif %}"
+                       data-tooltip="تخفیف‌های سبد خرید">
                         <span class="nav-icon">
                             <i class="fas fa-percentage"></i>
                         </span>
-                        <span class="nav-text">تخفیف‌ها</span>
+                        <span class="nav-text">تخفیف‌های سبد خرید</span>
                     </a>
                 </li>
             </ul>
@@ -194,12 +220,16 @@
 
         <!-- Content Management -->
         <div class="menu-section">
-            <h6 class="section-title">مدیریت محتوا</h6>
+            <h6 class="section-title">
+                <i class="fas fa-file me-1"></i>
+                مدیریت محتوا
+            </h6>
             <ul class="nav flex-column">
-                <!-- اسلایدرهای اصلی - اضافه شده -->
+                <!-- اسلایدرهای اصلی -->
                 <li class="nav-item">
                     <a href="{% url 'panelAdmin:admin_slider_main_list' %}"
-                       class="nav-link {% if 'admin_slider_main' in request.resolver_match.url_name %}active{% endif %}">
+                       class="nav-link {% if 'admin_slider_main' in request.resolver_match.url_name %}active{% endif %}"
+                       data-tooltip="اسلایدرهای اصلی">
                         <span class="nav-icon">
                             <i class="fas fa-sliders-h"></i>
                         </span>
@@ -207,9 +237,11 @@
                     </a>
                 </li>
 
+                <!-- اسلایدر سایت -->
                 <li class="nav-item">
                     <a href="{% url 'panelAdmin:admin_slider_site_list' %}"
-                       class="nav-link {% if 'admin_slider_site' in request.resolver_match.url_name %}active{% endif %}">
+                       class="nav-link {% if 'admin_slider_site' in request.resolver_match.url_name %}active{% endif %}"
+                       data-tooltip="اسلایدر سایت">
                         <span class="nav-icon">
                             <i class="fas fa-images"></i>
                         </span>
@@ -217,9 +249,11 @@
                     </a>
                 </li>
 
+                <!-- بنرها -->
                 <li class="nav-item">
                     <a href="{% url 'panelAdmin:admin_banner_list' %}"
-                       class="nav-link {% if 'admin_banner' in request.resolver_match.url_name %}active{% endif %}">
+                       class="nav-link {% if 'admin_banner' in request.resolver_match.url_name %}active{% endif %}"
+                       data-tooltip="بنرها">
                         <span class="nav-icon">
                             <i class="fas fa-ad"></i>
                         </span>
@@ -227,14 +261,15 @@
                     </a>
                 </li>
 
+                <!-- نظرات -->
                 <li class="nav-item">
                     <a href="{% url 'panelAdmin:admin_comment_list' %}"
-                       class="nav-link {% if 'admin_comment' in request.resolver_match.url_name %}active{% endif %}">
+                       class="nav-link {% if 'admin_comment' in request.resolver_match.url_name %}active{% endif %}"
+                       data-tooltip="نظرات">
                         <span class="nav-icon">
                             <i class="fas fa-comments"></i>
                         </span>
                         <span class="nav-text">نظرات</span>
-                        <span class="nav-badge badge bg-warning">۳</span>
                     </a>
                 </li>
             </ul>
@@ -242,11 +277,16 @@
 
         <!-- Analytics & Reports -->
         <div class="menu-section">
-            <h6 class="section-title">تحلیل و گزارش‌ها</h6>
+            <h6 class="section-title">
+                <i class="fas fa-chart-simple me-1"></i>
+                تحلیل و گزارش‌ها
+            </h6>
             <ul class="nav flex-column">
+                <!-- گزارش سفارشات -->
                 <li class="nav-item">
                     <a href="{% url 'panelAdmin:admin_order_report' %}"
-                       class="nav-link {% if 'admin_order_report' in request.resolver_match.url_name %}active{% endif %}">
+                       class="nav-link {% if 'admin_order_report' in request.resolver_match.url_name %}active{% endif %}"
+                       data-tooltip="گزارش سفارشات">
                         <span class="nav-icon">
                             <i class="fas fa-chart-bar"></i>
                         </span>
@@ -254,64 +294,68 @@
                     </a>
                 </li>
 
-            
+                <!-- تنظیمات سایت -->
                 <li class="nav-item">
-                    <a href="{% url 'panelAdmin:admin_shop_settings' %}" class="nav-link">
+                    <a href="{% url 'panelAdmin:admin_shop_settings' %}"
+                       class="nav-link {% if 'admin_shop_settings' in request.resolver_match.url_name %}active{% endif %}"
+                       data-tooltip="تنظیمات سایت">
                         <span class="nav-icon">
                             <i class="fas fa-chart-pie"></i>
                         </span>
-                        <span class="nav-text">تنظیمات سایت </span>
+                        <span class="nav-text">تنظیمات سایت</span>
                     </a>
                 </li>
-
-
             </ul>
         </div>
-
-        <!-- Settings -->
-        <
     </div>
 
     <!-- Sidebar Footer -->
     <div class="sidebar-footer">
         <div class="quick-actions">
-            <a href="#" class="action-item" data-bs-toggle="tooltip" title="پشتیبانی">
+            <a href="#" class="action-item" data-tooltip="پشتیبانی">
                 <i class="fas fa-life-ring"></i>
             </a>
-            <a href="#" class="action-item" data-bs-toggle="tooltip" title="تنظیمات">
+            <a href="#" class="action-item" data-tooltip="تنظیمات">
                 <i class="fas fa-cog"></i>
             </a>
-            <a href="#" class="action-item" data-bs-toggle="tooltip" title="خروج">
+            <a href=" " class="action-item" data-tooltip="خروج">
                 <i class="fas fa-sign-out-alt"></i>
             </a>
         </div>
         <div class="footer-info">
-            <small class="text-muted d-block">
+            <small class="time-display">
                 <i class="fas fa-clock me-1"></i>
                 {% now "H:i" %}
             </small>
-            <small class="text-muted">نسخه ۲.۰.۱</small>
+            <small class="version">نسخه ۲.۰.۱</small>
         </div>
     </div>
 </aside>
 
-<!-- CSS Styles -->
+<!-- Styles -->
 <style>
-    /* Sidebar Variables */
+    /* ===== VARIABLES ===== */
     :root {
         --sidebar-width: 280px;
-        --sidebar-collapsed-width: 70px;
-        --sidebar-bg: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-        --sidebar-text: #ffffff;
-        --sidebar-hover: rgba(255, 255, 255, 0.1);
-        --sidebar-active: rgba(67, 97, 238, 0.2);
+        --sidebar-collapsed-width: 80px;
+        --sidebar-bg: #1a1f2e;
+        --sidebar-secondary-bg: #141824;
+        --sidebar-text: #e9ecef;
+        --sidebar-text-muted: #8f9bb3;
+        --sidebar-hover: rgba(67, 97, 238, 0.15);
+        --sidebar-active: rgba(67, 97, 238, 0.25);
+        --sidebar-active-border: #4361ee;
         --primary-color: #4361ee;
+        --primary-light: #4895ef;
         --success-color: #4cc9f0;
         --warning-color: #f8961e;
         --danger-color: #f72585;
+        --info-color: #560bad;
+        --transition-speed: 0.3s;
+        --border-radius: 12px;
     }
 
-    /* Sidebar Base */
+    /* ===== SIDEBAR BASE ===== */
     .sidebar {
         position: fixed;
         top: 0;
@@ -320,24 +364,28 @@
         width: var(--sidebar-width);
         background: var(--sidebar-bg);
         color: var(--sidebar-text);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 1000;
+        transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1040;
         overflow-y: auto;
         overflow-x: hidden;
-        box-shadow: 5px 0 15px rgba(0, 0, 0, 0.1);
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        border-left: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    .sidebar.collapsed {
-        width: var(--sidebar-collapsed-width);
-    }
-
-    /* Sidebar Header */
+    /* ===== SIDEBAR HEADER ===== */
     .sidebar-header {
-        padding: 1.5rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1.25rem 1.5rem;
+        background: var(--sidebar-secondary-bg);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         display: flex;
         align-items: center;
         justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        backdrop-filter: blur(10px);
     }
 
     .brand-logo {
@@ -347,46 +395,55 @@
     }
 
     .logo-icon {
-        width: 40px;
-        height: 40px;
-        background: var(--primary-color);
+        width: 42px;
+        height: 42px;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
         border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.2rem;
+        font-size: 1.3rem;
+        box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
     }
 
     .logo-text h5 {
         font-weight: 700;
         margin-bottom: 2px;
+        color: white;
+        font-size: 1.1rem;
     }
 
     .logo-text small {
-        font-size: 0.75rem;
-        opacity: 0.7;
+        font-size: 0.7rem;
+        opacity: 0.6;
+        color: var(--sidebar-text-muted);
     }
 
     .sidebar-toggle {
-        background: transparent;
+        width: 36px;
+        height: 36px;
+        background: rgba(255, 255, 255, 0.05);
         border: none;
         color: var(--sidebar-text);
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         cursor: pointer;
-        padding: 5px;
-        border-radius: 5px;
-        transition: all 0.3s;
+        border-radius: 8px;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .sidebar-toggle:hover {
         background: var(--sidebar-hover);
+        transform: rotate(90deg);
     }
 
-    /* User Profile Card */
+    /* ===== USER PROFILE ===== */
     .user-profile-card {
         padding: 1.5rem;
-        text-align: center;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.1), transparent);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .profile-avatar {
@@ -402,49 +459,57 @@
         border-radius: 50%;
         object-fit: cover;
         border: 3px solid var(--primary-color);
+        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
     }
 
     .online-status {
         position: absolute;
         bottom: 5px;
         right: 5px;
-        width: 12px;
-        height: 12px;
+        width: 14px;
+        height: 14px;
         border-radius: 50%;
         border: 2px solid var(--sidebar-bg);
+        background: #2ecc71;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     }
 
     .online-status.active {
-        background: var(--success-color);
+        background: #2ecc71;
+        animation: pulse 2s infinite;
     }
 
     .profile-info {
+        text-align: center;
         margin-bottom: 1rem;
     }
 
     .profile-name {
         font-weight: 600;
         margin-bottom: 0.25rem;
+        color: white;
+        font-size: 1rem;
     }
 
     .role-badge {
         display: inline-block;
         padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.75rem;
+        border-radius: 30px;
+        font-size: 0.7rem;
         font-weight: 500;
+        background: rgba(255, 255, 255, 0.1);
     }
 
     .role-badge.super-admin {
-        background: linear-gradient(135deg, #f72585, #7209b7);
+        background: linear-gradient(135deg, var(--danger-color), #b5179e);
     }
 
     .role-badge.admin {
-        background: linear-gradient(135deg, #4361ee, #4cc9f0);
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
     }
 
     .role-badge.user {
-        background: linear-gradient(135deg, #f8961e, #f9c74f);
+        background: linear-gradient(135deg, var(--warning-color), #f9c74f);
     }
 
     .profile-stats {
@@ -457,225 +522,321 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+        cursor: help;
     }
 
     .stat-item i {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         margin-bottom: 0.25rem;
-        opacity: 0.8;
+        opacity: 0.7;
     }
 
     .stat-count {
         font-weight: 600;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
     }
 
-    /* Search Box */
+    /* ===== SEARCH BOX ===== */
     .sidebar-search {
         padding: 1rem 1.5rem;
     }
 
-    .sidebar-search .input-group {
+    .search-wrapper {
+        position: relative;
+        width: 100%;
+    }
+
+    .search-icon {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--sidebar-text-muted);
+        font-size: 0.9rem;
+        pointer-events: none;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.65rem 2.2rem 0.65rem 2rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 30px;
+        color: var(--sidebar-text);
+        font-size: 0.9rem;
+        transition: all 0.3s;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
         background: rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        overflow: hidden;
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
     }
 
-    .sidebar-search .input-group-text {
-        background: transparent;
+    .search-input::placeholder {
+        color: var(--sidebar-text-muted);
+        font-size: 0.85rem;
+    }
+
+    .search-clear {
+        position: absolute;
+        left: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
         border: none;
-        color: var(--sidebar-text);
+        color: var(--sidebar-text-muted);
+        font-size: 0.8rem;
+        padding: 4px;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.2s;
     }
 
-    .sidebar-search .form-control {
-        background: transparent;
-        border: none;
-        color: var(--sidebar-text);
-        padding-right: 0.5rem;
+    .search-input:not(:placeholder-shown) + .search-clear {
+        opacity: 1;
     }
 
-    .sidebar-search .form-control::placeholder {
-        color: rgba(255, 255, 255, 0.5);
+    .search-clear:hover {
+        color: var(--danger-color);
     }
 
-    /* Menu Sections */
+    /* ===== MENU SECTIONS ===== */
     .sidebar-menu-sections {
-        padding: 0 0.5rem;
+        flex: 1;
+        padding: 0.5rem;
+        overflow-y: auto;
     }
 
     .menu-section {
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
     }
 
     .section-title {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         text-transform: uppercase;
-        letter-spacing: 1px;
-        padding: 0 1rem;
-        margin-bottom: 0.75rem;
-        color: rgba(255, 255, 255, 0.5);
+        letter-spacing: 0.5px;
+        padding: 0.5rem 1rem;
+        margin-bottom: 0.25rem;
+        color: var(--sidebar-text-muted);
         font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    .nav {
+        list-style: none;
+        padding: 0;
+        margin: 0;
     }
 
     .nav-link {
         display: flex;
         align-items: center;
-        padding: 0.75rem 1rem;
-        color: rgba(255, 255, 255, 0.8);
+        padding: 0.7rem 1rem;
+        color: var(--sidebar-text);
         text-decoration: none;
-        border-radius: 8px;
-        margin: 0.25rem 0;
-        transition: all 0.3s;
+        border-radius: var(--border-radius);
+        margin: 0.15rem 0;
+        transition: all 0.2s;
         position: relative;
+        font-size: 0.9rem;
     }
 
     .nav-link:hover {
         background: var(--sidebar-hover);
-        color: var(--sidebar-text);
-        transform: translateX(-5px);
+        transform: translateX(-4px);
     }
 
     .nav-link.active {
         background: var(--sidebar-active);
-        color: var(--sidebar-text);
-        border-right: 3px solid var(--primary-color);
+        border-right: 3px solid var(--sidebar-active-border);
+        font-weight: 500;
     }
 
     .nav-icon {
-        width: 24px;
+        width: 28px;
         text-align: center;
         margin-left: 0.5rem;
-        font-size: 1.1rem;
+        font-size: 1rem;
         opacity: 0.8;
+        transition: all 0.2s;
     }
 
-    .nav-link.active .nav-icon,
-    .nav-link:hover .nav-icon {
+    .nav-link:hover .nav-icon,
+    .nav-link.active .nav-icon {
         opacity: 1;
         transform: scale(1.1);
+        color: var(--primary-light);
     }
 
     .nav-text {
         flex: 1;
-        font-size: 0.9rem;
-        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .nav-badge {
-        font-size: 0.7rem;
+        font-size: 0.65rem;
         padding: 0.2rem 0.5rem;
-        border-radius: 10px;
+        border-radius: 20px;
+        font-weight: 500;
+        margin-right: 0.5rem;
     }
 
-    /* Sidebar Footer */
+    /* ===== SIDEBAR FOOTER ===== */
     .sidebar-footer {
-        padding: 1.5rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1rem 1.5rem;
+        background: var(--sidebar-secondary-bg);
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
         margin-top: auto;
     }
 
     .quick-actions {
         display: flex;
         justify-content: space-around;
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
     }
 
     .action-item {
-        width: 36px;
-        height: 36px;
+        width: 38px;
+        height: 38px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
         color: var(--sidebar-text);
         text-decoration: none;
-        transition: all 0.3s;
+        transition: all 0.2s;
+        position: relative;
     }
 
     .action-item:hover {
         background: var(--primary-color);
-        transform: translateY(-2px);
+        transform: translateY(-3px);
+        box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
     }
 
     .footer-info {
-        text-align: center;
-        font-size: 0.8rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.75rem;
+        color: var(--sidebar-text-muted);
     }
 
-    /* Scrollbar Styling */
-    .sidebar::-webkit-scrollbar {
-        width: 4px;
+    .time-display {
+        display: flex;
+        align-items: center;
     }
 
-    .sidebar::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.05);
+    .version {
+        opacity: 0.5;
     }
 
-    .sidebar::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 4px;
+    /* ===== COLLAPSED STATE ===== */
+    .sidebar[data-collapsed="true"] {
+        width: var(--sidebar-collapsed-width);
     }
 
-    /* Collapsed State */
-    .sidebar.collapsed .logo-text,
-    .sidebar.collapsed .profile-info,
-    .sidebar.collapsed .profile-stats,
-    .sidebar.collapsed .section-title,
-    .sidebar.collapsed .nav-text,
-    .sidebar.collapsed .nav-badge,
-    .sidebar.collapsed .sidebar-search,
-    .sidebar.collapsed .footer-info {
+    .sidebar[data-collapsed="true"] .logo-text,
+    .sidebar[data-collapsed="true"] .profile-info,
+    .sidebar[data-collapsed="true"] .profile-stats,
+    .sidebar[data-collapsed="true"] .section-title,
+    .sidebar[data-collapsed="true"] .nav-text,
+    .sidebar[data-collapsed="true"] .nav-badge,
+    .sidebar[data-collapsed="true"] .sidebar-search,
+    .sidebar[data-collapsed="true"] .footer-info {
         display: none;
     }
 
-    .sidebar.collapsed .user-profile-card {
+    .sidebar[data-collapsed="true"] .sidebar-header {
+        padding: 1.25rem 0.75rem;
+        justify-content: center;
+    }
+
+    .sidebar[data-collapsed="true"] .brand-logo {
+        margin: 0;
+    }
+
+    .sidebar[data-collapsed="true"] .logo-icon {
+        margin: 0;
+    }
+
+    .sidebar[data-collapsed="true"] .user-profile-card {
         padding: 1rem;
     }
 
-    .sidebar.collapsed .profile-avatar {
-        width: 40px;
-        height: 40px;
+    .sidebar[data-collapsed="true"] .profile-avatar {
+        width: 45px;
+        height: 45px;
         margin-bottom: 0;
     }
 
-    .sidebar.collapsed .nav-link {
+    .sidebar[data-collapsed="true"] .nav-link {
         justify-content: center;
-        padding: 0.75rem;
+        padding: 0.75rem 0;
     }
 
-    .sidebar.collapsed .nav-icon {
+    .sidebar[data-collapsed="true"] .nav-icon {
         margin-left: 0;
         font-size: 1.2rem;
     }
 
-    .sidebar.collapsed .quick-actions {
+    .sidebar[data-collapsed="true"] .quick-actions {
         flex-direction: column;
-        align-items: center;
         gap: 0.5rem;
     }
 
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        .sidebar {
-            width: var(--sidebar-collapsed-width);
-        }
+    /* ===== TOOLTIPS ===== */
+    [data-tooltip] {
+        position: relative;
+        cursor: pointer;
+    }
 
-        .sidebar.show {
-            width: var(--sidebar-width);
-        }
+    [data-tooltip]:before {
+        content: attr(data-tooltip);
+        position: absolute;
+        right: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #2d3748;
+        color: white;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        margin-right: 10px;
+        z-index: 1000;
+        font-weight: normal;
+    }
 
-        .main-content {
-            margin-right: var(--sidebar-collapsed-width);
-        }
+    [data-tooltip]:hover:before {
+        opacity: 1;
+        visibility: visible;
+    }
 
-        .main-content.expanded {
-            margin-right: 0;
+    /* ===== ANIMATIONS ===== */
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 6px rgba(46, 204, 113, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
         }
     }
 
-    /* Animations */
-    @keyframes fadeIn {
+    @keyframes slideIn {
         from {
             opacity: 0;
             transform: translateX(-20px);
@@ -687,122 +848,167 @@
     }
 
     .nav-item {
-        animation: fadeIn 0.3s ease-out;
-        animation-fill-mode: both;
-    }
-
-    .nav-item:nth-child(1) { animation-delay: 0.1s; }
-    .nav-item:nth-child(2) { animation-delay: 0.2s; }
-    .nav-item:nth-child(3) { animation-delay: 0.3s; }
-    .nav-item:nth-child(4) { animation-delay: 0.4s; }
-    .nav-item:nth-child(5) { animation-delay: 0.5s; }
-
-    /* Tooltip for collapsed state */
-    .sidebar.collapsed .nav-link {
-        position: relative;
-    }
-
-    .sidebar.collapsed .nav-link::after {
-        content: attr(data-tooltip);
-        position: absolute;
-        right: 100%;
-        top: 50%;
-        transform: translateY(-50%);
-        background: var(--sidebar-bg);
-        color: var(--sidebar-text);
-        padding: 0.5rem 1rem;
-        border-radius: 5px;
-        font-size: 0.8rem;
-        white-space: nowrap;
+        animation: slideIn 0.3s ease-out forwards;
         opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s;
-        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
     }
 
-    .sidebar.collapsed .nav-link:hover::after {
-        opacity: 1;
-        visibility: visible;
-        right: 120%;
+    /* Stagger animation delays */
+    .nav-item:nth-child(1) { animation-delay: 0.05s; }
+    .nav-item:nth-child(2) { animation-delay: 0.1s; }
+    .nav-item:nth-child(3) { animation-delay: 0.15s; }
+    .nav-item:nth-child(4) { animation-delay: 0.2s; }
+    .nav-item:nth-child(5) { animation-delay: 0.25s; }
+    .nav-item:nth-child(6) { animation-delay: 0.3s; }
+
+    /* ===== SCROLLBAR ===== */
+    .sidebar::-webkit-scrollbar {
+        width: 3px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+        .sidebar {
+            width: var(--sidebar-collapsed-width);
+        }
+
+        .sidebar[data-collapsed="false"] {
+            width: var(--sidebar-width);
+            position: fixed;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+        }
     }
 </style>
 
 <!-- JavaScript -->
 <script>
-    // Toggle sidebar
-    function toggleSidebar() {
+(function() {
+    'use strict';
+
+    // Sidebar Toggle Function
+    window.toggleSidebar = function() {
         const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
+        const isCollapsed = sidebar.getAttribute('data-collapsed') === 'true';
 
-        sidebar.classList.toggle('collapsed');
-        mainContent.classList.toggle('expanded');
+        sidebar.setAttribute('data-collapsed', !isCollapsed);
+        localStorage.setItem('sidebarCollapsed', !isCollapsed);
 
-        // Save state to localStorage
-        const isCollapsed = sidebar.classList.contains('collapsed');
-        localStorage.setItem('sidebarCollapsed', isCollapsed);
-    }
+        // Dispatch event for other components
+        window.dispatchEvent(new CustomEvent('sidebarToggle', {
+            detail: { collapsed: !isCollapsed }
+        }));
+    };
 
-    // Initialize sidebar state
+    // Initialize sidebar
     document.addEventListener('DOMContentLoaded', function() {
         const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
+        const savedState = localStorage.getItem('sidebarCollapsed');
 
         // Load saved state
-        const savedState = localStorage.getItem('sidebarCollapsed');
-        if (savedState === 'true') {
-            sidebar.classList.add('collapsed');
-            mainContent.classList.add('expanded');
+        if (savedState !== null) {
+            sidebar.setAttribute('data-collapsed', savedState === 'true');
         }
 
-        // Add data-tooltip for collapsed state
-        document.querySelectorAll('.nav-text').forEach(item => {
-            const parentLink = item.closest('.nav-link');
-            if (parentLink) {
-                parentLink.setAttribute('data-tooltip', item.textContent.trim());
-            }
-        });
+        // Setup search functionality
+        const searchInput = document.getElementById('menuSearch');
+        const clearButton = document.getElementById('clearSearch');
+        const menuContainer = document.getElementById('menuContainer');
 
-        // Initialize tooltips
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-
-        // Search functionality
-        const searchInput = document.querySelector('.sidebar-search input');
         if (searchInput) {
+            // Search handler
             searchInput.addEventListener('input', function(e) {
-                const searchTerm = e.target.value.toLowerCase();
-                const navItems = document.querySelectorAll('.nav-item');
+                const searchTerm = e.target.value.toLowerCase().trim();
+                const menuItems = menuContainer.querySelectorAll('.nav-item');
 
-                navItems.forEach(item => {
+                menuItems.forEach(item => {
                     const text = item.textContent.toLowerCase();
-                    if (text.includes(searchTerm)) {
-                        item.style.display = '';
-                        item.style.animation = 'fadeIn 0.3s ease-out';
+                    const shouldShow = searchTerm === '' || text.includes(searchTerm);
+
+                    item.style.display = shouldShow ? '' : 'none';
+
+                    if (shouldShow && searchTerm !== '') {
+                        // Highlight matching text
+                        const link = item.querySelector('.nav-link');
+                        if (link) {
+                            link.style.backgroundColor = 'rgba(67, 97, 238, 0.2)';
+                        }
                     } else {
-                        item.style.display = 'none';
+                        const link = item.querySelector('.nav-link');
+                        if (link) {
+                            link.style.backgroundColor = '';
+                        }
                     }
                 });
             });
-        }
-    });
 
-    // Keyboard shortcuts
-    document.addEventListener('keydown', function(e) {
-        // Ctrl + B to toggle sidebar
-        if (e.ctrlKey && e.key === 'b') {
-            e.preventDefault();
-            toggleSidebar();
+            // Clear search
+            if (clearButton) {
+                clearButton.addEventListener('click', function() {
+                    searchInput.value = '';
+                    searchInput.dispatchEvent(new Event('input'));
+                    searchInput.focus();
+                });
+            }
+
+            // Keyboard shortcut: Ctrl+/ to focus search
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === '/') {
+                    e.preventDefault();
+                    searchInput.focus();
+                }
+
+                // Escape to clear search
+                if (e.key === 'Escape' && document.activeElement === searchInput) {
+                    searchInput.value = '';
+                    searchInput.dispatchEvent(new Event('input'));
+                    searchInput.blur();
+                }
+            });
         }
 
-        // Escape to clear search
-        if (e.key === 'Escape') {
-            const searchInput = document.querySelector('.sidebar-search input');
-            if (searchInput) {
-                searchInput.value = '';
-                searchInput.dispatchEvent(new Event('input'));
+        // Set active menu item based on current URL
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        navLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && currentPath.includes(href) && href !== '/') {
+                link.classList.add('active');
+            }
+        });
+
+        // Dynamic time update
+        function updateTime() {
+            const timeElement = document.querySelector('.time-display');
+            if (timeElement) {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('fa-IR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                const icon = timeElement.querySelector('i');
+                if (icon) {
+                    icon.nextSibling.textContent = ' ' + timeString;
+                }
             }
         }
+
+        // Update time every minute
+        updateTime();
+        setInterval(updateTime, 60000);
     });
+
+})();
 </script>

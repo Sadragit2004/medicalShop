@@ -1,121 +1,187 @@
 <!-- templates/admin/base/header.html -->
-<nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
+{% load static %}
+<nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm" dir="rtl">
     <div class="container-fluid">
         <!-- Sidebar Toggle Button -->
-        <button class="btn btn-outline-secondary me-2" onclick="toggleSidebar()">
+        <button class="btn btn-outline-secondary me-2"
+                onclick="toggleSidebar()"
+                aria-label="تغییر وضعیت منو"
+                title="باز و بسته کردن منو">
             <i class="fas fa-bars"></i>
         </button>
 
         <!-- Brand -->
-        <a class="navbar-brand fw-bold text-primary" href="{% url 'panelAdmin:admin_dashboard' %}">
-            <i class="fas fa-crown me-2"></i>
-            پنل مدیریت
+        <a class="navbar-brand fw-bold" href="{% url 'panelAdmin:admin_dashboard' %}">
+            <i class="fas fa-crown text-warning ms-2"></i>
+            <span class="bg-gradient-primary bg-clip-text text-transparent">پنل مدیریت</span>
         </a>
 
         <!-- Search (Hidden on mobile) -->
-        <div class="d-none d-md-flex search-box me-auto" style="max-width: 300px;">
-            <input type="text" class="form-control" placeholder="جستجو...">
-            <i class="fas fa-search"></i>
-        </div>
+      
 
-        <!-- Right Side -->
-        <div class="navbar-nav align-items-center">
+        <!-- Right Side Actions -->
+        <div class="d-flex align-items-center gap-2 gap-lg-3">
+
             <!-- Notifications -->
-            <div class="nav-item dropdown me-3">
-                <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button"
-                   data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-bell fa-lg"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                        3
-                    </span>
-                </a>
-                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown">
-                    <h6 class="dropdown-header">اعلان‌ها</h6>
-                    <a class="dropdown-item" href="#">
-                        <div class="d-flex">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-shopping-cart text-success"></i>
-                            </div>
-                            <div class="flex-grow-1 me-3">
-                                <p class="mb-0">سفارش جدید ثبت شد</p>
-                                <small class="text-muted">5 دقیقه پیش</small>
-                            </div>
-                        </div>
-                    </a>
-                    <a class="dropdown-item" href="#">
-                        <div class="d-flex">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-user text-primary"></i>
-                            </div>
-                            <div class="flex-grow-1 me-3">
-                                <p class="mb-0">کاربر جدید ثبت‌نام کرد</p>
-                                <small class="text-muted">1 ساعت پیش</small>
-                            </div>
-                        </div>
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item text-center text-primary" href="#">
-                        مشاهده همه اعلان‌ها
-                    </a>
-                </div>
-            </div>
+
 
             <!-- Messages -->
-            <div class="nav-item dropdown me-3">
-                <a class="nav-link position-relative" href="#" id="messageDropdown" role="button"
-                   data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-envelope fa-lg"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning">
-                        5
-                    </span>
-                </a>
-                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="messageDropdown">
-                    <h6 class="dropdown-header">پیام‌ها</h6>
-                    <a class="dropdown-item" href="#">
-                        <div class="d-flex">
-                            <div class="flex-shrink-0">
-                                <img src="https://via.placeholder.com/40" class="avatar" alt="...">
-                            </div>
-                            <div class="flex-grow-1 me-3">
-                                <p class="mb-0">علی محمدی</p>
-                                <small class="text-muted">سفارش من کی ارسال میشه؟</small>
-                            </div>
-                        </div>
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item text-center text-primary" href="#">
-                        مشاهده همه پیام‌ها
-                    </a>
-                </div>
-            </div>
 
             <!-- User Dropdown -->
-            <div class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown"
-                   role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img src="https://via.placeholder.com/35" class="rounded-circle me-2" alt="...">
-                    <span class="d-none d-md-inline">
-                        {% if user.get_full_name %}
-                            {{ user.get_full_name }}
-                        {% else %}
-                            {{ user.mobileNumber }}
-                        {% endif %}
+            <div class="dropdown">
+                <button class="btn btn-light d-flex align-items-center gap-2 py-1 ps-1 pe-3 border-0 hover-bg-light"
+                        type="button"
+                        id="userDropdown"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                    <div class="position-relative">
+                        <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.mobileNumber }}&background=0D6EFD&color=fff&size=35&bold=true"
+                             class="rounded-circle border border-2 border-white"
+                             width="35"
+                             height="35"
+                             alt="{{ user.get_full_name|default:user.mobileNumber }}">
+                        <span class="position-absolute bottom-0 end-0 bg-success border border-2 border-white rounded-circle p-1"></span>
+                    </div>
+                    <span class="d-none d-md-block">
+                        {{ user.get_full_name|default:user.mobileNumber|truncatechars:15 }}
                     </span>
-                </a>
-                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                    <h6 class="dropdown-header">پروفایل کاربری</h6>
-                    <a class="dropdown-item" href="#">
-                        <i class="fas fa-user me-2"></i>پروفایل من
+                    <i class="fas fa-chevron-down small text-muted"></i>
+                </button>
+
+                <div class="dropdown-menu dropdown-menu-end shadow-lg py-2" style="min-width: 240px;">
+                    <!-- User Info -->
+                    <div class="px-3 py-2 border-bottom mb-2">
+                        <p class="fw-bold mb-0">{{ user.get_full_name|default:"کاربر" }}</p>
+                        <small class="text-muted">{{ user.mobileNumber }}</small>
+                    </div>
+
+                    <a class="dropdown-item py-2" href="#">
+                        <i class="fas fa-user ms-2 text-muted" style="width: 20px;"></i>
+                        پروفایل من
                     </a>
-                    <a class="dropdown-item" href="#">
-                        <i class="fas fa-cog me-2"></i>تنظیمات
+                    <a class="dropdown-item py-2" href="#">
+                        <i class="fas fa-cog ms-2 text-muted" style="width: 20px;"></i>
+                        تنظیمات حساب
                     </a>
+                    <a class="dropdown-item py-2" href="#">
+                        <i class="fas fa-shield-alt ms-2 text-muted" style="width: 20px;"></i>
+                        امنیت
+                    </a>
+
                     <div class="dropdown-divider"></div>
-                    {% comment %} <a class="dropdown-item" href="{% url 'admin_logout' %}"> {% endcomment %}
-                        <i class="fas fa-sign-out-alt me-2"></i>خروج
+
+                    <a class="dropdown-item py-2 text-danger" href="">
+                        <i class="fas fa-sign-out-alt ms-2" style="width: 20px;"></i>
+                        خروج از حساب
                     </a>
                 </div>
             </div>
         </div>
     </div>
 </nav>
+
+<style>
+/* Custom styles for admin header */
+.navbar {
+    padding: 0.5rem 1rem;
+    z-index: 1030;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #0d6efd, #0b5ed7);
+}
+
+.bg-clip-text {
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+.text-transparent {
+    color: transparent;
+}
+
+.hover-bg-light:hover {
+    background-color: rgba(0,0,0,0.05) !important;
+}
+
+/* Search animation */
+.search-container {
+    transition: all 0.3s ease;
+}
+
+.search-container input:focus {
+    width: 350px !important;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+    border-color: #0d6efd;
+}
+
+/* Dropdown animations */
+.dropdown-menu {
+    display: block;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+}
+
+.dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* Notification hover effects */
+.dropdown-item {
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* Badge pulse animation */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.badge-pulse {
+    animation: pulse 2s infinite;
+}
+
+/* RTL specific adjustments */
+[dir="rtl"] .me-auto {
+    margin-right: auto !important;
+    margin-left: 0 !important;
+}
+
+[dir="rtl"] .ms-3 {
+    margin-right: 1rem !important;
+    margin-left: 0 !important;
+}
+
+[dir="rtl"] .ps-5 {
+    padding-right: 3rem !important;
+    padding-left: 1rem !important;
+}
+</style>
+
+<script>
+// Optional: Add dynamic notification handling
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle dropdown auto-hide on click outside
+    const dropdowns = document.querySelectorAll('.dropdown');
+    dropdowns.forEach(dropdown => {
+        dropdown.addEventListener('hide.bs.dropdown', function() {
+            // Optional: Add any cleanup logic
+        });
+    });
+});
+</script>
