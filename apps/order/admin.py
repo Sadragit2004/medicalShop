@@ -11,7 +11,7 @@ from django.utils import timezone
 # ========================
 class OrderDetailInline(admin.TabularInline):
     model = OrderDetail
-    extra = 0
+    extra = 1
     readonly_fields = ['get_total_price']
     fields = ['product', 'brand', 'qty', 'price', 'selectedOptions', 'get_total_price']
 
