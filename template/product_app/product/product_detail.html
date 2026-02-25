@@ -30,7 +30,7 @@
 
 <!-- Product Meta -->
 <meta property="product:brand" content="{{ product.brand.title|default:'' }}">
-<meta property="product:availability" content="{% if product.quantity > 0 %}instock{% else %}out of stock{% endif %}">
+<meta property="product:availability" content="{% if product.stock > 0 %}instock{% else %}out of stock{% endif %}">
 <meta property="product:condition" content="new">
 <meta property="product:retailer_item_id" content="{{ product.id }}">
 {% if default_sale_type %}
@@ -76,7 +76,7 @@
         "priceCurrency": "IRR",
         "price": "{% if default_sale_type %}{{ default_sale_type.final_price|default:default_sale_type.price }}{% else %}{{ product.get_base_price|default:'0' }}{% endif %}",
         "priceValidUntil": "{{ product.updated_at|date:'Y-m-d'|default:'2024-12-31' }}",
-        "availability": "https://schema.org/{% if product.quantity > 0 %}InStock{% else %}OutOfStock{% endif %}",
+        "availability": "https://schema.org/{% if product.stock > 0 %}InStock{% else %}OutOfStock{% endif %}",
         "itemCondition": "https://schema.org/NewCondition",
         "seller": {
             "@type": "Organization",
@@ -273,7 +273,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .mobile-add-to-cart-btn {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    background: linear-gradient(135deg, #22adbd);
     color: white;
     border-radius: 10px;
     padding: 12px 20px;
@@ -400,7 +400,7 @@ input[type="number"]::-webkit-outer-spin-button {
     <!-- نوار ثابت پایین برای موبایل -->
     <div class="mobile-fixed-bottom-bar">
         <!-- دکمه خانه -->
-        <a href="{% url 'main:index' %}" class="home-btn">
+        <a style='background:#22adbd;' href="{% url 'main:index' %}" class="home-btn">
             <svg class="w-5 h-5">
                 <use href="#home" />
             </svg>
@@ -413,7 +413,7 @@ input[type="number"]::-webkit-outer-spin-button {
                 <div class="mobile-final-price">{{ default_sale_type.final_price|intcomma }} تومان</div>
                 <div class="mobile-discount-badge">{{ discount_percent }}% تخفیف</div>
             {% else %}
-                <div class="mobile-final-price" style="color: #3b82f6;">{{ default_sale_type.price|intcomma }} تومان</div>
+                <div class="mobile-final-price">{{ default_sale_type.price|intcomma }} تومان</div>
             {% endif %}
         </div>
 
@@ -438,7 +438,7 @@ input[type="number"]::-webkit-outer-spin-button {
     <!-- PRODUCT DETAILS SECTION -->
     <section class="mt-5 flex flex-col lg:flex-row items-start gap-4 child:rounded-lg child:bg-white child:dark:bg-gray-800 child:shadow child:p-4">
         <!-- IMAGE & INFO BOX Container -->
-        <div  class="w-full lg:w-3/4">
+        <div class="w-full lg:w-3/4">
             <div class="flex flex-col md:flex-row justify-start gap-x-8 xl:gap-x-2 items-start">
                 <!-- IMAGE SLIDER -->
                 <div class="w-2/4 hidden md:flex flex-col justify-center items-center gap-y-4">
@@ -471,22 +471,21 @@ input[type="number"]::-webkit-outer-spin-button {
                             {{ product.brand.title|default:"بدون برند" }} / {{ product.category.first.title|default:"بدون دسته" }}
                         </a>
                         <div class="hidden md:flex items-center gap-x-2">
-
-                          <div class="tooltip">
-                            <button class="toggle-favorite-btn rounded-full p-1.5 app-border app-hover"
-                                    data-product-id="{{ product.id }}">
-                                <svg class="size-4 md:size-5 {% if is_favorite %}text-red-500 fill-red-500{% endif %}"
-                                    id="heart-icon-{{ product.id }}">
-                                    <use href="#heart"></use>
-                                </svg>
-                            </button>
-                            <div class="tooltiptext">
-                                علاقه مندی
+                            <div class="tooltip">
+                                <button class="toggle-favorite-btn rounded-full p-1.5 app-border app-hover"
+                                        data-product-id="{{ product.id }}">
+                                    <svg class="size-4 md:size-5 {% if is_favorite %}text-red-500 fill-red-500{% endif %}"
+                                        id="heart-icon-{{ product.id }}">
+                                        <use href="#heart"></use>
+                                    </svg>
+                                </button>
+                                <div class="tooltiptext">
+                                    علاقه مندی
+                                </div>
                             </div>
                         </div>
-
-                        </div>
                     </div>
+
                     <!-- MOBILE SLIDER -->
                     {% if galleries %}
                     <div class="flex md:hidden">
@@ -524,7 +523,7 @@ input[type="number"]::-webkit-outer-spin-button {
                     </div>
 
                     <!-- ویژگی‌های محصول -->
-                  {% if product_features %}
+                    {% if product_features %}
                     <div class="w-full flex flex-col gap-y-4">
                         <span class="font-DanaDemiBold text-lg dark:text-gray-200">ویژگی‌ها</span>
                         <div class="grid grid-cols-12 gap-2 child:p-2 child:h-16 child:bg-gray-100 dark:child:bg-gray-900 child:rounded-lg child:flex child:flex-col child:gap-y-1.5">
@@ -540,136 +539,114 @@ input[type="number"]::-webkit-outer-spin-button {
                             {% endfor %}
                         </div>
                     </div>
-                {% endif %}
+                    {% endif %}
 
-
-                 {% if product_features %}
-<div class="w-full flex flex-col gap-y-4">
-    <span class="font-DanaDemiBold text-base dark:text-gray-200">
-        انتخاب سایز
-    </span>
-
-    <div class="mb-6">
-        <div class="flex flex-wrap gap-2" id="size-selector">
-            {% for pf in product_features %}
-                {% if "سایز" in pf.feature.title %}
-                <div class="size-option" data-size-id="{{ pf.id }}" data-size-value="{{ pf.value }}">
-                    <div class="w-10 h-10 flex items-center justify-center rounded-full border-2
-                                border-gray-200 dark:border-gray-700
-                                bg-white dark:bg-gray-800
-                                text-xs font-DanaDemiBold
-                                text-slate-700 dark:text-slate-300
-                                transition-all duration-200
-                                hover:border-green-400 hover:scale-105">
-                        {{ pf.value }}
+                    {% if product_features %}
+                    <div class="w-full flex flex-col gap-y-4">
+                        <span class="font-DanaDemiBold text-base dark:text-gray-200">
+                            انتخاب سایز
+                        </span>
+                        <div class="mb-6">
+                            <div class="flex flex-wrap gap-2" id="size-selector">
+                                {% for pf in product_features %}
+                                    {% if "سایز" in pf.feature.title %}
+                                    <div class="size-option" data-size-id="{{ pf.id }}" data-size-value="{{ pf.value }}">
+                                        <div class="w-10 h-10 flex items-center justify-center rounded-full border-2
+                                                    border-gray-200 dark:border-gray-700
+                                                    bg-white dark:bg-gray-800
+                                                    text-xs font-DanaDemiBold
+                                                    text-slate-700 dark:text-slate-300
+                                                    transition-all duration-200
+                                                    hover:border-green-400 hover:scale-105">
+                                            {{ pf.value }}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <input type="hidden" name="size-desktop" id="selected-size" value="">
+                        </div>
                     </div>
-                </div>
-                {% endif %}
-            {% endfor %}
-        </div>
 
-        <!-- این input پنهان رو برای ارسال به سرور نگه دار -->
-        <input type="hidden" name="size-desktop" id="selected-size" value="">
-    </div>
-</div>
+                    <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const sizeOptions = document.querySelectorAll('.size-option');
+                        const selectedSizeInput = document.getElementById('selected-size');
+                        let selectedSizeId = null;
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const sizeOptions = document.querySelectorAll('.size-option');
-    const selectedSizeInput = document.getElementById('selected-size');
-    let selectedSizeId = null;
+                        sizeOptions.forEach((option, index) => {
+                            if (index === 0) {
+                                option.querySelector('div').classList.add(
+                                    'border-green-500',
+                                    'bg-green-50',
+                                    'text-green-600',
+                                    'dark:bg-green-900/20',
+                                    'dark:text-green-300',
+                                    'dark:border-green-400'
+                                );
+                                selectedSizeId = option.dataset.sizeId;
+                                selectedSizeInput.value = selectedSizeId;
+                            }
 
-    sizeOptions.forEach((option, index) => {
-        // انتخاب اولیه
-        if (index === 0) {
-            option.querySelector('div').classList.add(
-                'border-green-500',
-                'bg-green-50',
-                'text-green-600',
-                'dark:bg-green-900/20',
-                'dark:text-green-300',
-                'dark:border-green-400'
-            );
-            selectedSizeId = option.dataset.sizeId;
-            selectedSizeInput.value = selectedSizeId;
-        }
+                            option.addEventListener('click', function() {
+                                const sizeId = this.dataset.sizeId;
+                                const sizeValue = this.dataset.sizeValue;
 
-        option.addEventListener('click', function() {
-            const sizeId = this.dataset.sizeId;
-            const sizeValue = this.dataset.sizeValue;
+                                sizeOptions.forEach(opt => {
+                                    opt.querySelector('div').classList.remove(
+                                        'border-green-500',
+                                        'bg-green-50',
+                                        'text-green-600',
+                                        'peer-checked:ring-1',
+                                        'peer-checked:ring-green-300',
+                                        'dark:bg-green-900/20',
+                                        'dark:text-green-300',
+                                        'dark:border-green-400',
+                                        'dark:peer-checked:ring-green-800'
+                                    );
+                                    opt.querySelector('div').classList.add(
+                                        'border-gray-200',
+                                        'dark:border-gray-700',
+                                        'bg-white',
+                                        'dark:bg-gray-800',
+                                        'text-slate-700',
+                                        'dark:text-slate-300'
+                                    );
+                                });
 
-            // حذف استایل از همه
-            sizeOptions.forEach(opt => {
-                opt.querySelector('div').classList.remove(
-                    'border-green-500',
-                    'bg-green-50',
-                    'text-green-600',
-                    'peer-checked:ring-1',
-                    'peer-checked:ring-green-300',
-                    'dark:bg-green-900/20',
-                    'dark:text-green-300',
-                    'dark:border-green-400',
-                    'dark:peer-checked:ring-green-800'
-                );
-                opt.querySelector('div').classList.add(
-                    'border-gray-200',
-                    'dark:border-gray-700',
-                    'bg-white',
-                    'dark:bg-gray-800',
-                    'text-slate-700',
-                    'dark:text-slate-300'
-                );
-            });
+                                this.querySelector('div').classList.add(
+                                    'border-green-500',
+                                    'bg-green-50',
+                                    'text-green-600',
+                                    'dark:bg-green-900/20',
+                                    'dark:text-green-300',
+                                    'dark:border-green-400'
+                                );
+                                this.querySelector('div').classList.remove(
+                                    'border-gray-200',
+                                    'dark:border-gray-700',
+                                    'bg-white',
+                                    'dark:bg-gray-800',
+                                    'text-slate-700',
+                                    'dark:text-slate-300'
+                                );
 
-            // اضافه کردن استایل به انتخاب شده
-            this.querySelector('div').classList.add(
-                'border-green-500',
-                'bg-green-50',
-                'text-green-600',
-                'dark:bg-green-900/20',
-                'dark:text-green-300',
-                'dark:border-green-400'
-            );
-            this.querySelector('div').classList.remove(
-                'border-gray-200',
-                'dark:border-gray-700',
-                'bg-white',
-                'dark:bg-gray-800',
-                'text-slate-700',
-                'dark:text-slate-300'
-            );
-
-            // ذخیره مقدار
-            selectedSizeId = sizeId;
-            selectedSizeInput.value = sizeId;
-
-            console.log('✅ سایز انتخاب شد:', sizeValue, '(ID:', sizeId + ')');
-
-            // میتونی اینجا یک event دیگه هم trigger کنی
-            const event = new CustomEvent('sizeSelected', {
-                detail: { sizeId: sizeId, sizeValue: sizeValue }
-            });
-            document.dispatchEvent(event);
-        });
-    });
-
-    // برای دیدن وضعیت
-    console.log('🎯 تعداد سایزها:', sizeOptions.length);
-});
-</script>
-{% endif %}
-
+                                selectedSizeId = sizeId;
+                                selectedSizeInput.value = selectedSizeId;
+                            });
+                        });
+                    });
+                    </script>
+                    {% endif %}
                 </div>
             </div>
 
-            <div class="mt-10 lg:mr-2 grid grid-cols-12 child:col-span-6 xl:child:col-span-3 gap-x-1 gap-y-2 lg:gap-4 child:border child:text-gray-400 child:dark:border-white/20 child:border-gray-200 child:rounded-lg child:h-12  child:p-2 child:flex child:items-center child:gap-x-1 lg:child:gap-x-2 child:text-sm lg:text-base">
+            <div class="mt-10 lg:mr-2 grid grid-cols-12 child:col-span-6 xl:child:col-span-3 gap-x-1 gap-y-2 lg:gap-4 child:border child:text-gray-400 child:dark:border-white/20 child:border-gray-200 child:rounded-lg child:h-12 child:p-2 child:flex child:items-center child:gap-x-1 lg:child:gap-x-2 child:text-sm lg:text-base">
                 <span>
                     <svg class="w-4 h-4 lg:w-6 lg:h-6">
                         <use href="#check-badge"></use>
                     </svg>
-                    <p>
-                        تضمین اصالت کالا
-                    </p>
+                    <p>تضمین اصالت کالا</p>
                 </span>
                 <span>
                     <svg class="w-4 h-4 lg:w-6 lg:h-6">
@@ -681,44 +658,38 @@ document.addEventListener('DOMContentLoaded', function() {
                     <svg class="w-4 h-4 lg:w-6 lg:h-6">
                         <use href="#truke"></use>
                     </svg>
-                    <p>ارسال به سراسر ایران </p>
+                    <p>ارسال به سراسر ایران</p>
                 </span>
             </div>
         </div>
 
-        <!-- PRICE & ADD TO CART BOX - این قسمت در هر دو نسخه نمایش داده می‌شود -->
-        <div id='arv22'  class="w-full lg:w-1/4 lg:sticky top-5 flex flex-col gap-y-6">
-            <!-- PRICE -->
+        <!-- PRICE & ADD TO CART BOX -->
+        <div id='arv22' class="w-full lg:w-1/4 lg:sticky top-5 flex flex-col gap-y-6">
             {% if default_sale_type %}
+            <!-- PRICE -->
             <div class="space-y-2">
-                {% if discount_percent %}
-
-                {% if not is_call %}
-
-                  <span class="inline-block px-2 py-1 rounded-lg bg-red-50 text-red-600 text-xs font-DanaDemiBold">
+                {% if discount_percent and not is_call %}
+                <span class="inline-block px-2 py-1 rounded-lg bg-red-50 text-red-600 text-xs font-DanaDemiBold">
                     {{ discount_percent }}% تخفیف
                 </span>
-
                 {% endif %}
 
-                {% endif %}
-               {% if not is_call %}
+                {% if not is_call %}
                 <div class="flex items-baseline gap-x-1">
                     {% if discount_percent > 0 and default_sale_type.final_price > 0 %}
-                        <div class="flex flex-col items-end">
-                            <p class="text-lg text-gray-500 line-through">{{ default_sale_type.price|intcomma }}</p>
-                            <p class="text-2xl font-DanaDemiBold text-red-600" id="current-price">{{ default_sale_type.final_price|intcomma }}</p>
-                        </div>
+                    <div class="flex flex-col items-end">
+                        <p class="text-lg text-gray-500 line-through">{{ default_sale_type.price|intcomma }}</p>
+                        <p class="text-2xl font-DanaDemiBold text-red-600" id="current-price">{{ default_sale_type.final_price|intcomma }}</p>
+                    </div>
                     {% else %}
-                        <p class="text-2xl font-DanaDemiBold text-blue-600" id="current-price">{{ default_sale_type.price|intcomma }}</p>
+                    <p class="text-2xl font-DanaDemiBold text-blue-600" id="current-price">{{ default_sale_type.price|intcomma }}</p>
                     {% endif %}
-                     <span style='background:#22adbd;'>تومان</span>
+                    <span>تومان</span>
                 </div>
-               {% endif %}
+                {% endif %}
+
                 {% if default_sale_type.typeSale == 2 %}
-                <p class="text-sm text-gray-500" id="carton-unit-info">
-                    هر کارتن {{ default_sale_type.memberCarton }} عددی
-                </p>
+
                 {% endif %}
             </div>
 
@@ -754,198 +725,199 @@ document.addEventListener('DOMContentLoaded', function() {
 
             <div class="w-full flex flex-col gap-2">
                 <!-- SINGLE SALE TYPE (typeSale = 1) -->
-                {% if default_sale_type.typeSale == 1 %}
-                {% if not is_call %}
-                 <div class="flex items-center justify-between gap-x-1 rounded-lg border border-gray-200 dark:border-white/20 py-2 px-3">
-                    <svg class="w-6 h-6 increment text-green-600 cursor-pointer">
-                        <use href="#plus"></use>
-                    </svg>
-                    <input type="number" name="quantity" id="quantity"
-                           min="1"
-                           max="1000"
-                           value="1"
-                           class="custom-input mr-4 text-lg bg-transparent text-center w-20">
-                    <svg class="w-6 h-6 decrement text-red-500 cursor-pointer" id="decrement-btn">
-                        <use href="#minus"></use>
-                    </svg>
-                </div>
-                {% endif %}
-                {% endif %}
+                 {% if default_sale_type.typeSale == 1 and not is_call %}
+    <div class="flex items-center justify-between gap-x-1 rounded-lg border border-gray-200 dark:border-white/20 py-2 px-3">
+        <!-- کلاس increment از اینجا حذف شد تا تداخل ایجاد نشود -->
+        <svg class="w-6 h-6 text-green-600 cursor-pointer" onclick="updateSingleQuantity('increment')">
+            <use href="#plus"></use>
+        </svg>
+        <input type="number" name="quantity" id="quantity"
+               min="1"
+               max="{{ product_stock }}"
+               value="1"
+               class="custom-input mr-4 text-lg bg-transparent text-center w-20 border-none focus:ring-0"
+               onchange="validateSingleQuantity(this)">
+        <!-- کلاس decrement از اینجا حذف شد تا تداخل ایجاد نشود -->
+        <svg class="w-6 h-6 text-red-500 cursor-pointer" onclick="updateSingleQuantity('decrement')">
+            <use href="#minus"></use>
+        </svg>
+    </div>
+
+    <!-- باکس کارتن -->
+    {% if member_carton and member_carton > 0 %}
+    <div id="single-carton-info" class="mt-2 bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg text-center text-sm">
+        <span id="single-item-count" class="font-bold text-red-600">1</span> عدد معادل
+        <span id="single-cartons-count" class="font-bold text-lg text-blue-700">0</span> کارتن می‌باشد
+        <div class="text-xs text-gray-500 mt-1">(هر کارتن {{ member_carton }} عدد)</div>
+    </div>
+    {% endif %}
+    {% endif %}
 
                 <!-- LIMITED SALE TYPE (typeSale = 3) -->
-                {% if default_sale_type.typeSale == 3 %}
-
-                {% if not is_call %}
-
-                  <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                    <div class="flex items-center justify-center gap-x-4 mb-3">
+                {% if default_sale_type.typeSale == 3 and not is_call %}
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div class="flex items-center justify-center gap-x-8 mb-4 bg-amber-100 p-3 rounded-lg">
                         <div class="text-center">
-                            <div class="text-2xl font-DanaDemiBold text-amber-600" id="remaining-count">{{ default_sale_type.limitedSale }}</div>
-                            <div class="text-sm text-gray-600">موجودی</div>
+                            <div class="text-sm text-gray-600">موجودی کل</div>
+                            <div class="text-2xl font-DanaDemiBold text-amber-700">{{ product.stock|intcomma }}</div>
+                            <div class="text-xs text-gray-500">عدد</div>
                         </div>
                         <div class="h-12 w-px bg-amber-300"></div>
                         <div class="text-center">
-                            <div class="text-2xl font-DanaDemiBold text-blue-600" id="selected-count">0</div>
-                            <div class="text-sm text-gray-600">انتخاب شده</div>
+                            <div class="text-sm text-gray-600">حداقل خرید</div>
+                            <div class="text-2xl font-DanaDemiBold text-blue-600">{{ default_sale_type.limitedSale }}</div>
+                            <div class="text-xs text-gray-500">عدد</div>
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between gap-x-1 rounded-lg border border-gray-200 py-2 px-3">
-                        <svg class="w-6 h-6 increment text-green-600 cursor-pointer">
+                    <!-- بخش دکمه های افزایش و کاهش و فیلد تعداد -->
+                    <div class="flex items-center justify-between gap-x-1 rounded-lg border border-gray-200 py-2 px-3 mb-4 bg-white dark:bg-gray-800">
+                        <svg class="w-6 h-6 text-green-600 cursor-pointer" onclick="updateLimitedQuantity('increment')">
                             <use href="#plus"></use>
                         </svg>
+
                         <input type="number" name="quantity" id="quantity"
                                min="{{ default_sale_type.limitedSale }}"
-                               max="1000"
+                               max="{{ product.stock }}"
                                value="{{ default_sale_type.limitedSale }}"
-                               class="custom-input mr-4 text-lg bg-transparent text-center w-20">
-                        <svg class="w-6 h-6 decrement text-red-500 cursor-pointer" id="decrement-btn">
+                               step="{{ default_sale_type.limitedSale }}"
+                               data-per-carton="{{ default_sale_type.memberCarton }}"
+                               class="custom-input mr-4 text-lg bg-transparent text-center w-20 border-none focus:ring-0"
+                               onchange="validateLimitedQuantity(this)">
+
+                        <svg class="w-6 h-6 text-red-500 cursor-pointer" onclick="updateLimitedQuantity('decrement')">
                             <use href="#minus"></use>
                         </svg>
                     </div>
 
-                    <div class="text-sm text-amber-700 font-DanaMedium text-center mt-2">
-                        ⚠️ حداقل خرید {{ default_sale_type.limitedSale }} عدد
+                    <!-- باکس داینامیک نمایش کارتن -->
+                    <div id="dynamic-carton-info" class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3 text-center hidden transition-all duration-300">
+                        <div class="text-sm text-gray-700 mb-2">
+                            شما در حال سفارش <span id="dynamic-cartons-selected" class="font-DanaDemiBold text-blue-700 text-lg mx-1">1</span> کارتن هستید
+                        </div>
+                        <div class="flex items-center justify-center gap-4 text-xs text-gray-500 border-t border-blue-200 pt-2">
+                            <div>
+                                تعداد در کارتن: <span class="font-DanaDemiBold text-gray-700">{{ default_sale_type.memberCarton }}</span> عدد
+                            </div>
+                            <div class="w-px h-4 bg-blue-200"></div>
+                            <div>
+                                موجودی انبار: <span id="total-available-cartons" class="font-DanaDemiBold text-blue-600">0</span> کارتن
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-
                 {% endif %}
 
-                {% endif %}
-
-                <!-- CARTON SALE TYPE (typeSale = 2) -->
-                {% if default_sale_type.typeSale == 2 %}
-
-                 {% if not is_call %}
-
-
-                   <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <!-- CARTON SALE TYPE (typeSale = 2) - اصلاح شده برای کارکرد صحیح -->
+                {% if default_sale_type.typeSale == 2 and not is_call %}
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <!-- Carton Calculation Display -->
+                    <div class="flex items-center justify-between bg-blue-100 p-3 rounded-lg mb-4">
+                        <div class="text-center">
+                            <div class="text-sm text-gray-600">تعداد کارتن</div>
+                            <div class="text-2xl font-DanaDemiBold text-blue-700" id="carton-count">1</div>
+                        </div>
+                        <div class="h-12 w-px bg-blue-300"></div>
+                        <div class="text-center">
+                            <div class="text-sm text-gray-600">تعداد کل واحد</div>
+                            <div class="text-2xl font-DanaDemiBold text-green-600" id="total-units">{{ default_sale_type.memberCarton }}</div>
+                            <div class="text-xs text-gray-500">عدد</div>
+                        </div>
+                    </div>
 
                     <!-- Quantity Selector -->
-                    <div class="flex items-center justify-between gap-x-1 rounded-lg border border-gray-200 py-2 px-3 mb-3">
-                        <svg class="w-6 h-6 increment text-green-600 cursor-pointer">
+                    <div class="flex items-center justify-between gap-x-1 rounded-lg border border-gray-200 py-2 px-3 mb-3 bg-white dark:bg-gray-800">
+                        <svg class="w-6 h-6 increment text-green-600 cursor-pointer" onclick="updateCartonQuantity('increment')">
                             <use href="#plus"></use>
                         </svg>
                         <div class="flex-1 text-center">
                             <input type="number" name="quantity" id="quantity"
                                    min="1"
-                                   max="1000"
+                                   max="{{ max_cartons }}"
                                    value="1"
-                                   class="custom-input text-lg bg-transparent text-center w-20">
+                                   step="1"
+                                   data-per-carton="{{ default_sale_type.memberCarton }}"
+                                   data-max-cartons="{{ max_cartons }}"
+                                   class="custom-input text-lg bg-transparent text-center w-20 border-none focus:ring-0"
+                                   onchange="validateCartonQuantity(this)">
                             <div class="text-sm text-gray-600 mt-1">کارتن</div>
                         </div>
-                        <svg class="w-6 h-6 decrement text-red-500 cursor-pointer" id="decrement-btn">
+                        <svg class="w-6 h-6 decrement text-red-500 cursor-pointer" onclick="updateCartonQuantity('decrement')">
                             <use href="#minus"></use>
                         </svg>
                     </div>
 
                     <!-- Carton Info -->
                     <div class="text-sm text-blue-600 font-DanaMedium text-center bg-blue-100 py-2 px-3 rounded">
-                        <span id="carton-count">1</span> کارتن
-                        ({{ default_sale_type.memberCarton }} عدد در هر کارتن)
+                        هر کارتن {{ default_sale_type.memberCarton }} عدد
                     </div>
                 </div>
-
-                 {% endif %}
-
                 {% endif %}
             </div>
 
             <!-- نمایش جمع کل -->
-            {% if default_sale_type.typeSale == 1 %}
-            <!-- Single Sale Total -->
-           {% if not is_call %}
-            <div class="w-full flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg py-3 px-4 font-DanaMedium text-lg">
-                <p class="text-gray-700">مجموع خرید:</p>
-                <div class="flex flex-col items-end">
-                    {% if discount_percent > 0 and default_sale_type.final_price > 0 %}
-                        <p class="text-gray-500 line-through text-sm">{{ default_sale_type.price|intcomma }} تومان</p>
-                        <p id="total-price" class="text-red-600 font-DanaDemiBold" data-unit-price="{{ default_sale_type.final_price }}">{{ default_sale_type.final_price|intcomma }} تومان</p>
-                        <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full mt-1">{{ discount_percent }}% تخفیف</span>
-                    {% else %}
-                        <p id="total-price" class="text-blue-600" data-unit-price="{{ default_sale_type.final_price|default:default_sale_type.price }}">{{ default_sale_type.final_price|default:default_sale_type.price|intcomma }} تومان</p>
-                    {% endif %}
-                </div>
-            </div>
-           {% endif %}
-            {% endif %}
-
-            {% if default_sale_type.typeSale == 3 %}
-            <!-- Limited Sale Total -->
-           {% if not is_call %}
-
-            <div class="w-full flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg py-3 px-4 font-DanaMedium text-lg">
-                <p class="text-gray-700">مجموع خرید:</p>
-                <div class="flex flex-col items-end">
-                    {% if discount_percent > 0 and default_sale_type.final_price > 0 %}
-                        <p class="text-gray-500 line-through text-sm">{{ default_sale_type.price|intcomma }} تومان</p>
-                        <p id="total-price" class="text-red-600 font-DanaDemiBold" data-unit-price="{{ default_sale_type.final_price }}">{{ default_sale_type.final_price|intcomma }} تومان</p>
-                        <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full mt-1">{{ discount_percent }}% تخفیف</span>
-                    {% else %}
-                        <p id="total-price" class="text-amber-600" data-unit-price="{{ default_sale_type.final_price|default:default_sale_type.price }}">{{ default_sale_type.final_price|default:default_sale_type.price|intcomma }} تومان</p>
-                    {% endif %}
-                </div>
-            </div>
-
-           {% endif %}
-            {% endif %}
-
-            {% if default_sale_type.typeSale == 2 %}
-            <!-- Carton Sale Total & Breakdown -->
-           {% if not is_call %}
-
-            <div class="w-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
-                <!-- Calculation Breakdown -->
-                <div class="text-sm text-gray-600 mb-3 text-center" id="carton-detail">
-                    1 کارتن × {{ default_sale_type.memberCarton }} عدد × {{ default_sale_type.final_price|default:default_sale_type.price|intcomma }} تومان
-                </div>
-
-                <!-- Total -->
-                <div class="flex items-center justify-between font-DanaMedium text-lg">
+            {% if not is_call %}
+                {% if default_sale_type.typeSale == 1 %}
+                <div class="w-full flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg py-3 px-4 font-DanaMedium text-lg">
                     <p class="text-gray-700">مجموع خرید:</p>
                     <div class="flex flex-col items-end">
                         {% if discount_percent > 0 and default_sale_type.final_price > 0 %}
-                            <p class="text-gray-500 line-through text-sm">{{ default_sale_type.price|intcomma }} تومان</p>
-                            <p id="total-price" class="text-red-600 font-DanaDemiBold" data-unit-price="{{ default_sale_type.final_price }}">{{ default_sale_type.final_price|intcomma }} تومان</p>
-                            <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full mt-1">{{ discount_percent }}% تخفیف</span>
+                        <p class="text-gray-500 line-through text-sm">{{ default_sale_type.price|intcomma }} تومان</p>
+                        <p id="total-price" class="text-red-600 font-DanaDemiBold" data-unit-price="{{ default_sale_type.final_price }}">{{ default_sale_type.final_price|intcomma }} تومان</p>
+                        <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full mt-1">{{ discount_percent }}% تخفیف</span>
                         {% else %}
-                            <p id="total-price" class="text-blue-600 font-DanaDemiBold" data-unit-price="{{ default_sale_type.final_price|default:default_sale_type.price }}">{{ default_sale_type.final_price|default:default_sale_type.price|intcomma }} تومان</p>
+                        <p id="total-price" class="text-blue-600" data-unit-price="{{ default_sale_type.final_price|default:default_sale_type.price }}">{{ default_sale_type.final_price|default:default_sale_type.price|intcomma }} تومان</p>
                         {% endif %}
                     </div>
                 </div>
+                {% endif %}
 
-                <!-- Savings Indicator (if applicable) -->
-                <div class="text-xs text-green-600 text-center mt-2" id="savings-indicator">
-                    💰 خرید کارتن‌ایی - صرفه اقتصادی بالا
+                {% if default_sale_type.typeSale == 3 %}
+                <div class="w-full flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg py-3 px-4 font-DanaMedium text-lg">
+                    <p class="text-gray-700">مجموع خرید:</p>
+                    <div class="flex flex-col items-end">
+                        {% if discount_percent > 0 and default_sale_type.final_price > 0 %}
+                        <p class="text-gray-500 line-through text-sm">{{ default_sale_type.price|intcomma }} تومان</p>
+                        <p id="total-price" class="text-red-600 font-DanaDemiBold" data-unit-price="{{ default_sale_type.final_price }}">{{ default_sale_type.final_price|intcomma }} تومان</p>
+                        <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full mt-1">{{ discount_percent }}% تخفیف</span>
+                        {% else %}
+                        <p id="total-price" class="text-amber-600" data-unit-price="{{ default_sale_type.final_price|default:default_sale_type.price }}">{{ default_sale_type.final_price|default:default_sale_type.price|intcomma }} تومان</p>
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
+                {% endif %}
 
-           {% endif %}
+                {% if default_sale_type.typeSale == 2 %}
+                <div class="w-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+
+                    <div class="flex items-center justify-between font-DanaMedium text-lg">
+                        <p class="text-gray-700">مجموع خرید:</p>
+                        <div class="flex flex-col items-end">
+                            {% if discount_percent > 0 and default_sale_type.final_price > 0 %}
+                            <p class="text-gray-500 line-through text-sm">{{ default_sale_type.price|intcomma }} تومان</p>
+                            <p id="total-price" class="text-red-600 font-DanaDemiBold" data-unit-price="{{ default_sale_type.final_price }}">{{ default_sale_type.final_price|intcomma }} تومان</p>
+                            <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full mt-1">{{ discount_percent }}% تخفیف</span>
+                            {% else %}
+                            <p id="total-price" class="text-blue-600 font-DanaDemiBold" data-unit-price="{{ default_sale_type.final_price|default:default_sale_type.price }}">{{ default_sale_type.final_price|default:default_sale_type.price|intcomma }} تومان</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="text-xs text-green-600 text-center mt-2" id="savings-indicator">
+                        💰 خرید کارتن‌ایی - صرفه اقتصادی بالا
+                    </div>
+                </div>
+                {% endif %}
             {% endif %}
 
-            <!-- پیشنهاد خرید -->
-            <div class="relative overflow-hidden text-sm font-DanaDemiBold text-right">
-                <div id="slider-text" class="transition-all duration-700 ease-in-out">
-                    <p>🔥 {{ product.recommendation_stats.recommend|floatformat:0 }}% پیشنهاد خرید این محصول</p>
-                </div>
-            </div>
 
-            <!-- دکمه افزودن به سبد -->
-            {% if is_call and emergency_phone %}
-                <a href="tel:{{ emergency_phone.phone_number }}"
-                   class="call-btn">
-                    <span class="font-DanaDemiBold">
-                        تماس بگیرید
-                    </span>
-                    <svg class="w-5 h-5">
-                        <use href="#phone"></use>
-                    </svg>
-                </a>
+              {% if is_call and emergency_phone %}
+            <a href="tel:{{ emergency_phone.phone_number }}" class="call-btn">
+                <span class="font-DanaDemiBold">تماس بگیرید</span>
+                <svg class="w-5 h-5"><use href="#phone"></use></svg>
+            </a>
             {% else %}
-               <div id='arv-btn'>
-                 <button class="add-to-cart-btn add-to-cart-desktop"
+            <div id='arv-btn'>
+                <button class="add-to-cart-btn add-to-cart-desktop"
                         data-product-id="{{ product.id }}"
                         data-quantity="1"
                         data-detail="">
@@ -958,20 +930,25 @@ document.addEventListener('DOMContentLoaded', function() {
                             افزودن به سبد
                         {% endif %}
                     </span>
-                    <svg class="w-5 h-5">
-                        <use href="#shopping-bag"></use>
-                    </svg>
+                    <svg class="w-5 h-5"><use href="#shopping-bag"></use></svg>
                 </button>
-               </div>
+            </div>
             {% endif %}
 
             <div class="text-sm text-gray-400 flex xl:items-center gap-x-1">
-                <svg class="w-5 h-5">
-                    <use href="#info"></use>
-                </svg>
-                <p>{{product.shortDescription}}</p>
+                <svg class="w-5 h-5"><use href="#info"></use></svg>
+                <p>{{ product.shortDescription }}</p>
             </div>
             {% endif %}
+
+            <div class="relative overflow-hidden text-sm font-DanaDemiBold text-right">
+                <div id="slider-text" class="transition-all duration-700 ease-in-out">
+                    <p>🔥 {{ product.recommendation_stats.recommend|floatformat:0 }}% پیشنهاد خرید این محصول</p>
+                </div>
+            </div>
+
+            <!-- دکمه افزودن به سبد -->
+
         </div>
     </section>
 
@@ -981,9 +958,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="flex flex-col gap-y-4 xs:flex-row items-center justify-between w-full text-center xs:text-start">
             <div class="flex items-center gap-x-2 sm:gap-x-4">
                 <span class="size-12 hidden xs:flex rounded-lg bg-white shadow-lg dark:bg-gray-800 flex-center">
-                    <svg class="size-7 text-gray-700 dark:text-gray-100">
-                        <use href="#mobile"></use>
-                    </svg>
+                    <svg class="size-7 text-gray-700 dark:text-gray-100"><use href="#mobile"></use></svg>
                 </span>
                 <div class="space-y-1 md:space-y-1">
                     <span class="text-xl md:text-2xl font-MorabbaMedium text-gray-800 dark:text-gray-50">محصولات
@@ -995,71 +970,52 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="w-full xs:w-auto flex justify-between xs:justify-end items-center gap-x-2">
                 <div class="flex items-center gap-x-2">
                     <button class="slider-navigate_btn BestSelling-prev-slide">
-                        <svg class="size-6 -rotate-90">
-                            <use href="#chevron" />
-                        </svg>
+                        <svg class="size-6 -rotate-90"><use href="#chevron" /></svg>
                     </button>
                     <button class="slider-navigate_btn BestSelling-next-slide">
-                        <svg class="size-6 rotate-90">
-                            <use href="#chevron" />
-                        </svg>
+                        <svg class="size-6 rotate-90"><use href="#chevron" /></svg>
                     </button>
                 </div>
-                <a href=" "
-                    class="group shadow-xl text-sm md:text-base flex gap-x-1.5 items-center px-2 h-10 md:px-3 text-white bg-blue-600 rounded-xl">
+                <a href=" " class="group shadow-xl text-sm md:text-base flex gap-x-1.5 items-center px-2 h-10 md:px-3 text-white bg-blue-600 rounded-xl">
                     <p>مشاهده همه</p>
-                    <span
-                        class="w-7 h-7 rounded-full bg-blue-500 flex-center md:group-hover:-translate-x-1 transition-transform duration-300">
-                        <svg class="size-5">
-                            <use href="#arrow" />
-                        </svg>
+                    <span class="w-7 h-7 rounded-full bg-blue-500 flex-center md:group-hover:-translate-x-1 transition-transform duration-300">
+                        <svg class="size-5"><use href="#arrow" /></svg>
                     </span>
                 </a>
             </div>
         </div>
+
         <!-- محصولات مرتبط Slider -->
         <div class="swiper BestSelling mt-5 w-full">
             <div class="swiper-wrapper py-5">
                 {% for related in related_products %}
                 <div class="swiper-slide product-card group">
-                    <!-- product header -->
                     <div class="product-card_header">
-
-                        <!-- badge offer -->
                         {% if related.discount_percent %}
                         <span class="product-card_badge">{{ related.discount_percent }}% تخفیف‌</span>
                         {% endif %}
                     </div>
-                    <!-- product img -->
                     <a href="{{ related.get_absolute_url }}">
                         <img loading="lazy" class="product-card_img group-hover:opacity-0 absolute" src="{{ related.mainImage.url }}" alt="{{ related.title }}">
                         {% if related.galleries.all %}
                         <img loading="lazy" class="product-card_img opacity-0 group-hover:opacity-100" src="{{ related.galleries.first.image.url }}" alt="{{ related.title }}">
                         {% endif %}
                     </a>
-                    <!-- product footer -->
                     <div class="space-y-2">
                         <a href="{{ related.get_absolute_url }}" class="product-card_link">
                             {{ related.title|truncatechars:70 }}
                         </a>
-                        <!-- Rate and Price -->
                         <div class="product-card_price-wrapper">
-                            <!-- RATE -->
                             <div class="product-card_rate">
                                 <span class="flex items-center gap-x-0.5">
-                                    <svg class="size-4 text-blue-500 mb-0.5">
-                                        <use href="#rocket"></use>
-                                    </svg>
+                                    <svg class="size-4 text-blue-500 mb-0.5"><use href="#rocket"></use></svg>
                                     <p class="text-xs">ارسال امروز</p>
                                 </span>
                                 <span class="text-gray-400 flex items-center text-sm gap-x-0.5">
                                     <p>{{ related.average_rating|floatformat:1 }}</p>
-                                    <svg class="size-4 mb-1">
-                                        <use href="#star"></use>
-                                    </svg>
+                                    <svg class="size-4 mb-1"><use href="#star"></use></svg>
                                 </span>
                             </div>
-                            <!-- Price -->
                             <div class="product-card_price">
                                 {% if related.discount_percent %}
                                 <del class="text-xs text-gray-400">{{ related.price|intcomma }}</del>
@@ -1067,7 +1023,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 {% else %}
                                 <p>{{ related.price|intcomma }}</p>
                                 {% endif %}
-                                 <span style='background:#22adbd;'>تومان</span>
+                                <span style='background:#22adbd;'>تومان</span>
                             </div>
                         </div>
                     </div>
@@ -1094,9 +1050,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 {% if product.description|length > 500 %}
                 <a href="#" class="flex gap-x-1 items-center text-blue-400">
                     مشاهده بیشتر
-                    <svg class="size-4">
-                        <use href="#chevron-left" />
-                    </svg>
+                    <svg class="size-4"><use href="#chevron-left" /></svg>
                 </a>
                 {% endif %}
             </p>
@@ -1126,9 +1080,7 @@ document.addEventListener('DOMContentLoaded', function() {
             {% if product_features|length > 10 %}
             <a href="#" class="flex gap-x-1 items-center text-blue-400">
                 مشاهده بیشتر
-                <svg class="size-4">
-                    <use href="#chevron-left" />
-                </svg>
+                <svg class="size-4"><use href="#chevron-left" /></svg>
             </a>
             {% endif %}
         </div>
@@ -1141,22 +1093,17 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
 
             <div class="w-full flex flex-col md:flex-row items-start gap-10">
-                <!-- SUBMIT COMMENT -->
                 {% if not user_has_commented and user.is_authenticated %}
                 <div class="lg:w-1/4 flex flex-col w-full">
                     <p class="font-DanaMedium text-lg mb-2">ثبت دیدگاه</p>
                     <p class="text-gray-500 dark:text-white text-sm mb-4">این محصول را به دیگران پیشنهاد : </p>
                     <div class="grid grid-cols-12 child:col-span-6 gap-4 child:w-full child:flex child:items-center child:justify-center child:gap-x-2 child:rounded-lg child:shadow child:py-2 mb-5 child:font-DanaMedium child:duration-300 child:transition-all">
                         <button class="comment-type-btn text-green-600 ring-transparent ring-1 focus:ring-green-600 dark:ring-white/20 dark:focus:ring-green-600" data-type="recommend">
-                            <svg class="w-5 h-5">
-                                <use href="#hand-up"></use>
-                            </svg>
+                            <svg class="w-5 h-5"><use href="#hand-up"></use></svg>
                             میکنم
                         </button>
                         <button class="comment-type-btn text-red-500 ring-transparent ring-1 focus:ring-[#EF4343] dark:ring-white/20 dark:focus:ring-[#EF4343]" data-type="not_recommend">
-                            <svg class="w-5 h-5">
-                                <use href="#hand-down"></use>
-                            </svg>
+                            <svg class="w-5 h-5"><use href="#hand-down"></use></svg>
                             نمیکنم
                         </button>
                     </div>
@@ -1168,29 +1115,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 {% endif %}
 
-                <!-- ALL COMMENTS -->
                 <ul class="lg:w-3/4 flex flex-col gap-y-2 child:w-full comments-list">
                     {% for comment in comments %}
                     <li class="comment-item child:flex py-4 border-b border-gray-200 dark:border-b-gray-200/20 {% if forloop.counter > 3 %}hidden-comment-item hidden{% endif %}">
-                        <!-- TITLE -->
                         <div class="flex items-center gap-x-2">
                             <span class="font-DanaMedium text-lg mb-1">{{ comment.user.family }}</span>
                             <span class="px-2 py-1 mb-2 rounded-lg bg-blue-500 text-white text-xs">خریدار</span>
                         </div>
-                        <!-- COMMENT TEXT -->
                         <div class="flex-col">
                             {% if comment.typeComment == 'recommend' %}
                             <span class="flex items-center gap-x-1 text-green-500 mb-4">
-                                <svg class="w-4 h-4">
-                                    <use href="#hand-up"></use>
-                                </svg>
+                                <svg class="w-4 h-4"><use href="#hand-up"></use></svg>
                                 پیشنهاد میشود
                             </span>
                             {% else %}
                             <span class="flex items-center gap-x-1 text-red-500 mb-4">
-                                <svg class="w-4 h-4">
-                                    <use href="#hand-down"></use>
-                                </svg>
+                                <svg class="w-4 h-4"><use href="#hand-down"></use></svg>
                                 پیشنهاد نمیشود
                             </span>
                             {% endif %}
@@ -1198,7 +1138,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                 {{ comment.text }}
                             </p>
                         </div>
-                        <!-- COMMENT FOOTER -->
                         <div class="mt-2 lg:mt-0 flex-col lg:flex-row gap-y-2 lg:items-center justify-between">
                             <div class="flex items-center gap-x-4 text-gray-400 text-sm">
                                 <p>{{ comment.createdAt|date:"Y/m/d H:i" }}</p>
@@ -1214,9 +1153,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     {% if comments|length > 3 %}
                     <button class="more-comment-btn w-full flex items-center justify-center gap-x-1 my-4 text-blue-600 dark:text-blue-400 font-DanaMedium">
                         <p class="more-comment-text">مشاهده بیشتر</p>
-                        <svg class="size-4 more-comment-icon">
-                            <use href="#chevron"></use>
-                        </svg>
+                        <svg class="size-4 more-comment-icon"><use href="#chevron"></use></svg>
                     </button>
                     {% endif %}
                 </ul>
@@ -1228,12 +1165,8 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- SLIDER MODAL -->
 <div class="slider-modal hidden">
     <div class="flex w-full h-fit items-center justify-between">
-        <span class="font-DanaMedium text-lg">
-            تصاویر {{ product.title }}
-        </span>
-        <svg class="size-6 cursor-pointer close-sliderModal">
-            <use href="#x-mark"></use>
-        </svg>
+        <span class="font-DanaMedium text-lg">تصاویر {{ product.title }}</span>
+        <svg class="size-6 cursor-pointer close-sliderModal"><use href="#x-mark"></use></svg>
     </div>
 
     <div class="swiper ProductDetailsSlider mt-14 px-10 w-96 relative">
@@ -1246,14 +1179,10 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
     <button class="slider-navigate_btn absolute right-40 top-[17rem] border dark:border-gray-700 border-gray-200 button-prev-ProductDetailsSlider z-20">
-        <svg class="size-6 -rotate-90">
-            <use href="#chevron" />
-        </svg>
+        <svg class="size-6 -rotate-90"><use href="#chevron" /></svg>
     </button>
     <button class="slider-navigate_btn absolute left-40 top-[17rem] border dark:border-gray-700 border-gray-200 button-next-ProductDetailsSlider z-10">
-        <svg class="size-6 rotate-90">
-            <use href="#chevron" />
-        </svg>
+        <svg class="size-6 rotate-90"><use href="#chevron" /></svg>
     </button>
 </div>
 
@@ -1265,19 +1194,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // ========================
     const mobileBar = document.querySelector('.mobile-fixed-bottom-bar');
 
-    // بررسی نمایش نوار در موبایل
     function checkMobileBarVisibility() {
         if (window.innerWidth <= 768) {
             mobileBar.style.display = 'flex';
-
-            // به‌روزرسانی قیمت در نوار موبایل
             updateMobilePriceDisplay();
         } else {
             mobileBar.style.display = 'none';
         }
     }
 
-    // به‌روزرسانی نمایش قیمت در نوار موبایل
     function updateMobilePriceDisplay() {
         const priceDisplay = document.querySelector('.mobile-price-display');
         const discountPercent = {{ discount_percent|default:0 }};
@@ -1299,7 +1224,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // بررسی اولیه و هنگام تغییر سایز صفحه
     checkMobileBarVisibility();
     window.addEventListener('resize', checkMobileBarVisibility);
 
@@ -1372,7 +1296,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const typeBtn = document.querySelector('.comment-type-btn.text-green-600, .comment-type-btn.text-red-500');
             const type = typeBtn ? typeBtn.getAttribute('data-type') : 'recommend';
 
-            // Validation
             if (!text) {
                 alert('لطفا متن دیدگاه را وارد کنید');
                 return;
@@ -1383,12 +1306,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Show loading
             const originalText = this.textContent;
             this.textContent = 'در حال ارسال...';
             this.disabled = true;
 
-            // Send data
             const formData = new FormData();
             formData.append('text', text);
             formData.append('type', type);
@@ -1400,7 +1321,6 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
-                // Restore button
                 this.textContent = originalText;
                 this.disabled = false;
 
@@ -1412,10 +1332,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                // Restore button
                 this.textContent = originalText;
                 this.disabled = false;
-
                 console.error('Error:', error);
                 alert('خطا در ارتباط با سرور');
             });
@@ -1428,7 +1346,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const commentTypeBtns = document.querySelectorAll('.comment-type-btn');
     commentTypeBtns.forEach(btn => {
         btn.addEventListener('click', function() {
-            // Remove previous selection
             commentTypeBtns.forEach(b => {
                 b.classList.remove('text-green-600', 'text-red-500',
                                   'ring-green-600', 'ring-[#EF4343]',
@@ -1436,7 +1353,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 b.classList.add('ring-transparent', 'dark:ring-white/20');
             });
 
-            // New selection
             this.classList.remove('ring-transparent', 'dark:ring-white/20');
             if (this.getAttribute('data-type') === 'recommend') {
                 this.classList.add('text-green-600', 'ring-green-600', 'dark:focus:ring-green-600');
@@ -1449,7 +1365,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // ========================
     // مدیریت دکمه‌های خرید
     // ========================
-    // دکمه خرید در نوار موبایل
     const mobileAddToCartBtn = document.querySelector('.add-to-cart-btn-mobile');
     if (mobileAddToCartBtn) {
         mobileAddToCartBtn.addEventListener('click', function() {
@@ -1459,7 +1374,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // دکمه خرید در پنل اصلی (دسکتاپ)
     const desktopAddToCartBtn = document.querySelector('.add-to-cart-desktop');
     if (desktopAddToCartBtn) {
         desktopAddToCartBtn.addEventListener('click', function() {
@@ -1473,15 +1387,175 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// توابع مدیریت مقادیر برای انواع مختلف فروش
+function updateSingleQuantity(action) {
+    const input = document.getElementById('quantity');
+    let currentValue = parseInt(input.value) || 1;
+    const min = 1;
+    const max = {{ product.stock }};
+
+    if (action === 'increment') {
+        if (currentValue < max) {
+            input.value = currentValue + 1;
+        } else {
+            showToast('موجودی محصول تا این تعداد موجود می‌باشد', 'error');
+        }
+    } else if (action === 'decrement') {
+        if (currentValue > min) {
+            input.value = currentValue - 1;
+        }
+    }
+
+    validateSingleQuantity(input);
+}
+
+function validateSingleQuantity(input) {
+    let value = parseInt(input.value) || 1;
+    const min = 1;
+    const max = {{ product.stock }};
+
+    if (value < min) value = min;
+    if (value > max) {
+        value = max;
+        showToast('موجودی محصول تا این تعداد موجود می‌باشد', 'error');
+    }
+
+    input.value = value;
+    updateTotalPrice(value);
+}
+
+function validateLimitedQuantity(input) {
+    let value = parseInt(input.value) || parseInt(input.min);
+    const min = parseInt(input.min);
+    const max = parseInt(input.max);
+    const step = parseInt(input.step);
+
+    // اطمینان از مضرب بودن step
+    const remainder = (value - min) % step;
+    if (remainder !== 0) {
+        value = value - remainder;
+    }
+
+    if (value < min) value = min;
+    if (value > max) {
+        value = Math.floor(max / step) * step;
+        showToast('موجودی محصول تا این تعداد موجود می‌باشد', 'error');
+    }
+
+    input.value = value;
+
+    // آپدیت و نمایش زنده تعداد کارتن
+    updateDynamicCartonDisplay(value, input);
+
+    updateTotalPrice(value);
+}
+
+// توابع مربوط به نوع کارتن (typeSale = 2)
+function updateCartonQuantity(action) {
+    const input = document.getElementById('quantity');
+    let currentValue = parseInt(input.value) || 1;
+    const min = parseInt(input.min) || 1;
+    const max = parseInt(input.max) || parseInt(input.dataset.maxCartons) || 999;
+
+    if (action === 'increment') {
+        if (currentValue < max) {
+            input.value = currentValue + 1;
+        } else {
+            showToast('بیش از این تعداد کارتن موجود نمی‌باشد', 'error');
+        }
+    } else if (action === 'decrement') {
+        if (currentValue > min) {
+            input.value = currentValue - 1;
+        }
+    }
+
+    validateCartonQuantity(input);
+}
+
+function validateCartonQuantity(input) {
+    let value = parseInt(input.value) || 1;
+    const min = parseInt(input.min) || 1;
+    const max = parseInt(input.max) || parseInt(input.dataset.maxCartons) || 999;
+    const perCarton = parseInt(input.dataset.perCarton) || 1;
+
+    // اعمال محدودیت‌ها
+    if (value < min) value = min;
+    if (value > max) {
+        value = max;
+        showToast('بیش از این تعداد کارتن موجود نمی‌باشد', 'error');
+    }
+
+    input.value = value;
+
+    // آپدیت تعداد کارتن
+    const cartonCountElement = document.getElementById('carton-count');
+    if (cartonCountElement) {
+        cartonCountElement.textContent = value.toLocaleString();
+    }
+
+    // آپدیت تعداد کل واحدها
+    const totalUnitsElement = document.getElementById('total-units');
+    if (totalUnitsElement) {
+        const totalUnits = value * perCarton;
+        totalUnitsElement.textContent = totalUnits.toLocaleString();
+    }
+
+    // آپدیت متنِ "X کارتن × Y عدد × Z تومان"
+    const cartonDetail = document.getElementById('carton-detail');
+    if (cartonDetail) {
+        const priceElement = document.getElementById('total-price');
+        if (priceElement) {
+            const unitPrice = parseInt(priceElement.getAttribute('data-unit-price')) || 0;
+            cartonDetail.textContent = `${value} کارتن × ${perCarton} عدد × ${unitPrice.toLocaleString()} تومان`;
+        }
+    }
+
+    // برای نوع کارتن، تعداد کل واحدها = تعداد کارتن × تعداد در هر کارتن
+    const totalUnits = value * perCarton;
+    updateTotalPrice(totalUnits);
+}
+
+function updateTotalPrice(quantity) {
+    const totalElement = document.getElementById('total-price');
+    if (!totalElement) return;
+
+    const unitPrice = parseFloat(totalElement.dataset.unitPrice || '{{ default_sale_type.final_price|default:default_sale_type.price }}');
+    const total = unitPrice * quantity;
+
+    if (totalElement) {
+        totalElement.textContent = total.toLocaleString() + ' تومان';
+    }
+
+    updateMobilePriceTotal(quantity);
+}
+
+function updateMobilePriceTotal(quantity) {
+    const mobilePriceDisplay = document.querySelector('.mobile-price-display');
+    if (!mobilePriceDisplay) return;
+
+    const unitPrice = {{ default_sale_type.final_price|default:default_sale_type.price }};
+    const total = unitPrice * quantity;
+    const discountPercent = {{ discount_percent|default:0 }};
+
+    if (discountPercent > 0) {
+        const originalTotal = {{ default_sale_type.price }} * quantity;
+        mobilePriceDisplay.innerHTML = `
+            <div class="mobile-original-price">${originalTotal.toLocaleString()} تومان</div>
+            <div class="mobile-final-price">${total.toLocaleString()} تومان</div>
+            <div class="mobile-discount-badge">${discountPercent}% تخفیف</div>
+        `;
+    } else {
+        mobilePriceDisplay.innerHTML = `
+            <div class="mobile-final-price" style="color: #3b82f6;">${total.toLocaleString()} تومان</div>
+        `;
+    }
+}
+
 // تابع عمومی برای افزودن به سبد خرید
 function addToCart(productId, quantity, detail) {
-    // نمایش پیام موفقیت
     showToast('محصول به سبد خرید اضافه شد', 'success');
-
-    // در اینجا می‌توانید کد واقعی افزودن به سبد خرید را اضافه کنید
     console.log(`افزودن به سبد: محصول ${productId}، تعداد ${quantity}، جزئیات: ${detail}`);
 
-    // مثال: ارسال درخواست به سرور
     const formData = new FormData();
     formData.append('product_id', productId);
     formData.append('quantity', quantity);
@@ -1490,7 +1564,6 @@ function addToCart(productId, quantity, detail) {
     }
     formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
 
-    // این بخش را با endpoint واقعی سبد خرید خود جایگزین کنید
     fetch('/cart/add/', {
         method: 'POST',
         body: formData
@@ -1546,6 +1619,66 @@ function showToast(message, type = 'info') {
         }, 300);
     }, 3000);
 }
+
+// فعال‌سازی اعتبارسنجی اولیه
+document.addEventListener('DOMContentLoaded', function() {
+    const quantityInput = document.getElementById('quantity');
+    if (quantityInput) {
+        {% if default_sale_type.typeSale == 2 %}
+            validateCartonQuantity(quantityInput);
+        {% elif default_sale_type.typeSale == 3 %}
+            validateLimitedQuantity(quantityInput);
+        {% else %}
+            validateSingleQuantity(quantityInput);
+        {% endif %}
+    }
+});
+
+function updateLimitedQuantity(action) {
+    const input = document.getElementById('quantity');
+    let currentValue = parseInt(input.value) || 0;
+    const step = parseInt(input.step) || 1;
+
+    if (action === 'increment') {
+        input.value = currentValue + step;
+    } else if (action === 'decrement') {
+        input.value = currentValue - step;
+    }
+
+    validateLimitedQuantity(input);
+}
+
+function updateDynamicCartonDisplay(currentValue, inputElement) {
+    const infoDiv = document.getElementById('dynamic-carton-info');
+    const selectedSpan = document.getElementById('dynamic-cartons-selected');
+    const totalAvailableSpan = document.getElementById('total-available-cartons');
+
+    // گرفتن تعداد در کارتن
+    let perCarton = parseInt(inputElement.getAttribute('data-per-carton'));
+    if (isNaN(perCarton) || perCarton <= 0) {
+        perCarton = parseInt(inputElement.step) || 1;
+    }
+
+    const stock = parseInt(inputElement.getAttribute('max')) || 0;
+
+    if (infoDiv && selectedSpan) {
+        const selectedCartons = currentValue / perCarton;
+        const totalCartons = Math.floor(stock / perCarton);
+
+        // آپدیت موجودی کل کارتن ها
+        if (totalAvailableSpan) {
+            totalAvailableSpan.textContent = totalCartons.toLocaleString();
+        }
+
+        // آپدیت زنده عددی که کاربر در حال سفارش است
+        selectedSpan.textContent = Number.isInteger(selectedCartons) ?
+                                   selectedCartons.toLocaleString() :
+                                   selectedCartons.toFixed(1);
+
+        // نمایش باکس
+        infoDiv.classList.remove('hidden');
+    }
+}
 </script>
 
 <script src='{% static "js/cart.js" %}' ></script>
@@ -1554,7 +1687,6 @@ function showToast(message, type = 'info') {
     document.addEventListener('DOMContentLoaded', function() {
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-        // تابع برای آپدیت آیکون قلب
         function updateFavoriteIcon(productId, isFavorite) {
             const heartIcon = document.getElementById(`heart-icon-${productId}`);
             const heartBtn = document.querySelector(`.toggle-favorite-btn[data-product-id="${productId}"]`);
@@ -1572,12 +1704,10 @@ function showToast(message, type = 'info') {
             }
         }
 
-        // تابع toggle علاقه‌مندی
         function toggleFavorite(productId) {
             const heartIcon = document.getElementById(`heart-icon-${productId}`);
             const originalClass = heartIcon.className;
 
-            // نمایش حالت لودینگ
             heartIcon.className = 'size-4 md:size-5 animate-pulse text-gray-400';
 
             fetch(`/dashboard/favorite/toggle/${productId}/`, {
@@ -1609,7 +1739,6 @@ function showToast(message, type = 'info') {
             });
         }
 
-        // تابع چک کردن وضعیت علاقه‌مندی برای یک محصول
         function checkFavorite(productId) {
             fetch(`/dashboard/favorite/check-batch/${productId}/`, {
                 method: 'POST',
@@ -1630,7 +1759,6 @@ function showToast(message, type = 'info') {
             });
         }
 
-        // Event Listener برای دکمه‌های علاقه‌مندی
         document.addEventListener('click', function(e) {
             const toggleBtn = e.target.closest('.toggle-favorite-btn');
             if (toggleBtn) {
@@ -1640,10 +1768,7 @@ function showToast(message, type = 'info') {
             }
         });
 
-        // اجرای اولیه: بررسی وضعیت علاقه‌مندی‌ها
         const favoriteBtns = document.querySelectorAll('.toggle-favorite-btn');
-
-        // برای هر دکمه، وضعیت علاقه‌مندی رو چک کن
         favoriteBtns.forEach(btn => {
             const productId = btn.getAttribute('data-product-id');
             checkFavorite(productId);
