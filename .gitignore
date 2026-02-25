@@ -1,45 +1,27 @@
+# Media files
+media/
+mediafiles/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.svg
+*.ico
+
+# Migrations
+*/migrations/*.py
+!*/migrations/__init__.py
+
 # Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-
-# Django migrations - حذف شده: migrations/ و __pycache__/ داخل آن شامل نمی‌شود
-
-# Django
-db.sqlite3
-*.log
-/web/setting.py
-*/migrations/__pycache__/
-# Environments
-venv/
 .env
-
-# Static files
-# staticfiles/  # اگر می‌خواهید static جمع‌آوری شده را نادیده بگیرید
-# media/        # اگر می‌خواهید media آپلود شده را نادیده بگیرید
-
-# IDEs and editors
-.vscode/
-.idea/
-*.swp
-
-
-
-# Images & uploads
-*.jpg
-*.jpeg
-*.png
-*.webp
-media/
-uploads/
-static/uploads/
-
-# Django
-db.sqlite3
-__pycache__/
-*.pyc
 venv/
+.venv/
 
-# Env
-.env
+# Database
+*.sqlite3
+*.db
