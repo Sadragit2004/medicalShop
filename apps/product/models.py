@@ -80,6 +80,8 @@ class Product(BaseModel):
     description = RichTextUploadingField(
         verbose_name="توضیحات محصول", config_name="special", blank=True, null=True
     )
+
+    stock = models.PositiveIntegerField(verbose_name="موجودی", default=0)
     shortDescription = models.TextField(verbose_name="توضیح کوتاه", max_length=500)
 
     class Meta:
