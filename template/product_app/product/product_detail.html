@@ -664,292 +664,295 @@ input[type="number"]::-webkit-outer-spin-button {
         </div>
 
         <!-- PRICE & ADD TO CART BOX -->
-        <div id='arv22' class="w-full lg:w-1/4 lg:sticky top-5 flex flex-col gap-y-6">
-            {% if default_sale_type %}
-            <!-- PRICE -->
-            <div class="space-y-2">
-                {% if discount_percent and not is_call %}
-                <span class="inline-block px-2 py-1 rounded-lg bg-red-50 text-red-600 text-xs font-DanaDemiBold">
-                    {{ discount_percent }}% تخفیف
-                </span>
-                {% endif %}
+       <div id='arv22' class="w-full lg:w-1/4 lg:sticky top-5 flex flex-col gap-y-6">
+    {% if default_sale_type %}
+    <!-- PRICE - فقط وقتی is_call نیست نمایش بده -->
+    <div class="space-y-2">
+        {% if discount_percent and not is_call %}
+        <span class="inline-block px-2 py-1 rounded-lg bg-red-50 text-red-600 text-xs font-DanaDemiBold">
+            {{ discount_percent }}% تخفیف
+        </span>
+        {% endif %}
 
-                {% if not is_call %}
-                <div class="flex items-baseline gap-x-1">
-                    {% if discount_percent > 0 and default_sale_type.final_price > 0 %}
-                    <div class="flex flex-col items-end">
-                        <p class="text-lg text-gray-500 line-through">{{ default_sale_type.price|intcomma }}</p>
-                        <p class="text-2xl font-DanaDemiBold text-red-600" id="current-price">{{ default_sale_type.final_price|intcomma }}</p>
-                    </div>
-                    {% else %}
-                    <p class="text-2xl font-DanaDemiBold text-blue-600" id="current-price">{{ default_sale_type.price|intcomma }}</p>
-                    {% endif %}
-                    <span>تومان</span>
-                </div>
-                {% endif %}
-
-                {% if default_sale_type.typeSale == 2 %}
-
-                {% endif %}
+        {% if not is_call %}
+        <div class="flex items-baseline gap-x-1">
+            {% if discount_percent > 0 and default_sale_type.final_price > 0 %}
+            <div class="flex flex-col items-end">
+                <p class="text-lg text-gray-500 line-through">{{ default_sale_type.price|intcomma }}</p>
+                <p class="text-2xl font-DanaDemiBold text-red-600" id="current-price">{{ default_sale_type.final_price|intcomma }}</p>
             </div>
-
-            {% if has_multiple_prices %}
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-2">نوع فروش:</label>
-                <div class="flex flex-wrap gap-2">
-                    {% for sale in sale_types %}
-                    <button data-sale-id="{{ sale.id }}"
-                            data-sale-type="{{ sale.typeSale }}"
-                            data-price="{{ sale.final_price|default:sale.price }}"
-                            data-base-price="{{ sale.price }}"
-                            data-member-carton="{{ sale.memberCarton|default:1 }}"
-                            data-limited-sale="{{ sale.limitedSale|default:0 }}"
-                            class="sale-type-btn px-3 py-2 rounded-lg border {% if sale.typeSale == default_sale_type.typeSale %}bg-blue-500 text-white border-blue-500{% else %}border-gray-300{% endif %}">
-                        {{ sale.get_typeSale_display }}
-                        {% if sale.typeSale == 2 and sale.memberCarton %}
-                        ({{ sale.memberCarton }} عددی)
-                        {% endif %}
-                        {% if sale.limitedSale %}
-                        (حداقل {{ sale.limitedSale }} عدد)
-                        {% endif %}
-                        {% if discount_percent > 0 and sale.final_price > 0 %}
-                        <span class="text-xs block text-yellow-600">{{ sale.final_price|intcomma }} تومان</span>
-                        {% else %}
-                        <span class="text-xs block text-gray-600">{{ sale.price|intcomma }} تومان</span>
-                        {% endif %}
-                    </button>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
-            <div class="w-full flex flex-col gap-2">
-                <!-- SINGLE SALE TYPE (typeSale = 1) -->
-                 {% if default_sale_type.typeSale == 1 and not is_call %}
-    <div class="flex items-center justify-between gap-x-1 rounded-lg border border-gray-200 dark:border-white/20 py-2 px-3">
-        <!-- کلاس increment از اینجا حذف شد تا تداخل ایجاد نشود -->
-        <svg class="w-6 h-6 text-green-600 cursor-pointer" onclick="updateSingleQuantity('increment')">
-            <use href="#plus"></use>
-        </svg>
-        <input type="number" name="quantity" id="quantity"
-               min="1"
-               max="{{ product_stock }}"
-               value="1"
-               class="custom-input mr-4 text-lg bg-transparent text-center w-20 border-none focus:ring-0"
-               onchange="validateSingleQuantity(this)">
-        <!-- کلاس decrement از اینجا حذف شد تا تداخل ایجاد نشود -->
-        <svg class="w-6 h-6 text-red-500 cursor-pointer" onclick="updateSingleQuantity('decrement')">
-            <use href="#minus"></use>
-        </svg>
-    </div>
-
-    <!-- باکس کارتن -->
-    {% if member_carton and member_carton > 0 %}
-    <div id="single-carton-info" class="mt-2 bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg text-center text-sm">
-        <span id="single-item-count" class="font-bold text-red-600">1</span> عدد معادل
-        <span id="single-cartons-count" class="font-bold text-lg text-blue-700">0</span> کارتن می‌باشد
-        <div class="text-xs text-gray-500 mt-1">(هر کارتن {{ member_carton }} عدد)</div>
-    </div>
-    {% endif %}
-    {% endif %}
-
-                <!-- LIMITED SALE TYPE (typeSale = 3) -->
-                {% if default_sale_type.typeSale == 3 and not is_call %}
-                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                    <div class="flex items-center justify-center gap-x-8 mb-4 bg-amber-100 p-3 rounded-lg">
-                        <div class="text-center">
-                            <div class="text-sm text-gray-600">موجودی کل</div>
-                            <div class="text-2xl font-DanaDemiBold text-amber-700">{{ product.stock|intcomma }}</div>
-                            <div class="text-xs text-gray-500">عدد</div>
-                        </div>
-                        <div class="h-12 w-px bg-amber-300"></div>
-                        <div class="text-center">
-                            <div class="text-sm text-gray-600">حداقل خرید</div>
-                            <div class="text-2xl font-DanaDemiBold text-blue-600">{{ default_sale_type.limitedSale }}</div>
-                            <div class="text-xs text-gray-500">عدد</div>
-                        </div>
-                    </div>
-
-                    <!-- بخش دکمه های افزایش و کاهش و فیلد تعداد -->
-                    <div class="flex items-center justify-between gap-x-1 rounded-lg border border-gray-200 py-2 px-3 mb-4 bg-white dark:bg-gray-800">
-                        <svg class="w-6 h-6 text-green-600 cursor-pointer" onclick="updateLimitedQuantity('increment')">
-                            <use href="#plus"></use>
-                        </svg>
-
-                        <input type="number" name="quantity" id="quantity"
-                               min="{{ default_sale_type.limitedSale }}"
-                               max="{{ product.stock }}"
-                               value="{{ default_sale_type.limitedSale }}"
-                               step="{{ default_sale_type.limitedSale }}"
-                               data-per-carton="{{ default_sale_type.memberCarton }}"
-                               class="custom-input mr-4 text-lg bg-transparent text-center w-20 border-none focus:ring-0"
-                               onchange="validateLimitedQuantity(this)">
-
-                        <svg class="w-6 h-6 text-red-500 cursor-pointer" onclick="updateLimitedQuantity('decrement')">
-                            <use href="#minus"></use>
-                        </svg>
-                    </div>
-
-                    <!-- باکس داینامیک نمایش کارتن -->
-                    <div id="dynamic-carton-info" class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3 text-center hidden transition-all duration-300">
-                        <div class="text-sm text-gray-700 mb-2">
-                            شما در حال سفارش <span id="dynamic-cartons-selected" class="font-DanaDemiBold text-blue-700 text-lg mx-1">1</span> کارتن هستید
-                        </div>
-                        <div class="flex items-center justify-center gap-4 text-xs text-gray-500 border-t border-blue-200 pt-2">
-                            <div>
-                                تعداد در کارتن: <span class="font-DanaDemiBold text-gray-700">{{ default_sale_type.memberCarton }}</span> عدد
-                            </div>
-                            <div class="w-px h-4 bg-blue-200"></div>
-                            <div>
-                                موجودی انبار: <span id="total-available-cartons" class="font-DanaDemiBold text-blue-600">0</span> کارتن
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- CARTON SALE TYPE (typeSale = 2) - اصلاح شده برای کارکرد صحیح -->
-                {% if default_sale_type.typeSale == 2 and not is_call %}
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <!-- Carton Calculation Display -->
-                    <div class="flex items-center justify-between bg-blue-100 p-3 rounded-lg mb-4">
-                        <div class="text-center">
-                            <div class="text-sm text-gray-600">تعداد کارتن</div>
-                            <div class="text-2xl font-DanaDemiBold text-blue-700" id="carton-count">1</div>
-                        </div>
-                        <div class="h-12 w-px bg-blue-300"></div>
-                        <div class="text-center">
-                            <div class="text-sm text-gray-600">تعداد کل واحد</div>
-                            <div class="text-2xl font-DanaDemiBold text-green-600" id="total-units">{{ default_sale_type.memberCarton }}</div>
-                            <div class="text-xs text-gray-500">عدد</div>
-                        </div>
-                    </div>
-
-                    <!-- Quantity Selector -->
-                    <div class="flex items-center justify-between gap-x-1 rounded-lg border border-gray-200 py-2 px-3 mb-3 bg-white dark:bg-gray-800">
-                        <svg class="w-6 h-6 increment text-green-600 cursor-pointer" onclick="updateCartonQuantity('increment')">
-                            <use href="#plus"></use>
-                        </svg>
-                        <div class="flex-1 text-center">
-                            <input type="number" name="quantity" id="quantity"
-                                   min="1"
-                                   max="{{ max_cartons }}"
-                                   value="1"
-                                   step="1"
-                                   data-per-carton="{{ default_sale_type.memberCarton }}"
-                                   data-max-cartons="{{ max_cartons }}"
-                                   class="custom-input text-lg bg-transparent text-center w-20 border-none focus:ring-0"
-                                   onchange="validateCartonQuantity(this)">
-                            <div class="text-sm text-gray-600 mt-1">کارتن</div>
-                        </div>
-                        <svg class="w-6 h-6 decrement text-red-500 cursor-pointer" onclick="updateCartonQuantity('decrement')">
-                            <use href="#minus"></use>
-                        </svg>
-                    </div>
-
-                    <!-- Carton Info -->
-                    <div class="text-sm text-blue-600 font-DanaMedium text-center bg-blue-100 py-2 px-3 rounded">
-                        هر کارتن {{ default_sale_type.memberCarton }} عدد
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- نمایش جمع کل -->
-            {% if not is_call %}
-                {% if default_sale_type.typeSale == 1 %}
-                <div class="w-full flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg py-3 px-4 font-DanaMedium text-lg">
-                    <p class="text-gray-700">مجموع خرید:</p>
-                    <div class="flex flex-col items-end">
-                        {% if discount_percent > 0 and default_sale_type.final_price > 0 %}
-                        <p class="text-gray-500 line-through text-sm">{{ default_sale_type.price|intcomma }} تومان</p>
-                        <p id="total-price" class="text-red-600 font-DanaDemiBold" data-unit-price="{{ default_sale_type.final_price }}">{{ default_sale_type.final_price|intcomma }} تومان</p>
-                        <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full mt-1">{{ discount_percent }}% تخفیف</span>
-                        {% else %}
-                        <p id="total-price" class="text-blue-600" data-unit-price="{{ default_sale_type.final_price|default:default_sale_type.price }}">{{ default_sale_type.final_price|default:default_sale_type.price|intcomma }} تومان</p>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if default_sale_type.typeSale == 3 %}
-                <div class="w-full flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg py-3 px-4 font-DanaMedium text-lg">
-                    <p class="text-gray-700">مجموع خرید:</p>
-                    <div class="flex flex-col items-end">
-                        {% if discount_percent > 0 and default_sale_type.final_price > 0 %}
-                        <p class="text-gray-500 line-through text-sm">{{ default_sale_type.price|intcomma }} تومان</p>
-                        <p id="total-price" class="text-red-600 font-DanaDemiBold" data-unit-price="{{ default_sale_type.final_price }}">{{ default_sale_type.final_price|intcomma }} تومان</p>
-                        <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full mt-1">{{ discount_percent }}% تخفیف</span>
-                        {% else %}
-                        <p id="total-price" class="text-amber-600" data-unit-price="{{ default_sale_type.final_price|default:default_sale_type.price }}">{{ default_sale_type.final_price|default:default_sale_type.price|intcomma }} تومان</p>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if default_sale_type.typeSale == 2 %}
-                <div class="w-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
-
-                    <div class="flex items-center justify-between font-DanaMedium text-lg">
-                        <p class="text-gray-700">مجموع خرید:</p>
-                        <div class="flex flex-col items-end">
-                            {% if discount_percent > 0 and default_sale_type.final_price > 0 %}
-                            <p class="text-gray-500 line-through text-sm">{{ default_sale_type.price|intcomma }} تومان</p>
-                            <p id="total-price" class="text-red-600 font-DanaDemiBold" data-unit-price="{{ default_sale_type.final_price }}">{{ default_sale_type.final_price|intcomma }} تومان</p>
-                            <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full mt-1">{{ discount_percent }}% تخفیف</span>
-                            {% else %}
-                            <p id="total-price" class="text-blue-600 font-DanaDemiBold" data-unit-price="{{ default_sale_type.final_price|default:default_sale_type.price }}">{{ default_sale_type.final_price|default:default_sale_type.price|intcomma }} تومان</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="text-xs text-green-600 text-center mt-2" id="savings-indicator">
-                        💰 خرید کارتن‌ایی - صرفه اقتصادی بالا
-                    </div>
-                </div>
-                {% endif %}
-            {% endif %}
-
-
-              {% if is_call and emergency_phone %}
-            <a href="tel:{{ emergency_phone.phone_number }}" class="call-btn">
-                <span class="font-DanaDemiBold">تماس بگیرید</span>
-                <svg class="w-5 h-5"><use href="#phone"></use></svg>
-            </a>
             {% else %}
-            <div id='arv-btn'>
-                <button class="add-to-cart-btn add-to-cart-desktop"
-                        data-product-id="{{ product.id }}"
-                        data-quantity="1"
-                        data-detail="">
-                    <span class="add-to-cart-text">
-                        {% if default_sale_type.typeSale == 2 %}
-                            افزودن کارتن به سبد
-                        {% elif default_sale_type.typeSale == 3 %}
-                            افزودن به سبد
-                        {% else %}
-                            افزودن به سبد
-                        {% endif %}
-                    </span>
-                    <svg class="w-5 h-5"><use href="#shopping-bag"></use></svg>
-                </button>
-            </div>
+            <p class="text-2xl font-DanaDemiBold text-blue-600" id="current-price">{{ default_sale_type.price|intcomma }}</p>
             {% endif %}
+            <span>تومان</span>
+        </div>
+        {% endif %}
 
-            <div class="text-sm text-gray-400 flex xl:items-center gap-x-1">
-                <svg class="w-5 h-5"><use href="#info"></use></svg>
-                <p>{{ product.shortDescription }}</p>
-            </div>
-            {% endif %}
+        {% if default_sale_type.typeSale == 2 %}
 
-            <div class="relative overflow-hidden text-sm font-DanaDemiBold text-right">
-                <div id="slider-text" class="transition-all duration-700 ease-in-out">
-                    <p>🔥 {{ product.recommendation_stats.recommend|floatformat:0 }}% پیشنهاد خرید این محصول</p>
+        {% endif %}
+    </div>
+
+    <!-- MULTIPLE PRICES - فقط وقتی is_call نیست -->
+    {% if has_multiple_prices and not is_call %}
+    <div class="mb-4">
+        <label class="block text-sm font-medium mb-2">نوع فروش:</label>
+        <div class="flex flex-wrap gap-2">
+            {% for sale in sale_types %}
+            <button data-sale-id="{{ sale.id }}"
+                    data-sale-type="{{ sale.typeSale }}"
+                    data-price="{{ sale.final_price|default:sale.price }}"
+                    data-base-price="{{ sale.price }}"
+                    data-member-carton="{{ sale.memberCarton|default:1 }}"
+                    data-limited-sale="{{ sale.limitedSale|default:0 }}"
+                    class="sale-type-btn px-3 py-2 rounded-lg border {% if sale.typeSale == default_sale_type.typeSale %}bg-blue-500 text-white border-blue-500{% else %}border-gray-300{% endif %}">
+                {{ sale.get_typeSale_display }}
+                {% if sale.typeSale == 2 and sale.memberCarton %}
+                ({{ sale.memberCarton }} عددی)
+                {% endif %}
+                {% if sale.limitedSale %}
+                (حداقل {{ sale.limitedSale }} عدد)
+                {% endif %}
+                {% if discount_percent > 0 and sale.final_price > 0 %}
+                <span class="text-xs block text-yellow-600">{{ sale.final_price|intcomma }} تومان</span>
+                {% else %}
+                <span class="text-xs block text-gray-600">{{ sale.price|intcomma }} تومان</span>
+                {% endif %}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- بخش خرید - فقط وقتی is_call نیست نمایش بده -->
+    {% if not is_call %}
+    <div class="w-full flex flex-col gap-2">
+        <!-- SINGLE SALE TYPE (typeSale = 1) -->
+         {% if default_sale_type.typeSale == 1 %}
+        <div class="flex items-center justify-between gap-x-1 rounded-lg border border-gray-200 dark:border-white/20 py-2 px-3">
+            <svg class="w-6 h-6 text-green-600 cursor-pointer" onclick="updateSingleQuantity('increment')">
+                <use href="#plus"></use>
+            </svg>
+            <input type="number" name="quantity" id="quantity"
+                   min="1"
+                   max="{{ product_stock }}"
+                   value="1"
+                   class="custom-input mr-4 text-lg bg-transparent text-center w-20 border-none focus:ring-0"
+                   onchange="validateSingleQuantity(this)">
+            <svg class="w-6 h-6 text-red-500 cursor-pointer" onclick="updateSingleQuantity('decrement')">
+                <use href="#minus"></use>
+            </svg>
+        </div>
+
+        <!-- باکس کارتن -->
+        {% if member_carton and member_carton > 0 %}
+        <div id="single-carton-info" class="mt-2 bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg text-center text-sm">
+            <span id="single-item-count" class="font-bold text-red-600">1</span> عدد معادل
+            <span id="single-cartons-count" class="font-bold text-lg text-blue-700">0</span> کارتن می‌باشد
+            <div class="text-xs text-gray-500 mt-1">(هر کارتن {{ member_carton }} عدد)</div>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <!-- LIMITED SALE TYPE (typeSale = 3) -->
+        {% if default_sale_type.typeSale == 3 %}
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div class="flex items-center justify-center gap-x-8 mb-4 bg-amber-100 p-3 rounded-lg">
+                <div class="text-center">
+                    <div class="text-sm text-gray-600">موجودی کل</div>
+                    <div class="text-2xl font-DanaDemiBold text-amber-700">{{ product.stock|intcomma }}</div>
+                    <div class="text-xs text-gray-500">عدد</div>
+                </div>
+                <div class="h-12 w-px bg-amber-300"></div>
+                <div class="text-center">
+                    <div class="text-sm text-gray-600">حداقل خرید</div>
+                    <div class="text-2xl font-DanaDemiBold text-blue-600">{{ default_sale_type.limitedSale }}</div>
+                    <div class="text-xs text-gray-500">عدد</div>
                 </div>
             </div>
 
-            <!-- دکمه افزودن به سبد -->
+            <!-- بخش دکمه های افزایش و کاهش و فیلد تعداد -->
+            <div class="flex items-center justify-between gap-x-1 rounded-lg border border-gray-200 py-2 px-3 mb-4 bg-white dark:bg-gray-800">
+                <svg class="w-6 h-6 text-green-600 cursor-pointer" onclick="updateLimitedQuantity('increment')">
+                    <use href="#plus"></use>
+                </svg>
 
+                <input type="number" name="quantity" id="quantity"
+                       min="{{ default_sale_type.limitedSale }}"
+                       max="{{ product.stock }}"
+                       value="{{ default_sale_type.limitedSale }}"
+                       step="{{ default_sale_type.limitedSale }}"
+                       data-per-carton="{{ default_sale_type.memberCarton }}"
+                       class="custom-input mr-4 text-lg bg-transparent text-center w-20 border-none focus:ring-0"
+                       onchange="validateLimitedQuantity(this)">
+
+                <svg class="w-6 h-6 text-red-500 cursor-pointer" onclick="updateLimitedQuantity('decrement')">
+                    <use href="#minus"></use>
+                </svg>
+            </div>
+
+            <!-- باکس داینامیک نمایش کارتن -->
+            <div id="dynamic-carton-info" class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3 text-center hidden transition-all duration-300">
+                <div class="text-sm text-gray-700 mb-2">
+                    شما در حال سفارش <span id="dynamic-cartons-selected" class="font-DanaDemiBold text-blue-700 text-lg mx-1">1</span> کارتن هستید
+                </div>
+                <div class="flex items-center justify-center gap-4 text-xs text-gray-500 border-t border-blue-200 pt-2">
+                    <div>
+                        تعداد در کارتن: <span class="font-DanaDemiBold text-gray-700">{{ default_sale_type.memberCarton }}</span> عدد
+                    </div>
+                    <div class="w-px h-4 bg-blue-200"></div>
+                    <div>
+                        موجودی انبار: <span id="total-available-cartons" class="font-DanaDemiBold text-blue-600">0</span> کارتن
+                    </div>
+                </div>
+            </div>
         </div>
+        {% endif %}
+
+        <!-- CARTON SALE TYPE (typeSale = 2) -->
+        {% if default_sale_type.typeSale == 2 %}
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <!-- Carton Calculation Display -->
+            <div class="flex items-center justify-between bg-blue-100 p-3 rounded-lg mb-4">
+                <div class="text-center">
+                    <div class="text-sm text-gray-600">تعداد کارتن</div>
+                    <div class="text-2xl font-DanaDemiBold text-blue-700" id="carton-count">1</div>
+                </div>
+                <div class="h-12 w-px bg-blue-300"></div>
+                <div class="text-center">
+                    <div class="text-sm text-gray-600">تعداد کل واحد</div>
+                    <div class="text-2xl font-DanaDemiBold text-green-600" id="total-units">{{ default_sale_type.memberCarton }}</div>
+                    <div class="text-xs text-gray-500">عدد</div>
+                </div>
+            </div>
+
+            <!-- Quantity Selector -->
+            <div class="flex items-center justify-between gap-x-1 rounded-lg border border-gray-200 py-2 px-3 mb-3 bg-white dark:bg-gray-800">
+                <svg class="w-6 h-6 increment text-green-600 cursor-pointer" onclick="updateCartonQuantity('increment')">
+                    <use href="#plus"></use>
+                </svg>
+                <div class="flex-1 text-center">
+                    <input type="number" name="quantity" id="quantity"
+                           min="1"
+                           max="{{ max_cartons }}"
+                           value="1"
+                           step="1"
+                           data-per-carton="{{ default_sale_type.memberCarton }}"
+                           data-max-cartons="{{ max_cartons }}"
+                           class="custom-input text-lg bg-transparent text-center w-20 border-none focus:ring-0"
+                           onchange="validateCartonQuantity(this)">
+                    <div class="text-sm text-gray-600 mt-1">کارتن</div>
+                </div>
+                <svg class="w-6 h-6 decrement text-red-500 cursor-pointer" onclick="updateCartonQuantity('decrement')">
+                    <use href="#minus"></use>
+                </svg>
+            </div>
+
+            <!-- Carton Info -->
+            <div class="text-sm text-blue-600 font-DanaMedium text-center bg-blue-100 py-2 px-3 rounded">
+                هر کارتن {{ default_sale_type.memberCarton }} عدد
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- نمایش جمع کل - فقط وقتی is_call نیست -->
+    {% if not is_call %}
+        {% if default_sale_type.typeSale == 1 %}
+        <div class="w-full flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg py-3 px-4 font-DanaMedium text-lg">
+            <p class="text-gray-700">مجموع خرید:</p>
+            <div class="flex flex-col items-end">
+                {% if discount_percent > 0 and default_sale_type.final_price > 0 %}
+                <p class="text-gray-500 line-through text-sm">{{ default_sale_type.price|intcomma }} تومان</p>
+                <p id="total-price" class="text-red-600 font-DanaDemiBold" data-unit-price="{{ default_sale_type.final_price }}">{{ default_sale_type.final_price|intcomma }} تومان</p>
+                <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full mt-1">{{ discount_percent }}% تخفیف</span>
+                {% else %}
+                <p id="total-price" class="text-blue-600" data-unit-price="{{ default_sale_type.final_price|default:default_sale_type.price }}">{{ default_sale_type.final_price|default:default_sale_type.price|intcomma }} تومان</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if default_sale_type.typeSale == 3 %}
+        <div class="w-full flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg py-3 px-4 font-DanaMedium text-lg">
+            <p class="text-gray-700">مجموع خرید:</p>
+            <div class="flex flex-col items-end">
+                {% if discount_percent > 0 and default_sale_type.final_price > 0 %}
+                <p class="text-gray-500 line-through text-sm">{{ default_sale_type.price|intcomma }} تومان</p>
+                <p id="total-price" class="text-red-600 font-DanaDemiBold" data-unit-price="{{ default_sale_type.final_price }}">{{ default_sale_type.final_price|intcomma }} تومان</p>
+                <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full mt-1">{{ discount_percent }}% تخفیف</span>
+                {% else %}
+                <p id="total-price" class="text-amber-600" data-unit-price="{{ default_sale_type.final_price|default:default_sale_type.price }}">{{ default_sale_type.final_price|default:default_sale_type.price|intcomma }} تومان</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if default_sale_type.typeSale == 2 %}
+        <div class="w-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex items-center justify-between font-DanaMedium text-lg">
+                <p class="text-gray-700">مجموع خرید:</p>
+                <div class="flex flex-col items-end">
+                    {% if discount_percent > 0 and default_sale_type.final_price > 0 %}
+                    <p class="text-gray-500 line-through text-sm">{{ default_sale_type.price|intcomma }} تومان</p>
+                    <p id="total-price" class="text-red-600 font-DanaDemiBold" data-unit-price="{{ default_sale_type.final_price }}">{{ default_sale_type.final_price|intcomma }} تومان</p>
+                    <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full mt-1">{{ discount_percent }}% تخفیف</span>
+                    {% else %}
+                    <p id="total-price" class="text-blue-600 font-DanaDemiBold" data-unit-price="{{ default_sale_type.final_price|default:default_sale_type.price }}">{{ default_sale_type.final_price|default:default_sale_type.price|intcomma }} تومان</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="text-xs text-green-600 text-center mt-2" id="savings-indicator">
+                💰 خرید کارتن‌ایی - صرفه اقتصادی بالا
+            </div>
+        </div>
+        {% endif %}
+    {% endif %}
+
+    <!-- ========== بخش دکمه اصلی ========== -->
+    {% if is_call %}
+        <!-- وقتی is_call = true هست، فقط دکمه تماس نمایش داده میشه -->
+        <a href="tel:{{ emergency_phone.phone_number|default:'' }}" class="call-btn {% if not emergency_phone %}bg-gray-400 cursor-not-allowed{% endif %}">
+            <span class="font-DanaDemiBold">تماس بگیرید</span>
+            <svg class="w-5 h-5"><use href="#phone"></use></svg>
+        </a>
+        {% if not emergency_phone %}
+            <small class="text-red-500 text-center">⚠️ شماره تماس اضطراری ثبت نشده</small>
+        {% endif %}
+    {% else %}
+        <!-- وقتی is_call = false هست، دکمه افزودن به سبد -->
+        <div id='arv-btn'>
+            <button class="add-to-cart-btn add-to-cart-desktop"
+                    data-product-id="{{ product.id }}"
+                    data-quantity="1"
+                    data-detail="">
+                <span class="add-to-cart-text">
+                    {% if default_sale_type.typeSale == 2 %}
+                        افزودن کارتن به سبد
+                    {% elif default_sale_type.typeSale == 3 %}
+                        افزودن به سبد
+                    {% else %}
+                        افزودن به سبد
+                    {% endif %}
+                </span>
+                <svg class="w-5 h-5"><use href="#shopping-bag"></use></svg>
+            </button>
+        </div>
+    {% endif %}
+
+    <div class="text-sm text-gray-400 flex xl:items-center gap-x-1">
+        <svg class="w-5 h-5"><use href="#info"></use></svg>
+        <p>{{ product.shortDescription }}</p>
+    </div>
+
+    <div class="relative overflow-hidden text-sm font-DanaDemiBold text-right">
+        <div id="slider-text" class="transition-all duration-700 ease-in-out">
+            <p>🔥 {{ product.recommendation_stats.recommend|floatformat:0 }}% پیشنهاد خرید این محصول</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
     </section>
 
     <!-- محصولات مرتبط -->
@@ -1017,13 +1020,17 @@ input[type="number"]::-webkit-outer-spin-button {
                                 </span>
                             </div>
                             <div class="product-card_price">
-                                {% if related.discount_percent %}
-                                <del class="text-xs text-gray-400">{{ related.price|intcomma }}</del>
-                                <p>{{ related.final_price|intcomma }}</p>
+                                {% if is_call %}
+                                    <p class=""> تماس بگیرید</p>
                                 {% else %}
-                                <p>{{ related.price|intcomma }}</p>
+                                    {% if related.discount_percent %}
+                                    <del class="text-xs text-gray-400">{{ related.price|intcomma }}</del>
+                                    <p>{{ related.final_price|intcomma }}</p>
+                                    {% else %}
+                                    <p>{{ related.price|intcomma }}</p>
+                                    {% endif %}
+                                    <span style='background:#22adbd;'>تومان</span>
                                 {% endif %}
-                                <span style='background:#22adbd;'>تومان</span>
                             </div>
                         </div>
                     </div>

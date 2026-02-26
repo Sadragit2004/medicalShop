@@ -316,12 +316,26 @@
                         <td class="editable-cell">
                             {% with product.saleTypes.first as price %}
                                 {% if price %}
-                                <div class="editable-value" onclick="editPrice(this, {{ product.id }}, {{ price.price }}, {{ price.typeSale }}, {{ price.memberCarton|default:'null' }}, {{ price.limitedSale|default:'null' }})">
+                                <div class="editable-value"
+                                     data-product-id="{{ product.id }}"
+                                     data-price-id="{{ price.id }}"
+                                     data-price="{{ price.price }}"
+                                     data-type-sale="{{ price.typeSale }}"
+                                     data-member-carton="{{ price.memberCarton|default:'' }}"
+                                     data-limited-sale="{{ price.limitedSale|default:'' }}"
+                                     onclick="editPrice(this)">
                                     <strong>{{ price.price|floatformat:0 }}</strong> تومان
                                     <small class="d-block text-muted">{{ price.get_typeSale_display }}</small>
                                 </div>
                                 {% else %}
-                                <div class="editable-value text-primary" onclick="editPrice(this, {{ product.id }}, 0, 1, null, null)">
+                                <div class="editable-value text-primary"
+                                     data-product-id="{{ product.id }}"
+                                     data-price-id=""
+                                     data-price="0"
+                                     data-type-sale="1"
+                                     data-member-carton=""
+                                     data-limited-sale=""
+                                     onclick="editPrice(this)">
                                     <i class="fas fa-plus-circle"></i> ثبت قیمت
                                 </div>
                                 {% endif %}
@@ -471,18 +485,23 @@ function saveStock(productId, newStock, cell) {
     form.submit();
 }
 
-// ویرایش قیمت
-function editPrice(element, productId, currentPrice, currentType, memberCarton, limitedSale) {
-    const cell = element.parentElement;
+// ویرایش قیمت - نسخه اصلاح شده
+function editPrice(element) {
+    // دریافت داده‌ها از data-* attributes
+    const productId = element.dataset.productId;
+    const priceId = element.dataset.priceId;
+    const currentPrice = element.dataset.price;
+    const currentType = element.dataset.typeSale;
+    const memberCarton = element.dataset.memberCarton || '';
+    const limitedSale = element.dataset.limitedSale || '';
 
-    // مقادیر پیش‌فرض
-    memberCarton = memberCarton || '';
-    limitedSale = limitedSale || '';
+    const cell = element.parentElement;
 
     // ساخت فرم ویرایش
     const formDiv = document.createElement('div');
     formDiv.className = 'price-edit-form';
     formDiv.innerHTML = `
+        <input type="hidden" id="priceId_${productId}" value="${priceId}">
         <input type="number" id="price_${productId}" class="form-control mb-2" value="${currentPrice}" placeholder="قیمت" step="1000">
         <select id="type_${productId}" class="form-control mb-2">
             <option value="1" ${currentType == 1 ? 'selected' : ''}>تک فروشی</option>
@@ -528,6 +547,7 @@ function editPrice(element, productId, currentPrice, currentType, memberCarton, 
 }
 
 function savePrice(btn, productId) {
+    const priceId = document.getElementById(`priceId_${productId}`).value;
     const price = document.getElementById(`price_${productId}`).value;
     const type = document.getElementById(`type_${productId}`).value;
 
@@ -546,6 +566,7 @@ function savePrice(btn, productId) {
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
         <input type="hidden" name="action" value="update_price">
         <input type="hidden" name="product_id" value="${productId}">
+        <input type="hidden" name="sale_type_id" value="${priceId}">
         <input type="hidden" name="price" value="${price}">
         <input type="hidden" name="type_sale" value="${type}">
     `;

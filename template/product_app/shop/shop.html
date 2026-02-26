@@ -425,7 +425,7 @@
             </div>
 
             <!-- PRODUCTS -->
-            <div class="grid grid-cols-1 xxs:grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 xs:gap-2 sm:gap-4" id="products-container">
+          <div class="grid grid-cols-1 xxs:grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 xs:gap-2 sm:gap-4" id="products-container">
                 {% for product in products %}
                 <div class="product-card group">
                     <!-- product header -->
@@ -470,16 +470,20 @@
 
                             <!-- Price -->
                             <div class="product-card_price">
-                                {% if product.discount_percent %}
-                                <del>
-                                    <p>{{ product.price|intcomma }}</p>
-                                    <h6 class="inline">تومان</h6>
-                                </del>
-                                <p class="text-blue-600 font-DanaDemiBold">{{ product.final_price|intcomma }}</p>
+                                {% if is_call %}
+                                    <p class="=">تماس بگیرید</p>
                                 {% else %}
-                                <p>{{ product.price|intcomma }}</p>
+                                    {% if product.discount_percent %}
+                                    <del>
+                                        <p>{{ product.price|intcomma }}</p>
+                                        <h6 class="inline">تومان</h6>
+                                    </del>
+                                    <p class="text-blue-600 font-DanaDemiBold">{{ product.final_price|intcomma }}</p>
+                                    {% else %}
+                                    <p>{{ product.price|intcomma }}</p>
+                                    {% endif %}
+                                    <span style='background:#22adbd;'>تومان</span>
                                 {% endif %}
-                                 <span style='background:#22adbd;'>تومان</span>
                             </div>
                         </div>
                     </div>

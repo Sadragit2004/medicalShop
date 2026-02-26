@@ -109,13 +109,17 @@
 
                         <!-- Price -->
                         <div class="product-card_price">
-                            {% if item.is_discounted %}
-                            <del>{{ item.original_price|intcomma }}<h6>تومان</h6></del>
-                            <p>{{ item.final_price|intcomma }}</p>
+                            {% if is_call %}
+                                <p class="">تماس بگیرید</p>
                             {% else %}
-                            <p>{{ item.original_price|intcomma }}</p>
+                                {% if item.is_discounted %}
+                                <del>{{ item.original_price|intcomma }}<h6>تومان</h6></del>
+                                <p>{{ item.final_price|intcomma }}</p>
+                                {% else %}
+                                <p>{{ item.original_price|intcomma }}</p>
+                                {% endif %}
+                                <span style='background:#22adbd;'>تومان</span>
                             {% endif %}
-                            <span style='background:#22adbd;'>تومان</span>
                         </div>
                     </div>
                 </div>

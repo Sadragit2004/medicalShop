@@ -345,7 +345,6 @@ def feature_value_delete(request, value_id):
 # ========================
 # PRODUCT CRUD
 # ========================
-
 def product_list(request):
     """لیست محصولات با قابلیت ویرایش سریع موجودی و قیمت"""
 
@@ -396,6 +395,7 @@ def product_list(request):
                     price = request.POST.get('price')
                     member_carton = request.POST.get('member_carton')
                     limited_sale = request.POST.get('limited_sale')
+                    sale_type_id = request.POST.get('sale_type_id')  # اضافه شد
 
                     if not all([product_id, type_sale, price]):
                         messages.error(request, 'اطلاعات کامل نیست')
@@ -440,27 +440,47 @@ def product_list(request):
                             messages.error(request, 'مقادیر باید اعداد مثبت باشند')
                             return redirect('panelAdmin:admin_product_list')
 
-                    # حذف قیمت‌های قبلی (اختیاری - می‌توانید تصمیم بگیرید)
-                    # product.saleTypes.all().delete()
+                    # بررسی وجود نوع فروش
+                    if sale_type_id:
+                        # اگر sale_type_id داریم، همان رکورد را ویرایش می‌کنیم
+                        sale_type = get_object_or_404(ProductSaleType, id=sale_type_id, product=product)
+                        sale_type.typeSale = type_sale
+                        sale_type.price = price
+                        sale_type.title = request.POST.get('price_title', '')
+                        sale_type.isActive = True
 
-                    # ایجاد قیمت جدید
-                    sale_type = ProductSaleType(
-                        product=product,
-                        typeSale=type_sale,
-                        price=price,
-                        title=request.POST.get('price_title', ''),
-                        isActive=True
-                    )
+                        # پاک کردن مقادیر قبلی
+                        sale_type.memberCarton = None
+                        sale_type.limitedSale = None
 
-                    if type_sale == 2:
-                        sale_type.memberCarton = member_carton
-                    elif type_sale == 3:
-                        sale_type.memberCarton = member_carton
-                        sale_type.limitedSale = limited_sale
+                        # تنظیم مقادیر جدید بر اساس نوع
+                        if type_sale == 2:
+                            sale_type.memberCarton = member_carton
+                        elif type_sale == 3:
+                            sale_type.memberCarton = member_carton
+                            sale_type.limitedSale = limited_sale
 
-                    sale_type.save()
+                        sale_type.save()
+                        messages.success(request, f'نوع فروش برای محصول {product.title} با موفقیت ویرایش شد')
 
-                    messages.success(request, f'قیمت برای محصول {product.title} با موفقیت ثبت شد')
+                    else:
+                        # ایجاد نوع فروش جدید
+                        sale_type = ProductSaleType(
+                            product=product,
+                            typeSale=type_sale,
+                            price=price,
+                            title=request.POST.get('price_title', ''),
+                            isActive=True
+                        )
+
+                        if type_sale == 2:
+                            sale_type.memberCarton = member_carton
+                        elif type_sale == 3:
+                            sale_type.memberCarton = member_carton
+                            sale_type.limitedSale = limited_sale
+
+                        sale_type.save()
+                        messages.success(request, f'قیمت برای محصول {product.title} با موفقیت ثبت شد')
 
             except Product.DoesNotExist:
                 messages.error(request, 'محصول یافت نشد')

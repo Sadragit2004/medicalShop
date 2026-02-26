@@ -76,3 +76,20 @@ def faq(request):
 def law(request):
 
     return render(request,'main_app/law.html')
+
+
+
+
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+from .models import SettingShop
+
+@require_GET
+def get_is_call_status(request):
+
+    setting = SettingShop.objects.first()
+    context = {
+        'is_call':setting.is_call
+    }
+    return context

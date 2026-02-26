@@ -140,6 +140,9 @@ class ContactPhone(models.Model):
     def __str__(self):
         return f"{self.title} - {self.phone_number}"
 
+
+
+
 class SettingShop(models.Model):
     name_shop = models.CharField(
         max_length=200,
