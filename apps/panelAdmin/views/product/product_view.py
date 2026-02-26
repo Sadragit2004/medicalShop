@@ -347,13 +347,141 @@ def feature_value_delete(request, value_id):
 # ========================
 
 def product_list(request):
-    """لیست محصولات"""
-    products = Product.objects.select_related('brand').prefetch_related('category').all()
+    """لیست محصولات با قابلیت ویرایش سریع موجودی و قیمت"""
+
+    # ========== پردازش درخواست‌های POST (ویرایش سریع) ==========
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        # ویرایش موجودی
+        if action == 'update_stock':
+            try:
+                product_id = request.POST.get('product_id')
+                new_stock = request.POST.get('stock')
+
+                if not product_id or new_stock is None:
+                    messages.error(request, 'اطلاعات کامل نیست')
+                    return redirect('panelAdmin:admin_product_list')
+
+                product = get_object_or_404(Product, id=product_id)
+
+                # اعتبارسنجی
+                try:
+                    new_stock = int(new_stock)
+                    if new_stock < 0:
+                        raise ValueError
+                except ValueError:
+                    messages.error(request, 'موجودی باید یک عدد مثبت باشد')
+                    return redirect('panelAdmin:admin_product_list')
+
+                # بروزرسانی
+                product.stock = new_stock
+                product.save()
+
+                messages.success(request, f'موجودی محصول {product.title} با موفقیت به {new_stock} عدد بروزرسانی شد')
+
+            except Product.DoesNotExist:
+                messages.error(request, 'محصول یافت نشد')
+            except Exception as e:
+                messages.error(request, f'خطا در بروزرسانی موجودی: {str(e)}')
+
+            return redirect('panelAdmin:admin_product_list')
+
+        # ویرایش قیمت
+        elif action == 'update_price':
+            try:
+                with transaction.atomic():
+                    product_id = request.POST.get('product_id')
+                    type_sale = request.POST.get('type_sale')
+                    price = request.POST.get('price')
+                    member_carton = request.POST.get('member_carton')
+                    limited_sale = request.POST.get('limited_sale')
+
+                    if not all([product_id, type_sale, price]):
+                        messages.error(request, 'اطلاعات کامل نیست')
+                        return redirect('panelAdmin:admin_product_list')
+
+                    product = get_object_or_404(Product, id=product_id)
+
+                    # اعتبارسنجی قیمت
+                    try:
+                        price = int(price)
+                        if price <= 0:
+                            raise ValueError
+                    except ValueError:
+                        messages.error(request, 'قیمت باید یک عدد مثبت باشد')
+                        return redirect('panelAdmin:admin_product_list')
+
+                    type_sale = int(type_sale)
+
+                    # اعتبارسنجی بر اساس نوع فروش
+                    if type_sale == 2:  # کارتن فروشی
+                        if not member_carton:
+                            messages.error(request, 'تعداد در کارتن را وارد کنید')
+                            return redirect('panelAdmin:admin_product_list')
+                        try:
+                            member_carton = int(member_carton)
+                            if member_carton <= 0:
+                                raise ValueError
+                        except ValueError:
+                            messages.error(request, 'تعداد در کارتن باید یک عدد مثبت باشد')
+                            return redirect('panelAdmin:admin_product_list')
+
+                    elif type_sale == 3:  # محدود
+                        if not member_carton or not limited_sale:
+                            messages.error(request, 'تعداد در کارتن و محدودیت خرید را وارد کنید')
+                            return redirect('panelAdmin:admin_product_list')
+                        try:
+                            member_carton = int(member_carton)
+                            limited_sale = int(limited_sale)
+                            if member_carton <= 0 or limited_sale <= 0:
+                                raise ValueError
+                        except ValueError:
+                            messages.error(request, 'مقادیر باید اعداد مثبت باشند')
+                            return redirect('panelAdmin:admin_product_list')
+
+                    # حذف قیمت‌های قبلی (اختیاری - می‌توانید تصمیم بگیرید)
+                    # product.saleTypes.all().delete()
+
+                    # ایجاد قیمت جدید
+                    sale_type = ProductSaleType(
+                        product=product,
+                        typeSale=type_sale,
+                        price=price,
+                        title=request.POST.get('price_title', ''),
+                        isActive=True
+                    )
+
+                    if type_sale == 2:
+                        sale_type.memberCarton = member_carton
+                    elif type_sale == 3:
+                        sale_type.memberCarton = member_carton
+                        sale_type.limitedSale = limited_sale
+
+                    sale_type.save()
+
+                    messages.success(request, f'قیمت برای محصول {product.title} با موفقیت ثبت شد')
+
+            except Product.DoesNotExist:
+                messages.error(request, 'محصول یافت نشد')
+            except Exception as e:
+                messages.error(request, f'خطا در ثبت قیمت: {str(e)}')
+
+            return redirect('panelAdmin:admin_product_list')
+
+    # ========== پردازش درخواست‌های GET (نمایش لیست) ==========
+
+    # دریافت همه محصولات با prefetch مربوطه (نسخه اصلی برای فیلتر کردن)
+    products_queryset = Product.objects.select_related('brand').prefetch_related(
+        'category',
+        'galleries',
+        Prefetch('saleTypes', queryset=ProductSaleType.objects.filter(isActive=True).order_by('-createdAt'))
+    ).all()
 
     # فیلتر بر اساس جستجو
     search_query = request.GET.get('search', '')
     if search_query:
-        products = products.filter(
+        products_queryset = products_queryset.filter(
             Q(title__icontains=search_query) |
             Q(slug__icontains=search_query) |
             Q(shortDescription__icontains=search_query)
@@ -362,36 +490,64 @@ def product_list(request):
     # فیلتر بر اساس دسته‌بندی
     category_id = request.GET.get('category')
     if category_id:
-        products = products.filter(category__id=category_id)
+        products_queryset = products_queryset.filter(category__id=category_id)
 
     # فیلتر بر اساس برند
     brand_id = request.GET.get('brand')
     if brand_id:
-        products = products.filter(brand__id=brand_id)
+        products_queryset = products_queryset.filter(brand__id=brand_id)
 
     # فیلتر بر اساس وضعیت
     status = request.GET.get('status')
     if status == 'active':
-        products = products.filter(isActive=True)
+        products_queryset = products_queryset.filter(isActive=True)
     elif status == 'inactive':
-        products = products.filter(isActive=False)
+        products_queryset = products_queryset.filter(isActive=False)
 
-    paginator = Paginator(products, 20)
+    # محاسبه آمار برای کارت‌های آماری (قبل از صفحه‌بندی)
+    total_products = products_queryset.count()
+    active_count = products_queryset.filter(isActive=True).count()
+    no_image_count = products_queryset.filter(mainImage__isnull=True).count()
+    no_price_count = products_queryset.filter(saleTypes__isnull=True).count()
+
+    # میانگین امتیاز و نظرات
+    from django.db.models import Avg, Count
+    avg_rating = 0
+
+    from apps.product.models import Comment
+    total_comments = Comment.objects.filter(product__in=products_queryset, isActive=True).count()
+
+    # صفحه‌بندی (بعد از محاسبه آمار)
+    paginator = Paginator(products_queryset, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    categories = Category.objects.all()
-    brands = Brand.objects.all()
+    # دریافت لیست دسته‌بندی‌ها و برندها برای فیلتر
+    categories = Category.objects.filter(isActive=True).order_by('title')
+    brands = Brand.objects.filter(isActive=True).order_by('title')
+
+    # دریافت پارامترهای فیلتر برای نمایش در قالب
+    selected_category = request.GET.get('category', '')
+    selected_brand = request.GET.get('brand', '')
+    selected_status = request.GET.get('status', '')
 
     return render(request, 'panelAdmin/products/product/list.html', {
         'page_obj': page_obj,
         'categories': categories,
         'brands': brands,
         'search_query': search_query,
-        'selected_category': category_id,
-        'selected_brand': brand_id,
-        'selected_status': status
+        'selected_category': selected_category,
+        'selected_brand': selected_brand,
+        'selected_status': selected_status,
+        # آمار
+        'active_count': active_count,
+        'no_image_count': no_image_count,
+        'no_price_count': no_price_count,
+        'avg_rating': round(avg_rating, 1),
+        'total_comments': total_comments,
+        'total_products': total_products,
     })
+
 
 def product_create(request):
     """ایجاد محصول جدید"""
@@ -422,11 +578,12 @@ def product_create(request):
                 # ایجاد محصول
                 product = Product.objects.create(
                     title=title,
-                    slug=slug,  # ذخیره اسلاگ دستی
+                    slug=slug,
                     brand_id=request.POST.get('brand') if request.POST.get('brand') else None,
                     mainImage=request.FILES.get('mainImage'),
                     description=request.POST.get('description'),
                     shortDescription=request.POST.get('shortDescription'),
+                    stock=int(request.POST.get('stock', 0)),  # اضافه شد
                     isActive=request.POST.get('isActive') == 'on'
                 )
 
@@ -464,6 +621,52 @@ def product_create(request):
                                 filterValue_id=filter_value_id if filter_value_id else None
                             )
 
+                # ========== اضافه کردن مدیریت انواع فروش ==========
+                sale_types_json = request.POST.get('sale_types_json')
+                if sale_types_json:
+                    sale_types_data = json.loads(sale_types_json)
+
+                    for sale_data in sale_types_data:
+                        if not sale_data.get('typeSale'):
+                            continue
+
+                        type_sale = int(sale_data['typeSale'])
+                        price = int(sale_data.get('price', 0))
+
+                        if price <= 0:
+                            continue
+
+                        # بررسی isActive
+                        is_active = sale_data.get('isActive', True)
+                        if isinstance(is_active, str):
+                            is_active = is_active.lower() == 'true'
+
+                        sale_type_obj = ProductSaleType(
+                            product=product,
+                            typeSale=type_sale,
+                            price=price,
+                            title=sale_data.get('title', ''),
+                            isActive=is_active
+                        )
+
+                        # تنظیم مقادیر اختصاصی بر اساس نوع فروش
+                        if type_sale == 2:  # کارتن فروشی
+                            member_carton = sale_data.get('memberCarton')
+                            if member_carton:
+                                sale_type_obj.memberCarton = int(member_carton)
+
+                        elif type_sale == 3:  # محدود
+                            member_carton = sale_data.get('memberCarton')
+                            if member_carton:
+                                sale_type_obj.memberCarton = int(member_carton)
+
+                            limited_sale = sale_data.get('limitedSale')
+                            if limited_sale:
+                                sale_type_obj.limitedSale = int(limited_sale)
+
+                        sale_type_obj.save()
+                # ================================================
+
                 messages.success(request, f'محصول {product.title} با موفقیت ایجاد شد')
                 return redirect('panelAdmin:admin_product_detail', product_id=product.id)
 
@@ -498,58 +701,87 @@ def product_detail(request, product_id):
         'comment_stats': product.comment_stats
     })
 
-def product_update(request, product_id):
-    """ویرایش محصول - با امکانات پیشرفته"""
-    product = get_object_or_404(
-        Product.objects.prefetch_related(
-            'category',
-            'galleries',
-            Prefetch('featuresValue', queryset=ProductFeature.objects.select_related('feature'))
-        ),
-        id=product_id
-    )
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.db.models import Prefetch
+from django.core.exceptions import ValidationError
+from apps.product.models import (
+    Product, Category, Brand, Feature, ProductFeature,
+    ProductGallery, ProductSaleType, SaleType, FeatureValue
+)
+import json
+import logging
 
-    categories = Category.objects.all()
-    brands = Brand.objects.all()
+logger = logging.getLogger(__name__)
+
+def product_update(request, product_id):
+    """ویرایش محصول - با امکانات پیشرفته و مدیریت نوع فروش"""
+    try:
+        product = get_object_or_404(
+            Product.objects.prefetch_related(
+                'category',
+                'galleries',
+                Prefetch('saleTypes', queryset=ProductSaleType.objects.all()),
+                Prefetch('featuresValue', queryset=ProductFeature.objects.select_related('feature', 'filterValue'))
+            ),
+            id=product_id
+        )
+    except Product.DoesNotExist:
+        messages.error(request, 'محصول مورد نظر یافت نشد')
+        return redirect('panelAdmin:admin_product_list')
+
+    # دریافت داده‌های مورد نیاز
+    categories = Category.objects.filter(isActive=True)
+    brands = Brand.objects.filter(isActive=True)
     features = Feature.objects.filter(isActive=True).prefetch_related(
         Prefetch('featureValues', queryset=FeatureValue.objects.all())
     )
     selected_categories = product.category.all()
 
+    # دریافت انواع فروش موجود
+    existing_sale_types = product.saleTypes.all()
+
     if request.method == 'POST':
         try:
             with transaction.atomic():
-                # آپدیت اطلاعات پایه محصول
-                product.title = request.POST.get('title', product.title)
+                # ========== آپدیت اطلاعات پایه محصول ==========
+                product.title = request.POST.get('title', product.title).strip()
+                product.slug = request.POST.get('slug', product.slug).strip() or slugify(product.title)
                 product.brand_id = request.POST.get('brand') if request.POST.get('brand') else None
                 product.description = request.POST.get('description', product.description)
-                product.shortDescription = request.POST.get('shortDescription', product.shortDescription)
+                product.shortDescription = request.POST.get('shortDescription', product.shortDescription).strip()
+                product.stock = int(request.POST.get('stock', product.stock))
                 product.isActive = request.POST.get('isActive') == 'on'
 
+                # مدیریت تصویر اصلی
                 if 'mainImage' in request.FILES:
                     product.mainImage = request.FILES['mainImage']
+                elif request.POST.get('delete_main_image') == 'true':
+                    product.mainImage.delete(save=False)
+                    product.mainImage = None
 
                 product.save()
 
-                # آپدیت دسته‌بندی‌ها
+                # ========== آپدیت دسته‌بندی‌ها ==========
                 selected_categories = request.POST.getlist('categories')
-                product.category.set(selected_categories)
+                if selected_categories:
+                    product.category.set(selected_categories)
 
-                # آپدیت گالری - اضافه کردن عکس‌های جدید
+                # ========== آپدیت گالری تصاویر ==========
                 gallery_images = request.FILES.getlist('gallery_images')
                 for image in gallery_images:
-                    if image.size > 0:
+                    if image and image.size > 0:
                         ProductGallery.objects.create(
                             product=product,
                             image=image,
-                            altText=request.POST.get('altText', product.title)
+                            altText=product.title
                         )
 
-                # آپدیت ویژگی‌ها
+                # ========== مدیریت ویژگی‌ها ==========
                 # حذف ویژگی‌های قبلی
                 product.featuresValue.all().delete()
 
-                # اضافه کردن ویژگی‌های جدید (روش پویا)
+                # اضافه کردن ویژگی‌های جدید از روش JSON
                 features_json = request.POST.get('features_json')
                 if features_json:
                     features_data = json.loads(features_json)
@@ -558,17 +790,76 @@ def product_update(request, product_id):
                             ProductFeature.objects.create(
                                 product=product,
                                 feature_id=feature_data['feature_id'],
-                                value=feature_data['value'],
+                                value=feature_data['value'].strip(),
                                 filterValue_id=feature_data.get('filter_value_id')
                             )
+
+                # ========== مدیریت انواع فروش ==========
+                # حذف انواع فروش قبلی
+                product.saleTypes.all().delete()
+
+                # دریافت و اعتبارسنجی داده‌های انواع فروش
+                sale_types_json = request.POST.get('sale_types_json')
+                if sale_types_json:
+                    sale_types_data = json.loads(sale_types_json)
+
+                    for sale_data in sale_types_data:
+                        if not sale_data.get('typeSale'):
+                            continue
+
+                        type_sale = int(sale_data['typeSale'])
+                        price = int(sale_data.get('price', 0))
+
+                        if price <= 0:
+                            raise ValidationError(f"قیمت برای نوع فروش {dict(SaleType.CHOICES).get(type_sale)} معتبر نیست")
+
+                        # بررسی isActive
+                        is_active = sale_data.get('isActive', True)
+                        if isinstance(is_active, str):
+                            is_active = is_active.lower() == 'true'
+
+                        sale_type_obj = ProductSaleType(
+                            product=product,
+                            typeSale=type_sale,
+                            price=price,
+                            title=sale_data.get('title', ''),
+                            isActive=is_active
+                        )
+
+                        # تنظیم مقادیر اختصاصی بر اساس نوع فروش
+                        if type_sale == SaleType.CARTON:
+                            member_carton = sale_data.get('memberCarton', 0)
+                            if member_carton:
+                                sale_type_obj.memberCarton = int(member_carton)
+                                if sale_type_obj.memberCarton <= 0:
+                                    raise ValidationError("تعداد در کارتن باید بزرگتر از صفر باشد")
+
+                        elif type_sale == SaleType.LIMITED:
+                            # برای نوع محدود، هم memberCarton و هم limitedSale رو ذخیره کن
+                            member_carton = sale_data.get('memberCarton', 0)
+                            if member_carton:
+                                sale_type_obj.memberCarton = int(member_carton)
+
+                            limited_sale = sale_data.get('limitedSale', 0)
+                            if limited_sale:
+                                sale_type_obj.limitedSale = int(limited_sale)
+                                if sale_type_obj.limitedSale <= 0:
+                                    raise ValidationError("محدودیت خرید باید بزرگتر از صفر باشد")
+
+                        sale_type_obj.save()
 
                 messages.success(request, 'محصول با موفقیت ویرایش شد')
                 return redirect('panelAdmin:admin_product_detail', product_id=product.id)
 
+        except json.JSONDecodeError as e:
+            messages.error(request, f'خطا در پردازش داده‌ها: {str(e)}')
+        except ValidationError as e:
+            messages.error(request, str(e))
         except Exception as e:
             messages.error(request, f'خطا در ویرایش محصول: {str(e)}')
+            logger.error(f"Error updating product {product_id}: {str(e)}", exc_info=True)
 
-    # آماده‌سازی ویژگی‌های موجود برای نمایش در فرم
+    # آماده‌سازی ویژگی‌های موجود برای JSON
     product_features = []
     for pf in product.featuresValue.all():
         feature_values = []
@@ -584,14 +875,31 @@ def product_update(request, product_id):
             'available_values': feature_values
         })
 
+    # آماده‌سازی انواع فروش برای JSON
+    sale_types = []
+    for st in existing_sale_types:
+        sale_types.append({
+            'id': st.id,
+            'typeSale': st.typeSale,
+            'typeSale_display': st.get_typeSale_display(),
+            'price': st.price,
+            'memberCarton': st.memberCarton,
+            'limitedSale': st.limitedSale,
+            'title': st.title or '',
+            'isActive': st.isActive
+        })
+
     return render(request, 'panelAdmin/products/product/update.html', {
         'product': product,
         'categories': categories,
         'brands': brands,
         'features': features,
         'selected_categories': selected_categories,
-        'product_features_json': json.dumps(product_features)
+        'product_features_json': json.dumps(product_features),
+        'sale_types_json': json.dumps(sale_types),
+        'SaleType': SaleType
     })
+
 
 def product_delete(request, product_id):
     """حذف محصول"""
