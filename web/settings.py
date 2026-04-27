@@ -80,7 +80,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'apps.main.views.media_admin',
-               
+
             ],
         },
     },
@@ -127,12 +127,10 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
+LANGUAGE_CODE = 'fa-ir'
+TIME_ZONE = 'Asia/Tehran'  # این خیلی مهمه - باید Tehran باشه
 USE_I18N = True
-
+USE_L10N = True
 USE_TZ = True
 
 
