@@ -37,13 +37,16 @@ def popular_brands(request):
 def rich_categories(request):
     """
     پر محتواترین دسته‌بندی‌ها بر اساس تعداد محصولات
+    فقط دسته‌بندی‌های لایه دوم (که والد آنها یک دسته‌بندی سطح اول است)
     """
     from .models import Category
+    from django.db.models import Count, Q
 
-    # فقط زیردسته‌ها (parent__isnull=False) تا والدها در لیست نیایند
+    # دسته‌بندی‌هایی که والد دارند و خود والد آنها parent=null است (لایه دوم)
     categories = Category.objects.filter(
         isActive=True,
-        parent__isnull=False
+        parent__isnull=False,  # خودش زیردسته باشد
+        parent__parent__isnull=True  # والد آن، یک دسته‌بندی سطح اول (بدون والد) باشد
     ).annotate(
         total_products=Count('products', filter=Q(products__isActive=True))
     ).filter(
