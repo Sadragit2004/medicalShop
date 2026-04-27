@@ -22,4 +22,8 @@ urlpatterns = [
     # API endpoints for addresses
     path('api/cities/<int:state_id>/', views.get_cities_by_state, name='get_cities_by_state'),
     path('api/addresses/create/', views.create_user_address, name='create_user_address'),
+    # اضافه کردن این مسیرها به urls.py
+path('api/save-checkout-info/', views.ajax_save_checkout_info, name='ajax_save_checkout_info'),
+path('api/save-all-info/', views.ajax_save_all_info, name='ajax_save_all_info'),
+
 ]

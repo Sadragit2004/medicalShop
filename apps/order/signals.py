@@ -68,3 +68,50 @@ def create_order_notifications(sender, instance, created, **kwargs):
 
     except Exception as e:
         print(f"Notification error: {e}")
+
+
+
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from apps.order.models import Order, OrderDetail
+from apps.product.models import Product
+from apps.peyment.models import Peyment
+
+
+@receiver(post_save, sender=Peyment)
+def decrease_stock_on_successful_payment(sender, instance, created, **kwargs):
+    """
+    بعد از پرداخت موفق، موجودی محصولات رو کم کن.
+    فقط یک بار این کار انجام بشه.
+    """
+    # فقط اگه پرداخت موفق بوده و نهایی شده
+    if instance.isFinaly:  # statusCode 100 یعنی موفق
+        order = instance.order
+
+        # اگه قبلاً موجودی این سفارش کم شده بود، دوباره کم نکن
+        if hasattr(order, 'stock_decreased') and order.stock_decreased:
+            return
+
+        # کم کردن موجودی از هر آیتم سفارش
+        for detail in order.details.all():
+            product = detail.product
+            if product.stock >= detail.qty:
+                product.stock -= detail.qty
+                product.save()
+            else:
+                # اگه موجودی کافی نبود، می‌تونی لاگ بزنی یا خطا بدی
+                print(f"⚠️ موجودی کافی نیست برای محصول {product.title} - سفارش {order.orderCode}")
+
+        # علامت بزن که موجودی کم شده (با یه attr موقت یا فیلد جدید)
+        order.stock_decreased = True
+
+
+@receiver(post_save, sender=Order)
+def prevent_double_stock_decrease(sender, instance, created, **kwargs):
+    """
+    هر سفارشی که ساخته می‌شه، یه attr موقت می‌گیره تا توی سیگنال پرداخت
+    بدونیم قبلاً کم شده یا نه.
+    """
+    if created:
+        instance.stock_decreased = False

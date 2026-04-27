@@ -5,7 +5,7 @@ from .models import Peyment
 @admin.register(Peyment)
 
 class Peyment_admin(admin.ModelAdmin):
-    
+
     list_display = ('customer','get_jalali_register_date','amount','isFinaly','statusCode','refId',)
 
     ordering = ('isFinaly',)
