@@ -42,7 +42,7 @@ def rich_categories(request):
     from .models import Category
     from django.db.models import Count, Q
 
-    # دسته‌بندی‌هایی که والد دارند و خود والد آنها parent=null است (لایه دوم)
+   
     categories = Category.objects.filter(
         isActive=True,
         parent__isnull=False,  # خودش زیردسته باشد
