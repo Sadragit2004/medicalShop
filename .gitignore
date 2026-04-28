@@ -6,7 +6,7 @@ mediafiles/
 *.png
 *.gif
 *.webp
-*.svg
+
 *.ico
 
 # Migrations
