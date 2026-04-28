@@ -1,10 +1,15 @@
 from django.shortcuts import render
+from django.utils import timezone
+from datetime import datetime
 from .models import DiscountBasket, DiscountDetail
 from apps.product.models import Product
 
 def get_amazing_product(request):
-    # Get all amazing discount baskets where isamzing is True
-    amazing_discounts = DiscountBasket.objects.filter(isamzing=True, isActive=True)
+    # Get current time
+    now = timezone.now()
+
+    # Get all amazing discount baskets where isamzing is True and isActive is True
+    amazing_discounts = DiscountBasket.objects.filter(isamzing=True, isActive=True, startDate__lte=now, endDate__gte=now)
 
     # Get all products from amazing discount baskets
     amazing_products = []
@@ -22,6 +27,15 @@ def get_amazing_product(request):
             discount_amount = (base_price * discount_percentage) // 100
             discounted_price = base_price - discount_amount
 
+            # Calculate remaining time
+            remaining_seconds = int((discount.endDate - now).total_seconds())
+
+            # Calculate days, hours, minutes, seconds
+            days = remaining_seconds // 86400
+            hours = (remaining_seconds % 86400) // 3600
+            minutes = (remaining_seconds % 3600) // 60
+            seconds = remaining_seconds % 60
+
             amazing_products.append({
                 'product': detail.product,
                 'discount': discount.discount,
@@ -29,11 +43,20 @@ def get_amazing_product(request):
                 'end_date': discount.endDate,
                 'original_price': base_price,
                 'discounted_price': discounted_price,
+                'remaining_time': {
+                    'days': days,
+                    'hours': hours,
+                    'minutes': minutes,
+                    'seconds': seconds,
+                    'total_seconds': remaining_seconds,
+                    'timestamp': int(discount.endDate.timestamp())
+                }
             })
 
     context = {
         'amazing_products': amazing_products,
         'amazing_discounts': amazing_discounts,
+        'now_timestamp': int(now.timestamp()),
     }
 
     return render(request, 'discount_app/amazing.html', context)
