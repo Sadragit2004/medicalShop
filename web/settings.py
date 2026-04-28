@@ -52,8 +52,8 @@ INSTALLED_APPS = [
     'apps.search.apps.SearchConfig',
     'apps.blog.apps.BlogConfig',
     'apps.dashboard.apps.DashboardConfig',
-    'apps.panelAdmin.apps.PaneladminConfig'
-
+    'apps.panelAdmin.apps.PaneladminConfig',
+    
 ]
 
 MIDDLEWARE = [
@@ -186,6 +186,18 @@ CKEDITOR_CONFIGS = {
                 ],'extraPlugins':','.join(['codesnippet',])
          }
 }
+
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # یا 'amqp://localhost'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # یا 'django-db' برای ذخیره نتایج در دیتابیس خودت
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Tehran'  # منطقه زمانی خودت
+
+# ❗ مهم برای دیتابیس: برای هر تسک، یک اتصال جدید به دیتابیس بگیر
+CELERY_TASK_ALWAYS_EAGER = False  # مطمئن شو False هست
+
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
