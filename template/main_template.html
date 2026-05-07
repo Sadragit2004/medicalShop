@@ -7,13 +7,27 @@
       <meta charset="UTF-8">
       <meta name="enamad" content="9992550" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+      <!-- تنظیمات Add to Home Screen و PWA -->
       <meta name="apple-mobile-web-app-title" content=" ">
       <meta name="application-name" content=" ">
+      <meta name="apple-mobile-web-app-capable" content="yes">
+      <meta name="mobile-web-app-capable" content="yes">
+
       <link rel="alternate" href="{{ request.build_absolute_uri }}" hreflang="fa-IR" />
       <meta name="msapplication-TileColor" content="#358597">
-      <!-- Favicon references removed - logo-new.png not found -->
-        <meta name="theme-color" content="#ffffff">
-          {% if request.GET.utmsource or request.GET.utm_medium or request.GET.utm_campaign %}
+
+      <!-- Favicon و آیکون‌های Add to Home Screen -->
+      <link rel="icon" type="image/png" sizes="192x192" href="/media/main/logo.png">
+      <link rel="icon" type="image/png" sizes="32x32" href="/media/main/logo.png">
+      <link rel="icon" type="image/png" sizes="16x16" href="/media/main/logo.png">
+      <link rel="apple-touch-icon" href="/media/main/logo.png">
+      <link rel="mask-icon" href="/media/main/logo.png" color="#358597">
+      <meta name="msapplication-TileImage" content="/media/main/logo.png">
+
+      <meta name="theme-color" content="#ffffff">
+
+        {% if request.GET.utmsource or request.GET.utm_medium or request.GET.utm_campaign %}
         <link rel="canonical" href="{{ request.build_absolute_uri }}" />
         {% else %}
         <link rel="canonical" href="{{ request.build_absolute_uri }}" />
@@ -21,6 +35,8 @@
 
         <meta property="og:locale" content="fa_IR" />
         <meta property="og:type" content="website" />
+        <meta property="og:image" content="/media/main/logo.png" />
+
         <link rel="stylesheet" href="{% static '/styles/apps22.css' %}">
     <!-- link -->
         <link rel="stylesheet" href="{% static '/swiper/swiper.css' %}">
@@ -41,6 +57,14 @@
           {% endblock meta1 %}
 
 
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "url": "https://www.sayamedical.com",
+    "logo": "https://www.sayamedical.com/media/main/logo.png"
+  }
+  </script>
 
     <!-- پشتیبانی از RTL -->
 

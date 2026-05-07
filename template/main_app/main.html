@@ -1,5 +1,57 @@
 {% extends "main_template.html" %}
 
+{% block meta1 %}
+    <!-- ================= Standard SEO ================= -->
+    <title>فروشگاه جامع تجهیزات پزشکی و مراقبت از سلامت | سایا مِد</title>
+    <meta name="description" content="سایا مِد مرجع تخصصی نقد، بررسی و خرید آنلاین تجهیزات پزشکی، لوازم مصرفی و کالای سلامت. با سایا مِد اصالت کالا، ارسال سریع و پشتیبانی تخصصی را تجربه کنید.">
+    <meta name="keywords" content="سایا مِد, تجهیزات پزشکی, لوازم سلامت, فروشگاه پزشکی, تجهیزات بیمارستانی, خرید کالای پزشکی, Saya Med">
+    <meta name="author" content="سایا مِد">
+    <meta name="publisher" content="فروشگاه اینترنتی سایا مِد">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+
+    <!-- Canonical URL (جلوگیری از محتوای تکراری در سئو) -->
+    <link rel="canonical" href="{{ request.build_absolute_uri }}">
+
+    <!-- ================= Open Graph (Facebook, LinkedIn, WhatsApp) ================= -->
+    <meta property="og:site_name" content="سایا مِد">
+    <meta property="og:title" content="خرید مطمئن تجهیزات پزشکی و سلامت با سایا مِد">
+    <meta property="og:description" content="بهترین تجربه خرید آنلاین لوازم مراقبت از بیمار و تجهیزات کلینیکی با ضمانت اصالت در سایا مِد.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}/media/main/logo.png">
+    <meta property="og:image:alt" content="لوگوی فروشگاه تجهیزات پزشکی سایا مِد">
+    <meta property="og:locale" content="fa_IR">
+
+    <!-- ================= Twitter Cards ================= -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="سایا مِد | فروشگاه تجهیزات پزشکی">
+    <meta name="twitter:description" content="تأمین‌کننده برترین برندهای پزشکی و سلامت. با سایا مِد، کیفیت و اطمینان را به خانه ببرید.">
+    <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}/media/main/logo.png">
+
+    <!-- ================= Mobile & Theme ================= -->
+    <meta name="theme-color" content="#2563eb"> <!-- رنگ آبی هدر (متناسب با قالب شما) -->
+
+    <!-- ================= Schema Markup (JSON-LD) برای گوگل ================= -->
+    <!-- معرفی دقیق برند به عنوان یک سازمان پزشکی به موتورهای جستجو -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MedicalOrganization",
+      "name": "سایا مِد",
+      "alternateName": "Saya Med",
+      "url": "{{ request.scheme }}://{{ request.get_host }}/",
+      "logo": "{{ request.scheme }}://{{ request.get_host }}/media/main/logo.png",
+      "description": "مرجع تخصصی فروش آنلاین تجهیزات پزشکی و کالای سلامت محور",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer service",
+        "availableLanguage": "Persian"
+      }
+    }
+    </script>
+{% endblock meta1 %}
+
+
 {% load render_partial %}
 
 {% block content %}
@@ -76,7 +128,7 @@
                 <img class="w-14 h-14" src="{{media_url}}/images/svg/2.svg" alt="">
                 <p class="text-gray-500 dark:text-gray-300">ضمانت اصل بودن کالا</p>
             </span>
-          
+
             <span class="flex flex-col items-center justify-center">
                 <img class="w-14 h-14" src="{{media_url}}/images/svg/4.svg" alt="">
                 <p class="text-gray-500 dark:text-gray-300">پشتیبانی 24 ساعته</p>
