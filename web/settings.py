@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'apps.blog.apps.BlogConfig',
     'apps.dashboard.apps.DashboardConfig',
     'apps.panelAdmin.apps.PaneladminConfig',
-    
+
 ]
 
 MIDDLEWARE = [
@@ -132,6 +132,8 @@ TIME_ZONE = 'Asia/Tehran'  # این خیلی مهمه - باید Tehran باشه
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
+
+
 
 
 # Static files (CSS, JavaScript, Images)

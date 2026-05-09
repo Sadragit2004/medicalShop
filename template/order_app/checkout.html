@@ -804,4 +804,23 @@ document.getElementById('submitAddressBtn').addEventListener('click', function()
 updatePaymentForm();
 </script>
 
+<script>
+    // پاک کردن مقدار None از فیلدهای ورودی
+function clearNoneFields() {
+    const firstName = document.getElementById('firstName');
+    const lastName = document.getElementById('lastName');
+
+    if (firstName && firstName.value === 'None') {
+        firstName.value = '';
+    }
+
+    if (lastName && lastName.value === 'None') {
+        lastName.value = '';
+    }
+}
+
+// اجرا هنگام بارگذاری صفحه
+clearNoneFields();
+</script>
+
 {% endblock content %}

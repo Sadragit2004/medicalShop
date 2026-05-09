@@ -7,8 +7,6 @@
 
 {% block meta1 %}
 
-{% load static %}
-{% load humanize %}
 
 <title>{{ product.title }} - {{ product.brand.title|default:"فروشگاه" }} | {{ site_name }}</title>
 <meta name="description" content="{{ product.description|striptags|truncatechars:160|default:product.title }}">
