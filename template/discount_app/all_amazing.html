@@ -1,0 +1,153 @@
+<!-- amazing_products.html -->
+{% extends "main_template.html" %}
+{% load humanize %}
+
+{% block meta1 %}
+<title>محصولات شگفت‌انگیز - {{ site_name }}</title>
+<meta name="description" content="بهترین محصولات با تخفیف‌های شگفت‌انگیز">
+{% endblock meta1 %}
+
+{% block content %}
+
+<main class="container">
+    <!-- Breadcrumb -->
+    <nav class="flex mt-8" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
+            <li class="inline-flex items-center">
+                <a href="/" class="inline-flex items-center text-sm gap-x-1 text-gray-700 hover:text-blue-600">
+                    <svg class="size-4 mb-0.5">
+                        <use href="#home" />
+                    </svg>
+                    صفحه اصلی
+                </a>
+            </li>
+            <li aria-current="page">
+                <div class="flex items-center">
+                    <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" fill="none" stroke="currentColor" viewBox="0 0 6 10">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4" />
+                    </svg>
+                    <h1 class="ms-1 text-sm text-gray-500">محصولات شگفت‌انگیز</h1>
+                </div>
+            </li>
+        </ol>
+    </nav>
+
+    <div class="flex flex-col lg:flex-row gap-4 mt-5">
+        <div class="lg:w-3/4 mx-auto">
+            <!-- PRODUCTS -->
+            <div class="grid grid-cols-1 xxs:grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 xs:gap-2 sm:gap-4">
+                {% for product in amazing_products %}
+                <div class="product-card group relative">
+                    <!-- product img -->
+                    <a href="{{ product.get_absolute_url }}">
+                        <img loading="lazy" class="product-card_img group-hover:opacity-0 absolute"
+                             src="{{ product.mainImage.url }}"
+                             alt="{{ product.title }}">
+                        <img loading="lazy" class="product-card_img opacity-0 group-hover:opacity-100"
+                             src="{{ product.mainImage.url }}"
+                             alt="{{ product.title }}">
+                    </a>
+
+                    <!-- برچسب تخفیف -->
+                    {% if product.has_discount and product.discount_percent > 0 %}
+                    <div class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-lg text-xs font-bold z-20 shadow-md">
+                        {{ product.discount_percent }}% تخفیف
+                    </div>
+                    {% endif %}
+
+                    <!-- product footer -->
+                    <div class="space-y-2">
+                        <a href="{{ product.get_absolute_url }}" class="product-card_link">
+                            {{ product.title|truncatechars:70 }}
+                        </a>
+
+                        <div class="product-card_price-wrapper">
+                            <div class="product-card_rate">
+                                <span class="flex items-center gap-x-0.5">
+                                    <svg class="size-4 text-blue-500 mb-0.5">
+                                        <use href="#rocket"></use>
+                                    </svg>
+                                    <p class="text-xs">ارسال امروز</p>
+                                </span>
+                                <span class="text-gray-400 flex items-center text-sm gap-x-0.5">
+                                    <p>{{ product.average_rating|floatformat:1 }}</p>
+                                    <svg class="size-4 mb-1">
+                                        <use href="#star"></use>
+                                    </svg>
+                                </span>
+                            </div>
+
+                            <div class="product-card_price">
+                                {% if product.has_discount and product.discount_percent > 0 and product.original_price > 0 %}
+                                    <!-- نمایش قیمت با تخفیف -->
+                                    <div class="flex flex-col items-end">
+                                        <del class="text-gray-400 text-sm">
+                                            {{ product.original_price|intcomma }} تومان
+                                        </del>
+                                        <div class="flex items-center gap-1">
+                                            <span style='background-color:#22adbd;' class="text-blue-600 font-DanaDemiBold text-lg">{{ product.final_price|intcomma }}</span>
+                                            <span style='background-color:#22adbd;' class="text-xs text-gray-500">تومان</span>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <!-- نمایش قیمت عادی -->
+                                    <div class="flex items-center gap-1">
+                                        <span style='background-color:#22adbd;' class="font-DanaDemiBold text-lg">{{ product.original_price|intcomma }}</span>
+                                        <span style='background-color:#22adbd;' class="text-xs text-gray-500">تومان</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-span-full text-center py-12">
+                    <span class="mt-4 text-lg font-medium text-gray-900">محصولی یافت نشد</span>
+                    <p class="mt-1 text-gray-500">هیچ محصول شگفت‌انگیزی وجود ندارد.</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- PAGINATION -->
+            {% if amazing_products.has_other_pages %}
+            <div class="mt-10 w-full flex items-center justify-center">
+                <ul class="flex items-center gap-x-3">
+                    {% if amazing_products.has_previous %}
+                    <li class="bg-white rounded-lg shadow hover:bg-blue-500 hover:text-white">
+                        <a href="?page={{ amazing_products.previous_page_number }}" class="flex items-center justify-center w-8 h-8">
+                            <svg class="size-5 rotate-180">
+                                <use href="#chevron-left"></use>
+                            </svg>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for i in amazing_products.paginator.page_range %}
+                        {% if amazing_products.number == i %}
+                        <li class="bg-blue-500 text-white rounded-lg w-8 h-8 flex items-center justify-center">
+                            <span>{{ i }}</span>
+                        </li>
+                        {% elif i > amazing_products.number|add:'-3' and i < amazing_products.number|add:'3' %}
+                        <li class="bg-white rounded-lg shadow hover:bg-blue-500 hover:text-white">
+                            <a href="?page={{ i }}" class="flex items-center justify-center w-8 h-8">{{ i }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if amazing_products.has_next %}
+                    <li class="bg-white rounded-lg shadow hover:bg-blue-500 hover:text-white">
+                        <a href="?page={{ amazing_products.next_page_number }}" class="flex items-center justify-center w-8 h-8">
+                            <svg class="size-5">
+                                <use href="#chevron-left"></use>
+                            </svg>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</main>
+
+{% endblock content %}
