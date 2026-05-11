@@ -57,7 +57,7 @@
 
                     <!-- برچسب تخفیف -->
                     {% if product.has_discount and product.discount_percent > 0 %}
-                    <div class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-lg text-xs font-bold z-20 shadow-md">
+                    <div style='z-index: 1;' class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-lg text-xs font-bold z-20 shadow-md">
                         {{ product.discount_percent }}% تخفیف
                     </div>
                     {% endif %}
