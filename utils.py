@@ -148,7 +148,7 @@ def price_by_delivery_tax(price, discount=0):
     # تبدیل قیمت به Decimal برای دقت بیشتر
     price_decimal = Decimal(str(price))
 
-    tax = price_decimal * Decimal('0.09')
+    tax = price_decimal * Decimal('0')
     total_sum = price_decimal + tax
     total_sum = total_sum - (total_sum * Decimal(str(discount)) / Decimal('100'))
 

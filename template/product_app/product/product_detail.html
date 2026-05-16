@@ -742,12 +742,12 @@ input[type="number"]::-webkit-outer-spin-button {
             </svg>
         </div>
 
-        <!-- باکس کارتن -->
+        <!-- باکس {{ product_type_title.title|default:"بسته" }} -->
         {% if member_carton and member_carton > 0 %}
         <div id="single-carton-info" class="mt-2 bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg text-center text-sm">
             <span id="single-item-count" class="font-bold text-red-600">1</span> عدد معادل
-            <span id="single-cartons-count" class="font-bold text-lg text-blue-700">0</span> کارتن می‌باشد
-            <div class="text-xs text-gray-500 mt-1">(هر کارتن {{ member_carton }} عدد)</div>
+            <span id="single-cartons-count" class="font-bold text-lg text-blue-700">0</span> {{ product_type_title.title|default:"بسته" }} می‌باشد
+            <div class="text-xs text-gray-500 mt-1">(هر {{ product_type_title.title|default:"بسته" }} {{ member_carton }} عدد)</div>
         </div>
         {% endif %}
         {% endif %}
@@ -789,18 +789,18 @@ input[type="number"]::-webkit-outer-spin-button {
                 </svg>
             </div>
 
-            <!-- باکس داینامیک نمایش کارتن -->
+            <!-- باکس داینامیک نمایش {{ product_type_title.title|default:"بسته" }} -->
             <div id="dynamic-carton-info" class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3 text-center hidden transition-all duration-300">
                 <div class="text-sm text-gray-700 mb-2">
-                    شما در حال سفارش <span id="dynamic-cartons-selected" class="font-DanaDemiBold text-blue-700 text-lg mx-1">1</span> کارتن هستید
+                    شما در حال سفارش <span id="dynamic-cartons-selected" class="font-DanaDemiBold text-blue-700 text-lg mx-1">1</span> {{ product_type_title.title|default:"بسته" }} هستید
                 </div>
                 <div class="flex items-center justify-center gap-4 text-xs text-gray-500 border-t border-blue-200 pt-2">
                     <div>
-                        تعداد در کارتن: <span class="font-DanaDemiBold text-gray-700">{{ default_sale_type.memberCarton }}</span> عدد
+                        تعداد در {{ product_type_title.title|default:"بسته" }}: <span class="font-DanaDemiBold text-gray-700">{{ default_sale_type.memberCarton }}</span> عدد
                     </div>
                     <div class="w-px h-4 bg-blue-200"></div>
                     <div>
-                        موجودی انبار: <span id="total-available-cartons" class="font-DanaDemiBold text-blue-600">0</span> کارتن
+                        موجودی انبار: <span id="total-available-cartons" class="font-DanaDemiBold text-blue-600">0</span> {{ product_type_title.title|default:"بسته" }}
                     </div>
                 </div>
             </div>
@@ -813,7 +813,7 @@ input[type="number"]::-webkit-outer-spin-button {
             <!-- Carton Calculation Display -->
             <div class="flex items-center justify-between bg-blue-100 p-3 rounded-lg mb-4">
                 <div class="text-center">
-                    <div class="text-sm text-gray-600">تعداد کارتن</div>
+                    <div class="text-sm text-gray-600">تعداد {{ product_type_title.title|default:"بسته" }}</div>
                     <div class="text-2xl font-DanaDemiBold text-blue-700" id="carton-count">1</div>
                 </div>
                 <div class="h-12 w-px bg-blue-300"></div>
@@ -839,7 +839,7 @@ input[type="number"]::-webkit-outer-spin-button {
                            data-max-cartons="{{ max_cartons }}"
                            class="custom-input text-lg bg-transparent text-center w-20 border-none focus:ring-0"
                            onchange="validateCartonQuantity(this)">
-                    <div class="text-sm text-gray-600 mt-1">کارتن</div>
+                    <div class="text-sm text-gray-600 mt-1">{{ product_type_title.title|default:"بسته" }}</div>
                 </div>
                 <svg class="w-6 h-6 decrement text-red-500 cursor-pointer" onclick="updateCartonQuantity('decrement')">
                     <use href="#minus"></use>
@@ -848,7 +848,7 @@ input[type="number"]::-webkit-outer-spin-button {
 
             <!-- Carton Info -->
             <div class="text-sm text-blue-600 font-DanaMedium text-center bg-blue-100 py-2 px-3 rounded">
-                هر کارتن {{ default_sale_type.memberCarton }} عدد
+                هر {{ product_type_title.title|default:"بسته" }} {{ default_sale_type.memberCarton }} عدد
             </div>
         </div>
         {% endif %}
@@ -902,7 +902,7 @@ input[type="number"]::-webkit-outer-spin-button {
                 </div>
             </div>
             <div class="text-xs text-green-600 text-center mt-2" id="savings-indicator">
-                💰 خرید کارتن‌ایی - صرفه اقتصادی بالا
+                💰 خرید {{ product_type_title.title|default:"بسته" }}‌ایی - صرفه اقتصادی بالا
             </div>
         </div>
         {% endif %}
@@ -927,7 +927,7 @@ input[type="number"]::-webkit-outer-spin-button {
                     data-detail="">
                 <span class="add-to-cart-text">
                     {% if default_sale_type.typeSale == 2 %}
-                        افزودن کارتن به سبد
+                        افزودن {{ product_type_title.title|default:"بسته" }} به سبد
                     {% elif default_sale_type.typeSale == 3 %}
                         افزودن به سبد
                     {% else %}
@@ -1449,13 +1449,13 @@ function validateLimitedQuantity(input) {
 
     input.value = value;
 
-    // آپدیت و نمایش زنده تعداد کارتن
+    // آپدیت و نمایش زنده تعداد {{ product_type_title.title|default:"بسته" }}
     updateDynamicCartonDisplay(value, input);
 
     updateTotalPrice(value);
 }
 
-// توابع مربوط به نوع کارتن (typeSale = 2)
+// توابع مربوط به نوع {{ product_type_title.title|default:"بسته" }} (typeSale = 2)
 function updateCartonQuantity(action) {
     const input = document.getElementById('quantity');
     let currentValue = parseInt(input.value) || 1;
@@ -1466,7 +1466,7 @@ function updateCartonQuantity(action) {
         if (currentValue < max) {
             input.value = currentValue + 1;
         } else {
-            showToast('بیش از این تعداد کارتن موجود نمی‌باشد', 'error');
+            showToast('بیش از این تعداد {{ product_type_title.title|default:"بسته" }} موجود نمی‌باشد', 'error');
         }
     } else if (action === 'decrement') {
         if (currentValue > min) {
@@ -1487,12 +1487,12 @@ function validateCartonQuantity(input) {
     if (value < min) value = min;
     if (value > max) {
         value = max;
-        showToast('بیش از این تعداد کارتن موجود نمی‌باشد', 'error');
+        showToast('بیش از این تعداد {{ product_type_title.title|default:"بسته" }} موجود نمی‌باشد', 'error');
     }
 
     input.value = value;
 
-    // آپدیت تعداد کارتن
+    // آپدیت تعداد {{ product_type_title.title|default:"بسته" }}
     const cartonCountElement = document.getElementById('carton-count');
     if (cartonCountElement) {
         cartonCountElement.textContent = value.toLocaleString();
@@ -1505,17 +1505,17 @@ function validateCartonQuantity(input) {
         totalUnitsElement.textContent = totalUnits.toLocaleString();
     }
 
-    // آپدیت متنِ "X کارتن × Y عدد × Z تومان"
+    // آپدیت متنِ "X {{ product_type_title.title|default:"بسته" }} × Y عدد × Z تومان"
     const cartonDetail = document.getElementById('carton-detail');
     if (cartonDetail) {
         const priceElement = document.getElementById('total-price');
         if (priceElement) {
             const unitPrice = parseInt(priceElement.getAttribute('data-unit-price')) || 0;
-            cartonDetail.textContent = `${value} کارتن × ${perCarton} عدد × ${unitPrice.toLocaleString()} تومان`;
+            cartonDetail.textContent = `${value} {{ product_type_title.title|default:"بسته" }} × ${perCarton} عدد × ${unitPrice.toLocaleString()} تومان`;
         }
     }
 
-    // برای نوع کارتن، تعداد کل واحدها = تعداد کارتن × تعداد در هر کارتن
+    // برای نوع {{ product_type_title.title|default:"بسته" }}، تعداد کل واحدها = تعداد {{ product_type_title.title|default:"بسته" }} × تعداد در هر {{ product_type_title.title|default:"بسته" }}
     const totalUnits = value * perCarton;
     updateTotalPrice(totalUnits);
 }
@@ -1658,7 +1658,7 @@ function updateDynamicCartonDisplay(currentValue, inputElement) {
     const selectedSpan = document.getElementById('dynamic-cartons-selected');
     const totalAvailableSpan = document.getElementById('total-available-cartons');
 
-    // گرفتن تعداد در کارتن
+    // گرفتن تعداد در {{ product_type_title.title|default:"بسته" }}
     let perCarton = parseInt(inputElement.getAttribute('data-per-carton'));
     if (isNaN(perCarton) || perCarton <= 0) {
         perCarton = parseInt(inputElement.step) || 1;
@@ -1670,7 +1670,7 @@ function updateDynamicCartonDisplay(currentValue, inputElement) {
         const selectedCartons = currentValue / perCarton;
         const totalCartons = Math.floor(stock / perCarton);
 
-        // آپدیت موجودی کل کارتن ها
+        // آپدیت موجودی کل {{ product_type_title.title|default:"بسته" }} ها
         if (totalAvailableSpan) {
             totalAvailableSpan.textContent = totalCartons.toLocaleString();
         }

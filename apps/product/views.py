@@ -42,7 +42,7 @@ def rich_categories(request):
     from .models import Category
     from django.db.models import Count, Q
 
-   
+
     categories = Category.objects.filter(
         isActive=True,
         parent__isnull=False,  # خودش زیردسته باشد
@@ -132,14 +132,16 @@ def latest_products(request):
     return render(request, 'product_app/product/latest_products.html', context)
 
 # views.py
-
 # views.py
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
+from django.db.models import Count, Q, OuterRef, Subquery, ExpressionWrapper, F, Value, PositiveIntegerField
+from django.db.models.functions import Floor, Coalesce
+from django.utils import timezone
+
 
 def product_detail(request, slug):
     """
@@ -310,7 +312,10 @@ def product_detail(request, slug):
     is_call = shop_setting.is_call if shop_setting else False
     emergency_phone = shop_setting.emergency_phone if shop_setting else None
 
-    # 11. context نهایی
+    # 11. نوع بسته بندی محصول (TypeProductTitle)
+    product_type_title = product.typetitle
+
+    # 12. context نهایی
     context = {
         # اطلاعات اصلی محصول
         'product': product,
@@ -366,6 +371,9 @@ def product_detail(request, slug):
         'product_stock': product.stock,
         'member_carton': default_sale_type.memberCarton if default_sale_type and default_sale_type.typeSale == SaleType.CARTON else 0,
         'limited_sale': default_sale_type.limitedSale if default_sale_type and default_sale_type.typeSale == SaleType.LIMITED else 0,
+
+        # نوع بسته بندی محصول
+        'product_type_title': product_type_title,
     }
 
     return render(request, 'product_app/product/product_detail.html', context)

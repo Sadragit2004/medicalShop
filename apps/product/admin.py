@@ -4,8 +4,7 @@ from django.utils.html import format_html
 from .models import (
     Category, Brand, Feature, FeatureValue, Product,
     ProductGallery, ProductFeature, ProductSaleType,
-    Rating, Comment
-)
+    Rating, Comment,TypeProductTitle)
 
 # ========================
 # فیلترهای سفارشی
@@ -25,6 +24,13 @@ class IsActiveFilter(admin.SimpleListFilter):
             return queryset.filter(isActive=True)
         if self.value() == 'inactive':
             return queryset.filter(isActive=False)
+
+
+
+@admin.register(TypeProductTitle)
+class TypeProductAdmin(admin.ModelAdmin):
+
+    list_display = ['title']
 
 
 class HasParentFilter(admin.SimpleListFilter):
@@ -223,7 +229,7 @@ class ProductAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
         ('توضیحات', {
-            'fields': ('shortDescription', 'description')
+            'fields': ('shortDescription', 'description','typetitle')
         }),
     )
 

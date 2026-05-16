@@ -71,6 +71,16 @@ class Brand(BaseModel):
 # محصول (Product)
 # ========================
 
+class TypeProductTitle(models.Model):
+
+    title = models.CharField(max_length=100,verbose_name='عنوان',blank=True,null=True)
+
+
+    def __str__(self):
+        return f'{self.title}'
+
+
+
 class Product(BaseModel):
     brand = models.ForeignKey(Brand, on_delete=models.SET_NULL, verbose_name="برند",
                              null=True, blank=True, related_name='products')
@@ -81,6 +91,9 @@ class Product(BaseModel):
         verbose_name="توضیحات محصول", config_name="special", blank=True, null=True
     )
 
+
+
+    typetitle = models.ForeignKey(TypeProductTitle,on_delete=models.CASCADE,verbose_name='نوع بسته بندی محصول',blank=True,null=True)
     stock = models.PositiveIntegerField(verbose_name="موجودی", default=0)
     shortDescription = models.TextField(verbose_name="توضیح کوتاه", max_length=500)
 

@@ -39,15 +39,11 @@ def render_checkout_page(request, order, checkout_data=None):
         # Calculate subtotal (sum of all items without discount)
         subtotal = sum(item.price * item.qty for item in order_items)
 
-        # Calculate tax (9%)
-        tax_amount = (subtotal * 9) // 100
-
-        # Calculate discount amount (applied to subtotal + tax)
-        subtotal_with_tax = subtotal + tax_amount
-        discount_amount = (subtotal_with_tax * order.discount) // 100 if order.discount else 0
+        # Calculate discount amount (applied to subtotal)
+        discount_amount = (subtotal * order.discount) // 100 if order.discount else 0
 
         # Calculate final total
-        final_total = subtotal_with_tax - discount_amount
+        final_total = subtotal - discount_amount
 
         # Prepare context
         context = {
@@ -60,7 +56,6 @@ def render_checkout_page(request, order, checkout_data=None):
             'total_items': total_items,
             'total_qty': total_qty,
             'subtotal': subtotal,
-            'tax_amount': tax_amount,
             'discount_percent': order.discount,
             'discount_amount': discount_amount,
             'final_total': final_total,
@@ -356,15 +351,11 @@ def order_invoice(request, order_id):
         # Calculate subtotal (sum of all items without discount)
         subtotal = sum(item.price * item.qty for item in order_items)
 
-        # Calculate tax (9%)
-        tax_amount = (subtotal * 9) // 100
-
-        # Calculate discount amount (applied to subtotal + tax)
-        subtotal_with_tax = subtotal + tax_amount
-        discount_amount = (subtotal_with_tax * order.discount) // 100 if order.discount else 0
+        # Calculate discount amount (applied to subtotal)
+        discount_amount = (subtotal * order.discount) // 100 if order.discount else 0
 
         # Calculate final total
-        final_total = subtotal_with_tax - discount_amount
+        final_total = subtotal - discount_amount
 
         context = {
             'order': order,
@@ -372,7 +363,6 @@ def order_invoice(request, order_id):
             'total_items': total_items,
             'total_qty': total_qty,
             'subtotal': subtotal,
-            'tax_amount': tax_amount,
             'discount_percent': order.discount,
             'discount_amount': discount_amount,
             'final_total': final_total,
