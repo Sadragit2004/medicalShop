@@ -334,6 +334,14 @@ input[type="number"]::-webkit-outer-spin-button {
     box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
 }
 
+.add-to-cart-btn:disabled {
+    background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.7;
+}
+
 .call-btn {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: white;
@@ -924,9 +932,12 @@ input[type="number"]::-webkit-outer-spin-button {
             <button class="add-to-cart-btn add-to-cart-desktop"
                     data-product-id="{{ product.id }}"
                     data-quantity="1"
-                    data-detail="">
+                    data-detail=""
+                    {% if product.stock <= 0 %}disabled{% endif %}>
                 <span class="add-to-cart-text">
-                    {% if default_sale_type.typeSale == 2 %}
+                    {% if product.stock <= 0 %}
+                        ناموجود
+                    {% elif default_sale_type.typeSale == 2 %}
                         افزودن {{ product_type_title.title|default:"بسته" }} به سبد
                     {% elif default_sale_type.typeSale == 3 %}
                         افزودن به سبد
@@ -1382,6 +1393,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const desktopAddToCartBtn = document.querySelector('.add-to-cart-desktop');
     if (desktopAddToCartBtn) {
         desktopAddToCartBtn.addEventListener('click', function() {
+            // جلوگیری از افزودن به سبد اگر موجودی صفر است
+            if ({{ product.stock }} <= 0) {
+                showToast('متاسفانه این محصول موجود نمی‌باشد', 'error');
+                return;
+            }
+
             const productId = this.getAttribute('data-product-id');
             const quantityElement = document.getElementById('quantity');
             const quantity = quantityElement ? parseInt(quantityElement.value) : 1;
@@ -1394,6 +1411,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // توابع مدیریت مقادیر برای انواع مختلف فروش
 function updateSingleQuantity(action) {
+    // اگر موجودی صفر است، هیچ تغییری نده
+    if ({{ product.stock }} <= 0) {
+        showToast('متاسفانه این محصول موجود نمی‌باشد', 'error');
+        return;
+    }
+
     const input = document.getElementById('quantity');
     let currentValue = parseInt(input.value) || 1;
     const min = 1;
@@ -1457,6 +1480,12 @@ function validateLimitedQuantity(input) {
 
 // توابع مربوط به نوع {{ product_type_title.title|default:"بسته" }} (typeSale = 2)
 function updateCartonQuantity(action) {
+    // اگر موجودی صفر است، هیچ تغییری نده
+    if ({{ product.stock }} <= 0) {
+        showToast('متاسفانه این محصول موجود نمی‌باشد', 'error');
+        return;
+    }
+
     const input = document.getElementById('quantity');
     let currentValue = parseInt(input.value) || 1;
     const min = parseInt(input.min) || 1;
@@ -1558,6 +1587,12 @@ function updateMobilePriceTotal(quantity) {
 
 // تابع عمومی برای افزودن به سبد خرید
 function addToCart(productId, quantity, detail) {
+    // بررسی مجدد موجودی قبل از افزودن به سبد
+    if ({{ product.stock }} <= 0) {
+        showToast('متاسفانه این محصول موجود نمی‌باشد', 'error');
+        return;
+    }
+
     showToast('محصول به سبد خرید اضافه شد', 'success');
     console.log(`افزودن به سبد: محصول ${productId}، تعداد ${quantity}، جزئیات: ${detail}`);
 
@@ -1625,9 +1660,37 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-// فعال‌سازی اعتبارسنجی اولیه
+// فعال‌سازی اعتبارسنجی اولیه و غیرفعال کردن کنترل‌ها در صورت ناموجودی
 document.addEventListener('DOMContentLoaded', function() {
     const quantityInput = document.getElementById('quantity');
+    const isOutOfStock = {{ product.stock }} <= 0;
+
+    if (isOutOfStock) {
+        // غیرفعال کردن تمام کنترل‌های افزایش/کاهش تعداد
+        const incrementButtons = document.querySelectorAll('[onclick*="increment"]');
+        const decrementButtons = document.querySelectorAll('[onclick*="decrement"]');
+        const quantityInputs = document.querySelectorAll('#quantity');
+
+        incrementButtons.forEach(btn => {
+            btn.style.cursor = 'not-allowed';
+            btn.style.opacity = '0.5';
+            btn.removeAttribute('onclick');
+            btn.classList.add('cursor-not-allowed');
+        });
+
+        decrementButtons.forEach(btn => {
+            btn.style.cursor = 'not-allowed';
+            btn.style.opacity = '0.5';
+            btn.removeAttribute('onclick');
+            btn.classList.add('cursor-not-allowed');
+        });
+
+        quantityInputs.forEach(input => {
+            input.disabled = true;
+            input.value = 0;
+        });
+    }
+
     if (quantityInput) {
         {% if default_sale_type.typeSale == 2 %}
             validateCartonQuantity(quantityInput);
@@ -1640,6 +1703,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function updateLimitedQuantity(action) {
+    // اگر موجودی صفر است، هیچ تغییری نده
+    if ({{ product.stock }} <= 0) {
+        showToast('متاسفانه این محصول موجود نمی‌باشد', 'error');
+        return;
+    }
+
     const input = document.getElementById('quantity');
     let currentValue = parseInt(input.value) || 0;
     const step = parseInt(input.step) || 1;
