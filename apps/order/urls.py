@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from . import core_view
+from . import order_panel
 
 app_name = 'order'
 
@@ -23,7 +24,9 @@ urlpatterns = [
     path('api/cities/<int:state_id>/', views.get_cities_by_state, name='get_cities_by_state'),
     path('api/addresses/create/', views.create_user_address, name='create_user_address'),
     # اضافه کردن این مسیرها به urls.py
-path('api/save-checkout-info/', views.ajax_save_checkout_info, name='ajax_save_checkout_info'),
-path('api/save-all-info/', views.ajax_save_all_info, name='ajax_save_all_info'),
+    path('api/save-checkout-info/', views.ajax_save_checkout_info, name='ajax_save_checkout_info'),
+    path('api/save-all-info/', views.ajax_save_all_info, name='ajax_save_all_info'),
+    path('orderPanel/', order_panel.OrderListView.as_view(), name='order_list2'),
+    path('orderPanel/<uuid:order_code>/', order_panel.OrderDetailView.as_view(), name='order_detail2'),
 
 ]

@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Ultra Orders Panel | مدیریت هوشمند سفارشات</title>
+    <!-- Font Awesome 6 & Chart.js CDN -->
+    <link rel="stylesheet" href="https://lib.arvancloud.ir/font-awesome/6.3.0/css/all.css" />
+    <script src="https://lib.arvancloud.ir/Chart.js/4.2.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --bg: #eef5ff;
+            --card: #ffffff;
+            --card2: #f7fbff;
+            --primary: #1877ff;
+            --primary2: #4da3ff;
+            --text: #0f172a;
+            --muted: #6b7a90;
+            --success: #17b26a;
+            --warning: #ff9800;
+            --danger: #ff4d6d;
+            --border: #dbe8ff;
+            --shadow: 0 12px 28px rgba(24, 119, 255, 0.08);
+            --radius: 26px;
+            --transition: all 0.2s ease;
+        }
+
+        body {
+            background: radial-gradient(circle at 10% 20%, #dcecff, #eef5ff 70%);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 14px;
+        }
+
+        .container {
+            max-width: 1700px;
+            margin: 0 auto;
+        }
+
+        /* topbar */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-icon {
+            width: 68px;
+            height: 68px;
+            background: linear-gradient(135deg, var(--primary), var(--primary2));
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 30px;
+            box-shadow: 0 14px 28px rgba(24, 119, 255, 0.25);
+        }
+
+        .logo h1 {
+            font-size: 26px;
+            letter-spacing: -0.3px;
+            margin-bottom: 6px;
+        }
+
+        .logo p {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .profile {
+            background: white;
+            border: 1px solid var(--border);
+            padding: 8px 18px 8px 20px;
+            border-radius: 38px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: var(--shadow);
+        }
+
+        .profile img {
+            width: 52px;
+            height: 52px;
+            border-radius: 28px;
+            object-fit: cover;
+        }
+
+        /* stats grid */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 22px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: #bbd6ff;
+        }
+
+        .stat-card::before {
+            content: "";
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: rgba(24, 119, 255, 0.05);
+            border-radius: 50%;
+            top: -50px;
+            left: -50px;
+        }
+
+        .stat-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-icon {
+            width: 58px;
+            height: 58px;
+            background: rgba(24, 119, 255, 0.12);
+            border-radius: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 28px;
+        }
+
+        .stat-card h2 {
+            font-size: 38px;
+            margin-top: 12px;
+            font-weight: 700;
+        }
+
+        .stat-card span {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        /* main grid */
+        .main {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 22px;
+        }
+
+        /* sidebar panels */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .panel {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .panel-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .panel-title h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .filters {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group i {
+            position: absolute;
+            top: 50%;
+            right: 18px;
+            transform: translateY(-50%);
+            color: var(--primary);
+            font-size: 1.1rem;
+            pointer-events: none;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            height: 56px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: #f9fbff;
+            padding: 0 48px 0 18px;
+            font-size: 0.95rem;
+            outline: none;
+            color: var(--text);
+            transition: 0.2s;
+            cursor: pointer;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(24, 119, 255, 0.1);
+        }
+
+        .chart-box {
+            height: 270px;
+            width: 100%;
+        }
+
+        /* orders panel */
+        .orders-panel {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px 22px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .orders-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .orders-header h3 {
+            font-size: 1.4rem;
+        }
+
+        .orders-scroll {
+            max-height: calc(100vh - 280px);
+            overflow-y: auto;
+            padding-left: 6px;
+            padding-right: 2px;
+        }
+
+        .orders-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .orders-scroll::-webkit-scrollbar-track {
+            background: #ecf3fe;
+            border-radius: 10px;
+        }
+
+        .orders-scroll::-webkit-scrollbar-thumb {
+            background: #b7d4ff;
+            border-radius: 12px;
+        }
+
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        /* order card premium */
+        .order-card {
+            background: linear-gradient(145deg, #ffffff, #fafdff);
+            border: 1px solid #e4edff;
+            border-radius: 32px;
+            padding: 18px;
+            transition: 0.25s cubic-bezier(0.2, 0, 0, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        }
+
+        .order-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary2);
+            box-shadow: 0 20px 30px -12px rgba(24, 119, 255, 0.2);
+        }
+
+        .order-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 18px;
+        }
+
+        .customer {
+            display: flex;
+            gap: 14px;
+        }
+
+        .customer img {
+            width: 58px;
+            height: 58px;
+            border-radius: 24px;
+            object-fit: cover;
+            border: 2px solid white;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .customer h4 {
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+
+        .badge {
+            padding: 8px 15px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .completed {
+            background: rgba(23, 178, 106, 0.12);
+            color: var(--success);
+        }
+
+        .pending {
+            background: rgba(255, 152, 0, 0.12);
+            color: var(--warning);
+        }
+
+        .cancel {
+            background: rgba(255, 77, 109, 0.12);
+            color: var(--danger);
+        }
+
+        .order-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .info-box {
+            background: #ffffff;
+            border: 1px solid #e9f0ff;
+            border-radius: 20px;
+            padding: 12px 14px;
+        }
+
+        .info-box span {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .info-box strong {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .order-footer {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .status-box {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .status-select {
+            flex: 1;
+            height: 48px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: white;
+            padding: 0 14px;
+            font-weight: 500;
+            font-size: 0.85rem;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        .status-select:focus {
+            border-color: var(--primary);
+        }
+
+        .status-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--primary2));
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status-btn:hover {
+            transform: scale(0.96);
+            opacity: 0.9;
+        }
+
+        .details-btn {
+            border: none;
+            background: #eff5ff;
+            color: var(--primary);
+            border-radius: 20px;
+            padding: 0 22px;
+            height: 48px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .details-btn:hover {
+            background: #e2edff;
+        }
+
+        /* responsive */
+        @media (max-width: 1200px) {
+            .main {
+                grid-template-columns: 1fr;
+            }
+
+            .orders-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .orders-scroll {
+                max-height: 600px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 14px;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .profile {
+                justify-content: space-between;
+            }
+
+            .order-info {
+                grid-template-columns: 1fr;
+            }
+
+            .order-footer {
+                grid-template-columns: 1fr;
+            }
+
+            .details-btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding: 8px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .logo h1 {
+                font-size: 1.3rem;
+            }
+
+            .orders-panel {
+                padding: 14px;
+            }
+
+            .order-card {
+                padding: 16px;
+            }
+
+            .customer img {
+                width: 48px;
+                height: 48px;
+            }
+
+            .badge {
+                padding: 6px 12px;
+                font-size: 10px;
+            }
+        }
+
+        /* toast style */
+        .toast-message {
+            position: fixed;
+            bottom: 25px;
+            left: 25px;
+            background: #1f2a48;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            font-weight: 500;
+            pointer-events: none;
+            transition: 0.2s;
+            direction: rtl;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- topbar -->
+    <div class="topbar">
+        <div class="logo">
+            <div class="logo-icon"><i class="fa-solid fa-chart-simple"></i></div>
+            <div>
+                <h1>پنل فوق حرفه‌ای سفارشات</h1>
+                <p>مدیریت هوشمند + تجربه کاربری روان</p>
+            </div>
+        </div>
+        <div class="profile">
+            <div>
+                <strong>مدیر فروشگاه</strong>
+                <p style="color:var(--muted); font-size:13px;">آنلاین</p>
+            </div>
+            <img src="https://i.pravatar.cc/110?img=42" alt="avatar">
+        </div>
+    </div>
+
+    <!-- stats -->
+    <div class="stats" id="statsSection">
+        <div class="stat-card">
+            <div class="stat-top"><div><span>کل سفارشات</span><h2 id="totalOrders">2,845</h2></div><div class="stat-icon"><i class="fa-solid fa-box"></i></div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-top"><div><span>در حال پردازش</span><h2 id="pendingCount">146</h2></div><div class="stat-icon"><i class="fa-solid fa-spinner"></i></div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-top"><div><span>تکمیل شده</span><h2 id="completedCount">1,982</h2></div><div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-top"><div><span>درآمد امروز</span><h2>48M</h2></div><div class="stat-icon"><i class="fa-solid fa-wallet"></i></div></div>
+        </div>
+    </div>
+
+    <!-- main area -->
+    <div class="main">
+        <div class="sidebar">
+            <!-- filter panel -->
+            <div class="panel">
+                <div class="panel-title"><h3><i class="fa-regular fa-sliders-h"></i> فیلتر حرفه‌ای</h3><i class="fa-solid fa-sliders"></i></div>
+                <div class="filters">
+                    <div class="input-group"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="searchCustomer" placeholder="جستجوی مشتری یا کد سفارش..."></div>
+                    <div class="input-group"><i class="fa-solid fa-filter"></i><select id="statusFilter"><option value="all">همه وضعیت‌ها</option><option value="completed">تکمیل شده</option><option value="pending">در حال پردازش</option><option value="cancel">لغو شده</option></select></div>
+                    <div class="input-group"><i class="fa-solid fa-money-bill"></i><select id="priceFilter"><option value="all">همه مبالغ</option><option value="above5">بالای ۵ میلیون</option><option value="above10">بالای ۱۰ میلیون</option></select></div>
+                </div>
+            </div>
+            <!-- chart panel -->
+            <div class="panel">
+                <div class="panel-title"><h3>تحلیل سفارشات</h3><i class="fa-solid fa-chart-line"></i></div>
+                <div class="chart-box"><canvas id="orderChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- orders list -->
+        <div class="orders-panel">
+            <div class="orders-header">
+                <div><h3>📋 لیست سفارشات</h3><p style="color:var(--muted); font-size:13px;">اسکرول هوشمند · بروزرسانی لحظه‌ای</p></div>
+                <button class="status-btn" id="addDemoOrderBtn" style="width:56px;height:56px;"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <div class="orders-scroll" id="ordersScrollContainer">
+                <div class="orders-grid" id="ordersGrid"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --------------------- ULTRA ORDERS DATA (پویا) ---------------------
+    let ordersArray = [];
+
+    // تابع کمکی برای تولید داده اولیه (12 سفارش واقعی)
+    function generateInitialOrders() {
+        const customers = ['علی محمدی', 'سارا حسینی', 'رضا کریمی', 'نازنین احمدی', 'کیان راد', 'مهرنوش فرهادی', 'امیر طهماسبی', 'زهرا جعفری', 'پدرام نوید', 'لیلا صادقی'];
+        const statuses = ['completed', 'pending', 'cancel'];
+        const baseOrders = [];
+        for (let i = 1; i <= 18; i++) {
+            let stat;
+            if (i % 5 === 0) stat = 'cancel';
+            else if (i % 3 === 0) stat = 'pending';
+            else stat = 'completed';
+            const amountVal = (Math.floor(Math.random() * 25) + 2); // 2 تا 27 میلیون
+            let amountMil = amountVal;
+            const orderId = `ORD-${Math.floor(1000 + i * 23)}`;
+            const customerName = customers[i % customers.length] + (i > 9 ? ` ${Math.floor(i/3)}` : '');
+            baseOrders.push({
+                id: orderId,
+                customer: customerName,
+                avatarSeed: 80 + i,
+                status: stat,
+                amount: amountMil,
+                date: `1405/02/${12 + (i % 20)}`,
+                originalIndex: i
+            });
+        }
+        return baseOrders;
+    }
+
+    let orders = generateInitialOrders();
+
+    // رفرش آمارها
+    function updateStats() {
+        const total = orders.length;
+        const pending = orders.filter(o => o.status === 'pending').length;
+        const completed = orders.filter(o => o.status === 'completed').length;
+        document.getElementById('totalOrders').innerText = total.toLocaleString();
+        document.getElementById('pendingCount').innerText = pending.toLocaleString();
+        document.getElementById('completedCount').innerText = completed.toLocaleString();
+        // درآمد امروز (mock ثابت ولی میشه پویا کرد)
+        // ظاهر حرفه‌ای: ثابت 48M نمادین
+    }
+
+    // رندر کارت‌ها با فیلترها و سرچ
+    function renderOrders() {
+        const searchValue = document.getElementById('searchCustomer')?.value?.trim().toLowerCase() || '';
+        const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+        const priceFilter = document.getElementById('priceFilter')?.value || 'all';
+
+        let filtered = [...orders];
+        if (searchValue !== '') {
+            filtered = filtered.filter(order => order.customer.toLowerCase().includes(searchValue) || order.id.toLowerCase().includes(searchValue));
+        }
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(order => order.status === statusFilter);
+        }
+        if (priceFilter === 'above5') {
+            filtered = filtered.filter(order => order.amount > 5);
+        } else if (priceFilter === 'above10') {
+            filtered = filtered.filter(order => order.amount > 10);
+        }
+
+        const grid = document.getElementById('ordersGrid');
+        if (!grid) return;
+        if (filtered.length === 0) {
+            grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px; background:#f5f9ff; border-radius:38px;"><i class="fa-solid fa-face-frown" style="font-size:40px; color:var(--primary2);"></i><p style="margin-top:16px;">هیچ سفارشی یافت نشد</p></div>`;
+            return;
+        }
+        let html = '';
+        filtered.forEach(order => {
+            let badgeClass = '';
+            let badgeText = '';
+            if (order.status === 'completed') { badgeClass = 'completed'; badgeText = 'تکمیل شده'; }
+            else if (order.status === 'pending') { badgeClass = 'pending'; badgeText = 'در حال پردازش'; }
+            else { badgeClass = 'cancel'; badgeText = 'لغو شده'; }
+
+            // نمایش مبلغ با فرمت
+            const amountDisplay = order.amount.toLocaleString() + " میلیون";
+
+            html += `
+                <div class="order-card" data-order-id="${order.id}">
+                    <div class="order-top">
+                        <div class="customer">
+                            <img src="https://i.pravatar.cc/110?img=${order.avatarSeed + 13}" alt="avatar">
+                            <div>
+                                <h4>${escapeHtml(order.customer)}</h4>
+                                <p>#${order.id}</p>
+                            </div>
+                        </div>
+                        <div class="badge ${badgeClass}">${badgeText}</div>
+                    </div>
+                    <div class="order-info">
+                        <div class="info-box"><span>مبلغ سفارش</span><strong>${amountDisplay}</strong></div>
+                        <div class="info-box"><span>تاریخ سفارش</span><strong>${order.date}</strong></div>
+                    </div>
+                    <div class="order-footer">
+                        <div class="status-box">
+                            <select class="status-select" data-id="${order.id}">
+                                <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>تکمیل شده</option>
+                                <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>در حال پردازش</option>
+                                <option value="cancel" ${order.status === 'cancel' ? 'selected' : ''}>لغو شده</option>
+                            </select>
+                            <button class="status-btn update-status-btn" data-id="${order.id}"><i class="fa-solid fa-check"></i></button>
+                        </div>
+                        <button class="details-btn view-details" data-id="${order.id}">جزئیات</button>
+                    </div>
+                </div>
+            `;
+        });
+        grid.innerHTML = html;
+
+        // attach events after render
+        document.querySelectorAll('.update-status-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const orderId = btn.getAttribute('data-id');
+                const selectEl = btn.closest('.order-card')?.querySelector('.status-select');
+                if (selectEl && orderId) {
+                    const newStatus = selectEl.value;
+                    const orderIndex = orders.findIndex(o => o.id === orderId);
+                    if (orderIndex !== -1) {
+                        orders[orderIndex].status = newStatus;
+                        updateStats();
+                        renderOrders();    // re-render with filters
+                        showToast(`وضعیت سفارش ${orderId} به ${newStatus === 'completed' ? 'تکمیل شده' : newStatus === 'pending' ? 'در حال پردازش' : 'لغو شده'} تغییر یافت`);
+                    }
+                }
+            });
+        });
+        // جزئیات (alert نمایش اطلاعات دقیق)
+        document.querySelectorAll('.view-details').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const orderId = btn.getAttribute('data-id');
+                const order = orders.find(o => o.id === orderId);
+                if (order) {
+                    alert(`🛍️ جزئیات سفارش ${order.id}\n👤 مشتری: ${order.customer}\n💰 مبلغ: ${order.amount} میلیون تومان\n📅 تاریخ: ${order.date}\n📌 وضعیت: ${order.status === 'completed' ? 'تکمیل شده' : order.status === 'pending' ? 'در حال پردازش' : 'لغو شده'}`);
+                } else {
+                    alert("سفارش یافت نشد.");
+                }
+            });
+        });
+    }
+
+    // افزودن سفارش دمو (با دکمه پلاس)
+    function addNewOrder() {
+        const newId = `ORD-${Math.floor(Math.random() * 9000 + 2000)}`;
+        const newCustomer = `مشتری ${orders.length + 1}`;
+        const randStatus = ['completed', 'pending', 'cancel'][Math.floor(Math.random() * 3)];
+        const amountRand = Math.floor(Math.random() * 30) + 2;
+        const todayDate = `1405/02/${Math.floor(Math.random() * 20) + 10}`;
+        const newOrder = {
+            id: newId,
+            customer: newCustomer,
+            avatarSeed: 200 + orders.length,
+            status: randStatus,
+            amount: amountRand,
+            date: todayDate,
+            originalIndex: orders.length + 1
+        };
+        orders.unshift(newOrder); // اضافه در ابتدا
+        updateStats();
+        renderOrders(); // فیلترهای فعلی حفظ میشود ولی رندر مجدد اعمال فیلتر میکند
+        showToast(`سفارش جدید اضافه شد: ${newCustomer} - مبلغ ${amountRand} میلیون`);
+    }
+
+    function showToast(msg) {
+        let existingToast = document.querySelector('.toast-message');
+        if(existingToast) existingToast.remove();
+        let toast = document.createElement('div');
+        toast.className = 'toast-message';
+        toast.innerHTML = `<i class="fa-regular fa-bell" style="margin-left: 10px;"></i> ${msg}`;
+        document.body.appendChild(toast);
+        setTimeout(() => { if(toast) toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 2300);
+    }
+
+    function escapeHtml(str) {
+        if(!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if(m === '&') return '&amp;';
+            if(m === '<') return '&lt;';
+            if(m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // Chart (فروش هفتگی با دیتا پویا)
+    let chartInstance;
+    function initChart() {
+        const ctx = document.getElementById('orderChart').getContext('2d');
+        if (chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه'],
+                datasets: [{
+                    label: 'فروش (میلیون تومان)',
+                    data: [18, 24, 14, 32, 27, 41, 38],
+                    borderColor: '#1877ff',
+                    backgroundColor: 'rgba(24,119,255,0.08)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#1877ff',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#0f172a', font: { size: 12 } } } },
+                scales: { x: { ticks: { color: '#6b7a90' }, grid: { color: '#e7f0ff' } }, y: { ticks: { color: '#6b7a90' }, grid: { color: '#e7f0ff' } } }
+            }
+        });
+    }
+
+    // اعمال فیلترها و جستجو رویدادها
+    function bindFilterEvents() {
+        const searchInput = document.getElementById('searchCustomer');
+        const statusSelect = document.getElementById('statusFilter');
+        const priceSelect = document.getElementById('priceFilter');
+        if(searchInput) searchInput.addEventListener('input', () => renderOrders());
+        if(statusSelect) statusSelect.addEventListener('change', () => renderOrders());
+        if(priceSelect) priceSelect.addEventListener('change', () => renderOrders());
+        const addBtn = document.getElementById('addDemoOrderBtn');
+        if(addBtn) addBtn.addEventListener('click', () => addNewOrder());
+    }
+
+    // بارگذاری اولیه
+    function bootstrap() {
+        updateStats();
+        renderOrders();
+        initChart();
+        bindFilterEvents();
+        // سینک آمار با هر تغییری که رندر مجدد میشه انجام میشه
+    }
+
+    bootstrap();
+</script>
+</body>
+</html>

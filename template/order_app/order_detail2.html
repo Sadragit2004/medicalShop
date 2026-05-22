@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>جزئیات سفارش | {{ order_code_display }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: #eef5ff;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #1877ff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: 0.2s;
+        }
+        .back-btn:hover {
+            background: #0d5ed9;
+            transform: translateX(-5px);
+        }
+        .card {
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 12px 28px rgba(24, 119, 255, 0.08);
+            margin-bottom: 24px;
+            overflow: hidden;
+            border: 1px solid #dbe8ff;
+        }
+        .card-header {
+            padding: 20px 28px;
+            border-bottom: 1px solid #eef2ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            background: linear-gradient(135deg, #f8fafd, #ffffff);
+        }
+        .card-header h2 {
+            font-size: 1.5rem;
+            color: #0f172a;
+        }
+        .order-code {
+            background: #eef2ff;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-family: monospace;
+            font-size: 14px;
+            direction: ltr;
+        }
+        .badge {
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .badge-delivered { background: #17b26a20; color: #17b26a; }
+        .badge-pending { background: #ff980020; color: #ff9800; }
+        .badge-canceled { background: #ff4d6d20; color: #ff4d6d; }
+        .badge-processing, .badge-paid, .badge-shipped { background: #1877ff20; color: #1877ff; }
+        .card-body {
+            padding: 28px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        .info-item {
+            background: #f8fafd;
+            border-radius: 20px;
+            padding: 16px 20px;
+            border: 1px solid #e9f0ff;
+            transition: 0.2s;
+        }
+        .info-item:hover {
+            border-color: #bbd6ff;
+        }
+        .info-item label {
+            font-size: 12px;
+            color: #6b7a90;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .info-item .value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .address-box {
+            background: linear-gradient(135deg, #f8fafd, #ffffff);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 32px;
+            border: 1px solid #e9f0ff;
+        }
+        .address-box h3 {
+            margin-bottom: 16px;
+            font-size: 1.2rem;
+            color: #1877ff;
+        }
+        .address-box p {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 32px;
+        }
+        .products-table th, .products-table td {
+            padding: 14px 12px;
+            text-align: center;
+            border-bottom: 1px solid #eef2ff;
+        }
+        .products-table th {
+            background: #f8fafd;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .price-summary {
+            background: linear-gradient(135deg, #f8fafd, #ffffff);
+            border-radius: 24px;
+            padding: 24px;
+            max-width: 400px;
+            margin-right: auto;
+            border: 1px solid #e9f0ff;
+        }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px dashed #dce5f0;
+        }
+        .price-row.total {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1877ff;
+            border-bottom: none;
+            margin-top: 12px;
+            padding-top: 16px;
+        }
+        .status-update {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .status-update select {
+            padding: 10px 16px;
+            border-radius: 30px;
+            border: 1px solid #dbe8ff;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .status-update button {
+            background: #1877ff;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .status-update button:hover {
+            background: #0d5ed9;
+        }
+        @media (max-width: 768px) {
+            .card-header { flex-direction: column; align-items: flex-start; }
+            .products-table { font-size: 12px; }
+            .products-table th, .products-table td { padding: 8px 4px; }
+            .price-summary { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a href="{% url 'order:order_list2' %}" class="back-btn">
+        <i class="fa-solid fa-arrow-right"></i> بازگشت به لیست سفارشات
+    </a>
+
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h2><i class="fa-regular fa-receipt"></i> سفارش</h2>
+                <div class="order-code" style="margin-top: 8px;">
+                    <i class="fa-regular fa-barcode"></i> {{ order_code_display }}
+                </div>
+            </div>
+            <div class="status-update">
+                <form method="post" style="display: flex; gap: 12px;">
+                    {% csrf_token %}
+                    <select name="status">
+                        {% for status_code, status_name in STATUS_CHOICES %}
+                        <option value="{{ status_code }}" {% if order.status == status_code %}selected{% endif %}>
+                            {{ status_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit">بروزرسانی وضعیت</button>
+                </form>
+                <div class="badge badge-{{ order.status }}">
+                    {{ status_display }}
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <label><i class="fa-regular fa-user"></i> مشتری</label>
+                    <div class="value">{{ customer_name }}</div>
+                </div>
+                <div class="info-item">
+                    <label><i class="fa-regular fa-mobile-alt"></i> شماره موبایل</label>
+                    <div class="value">{{ customer_mobile_display }}</div>
+                </div>
+                <div class="info-item">
+                    <label><i class="fa-regular fa-envelope"></i> ایمیل</label>
+                    <div class="value">{{ customer_email }}</div>
+                </div>
+                <div class="info-item">
+                    <label><i class="fa-regular fa-venus-mars"></i> جنسیت</label>
+                    <div class="value">{{ customer_gender }}</div>
+                </div>
+                <div class="info-item">
+                    <label><i class="fa-regular fa-cake-candles"></i> تاریخ تولد</label>
+                    <div class="value">{{ customer_birth_date }}</div>
+                </div>
+                <div class="info-item">
+                    <label><i class="fa-regular fa-calendar"></i> تاریخ ثبت</label>
+                    <div class="value">{{ register_date }}</div>
+                </div>
+            </div>
+
+            {% if address %}
+            <div class="address-box">
+                <h3><i class="fa-solid fa-location-dot"></i> آدرس تحویل سفارش</h3>
+                <p><strong>استان:</strong> {{ address.state }}</p>
+                <p><strong>شهر:</strong> {{ address.city }}</p>
+                <p><strong>آدرس دقیق:</strong> {{ address.detail }}</p>
+                <p><strong>کد پستی:</strong> {{ address.postal_code }}</p>
+                {% if address.lat != '-' %}
+                <p><strong>مختصات:</strong> عرض {{ address.lat }} ، طول {{ address.lng }}</p>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="address-box">
+                <h3><i class="fa-solid fa-location-dot"></i> آدرس تحویل</h3>
+                <p style="color: var(--danger);">آدرسی برای این سفارش ثبت نشده است</p>
+            </div>
+            {% endif %}
+
+            <h3 style="margin-bottom: 16px;"><i class="fa-solid fa-boxes"></i> محصولات سفارش</h3>
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th>تصویر</th>
+                        <th>نام محصول</th>
+                        <th>برند</th>
+                        <th>تعداد</th>
+                        <th>قیمت واحد</th>
+                        <th>قیمت کل</th>
+                        <th>ویژگی‌ها</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in products %}
+                    <tr>
+                        <td>
+                            {% if item.product_image %}
+                            <img src="{{ item.product_image }}" width="50" height="50" style="border-radius: 12px; object-fit: cover;">
+                            {% else %}
+                            <i class="fa-regular fa-image" style="font-size: 30px; color: #ccc;"></i>
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ item.product_name }}</strong></td>
+                        <td>{{ item.brand_name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.unit_price_display }} تومان</td>
+                        <td>{{ item.total_price_display }} تومان</td>
+                        <td>{{ item.selected_options }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align:center; padding: 40px;">
+                            <i class="fa-regular fa-box-open" style="font-size: 40px; color: #ccc;"></i>
+                            <p style="margin-top: 12px;">هیچ محصولی یافت نشد</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="price-summary">
+                <div class="price-row">
+                    <span>مجموع قیمت محصولات</span>
+                    <span>{{ subtotal_display }} تومان</span>
+                </div>
+                {% if discount_percent > 0 %}
+                <div class="price-row">
+                    <span>تخفیف ({{ discount_percent }}%)</span>
+                    <span style="color: var(--danger);">- {{ discount_amount_display }} تومان</span>
+                </div>
+                {% endif %}
+                <div class="price-row total">
+                    <span>قابل پرداخت</span>
+                    <span>{{ final_price_display }} تومان</span>
+                </div>
+            </div>
+
+            {% if description != '-' %}
+            <div style="margin-top: 24px; background: #fef7e0; border-radius: 20px; padding: 16px; border: 1px solid #ffe6b3;">
+                <strong><i class="fa-regular fa-note-sticky"></i> توضیحات سفارش:</strong>
+                <p style="margin-top: 8px; color: #6b5a00;">{{ description }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+</body>
+</html>

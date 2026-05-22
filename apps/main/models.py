@@ -195,3 +195,161 @@ class SettingShop(models.Model):
 
     def __str__(self):
         return self.name_shop
+
+
+
+from django.db import models
+from django.utils import timezone
+from django.contrib.sessions.models import Session
+from django.conf import settings
+
+from apps.user.models.user import CustomUser
+
+class UniqueVisit(models.Model):
+    """
+    مدل ثبت بازدید یکتا
+    """
+    session_key = models.CharField(
+        max_length=40,
+        unique=True,
+        verbose_name="کلید جلسه"
+    )
+    ip_address = models.GenericIPAddressField(
+        verbose_name="آدرس IP",
+        blank=True,
+        null=True
+    )
+    user = models.ForeignKey(
+        CustomUser,  # استفاده از CustomUser شما
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="کاربر (لاگین شده)"
+    )
+
+    first_visit = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="اولین بازدید"
+    )
+    last_visit = models.DateTimeField(
+        auto_now=True,
+        verbose_name="آخرین بازدید"
+    )
+    visit_count = models.PositiveIntegerField(
+        default=1,
+        verbose_name="تعداد بازدیدها"
+    )
+
+    user_agent = models.TextField(
+        verbose_name="مرورگر و دستگاه",
+        blank=True,
+        null=True
+    )
+    referer = models.URLField(
+        verbose_name="صفحه قبلی",
+        blank=True,
+        null=True
+    )
+
+    country = models.CharField(
+        max_length=100,
+        verbose_name="کشور",
+        blank=True,
+        null=True
+    )
+    city = models.CharField(
+        max_length=100,
+        verbose_name="شهر",
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name = "بازدید یکتا"
+        verbose_name_plural = "بازدیدهای یکتا"
+        ordering = ['-first_visit']
+
+    def __str__(self):
+        if self.user:
+            # دسترسی به mobileNumber و name/family از CustomUser
+            user_display = str(self.user.mobileNumber)
+            if self.user.name or self.user.family:
+                user_display = f"{self.user.name or ''} {self.user.family or ''}".strip()
+            return f"{user_display} - {self.first_visit.strftime('%Y/%m/%d %H:%M')}"
+        return f"کاربر ناشناس - {self.first_visit.strftime('%Y/%m/%d %H:%M')}"
+
+
+class DailyStat(models.Model):
+    """
+    مدل آمار روزانه
+    """
+    date = models.DateField(
+        unique=True,
+        verbose_name="تاریخ"
+    )
+    unique_visitors = models.PositiveIntegerField(
+        default=0,
+        verbose_name="بازدیدکنندگان یکتا"
+    )
+    total_visits = models.PositiveIntegerField(
+        default=0,
+        verbose_name="کل بازدیدها"
+    )
+    page_views = models.PositiveIntegerField(
+        default=0,
+        verbose_name="نمایش صفحات"
+    )
+
+    class Meta:
+        verbose_name = "آمار روزانه"
+        verbose_name_plural = "آمار روزانه"
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.date} - {self.unique_visitors} بازدیدکننده"
+
+
+class PageVisit(models.Model):
+    """
+    مدل ثبت بازدید هر صفحه
+    """
+    visit = models.ForeignKey(
+        UniqueVisit,
+        on_delete=models.CASCADE,
+        related_name="page_visits",
+        verbose_name="بازدید"
+    )
+    url = models.URLField(
+        max_length=500,
+        verbose_name="آدرس صفحه"
+    )
+    path = models.CharField(
+        max_length=500,
+        verbose_name="مسیر صفحه"
+    )
+    method = models.CharField(
+        max_length=10,
+        default='GET',
+        verbose_name="متد درخواست"
+    )
+    status_code = models.PositiveIntegerField(
+        default=200,
+        verbose_name="وضعیت پاسخ"
+    )
+    response_time = models.FloatField(
+        null=True,
+        blank=True,
+        verbose_name="زمان پاسخ (میلی‌ثانیه)"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="زمان بازدید"
+    )
+
+    class Meta:
+        verbose_name = "بازدید صفحه"
+        verbose_name_plural = "بازدیدهای صفحات"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.visit} - {self.path}"

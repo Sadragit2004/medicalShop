@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>مدیریت سفارشات | پنل هوشمند</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.2.1/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        :root {
+            --bg: #eef5ff; --card: #ffffff; --primary: #1877ff; --primary2: #4da3ff;
+            --text: #0f172a; --muted: #6b7a90; --success: #17b26a; --warning: #ff9800;
+            --danger: #ff4d6d; --border: #dbe8ff; --shadow: 0 12px 28px rgba(24, 119, 255, 0.08);
+            --radius: 26px;
+        }
+        body { background: radial-gradient(circle at 10% 20%, #dcecff, #eef5ff 70%); color: var(--text); padding: 14px; }
+        .container { max-width: 1700px; margin: 0 auto; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 22px; }
+        .logo { display: flex; align-items: center; gap: 16px; }
+        .logo-icon { width: 68px; height: 68px; background: linear-gradient(135deg, var(--primary), var(--primary2)); border-radius: 24px; display: flex; align-items: center; justify-content: center; color: white; font-size: 30px; box-shadow: 0 14px 28px rgba(24, 119, 255, 0.25); }
+        .logo h1 { font-size: 26px; margin-bottom: 6px; }
+        .logo p { color: var(--muted); font-size: 13px; }
+
+        /* دکمه اطلاعات امنیت */
+        .security-btn {
+            background: linear-gradient(135deg, #1a2a4a, #0f172a);
+            border: 1px solid rgba(24, 119, 255, 0.3);
+            padding: 12px 24px;
+            border-radius: 40px;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .security-btn:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+            box-shadow: 0 8px 25px rgba(24, 119, 255, 0.2);
+        }
+        .security-btn i { font-size: 20px; }
+
+        /* مودال */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+        .modal-overlay.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .modal-container {
+            background: linear-gradient(135deg, #ffffff, #f8fafd);
+            border-radius: 32px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            border: 1px solid rgba(24, 119, 255, 0.2);
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .modal-header {
+            padding: 24px 28px;
+            background: linear-gradient(135deg, #1877ff, #4da3ff);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 32px 32px 0 0;
+        }
+        .modal-header h2 { font-size: 1.5rem; display: flex; align-items: center; gap: 12px; }
+        .modal-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .modal-close:hover { background: rgba(255,255,255,0.4); transform: rotate(90deg); }
+
+        .modal-body { padding: 28px; }
+
+        .info-section {
+            background: #f0f5ff;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 24px;
+            border: 1px solid #dbe8ff;
+        }
+        .info-section h3 {
+            color: var(--primary);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+        .info-item {
+            background: white;
+            border-radius: 20px;
+            padding: 16px;
+            border: 1px solid #e9f0ff;
+            transition: 0.2s;
+        }
+        .info-item:hover { transform: translateX(-5px); border-color: var(--primary); }
+        .info-item .label {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .info-item .value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            word-break: break-all;
+        }
+        .security-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-secure { background: #17b26a20; color: #17b26a; }
+        .badge-warning { background: #ff980020; color: #ff9800; }
+        .badge-danger { background: #ff4d6d20; color: #ff4d6d; }
+
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 28px; }
+        .stat-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; box-shadow: var(--shadow); transition: all 0.2s ease; position: relative; overflow: hidden; }
+        .stat-card:hover { transform: translateY(-3px); border-color: #bbd6ff; }
+        .stat-top { display: flex; justify-content: space-between; align-items: center; }
+        .stat-icon { width: 58px; height: 58px; background: rgba(24, 119, 255, 0.12); border-radius: 22px; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 28px; }
+        .stat-card h2 { font-size: 38px; margin-top: 12px; font-weight: 700; }
+        .stat-card span { color: var(--muted); font-size: 14px; }
+        .main { display: grid; grid-template-columns: 340px 1fr; gap: 22px; }
+        .sidebar { display: flex; flex-direction: column; gap: 24px; }
+        .panel { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 20px; box-shadow: var(--shadow); }
+        .panel-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .panel-title h3 { font-size: 1.25rem; font-weight: 600; }
+        .filters { display: flex; flex-direction: column; gap: 18px; }
+        .input-group { position: relative; }
+        .input-group i { position: absolute; top: 50%; right: 18px; transform: translateY(-50%); color: var(--primary); font-size: 1.1rem; pointer-events: none; }
+        .input-group input, .input-group select { width: 100%; height: 56px; border-radius: 20px; border: 1px solid var(--border); background: #f9fbff; padding: 0 48px 0 18px; font-size: 0.95rem; outline: none; color: var(--text); transition: 0.2s; }
+        .input-group input:focus, .input-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(24, 119, 255, 0.1); }
+        .search-info { font-size: 12px; color: var(--muted); margin-top: 8px; padding: 8px 12px; background: #f0f5ff; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .clear-search { color: var(--primary); cursor: pointer; text-decoration: none; font-weight: 600; }
+        .chart-box { height: 270px; width: 100%; }
+        .orders-panel { background: white; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px 22px; display: flex; flex-direction: column; }
+        .orders-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .orders-header h3 { font-size: 1.4rem; }
+        .loading-spinner { display: none; text-align: center; padding: 40px; }
+        .loading-spinner i { font-size: 40px; color: var(--primary); animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .orders-scroll { max-height: calc(100vh - 280px); overflow-y: auto; padding-left: 6px; padding-right: 2px; }
+        .orders-scroll::-webkit-scrollbar { width: 6px; }
+        .orders-scroll::-webkit-scrollbar-track { background: #ecf3fe; border-radius: 10px; }
+        .orders-scroll::-webkit-scrollbar-thumb { background: #b7d4ff; border-radius: 12px; }
+        .orders-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .order-card { background: linear-gradient(145deg, #ffffff, #fafdff); border: 1px solid #e4edff; border-radius: 32px; padding: 18px; transition: 0.25s; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02); }
+        .order-card:hover { transform: translateY(-5px); border-color: var(--primary2); box-shadow: 0 20px 30px -12px rgba(24, 119, 255, 0.2); }
+        .order-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+        .customer { display: flex; gap: 14px; flex: 1; }
+        .customer-info { flex: 1; }
+        .customer-info h4 { font-size: 1rem; margin-bottom: 6px; }
+        .customer-info p { font-size: 11px; color: var(--muted); }
+        .badge { padding: 8px 15px; border-radius: 40px; font-size: 12px; font-weight: 700; }
+        .badge-delivered { background: rgba(23, 178, 106, 0.12); color: var(--success); }
+        .badge-pending { background: rgba(255, 152, 0, 0.12); color: var(--warning); }
+        .badge-canceled { background: rgba(255, 77, 109, 0.12); color: var(--danger); }
+        .badge-processing, .badge-paid, .badge-shipped { background: rgba(24, 119, 255, 0.12); color: var(--primary); }
+        .order-info { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 18px; }
+        .info-box { background: #ffffff; border: 1px solid #e9f0ff; border-radius: 20px; padding: 12px 14px; }
+        .info-box span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+        .info-box strong { font-size: 16px; font-weight: 700; }
+        .products-preview { background: #f8fafd; border-radius: 16px; padding: 8px 12px; margin-bottom: 16px; font-size: 12px; color: var(--muted); }
+        .order-footer { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
+        .status-box { display: flex; gap: 8px; flex: 1; }
+        .status-select { flex: 1; height: 48px; border-radius: 20px; border: 1px solid var(--border); background: white; padding: 0 14px; font-weight: 500; font-size: 0.85rem; outline: none; cursor: pointer; }
+        .status-btn { width: 48px; height: 48px; border-radius: 20px; background: linear-gradient(135deg, var(--primary), var(--primary2)); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .status-btn:hover { transform: scale(0.96); opacity: 0.9; }
+        .status-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .details-btn { border: none; background: #eff5ff; color: var(--primary); border-radius: 20px; padding: 0 22px; height: 48px; font-weight: 700; font-size: 0.85rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+        .details-btn:hover { background: #e2edff; }
+        .empty-state { grid-column: 1/-1; text-align: center; padding: 60px 20px; background: #f8fafd; border-radius: 38px; }
+        .empty-state i { font-size: 60px; color: var(--primary2); margin-bottom: 20px; opacity: 0.6; }
+        @media (max-width: 1200px) { .main { grid-template-columns: 1fr; } .orders-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .stats { grid-template-columns: repeat(2, 1fr); gap: 14px; } .order-info { grid-template-columns: 1fr; } .order-footer { grid-template-columns: 1fr; } .details-btn { width: 100%; } }
+        @media (max-width: 520px) { .stats { grid-template-columns: 1fr; } }
+        .toast-message { position: fixed; bottom: 25px; left: 25px; background: #1f2a48; color: white; padding: 12px 24px; border-radius: 60px; font-size: 0.85rem; z-index: 1000; backdrop-filter: blur(8px); font-weight: 500; pointer-events: none; direction: rtl; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="topbar">
+        <div class="logo">
+            <div class="logo-icon"><i class="fa-solid fa-chart-simple"></i></div>
+            <div><h1>پنل مدیریت سفارشات</h1><p>جستجوی پیشرفته · مدیریت هوشمند</p></div>
+        </div>
+        <!-- دکمه اطلاعات امنیت و بازدید -->
+        <button class="security-btn" id="securityModalBtn">
+            <i class="fa-solid fa-shield-haltered"></i>
+            <span>اطلاعات امنیت و بازدید</span>
+            <i class="fa-solid fa-chevron-down"></i>
+        </button>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card"><div class="stat-top"><div><span>کل سفارشات</span><h2 id="totalOrders">{{ total_orders|floatformat:0 }}</h2></div><div class="stat-icon"><i class="fa-solid fa-box"></i></div></div></div>
+        <div class="stat-card"><div class="stat-top"><div><span>در انتظار بررسی</span><h2 id="pendingCount">{{ pending_count|floatformat:0 }}</h2></div><div class="stat-icon"><i class="fa-solid fa-spinner"></i></div></div></div>
+        <div class="stat-card"><div class="stat-top"><div><span>تحویل شده</span><h2 id="completedCount">{{ completed_count|floatformat:0 }}</h2></div><div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div></div></div>
+        <div class="stat-card"><div class="stat-top"><div><span>درآمد امروز</span><h2 id="todayRevenue">{{ today_revenue_display }}</h2></div><div class="stat-icon"><i class="fa-solid fa-wallet"></i></div></div></div>
+    </div>
+
+    <div class="main">
+        <div class="sidebar">
+            <div class="panel">
+                <div class="panel-title"><h3><i class="fa-regular fa-sliders-h"></i> فیلتر و جستجو</h3><i class="fa-solid fa-sliders"></i></div>
+                <div class="filters">
+                    <div class="input-group"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="searchInput" placeholder="جستجو: کد سفارش، موبایل، نام، محصول، برند..." value="{{ search_query }}" autocomplete="off"></div>
+                    {% if search_query %}<div class="search-info"><span><i class="fa-regular fa-search"></i> نتایج جستجو: "{{ search_query }}"</span><a href="{% url 'order:order_list' %}" class="clear-search">clear</a></div>{% endif %}
+                    <div class="input-group"><i class="fa-solid fa-filter"></i><select id="statusFilter"><option value="all" {% if status_filter == 'all' %}selected{% endif %}>همه وضعیت‌ها</option><option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>در حال بررسی</option><option value="processing" {% if status_filter == 'processing' %}selected{% endif %}>در حال پردازش</option><option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>پرداخت شده</option><option value="shipped" {% if status_filter == 'shipped' %}selected{% endif %}>ارسال شده</option><option value="delivered" {% if status_filter == 'delivered' %}selected{% endif %}>تحویل داده شده</option><option value="canceled" {% if status_filter == 'canceled' %}selected{% endif %}>لغو شده</option></select></div>
+                    <div class="input-group"><i class="fa-solid fa-money-bill"></i><select id="priceFilter"><option value="all" {% if price_filter == 'all' %}selected{% endif %}>همه مبالغ</option><option value="above5" {% if price_filter == 'above5' %}selected{% endif %}>بالای ۵ میلیون تومان</option><option value="above10" {% if price_filter == 'above10' %}selected{% endif %}>بالای ۱۰ میلیون تومان</option></select></div>
+                </div>
+            </div>
+            <div class="panel"><div class="panel-title"><h3>تحلیل سفارشات</h3><i class="fa-solid fa-chart-line"></i></div><div class="chart-box"><canvas id="orderChart"></canvas></div></div>
+        </div>
+
+        <div class="orders-panel">
+            <div class="orders-header"><div><h3>📋 لیست سفارشات</h3><p style="color:var(--muted); font-size:13px;" id="ordersCount">جستجوی لحظه‌ای · ۰ سفارش</p></div></div>
+            <div class="loading-spinner" id="loadingSpinner"><i class="fa-solid fa-circle-notch fa-spin"></i><p style="margin-top: 12px;">در حال جستجو...</p></div>
+            <div class="orders-scroll" id="ordersScrollContainer"><div class="orders-grid" id="ordersGrid"></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال اطلاعات امنیت و بازدید -->
+<div class="modal-overlay" id="securityModal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2><i class="fa-solid fa-shield-haltered"></i> اطلاعات امنیت و بازدید</h2>
+            <button class="modal-close" id="closeModalBtn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <div style="text-align: center; padding: 40px;">
+                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 40px; color: var(--primary);"></i>
+                <p style="margin-top: 16px;">در حال دریافت اطلاعات...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrftoken = getCookie('csrftoken');
+    let ordersData = {{ orders|safe }};
+
+    function showToast(message, type = 'success') {
+        let toast = document.createElement('div');
+        toast.className = 'toast-message';
+        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        toast.innerHTML = `<i class="fa-regular ${icon}" style="margin-left: 10px;"></i> ${message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 3000);
+    }
+
+    function renderOrders(orders) {
+        const grid = document.getElementById('ordersGrid');
+        const ordersCountSpan = document.getElementById('ordersCount');
+
+        if (!grid) return;
+
+        if (!orders || orders.length === 0) {
+            grid.innerHTML = `<div class="empty-state"><i class="fa-regular fa-face-frown"></i><h3>هیچ سفارشی یافت نشد</h3><p style="color: var(--muted); margin-top: 8px;">سعی کنید عبارت دیگری جستجو کنید</p></div>`;
+            if (ordersCountSpan) ordersCountSpan.innerHTML = `جستجوی لحظه‌ای · ۰ سفارش`;
+            return;
+        }
+
+        if (ordersCountSpan) ordersCountSpan.innerHTML = `جستجوی لحظه‌ای · ${orders.length} سفارش`;
+
+        let html = '';
+        orders.forEach(order => {
+            let badgeClass = '';
+            if (order.status === 'delivered') badgeClass = 'badge-delivered';
+            else if (order.status === 'canceled') badgeClass = 'badge-canceled';
+            else if (order.status === 'pending') badgeClass = 'badge-pending';
+            else badgeClass = 'badge-processing';
+
+            html += `<div class="order-card" data-order-id="${order.id}">
+                <div class="order-top">
+                    <div class="customer">
+                        <div class="customer-info">
+                            <h4>${escapeHtml(order.customer_name)}</h4>
+                            <p><i class="fa-regular fa-mobile-alt"></i> ${order.customer_mobile}</p>
+                            <p><i class="fa-regular fa-hashtag"></i> ${order.order_code_short}...</p>
+                        </div>
+                    </div>
+                    <div class="badge ${badgeClass}">${order.status_display}</div>
+                </div>
+                <div class="order-info">
+                    <div class="info-box">
+                        <span>مبلغ سفارش</span>
+                        <strong>${order.amount_display} تومان</strong>
+                    </div>
+                    <div class="info-box">
+                        <span>تاریخ ثبت</span>
+                        <strong>${escapeHtml(order.jalali_date)}</strong>
+                    </div>
+                </div>
+                ${order.products_preview ? `<div class="products-preview"><i class="fa-regular fa-box"></i> ${escapeHtml(order.products_preview)}</div>` : ''}
+                <div class="order-footer">
+                    <div class="status-box">
+                        <select class="status-select" data-id="${order.id}">
+                            <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>در حال بررسی</option>
+                            <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>در حال پردازش</option>
+                            <option value="paid" ${order.status === 'paid' ? 'selected' : ''}>پرداخت شده</option>
+                            <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>ارسال شده</option>
+                            <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>تحویل داده شده</option>
+                            <option value="canceled" ${order.status === 'canceled' ? 'selected' : ''}>لغو شده</option>
+                        </select>
+                        <button class="status-btn update-status-btn" data-id="${order.id}"><i class="fa-solid fa-check"></i></button>
+                    </div>
+                    <a href="/order/orderPanel/${order.id}/" class="details-btn"><i class="fa-regular fa-eye"></i> جزئیات</a>
+                </div>
+            </div>`;
+        });
+
+        grid.innerHTML = html;
+
+        document.querySelectorAll('.update-status-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const orderId = btn.getAttribute('data-id');
+                const selectEl = btn.closest('.order-card')?.querySelector('.status-select');
+                if (selectEl && orderId) {
+                    const newStatus = selectEl.value;
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+                    try {
+                        const response = await fetch(window.location.pathname, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrftoken,
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify({ order_id: orderId, status: newStatus })
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            showToast(data.message);
+                            const orderIndex = ordersData.findIndex(o => o.id === orderId);
+                            if (orderIndex !== -1) {
+                                ordersData[orderIndex].status = newStatus;
+                                ordersData[orderIndex].status_display = data.status_display;
+                            }
+                            renderOrders(ordersData);
+                        } else {
+                            showToast('خطا: ' + data.message, 'error');
+                        }
+                    } catch (error) {
+                        showToast('خطا در ارتباط با سرور', 'error');
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+                    }
+                }
+            });
+        });
+    }
+
+    let searchTimeout;
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const priceFilter = document.getElementById('priceFilter');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const ordersGrid = document.getElementById('ordersGrid');
+
+    async function performSearch() {
+        const searchValue = searchInput.value.trim();
+        const statusValue = statusFilter.value;
+        const priceValue = priceFilter.value;
+
+        loadingSpinner.style.display = 'block';
+        if (ordersGrid) ordersGrid.style.opacity = '0.5';
+
+        try {
+            const params = new URLSearchParams({ search: searchValue, status: statusValue, price: priceValue });
+            const response = await fetch(`${window.location.pathname}?${params.toString()}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                ordersData = data.orders || [];
+                renderOrders(ordersData);
+
+                document.getElementById('totalOrders').innerText = (data.total_orders || 0).toLocaleString();
+                document.getElementById('pendingCount').innerText = (data.pending_count || 0).toLocaleString();
+                document.getElementById('completedCount').innerText = (data.completed_count || 0).toLocaleString();
+                document.getElementById('todayRevenue').innerText = (data.today_revenue || 0).toLocaleString();
+
+                const newUrl = `${window.location.pathname}?${params.toString()}`;
+                window.history.pushState({ path: newUrl }, '', newUrl);
+            }
+        } catch (error) {
+            console.error('Search error:', error);
+            showToast('خطا در جستجو', 'error');
+        } finally {
+            loadingSpinner.style.display = 'none';
+            if (ordersGrid) ordersGrid.style.opacity = '1';
+        }
+    }
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(performSearch, 500);
+    });
+    statusFilter.addEventListener('change', performSearch);
+    priceFilter.addEventListener('change', performSearch);
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    let chartInstance;
+    function initChart() {
+        const statusStats = {{ status_stats|safe }};
+        const ctx = document.getElementById('orderChart').getContext('2d');
+        if (chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['در حال بررسی', 'در حال پردازش', 'پرداخت شده', 'ارسال شده', 'تحویل شده', 'لغو شده'],
+                datasets: [{
+                    label: 'تعداد سفارشات',
+                    data: [statusStats.pending, statusStats.processing, statusStats.paid, statusStats.shipped, statusStats.delivered, statusStats.canceled],
+                    backgroundColor: '#1877ff',
+                    borderRadius: 12,
+                    barPercentage: 0.7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { position: 'top', labels: { font: { size: 12 } } } },
+                scales: { y: { beginAtZero: true, grid: { color: '#eef2ff' } }, x: { grid: { display: false } } }
+            }
+        });
+    }
+
+    // ======================== مودال اطلاعات امنیت و بازدید ========================
+
+    async function loadSecurityInfo() {
+        const modalBody = document.getElementById('modalBody');
+
+        // اطلاعات از مرورگر
+        const browserInfo = {
+            userAgent: navigator.userAgent,
+            language: navigator.language,
+            platform: navigator.platform,
+            cookiesEnabled: navigator.cookieEnabled,
+            doNotTrack: navigator.doNotTrack,
+            screenResolution: `${screen.width} x ${screen.height}`,
+            colorDepth: screen.colorDepth,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            online: navigator.onLine,
+            deviceMemory: navigator.deviceMemory || 'نامشخص',
+            hardwareConcurrency: navigator.hardwareConcurrency || 'نامشخص'
+        };
+
+        // اطلاعات صفحه
+        const pageInfo = {
+            url: window.location.href,
+            path: window.location.pathname,
+            referrer: document.referrer || 'مستقیم',
+            protocol: window.location.protocol,
+            host: window.location.host
+        };
+
+        // اطلاعات امنیتی
+        const securityInfo = {
+            isSecure: window.location.protocol === 'https:',
+            hasCsrf: !!document.querySelector('[name=csrf-token]'),
+            sessionId: getCookie('sessionid') ? 'فعال' : 'غیرفعال',
+            csrfToken: csrftoken ? 'فعال' : 'غیرفعال'
+        };
+
+        // اطلاعات بازدید از سرور (از API)
+        let serverStats = {
+            totalVisits: '--',
+            todayVisits: '--',
+            uniqueVisitors: '--'
+        };
+
+        try {
+            const response = await fetch('/api/stats/overview/');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    serverStats = {
+                        totalVisits: data.data.total?.page_views?.toLocaleString() || '--',
+                        todayVisits: data.data.today?.page_views?.toLocaleString() || '--',
+                        uniqueVisitors: data.data.total?.unique_visitors?.toLocaleString() || '--'
+                    };
+                }
+            }
+        } catch(e) {
+            console.log('Could not fetch stats');
+        }
+
+        // ساخت HTML مودال
+        modalBody.innerHTML = `
+            <div class="info-section">
+                <h3><i class="fa-solid fa-display"></i> اطلاعات مرورگر و دستگاه</h3>
+                <div class="info-grid">
+                    <div class="info-item"><div class="label"><i class="fa-regular fa-chrome"></i> مرورگر</div><div class="value">${escapeHtml(browserInfo.userAgent.split(' ').slice(-3).join(' ') || browserInfo.userAgent.substring(0, 80))}</div></div>
+                    <div class="info-item"><div class="label"><i class="fa-regular fa-language"></i> زبان</div><div class="value">${browserInfo.language}</div></div>
+                    <div class="info-item"><div class="label"><i class="fa-regular fa-desktop"></i> سیستم عامل</div><div class="value">${browserInfo.platform || 'نامشخص'}</div></div>
+                    <div class="info-item"><div class="label"><i class="fa-regular fa-expand"></i> رزولوشن صفحه</div><div class="value">${browserInfo.screenResolution}</div></div>
+                    <div class="info-item"><div class="label"><i class="fa-regular fa-palette"></i> عمق رنگ</div><div class="value">${browserInfo.colorDepth} بیت</div></div>
+                    <div class="info-item"><div class="label"><i class="fa-regular fa-globe"></i> منطقه زمانی</div><div class="value">${browserInfo.timezone}</div></div>
+                    <div class="info-item"><div class="label"><i class="fa-regular fa-microchip"></i> حافظه دستگاه</div><div class="value">${browserInfo.deviceMemory} GB</div></div>
+                    <div class="info-item"><div class="label"><i class="fa-regular fa-chart-simple"></i> هسته‌های پردازنده</div><div class="value">${browserInfo.hardwareConcurrency}</div></div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h3><i class="fa-solid fa-chart-line"></i> آمار بازدید سایت</h3>
+                <div class="info-grid">
+                    <div class="info-item"><div class="label"><i class="fa-regular fa-eye"></i> کل بازدیدهای امروز</div><div class="value">${serverStats.todayVisits}</div></div>
+                    <div class="info-item"><div class="label"><i class="fa-regular fa-users"></i> بازدیدکنندگان یکتا</div><div class="value">${serverStats.uniqueVisitors}</div></div>
+                    <div class="info-item"><div class="label"><i class="fa-regular fa-chart-simple"></i> کل بازدیدها</div><div class="value">${serverStats.totalVisits}</div></div>
+                    <div class="info-item"><div class="label"><i class="fa-regular fa-clock"></i> زمان کنونی</div><div class="value">${new Date().toLocaleString('fa-IR')}</div></div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h3><i class="fa-solid fa-shield-virus"></i> اطلاعات امنیتی</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="label"><i class="fa-regular fa-lock"></i> اتصال امن</div>
+                        <div class="value"><span class="security-badge ${securityInfo.isSecure ? 'badge-secure' : 'badge-danger'}">${securityInfo.isSecure ? '✓ امن (HTTPS)' : '✗ ناامن (HTTP)'}</span></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label"><i class="fa-regular fa-cookie"></i> وضعیت کوکی</div>
+                        <div class="value"><span class="security-badge ${browserInfo.cookiesEnabled ? 'badge-secure' : 'badge-danger'}">${browserInfo.cookiesEnabled ? 'فعال' : 'غیرفعال'}</span></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label"><i class="fa-regular fa-shield"></i> CSRF Token</div>
+                        <div class="value"><span class="security-badge ${securityInfo.hasCsrf ? 'badge-secure' : 'badge-danger'}">${securityInfo.hasCsrf ? 'فعال' : 'غیرفعال'}</span></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label"><i class="fa-regular fa-fingerprint"></i> جلسه کاربری</div>
+                        <div class="value"><span class="security-badge ${securityInfo.sessionId === 'فعال' ? 'badge-secure' : 'badge-warning'}">${securityInfo.sessionId}</span></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label"><i class="fa-regular fa-ban"></i> Do Not Track</div>
+                        <div class="value">${browserInfo.doNotTrack === '1' ? 'فعال' : (browserInfo.doNotTrack === 'unspecified' ? 'مشخص نشده' : 'غیرفعال')}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label"><i class="fa-regular fa-wifi"></i> وضعیت اتصال</div>
+                        <div class="value"><span class="security-badge ${browserInfo.online ? 'badge-secure' : 'badge-danger'}">${browserInfo.online ? 'آنلاین' : 'آفلاین'}</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h3><i class="fa-solid fa-link"></i> اطلاعات صفحه</h3>
+                <div class="info-grid">
+                    <div class="info-item"><div class="label"><i class="fa-regular fa-link"></i> آدرس صفحه</div><div class="value" style="font-size: 12px;">${escapeHtml(pageInfo.url)}</div></div>
+                    <div class="info-item"><div class="label"><i class="fa-regular fa-arrow-right-to-bracket"></i> صفحه قبلی</div><div class="value" style="font-size: 12px;">${escapeHtml(pageInfo.referrer)}</div></div>
+                    <div class="info-item"><div class="label"><i class="fa-regular fa-diagram-project"></i> پروتکل</div><div class="value">${pageInfo.protocol}</div></div>
+                    <div class="info-item"><div class="label"><i class="fa-regular fa-server"></i> هاست</div><div class="value">${pageInfo.host}</div></div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h3><i class="fa-solid fa-circle-info"></i> اطلاعات تکمیلی</h3>
+                <div class="info-grid">
+                    <div class="info-item"><div class="label"><i class="fa-regular fa-calendar"></i> ورژن مرورگر</div><div class="value" style="font-size: 11px;">${escapeHtml(browserInfo.userAgent.substring(0, 100))}</div></div>
+                    <div class="info-item"><div class="label"><i class="fa-regular fa-eye-slash"></i> وضعیت حریم خصوصی</div><div class="value">کوکی‌ها ${browserInfo.cookiesEnabled ? 'مجاز' : 'ممنوع'}</div></div>
+                </div>
+            </div>
+        `;
+    }
+
+    // کنترل مودال
+    const modal = document.getElementById('securityModal');
+    const openBtn = document.getElementById('securityModalBtn');
+    const closeBtn = document.getElementById('closeModalBtn');
+
+    openBtn.addEventListener('click', () => {
+        modal.classList.add('active');
+        loadSecurityInfo();
+    });
+
+    closeBtn.addEventListener('click', () => {
+        modal.classList.remove('active');
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('active');
+        }
+    });
+
+    renderOrders(ordersData);
+    initChart();
+</script>
+</body>
+</html>

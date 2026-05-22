@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 import uuid
+import jdatetime
 from apps.product.models import Product, Brand
 from apps.user.models.user import CustomUser
 import utils
@@ -12,7 +13,6 @@ class State(models.Model):
     lat = models.DecimalField(max_digits=9, decimal_places=6, verbose_name="عرض جغرافیایی", blank=True, null=True)
     lng = models.DecimalField(max_digits=9, decimal_places=6, verbose_name="طول جغرافیایی", blank=True, null=True)
     externalId = models.UUIDField(unique=True, default=uuid.uuid4, verbose_name="آیدی API", help_text="شناسه استان در API خارجی")
-
 
     class Meta:
         verbose_name = "استان"
@@ -29,6 +29,7 @@ class City(models.Model):
     lat = models.DecimalField(max_digits=9, decimal_places=6, verbose_name="عرض جغرافیایی", blank=True, null=True)
     lng = models.DecimalField(max_digits=9, decimal_places=6, verbose_name="طول جغرافیایی", blank=True, null=True)
     externalId = models.UUIDField(unique=True, default=uuid.uuid4, verbose_name="آیدی API", help_text="شناسه استان در API خارجی")
+
     class Meta:
         verbose_name = "شهر"
         verbose_name_plural = "شهرها"
@@ -65,15 +66,6 @@ class UserAddress(models.Model):
             self.lat or self.city.lat,
             self.lng or self.city.lng,
         )
-
-
-from django.db import models
-from django.utils import timezone
-import uuid
-from apps.user.models.user import CustomUser
-from apps.order.models import UserAddress
-import utils
-
 
 
 class Order(models.Model):
@@ -142,7 +134,6 @@ class Order(models.Model):
         verbose_name="نهایی شده"
     )
 
-    # برای ذخیره وضعیت قبلی (سیگنال استفاده می‌کنه)
     _original_status = None
 
     def __str__(self):
@@ -162,9 +153,64 @@ class Order(models.Model):
         final_price, tax = utils.price_by_delivery_tax(total, self.discount)
         return int(final_price * 10)
 
+    # ======================== توابع تبدیل تاریخ به شمسی با jdatetime (اصلاح شده) ========================
 
+    def _to_naive_datetime(self, dt):
+        """تبدیل timezone-aware به timezone-naive"""
+        if dt is None:
+            return None
+        if hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
+            return dt.astimezone(timezone.get_current_timezone()).replace(tzinfo=None)
+        return dt
 
+    def get_jalali_register_date(self):
+        """تاریخ ثبت به شمسی - فقط تاریخ"""
+        if not self.registerDate:
+            return "-"
+        dt = self._to_naive_datetime(self.registerDate)
+        jalali = jdatetime.datetime.fromgregorian(datetime=dt)
+        return jalali.strftime("%Y/%m/%d")
 
+    def get_jalali_register_time(self):
+        """ساعت ثبت به شمسی - فقط ساعت"""
+        if not self.registerDate:
+            return "-"
+        dt = self._to_naive_datetime(self.registerDate)
+        return dt.strftime("%H:%M")
+
+    def get_jalali_register_datetime(self):
+        """تاریخ و ساعت ثبت به شمسی"""
+        if not self.registerDate:
+            return "-"
+        dt = self._to_naive_datetime(self.registerDate)
+        jalali = jdatetime.datetime.fromgregorian(datetime=dt)
+        return jalali.strftime("%Y/%m/%d %H:%M")
+
+    def get_jalali_register_with_month_name(self):
+        """تاریخ ثبت با نام ماه"""
+        if not self.registerDate:
+            return "-"
+        dt = self._to_naive_datetime(self.registerDate)
+        jalali = jdatetime.datetime.fromgregorian(datetime=dt)
+        month_names = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
+                       'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند']
+        return f"{jalali.strftime('%Y/%m/%d')} {month_names[jalali.month - 1]} {jalali.strftime('%H:%M')}"
+
+    def get_jalali_update_date(self):
+        """تاریخ بروزرسانی به شمسی"""
+        if not self.updateDate:
+            return "-"
+        dt = self._to_naive_datetime(self.updateDate)
+        jalali = jdatetime.datetime.fromgregorian(datetime=dt)
+        return jalali.strftime("%Y/%m/%d")
+
+    def get_jalali_update_datetime(self):
+        """تاریخ و ساعت بروزرسانی به شمسی"""
+        if not self.updateDate:
+            return "-"
+        dt = self._to_naive_datetime(self.updateDate)
+        jalali = jdatetime.datetime.fromgregorian(datetime=dt)
+        return jalali.strftime("%Y/%m/%d %H:%M")
 
     class Meta:
         verbose_name = "سفارش"
