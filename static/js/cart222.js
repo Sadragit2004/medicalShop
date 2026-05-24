@@ -101,33 +101,125 @@ class ShoppingCartManager {
     }
 
     async updateCartQuantity(productId, quantity, detail = '', saleType = null) {
-        try {
-            const response = await fetch('/order/cart/update/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': this.getCSRFToken()
-                },
-                body: JSON.stringify({
-                    product_id: productId,
-                    quantity: parseInt(quantity),
-                    detail: detail,
-                    sale_type: saleType
-                })
-            });
+    // اول موجودی رو از دیتابیس بگیر
+    try {
+        const stockResponse = await fetch(`/product/cart/check-stock/?product_id=${productId}`);
+        const stockData = await stockResponse.json();
 
-            const data = await response.json();
-
-            if (data.success) {
-                this.updateCartDisplay(data);
-            } else {
-                this.showMessage(data.error || 'خطا در بروزرسانی تعداد', 'error');
+        if (stockData.success && quantity > stockData.stock) {
+            this.showMessage(`موجودی کافی نیست. حداکثر ${stockData.stock} عدد موجود است`, 'error');
+            // برگردوندن مقدار قبلی توی UI
+            const input = document.querySelector(`input[data-product-id="${productId}"]`);
+            if (input) {
+                const oldValue = input.getAttribute('data-old-value') || 1;
+                input.value = oldValue;
             }
-        } catch (error) {
-            console.error('Error updating cart quantity:', error);
-            this.showMessage('خطا در ارتباط با سرور', 'error');
+            return;
         }
+    } catch (error) {
+        console.error('Error checking stock:', error);
     }
+
+    try {
+        const response = await fetch('/order/cart/update/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': this.getCSRFToken()
+            },
+            body: JSON.stringify({
+                product_id: productId,
+                quantity: parseInt(quantity),
+                detail: detail,
+                sale_type: saleType
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            this.updateCartDisplay(data);
+        } else {
+            this.showMessage(data.error || 'خطا در بروزرسانی تعداد', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating cart quantity:', error);
+        this.showMessage('خطا در ارتباط با سرور', 'error');
+    }
+        }
+
+updateCartItemsList(items) {
+    if (!this.cartItemsContainer) return;
+
+    if (items.length === 0) {
+        this.cartItemsContainer.innerHTML = `
+            <div class="py-8 text-center text-gray-500">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300">
+                    <use href="#shopping-bag"></use>
+                </svg>
+                <p>سبد خرید شما خالی است</p>
+            </div>
+        `;
+        return;
+    }
+
+    const itemsHtml = items.map(item => `
+        <div class="grid grid-cols-12 gap-x-2 w-full py-4 cursor-pointer cart-item" data-product-id="${item.id}" data-detail="${item.detail}" data-sale-type="${item.sale_type || 1}" data-max-stock="${item.max_stock || 999}">
+            <!-- img -->
+            <div class="col-span-4 w-24 h-20">
+                <img src="${item.image || '/static/images/placeholder.png'}" class="rounded-lg object-cover w-full h-full" alt="${item.name}">
+            </div>
+            <!-- detail -->
+            <div class="col-span-8 flex flex-col justify-between">
+                <h2 class="font-DanaMedium line-clamp-2 text-sm">
+                    ${item.name}
+                </h2>
+                <div class="flex items-center justify-between gap-x-2 mt-2">
+
+                    <div class="flex flex-col items-end">
+                        <p class="text-lg text-blue-500 dark:text-blue-400 font-DanaMedium">
+                            ${item.total_price.toLocaleString()} تومان
+                        </p>
+                        <button class="remove-from-cart text-xs text-red-500 hover:text-red-700 mt-1" data-product-id="${item.id}" data-detail="${item.detail}" data-sale-type="${item.sale_type || 1}">
+                            حذف
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    this.cartItemsContainer.innerHTML = itemsHtml;
+
+    // اضافه کردن event listener برای increment تا قبل از افزایش، موجودی چک بشه
+    document.querySelectorAll('.increment').forEach(btn => {
+        btn.removeEventListener('click', this.handleIncrement);
+        btn.addEventListener('click', this.handleIncrement.bind(this));
+    });
+}
+
+handleIncrement(e) {
+    e.stopPropagation();
+    const btn = e.currentTarget;
+    const productId = btn.dataset.productId;
+    const detail = btn.dataset.detail;
+    const saleType = btn.dataset.saleType;
+    const input = btn.closest('.quantity-controls')?.querySelector('input');
+    const maxStock = parseInt(input?.getAttribute('max') || 999);
+    const currentValue = parseInt(input?.value || 1);
+
+    if (currentValue >= maxStock) {
+        this.showMessage(`حداکثر موجودی ${maxStock} عدد است`, 'error');
+        return;
+    }
+
+    if (input) {
+        input.setAttribute('data-old-value', currentValue);
+        const newValue = currentValue + 1;
+        input.value = newValue;
+        this.updateCartQuantity(productId, newValue, detail, saleType);
+    }
+}
 
     async removeFromCart(productId, detail = '', saleType = null) {
         try {
@@ -226,16 +318,7 @@ class ShoppingCartManager {
                         ${item.name}
                     </h2>
                     <div class="flex items-center justify-between gap-x-2 mt-2">
-                        <button class="w-20 flex items-center justify-between gap-x-1 rounded-lg border border-gray-200 dark:border-white/20 py-1 px-2 quantity-controls">
-                            <svg class="size-4 increment text-green-600 cursor-pointer" data-product-id="${item.id}" data-detail="${item.detail}" data-sale-type="${item.sale_type || 1}">
-                                <use href="#plus"></use>
-                            </svg>
-                            <input type="number" class="custom-input w-4 mr-2 text-sm text-center" min="1" max="20"
-                                value="${item.quantity}" data-product-id="${item.id}" data-detail="${item.detail}" data-sale-type="${item.sale_type || 1}" readonly>
-                            <svg class="size-4 decrement text-red-500 cursor-pointer" data-product-id="${item.id}" data-detail="${item.detail}" data-sale-type="${item.sale_type || 1}">
-                                <use href="#minus"></use>
-                            </svg>
-                        </button>
+                      
                         <div class="flex flex-col items-end">
                             <p class="text-lg text-blue-500 dark:text-blue-400 font-DanaMedium">
                                 ${item.total_price.toLocaleString()} تومان

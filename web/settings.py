@@ -16,15 +16,9 @@ SECRET_KEY = 'django-insecure--1vp=*0n5l^8+h)2)!2ooy7_2sw#_@q^uw8tlv!x4-x9du&=51
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'sayamedical.com',
-    'www.sayamedical.com',
-    '193.141.64.244',
+    '*'
 ]
 
-CSRF_TRUSTED_ORIGINS = [
-    'https://sayamedical.com',
-    'https://www.sayamedical.com',
-]
 
 
 # Application definition
@@ -98,8 +92,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'medical',
-        'USER': 'medical',
-        'PASSWORD': 'sadra1383',
+        'USER': 'root',
+        'PASSWORD': 'sadra1383@gmail.com',
         'HOST': 'localhost',
         'PORT': '3306',
 
@@ -131,7 +125,7 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = 'fa-ir'
 TIME_ZONE = 'Asia/Tehran'  # این خیلی مهمه - باید Tehran باشه
 USE_I18N = True
-USE_L10N = True
+
 USE_TZ = True
 
 THOUSAND_SEPARATOR = ','

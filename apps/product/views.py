@@ -1055,3 +1055,20 @@ def get_category_tree_mobile(request):
     }
 
     return render(request, 'product_app/category/category_tree_mobile.html', context)
+
+
+
+# views.py
+def check_cart_stock(request):
+    product_id = request.GET.get('product_id')
+    try:
+        product = Product.objects.get(id=product_id)
+        return JsonResponse({
+            'success': True,
+            'stock': product.stock
+        })
+    except Product.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'محصول یافت نشد'
+        })

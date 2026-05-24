@@ -68,7 +68,9 @@
                                  data-min-quantity="{{ item.min_quantity }}"
                                  data-limited-sale="{{ item.limited_sale|default:item.min_quantity }}"
                                  data-member-carton="{{ item.member_carton|default:1 }}"
-                                 data-current-quantity="{{ item.quantity }}">
+                                 data-current-quantity="{{ item.quantity }}"
+                                 data-max-stock="{{ item.max_stock|default:999 }}"
+                                 data-product-title="{{ item.title }}">
                                 <button onclick="changeQuantity(this, -1)"
                                         class="w-4 h-4 decrement text-red-500">
                                     <svg class="w-4 h-4">
@@ -90,6 +92,11 @@
                                 {% else %}
                                 حداقل خرید: {{ item.min_quantity }} عدد
                                 {% endif %}
+                            </p>
+                            {% endif %}
+                            {% if item.max_stock %}
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                موجودی: {{ item.max_stock }} عدد
                             </p>
                             {% endif %}
                         </div>
@@ -115,12 +122,7 @@
                                 </li>
                                 {% endif %}
                                 {% if item.warranty %}
-                                <li>
-                                    <svg class="w-5 h-5">
-                                        <use href="#shield"></use>
-                                    </svg>
-                                    <p class="mt-1">{{ item.warranty }}</p>
-                                </li>
+                               
                                 {% endif %}
                                 {% if item.sale_type == 2 %}
                                 <li>
@@ -137,12 +139,7 @@
                                     <p class="mt-1">فروش محدود - حداقل {{ item.min_quantity }} عدد</p>
                                 </li>
                                 {% endif %}
-                                <li>
-                                    <svg class="w-5 h-5">
-                                        <use href="#truck"></use>
-                                    </svg>
-                                    <p class="mt-1">ارسال {{ item.shipping_days }} روز کاری</p>
-                                </li>
+
                                 {% if item.sale_type == 2 %}
                                 <li>
                                     <svg class="w-5 h-5 text-blue-500">
@@ -205,7 +202,7 @@
                     <p>قیمت کالاها (<span id="cart-count-display">{{ cart_count }}</span>)</p>
                     <p class="flex gap-x-1 text-gray-600 dark:text-gray-300" id="products-price">{{ total_price|intcomma }} <span class="hidden xl:flex">تومان</span></p>
                 </li>
-              
+
                 <li class="border-t-2 border-dashed border-gray-400 pt-8">
                     <p>مجموع سبد خرید:</p>
                     <p class="font-DanaMedium text-xl text-gray-900 dark:text-white" id="total-price">{{ total_price|intcomma }} تومان</p>
@@ -222,11 +219,7 @@
             </a>
             {% endif %}
 
-            <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <p class="text-sm text-blue-800 dark:text-blue-200 text-center">
-                    ارسال رایگان برای خریدهای بالای ۵۰۰ هزار تومان
-                </p>
-            </div>
+
         </div>
     </section>
     {% else %}
@@ -259,15 +252,25 @@ function changeQuantity(button, change) {
 
     const container = button.closest('[data-product-id]');
     const productId = container.getAttribute('data-product-id');
+    const productTitle = container.getAttribute('data-product-title');
     const detail = container.getAttribute('data-detail');
     const saleType = parseInt(container.getAttribute('data-sale-type'));
     const minQuantity = parseInt(container.getAttribute('data-min-quantity')) || 1;
     const limitedSale = parseInt(container.getAttribute('data-limited-sale')) || minQuantity;
     const memberCarton = parseInt(container.getAttribute('data-member-carton')) || 1;
+    const maxStock = parseInt(container.getAttribute('data-max-stock')) || 999;
     const quantityInput = container.querySelector('.quantity-input');
     const currentQuantity = parseInt(quantityInput.value) || minQuantity;
 
     let newQuantity = currentQuantity + change;
+
+    // ========================
+    // بررسی موجودی (MOST IMPORTANT)
+    // ========================
+    if (newQuantity > maxStock) {
+        showNotification(`موجودی محصول "${productTitle}" کافی نیست. حداکثر ${maxStock} عدد موجود است`, 'error');
+        return;
+    }
 
     // بررسی محدودیت‌ها بر اساس نوع فروش
     if (saleType === 1) { // فروش تک
@@ -283,6 +286,17 @@ function changeQuantity(button, change) {
         // برای کارتن، حداقل باید minQuantity باشد
         if (change > 0 && newQuantity < minQuantity) {
             newQuantity = minQuantity;
+        }
+        // بررسی اینکه تعداد مضربی از memberCarton باشد
+        if (newQuantity % memberCarton !== 0) {
+            const suggestedQuantity = Math.ceil(newQuantity / memberCarton) * memberCarton;
+            if (suggestedQuantity <= maxStock) {
+                newQuantity = suggestedQuantity;
+                showNotification(`تعداد باید مضربی از ${memberCarton} باشد (هر کارتن ${memberCarton} عددی)`, 'warning');
+            } else {
+                showNotification(`امکان افزایش تعداد وجود ندارد. حداکثر ${maxStock} عدد موجود است`, 'error');
+                return;
+            }
         }
     } else if (saleType === 3) { // فروش محدود
         if (change < 0 && newQuantity < limitedSale) {
@@ -310,6 +324,8 @@ function changeQuantity(button, change) {
 
 function updateButtonStates(container, quantity, saleType, minQuantity, limitedSale) {
     const decrementBtn = container.querySelector('.decrement');
+    const incrementBtn = container.querySelector('.increment');
+    const maxStock = parseInt(container.getAttribute('data-max-stock')) || 999;
 
     if (decrementBtn) {
         let isDisabled = false;
@@ -328,6 +344,17 @@ function updateButtonStates(container, quantity, saleType, minQuantity, limitedS
         } else {
             decrementBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             decrementBtn.disabled = false;
+        }
+    }
+
+    // غیرفعال کردن دکمه افزایش اگر به حداکثر موجودی رسیده
+    if (incrementBtn) {
+        if (quantity >= maxStock) {
+            incrementBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            incrementBtn.disabled = true;
+        } else {
+            incrementBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            incrementBtn.disabled = false;
         }
     }
 }
@@ -370,6 +397,10 @@ async function updateCartItem(productId, quantity, detail, container) {
         if (data.success) {
             // آپدیت تمام UI از داده‌های سرور
             updateAllCartData(data);
+            // به روز رسانی دکمه‌ها با موجودی جدید از سرور
+            if (data.max_stock !== undefined) {
+                container.setAttribute('data-max-stock', data.max_stock);
+            }
             showNotification('سبد خرید بروزرسانی شد', 'success');
         } else {
             // بازگشت به مقدار قبلی
@@ -425,7 +456,7 @@ function getCookie(name) {
             if (cookie.substring(0, name.length + 1) === (name + '=')) {
                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                 break;
-        }
+            }
         }
     }
     return cookieValue;
@@ -449,7 +480,7 @@ function updateAllCartData(data) {
     const totalPrice = document.getElementById('total-price');
     if (totalPrice) {
         totalPrice.textContent = `${data.total_price.toLocaleString()} تومان`;
-        }
+    }
 
     // آپدیت شمارنده هدر
     updateHeaderCartCount(data.cart_count);
@@ -516,10 +547,10 @@ function removeFromCart(productId, detail) {
                 updateAllCartData(data);
 
                 // بررسی خالی بودن سبد
-                    const remainingItems = document.querySelectorAll('.relative');
-                    if (remainingItems.length === 0) {
+                const remainingItems = document.querySelectorAll('.relative');
+                if (remainingItems.length === 0) {
                     location.reload(); // بارگذاری مجدد صفحه
-                    }
+                }
 
                 showNotification('محصول از سبد خرید حذف شد', 'success');
             } else {
@@ -570,9 +601,8 @@ function showNotification(message, type = 'success') {
 
     // ایجاد نوتیفیکیشن جدید
     const notification = document.createElement('div');
-    notification.className = `cart-notification fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg font-DanaMedium transition-all duration-300 ${
-        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-    }`;
+    const bgColor = type === 'success' ? 'bg-green-500' : (type === 'error' ? 'bg-red-500' : 'bg-yellow-500');
+    notification.className = `cart-notification fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg font-DanaMedium transition-all duration-300 ${bgColor} text-white`;
     notification.style.transform = 'translateX(100%)';
     notification.style.opacity = '0';
 
@@ -581,7 +611,9 @@ function showNotification(message, type = 'success') {
             <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 ${type === 'success'
                     ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>'
-                    : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>'
+                    : type === 'error'
+                    ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>'
+                    : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>'
                 }
             </svg>
             <span>${message}</span>
@@ -650,7 +682,8 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 /* استایل برای دکمه‌های غیرفعال */
-.decrement.opacity-50 {
+.decrement.opacity-50,
+.increment.opacity-50 {
     opacity: 0.5 !important;
     cursor: not-allowed !important;
 }
@@ -658,6 +691,11 @@ document.addEventListener('DOMContentLoaded', function() {
 /* استایل لودینگ */
 [data-product-id] {
     transition: opacity 0.3s ease;
+}
+
+/* استایل برای نوتیفیکیشن هشدار */
+.cart-notification.bg-yellow-500 {
+    background-color: #eab308;
 }
 </style>
 {% endblock %}

@@ -27,16 +27,57 @@ class ShopCart:
         else:
             sale_type = product.saleTypes.filter(isActive=True).first()
 
-        # Calculate base price based on sale type
-        if sale_type:
-            if sale_type.typeSale == 2 and sale_type.memberCarton:  # Carton sale
-                base_price = sale_type.price * sale_type.memberCarton  # Per carton price
+        # ========================
+        # بررسی موجودی محصول
+        # ========================
+        if product.stock <= 0:
+            raise ValueError(f"محصول '{product.title}' موجودی ندارد")
+
+        # محاسبه مقدار فعلی در سبد خرید
+        current_qty_in_cart = 0
+        if key in self.shop_cart:
+            current_qty_in_cart = self.shop_cart[key]['qty']
+
+        # مقدار نهایی بعد از افزودن
+        new_total_qty = current_qty_in_cart + int(qty)
+
+        # بررسی اینکه از موجودی بیشتر نشود
+        if new_total_qty > product.stock:
+            remaining = product.stock - current_qty_in_cart
+            if remaining <= 0:
+                raise ValueError(f"محصول '{product.title}' به مقدار حداکثر {product.stock} عدد موجود است و شما قبلاً {current_qty_in_cart} عدد در سبد دارید")
             else:
-                base_price = sale_type.price  # Per item price
+                raise ValueError(f"موجودی محصول '{product.title}' کافی نیست. تنها {remaining} عدد دیگر می‌توانید اضافه کنید")
+
+        # بررسی محدودیت‌های حداقل خرید بر اساس نوع فروش
+        if sale_type:
+            if sale_type.typeSale == 2 and sale_type.memberCarton:  # فروش کارتن
+                # برای فروش کارتن، تعداد باید مضربی از memberCarton باشد
+                if new_total_qty % sale_type.memberCarton != 0:
+                    raise ValueError(f"تعداد باید مضربی از {sale_type.memberCarton} باشد (تعداد هر کارتن)")
+                # بررسی حداقل تعداد کارتن
+                min_cartons = sale_type.limitedSale or 1
+                min_qty = min_cartons * sale_type.memberCarton
+                if new_total_qty < min_qty:
+                    raise ValueError(f"حداقل تعداد برای این محصول {min_cartons} کارتن ({min_qty} عدد) است")
+            elif sale_type.typeSale == 3:  # فروش محدود با حداقل خرید
+                min_qty = sale_type.limitedSale or 1
+                if new_total_qty < min_qty:
+                    raise ValueError(f"حداقل تعداد برای این محصول {min_qty} عدد است")
+            elif sale_type.typeSale == 1:  # فروش تک
+                if new_total_qty < 1:
+                    raise ValueError(f"حداقل تعداد برای این محصول 1 عدد است")
+
+        # محاسبه قیمت پایه بر اساس نوع فروش
+        if sale_type:
+            if sale_type.typeSale == 2 and sale_type.memberCarton:  # فروش کارتن
+                base_price = sale_type.price  # قیمت هر کارتن
+            else:
+                base_price = sale_type.price  # قیمت هر عدد
         else:
             base_price = 0
 
-        # Calculate discounted price
+        # محاسبه قیمت با تخفیف
         now = timezone.now()
         discount_percent = DiscountBasket.objects.filter(
             isActive=True,
@@ -52,20 +93,20 @@ class ShopCart:
         if key not in self.shop_cart:
             self.shop_cart[key] = {
                 'qty': 0,
-                'price': str(base_price),  # قیمت پایه
+                'price': str(base_price),
                 'brand': product.brand.id if product.brand else None,
                 'detail': list_detail,
-                'final_price': str(final_price),  # قیمت نهایی با تخفیف
-                'discount_percent': discount_percent,  # درصد تخفیف
-                'sale_type': actual_sale_type,  # نوع فروش
-                'member_carton': sale_type.memberCarton if sale_type else 1,  # تعداد در کارتن
+                'final_price': str(final_price),
+                'discount_percent': discount_percent,
+                'sale_type': actual_sale_type,
+                'member_carton': sale_type.memberCarton if sale_type else 1,
                 'product_id': product.id,
                 'product_name': product.title,
                 'product_image': product.mainImage.url if product.mainImage else '',
                 'sale_type_title': sale_type.get_typeSale_display() if sale_type else 'تک فروشی'
             }
 
-        self.shop_cart[key]['qty'] += int(qty)
+        self.shop_cart[key]['qty'] = new_total_qty
         self.session.modified = True
         self.count = len(self.shop_cart.keys())
 
@@ -161,7 +202,8 @@ class ShopCart:
                     'shipping_days': 1,  # Default shipping days
                     'color': '',  # Default empty color
                     'warranty': 'گارانتی ۱۸ ماهه',  # Default warranty
-                    'key': key  # کلید یکتا برای مدیریت
+                    'key': key,  # کلید یکتا برای مدیریت
+                    'max_stock': product.stock  # اضافه کردن حداکثر موجودی برای استفاده در فرانت
                 })
             except Product.DoesNotExist:
                 # اگر محصول وجود ندارد، این آیتم را رد کن
@@ -179,3 +221,50 @@ class ShopCart:
         """برای backward compatibility"""
         for item in self.get_cart_items():
             yield item
+
+    def update_quantity(self, product_id, new_quantity, detail='', sale_type=1):
+        """آپدیت مستقیم تعداد یک محصول در سبد خرید"""
+        key = self._get_key(product_id, detail, sale_type)
+
+        if key not in self.shop_cart:
+            raise ValueError("محصول در سبد خرید وجود ندارد")
+
+        # دریافت محصول از دیتابیس برای بررسی موجودی
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            raise ValueError("محصول یافت نشد")
+
+        # بررسی موجودی
+        if new_quantity > product.stock:
+            raise ValueError(f"موجودی کافی نیست. فقط {product.stock} عدد موجود است")
+
+        if new_quantity < 1:
+            raise ValueError("تعداد باید حداقل ۱ باشد")
+
+        # بررسی محدودیت‌های نوع فروش
+        sale_type_obj = product.saleTypes.filter(isActive=True, typeSale=sale_type).first()
+        if sale_type_obj:
+            if sale_type_obj.typeSale == 2 and sale_type_obj.memberCarton:  # فروش کارتن
+                if new_quantity % sale_type_obj.memberCarton != 0:
+                    raise ValueError(f"تعداد باید مضربی از {sale_type_obj.memberCarton} باشد (تعداد هر کارتن)")
+                min_cartons = sale_type_obj.limitedSale or 1
+                min_qty = min_cartons * sale_type_obj.memberCarton
+                if new_quantity < min_qty:
+                    raise ValueError(f"حداقل تعداد برای این محصول {min_cartons} کارتن ({min_qty} عدد) است")
+            elif sale_type_obj.typeSale == 3:  # فروش محدود
+                min_qty = sale_type_obj.limitedSale or 1
+                if new_quantity < min_qty:
+                    raise ValueError(f"حداقل تعداد برای این محصول {min_qty} عدد است")
+
+        # آپدیت تعداد
+        self.shop_cart[key]['qty'] = new_quantity
+        self.session.modified = True
+
+        # برگرداندن اطلاعات جدید
+        return {
+            'new_quantity': new_quantity,
+            'item_total': float(self.shop_cart[key]['final_price']) * new_quantity,
+            'cart_total': self.calc_total_price(),
+            'cart_count': sum(item['qty'] for item in self.shop_cart.values())
+        }
