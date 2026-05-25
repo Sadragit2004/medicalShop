@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'apps.blog.apps.BlogConfig',
     'apps.dashboard.apps.DashboardConfig',
     'apps.panelAdmin.apps.PaneladminConfig',
- 'django_celery_beat',
+    'apps.price.apps.PriceConfig',
+    'django_celery_beat',
     'django_cleanup.apps.CleanupConfig',
     'django_celery_results',
 

@@ -18,7 +18,8 @@ urlpatterns = [
     path('search/',include('apps.search.urls',namespace='search')),
     path('blog/',include('apps.blog.urls',namespace='blog')),
     path('dashboard/',include('apps.dashboard.urls',namespace='paneluser')),
-    path('panelAdmin/',include('apps.panelAdmin.urls',namespace='panelAdmin'))
+    path('panelAdmin/',include('apps.panelAdmin.urls',namespace='panelAdmin')),
+    path('price/',include('apps.price.urls',namespace='price'))
 
 
 ]+static(sett.MEDIA_URL,document_root = sett.MEDIA_ROOT)

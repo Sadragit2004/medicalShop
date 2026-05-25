@@ -58,7 +58,6 @@
             align-items: center;
         }
 
-        /* دسته بندی با اسکرول افقی در موبایل */
         .category-filter {
             display: flex;
             flex-wrap: nowrap;
@@ -79,17 +78,7 @@
             height: 3px;
         }
 
-        .category-filter::-webkit-scrollbar-track {
-            background: #e2e8f0;
-            border-radius: 10px;
-        }
-
-        .category-filter::-webkit-scrollbar-thumb {
-            background: #3b82f6;
-            border-radius: 10px;
-        }
-
-        .category-btn {
+        .category-filter button {
             padding: 8px 18px;
             border: 2px solid #e2e8f0;
             border-radius: 40px;
@@ -104,7 +93,7 @@
             transition: all 0.2s;
         }
 
-        .category-btn.active {
+        .category-filter button.active {
             background: #3b82f6;
             border-color: #3b82f6;
             color: white;
@@ -263,7 +252,6 @@
         .type-download { background: #dbeafe; color: #2563eb; }
         .type-package { background: #fef3c7; color: #d97706; }
 
-        /* نمای موبایل */
         .mobile-view {
             display: none;
             flex-direction: column;
@@ -404,7 +392,6 @@
             gap: 8px;
         }
 
-        /* مودال */
         .full-modal {
             position: fixed;
             top: 0;
@@ -568,15 +555,37 @@
         .history-title { font-weight: 600; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0; font-size: 0.9rem; }
         .history-item { padding: 8px; border-bottom: 1px solid #f1f5f9; font-size: 0.75rem; }
 
+        .toast-message {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: #323232;
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            z-index: 3000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .toast-message.show { opacity: 1; }
+
         @media (max-width: 768px) { .table-container { display: none; } }
         @media (min-width: 769px) { .mobile-view { display: none !important; } .table-container { display: block !important; } }
+
+        .sparkline-canvas {
+            width: 100px;
+            height: 40px;
+        }
     </style>
 </head>
 <body>
 
 <div class="header">
     <h1><i class="fas fa-chart-line"></i> مرجع قیمت روز ایران</h1>
-    <div class="stats">
+    <div class="stats" id="statsPanel">
         <div class="stat-card"><i class="fas fa-box"></i> <span id="totalProducts">0</span> محصول</div>
         <div class="stat-card"><i class="fas fa-toggle-on"></i> <span id="activeCount">0</span> فعال</div>
         <div class="stat-card"><i class="fas fa-exchange-alt"></i> <span id="todayChanges">0</span> تغییر امروز</div>
@@ -597,14 +606,8 @@
     <button class="btn btn-primary" id="switchViewBtn"><i class="fas fa-mobile-alt"></i> نمای موبایل</button>
 </div>
 
-<!-- دسته بندی با اسکرول افقی در موبایل -->
 <div class="category-filter" id="categoryFilter">
     <button class="category-btn active" data-category="all"><i class="fas fa-layer-group"></i> همه</button>
-    <button class="category-btn" data-category="mobile"><i class="fas fa-mobile-alt"></i> موبایل</button>
-    <button class="category-btn" data-category="tablet"><i class="fas fa-tablet-alt"></i> تبلت</button>
-    <button class="category-btn" data-category="headphone"><i class="fas fa-headphones"></i> هدفون</button>
-    <button class="category-btn" data-category="powerbank"><i class="fas fa-battery-full"></i> پاوربانک</button>
-    <button class="category-btn" data-category="watch"><i class="fas fa-clock"></i> ساعت هوشمند</button>
 </div>
 
 <div class="table-container" id="tableView">
@@ -632,32 +635,22 @@
             </div>
             <div class="modal-product-row">
                 <div class="modal-product-img" id="modalImg">📱</div>
-                <div>
-                    <div class="modal-product-title" id="modalTitle" style="font-weight:600;font-size:1rem"></div>
-                </div>
+                <div><div class="modal-product-title" id="modalTitle" style="font-weight:600;font-size:1rem"></div></div>
             </div>
         </div>
         <div class="modal-body">
-            <div class="info-box">
-                <span>قیمت قبلی:</span>
-                <strong id="modalOldPrice"></strong>
-            </div>
-
+            <div class="info-box"><span>قیمت قبلی:</span><strong id="modalOldPrice"></strong></div>
             <div class="form-group">
                 <label class="form-label">💰 قیمت جدید (تومان)</label>
                 <input type="text" id="modalPriceInput" class="form-input" placeholder="مثال: 27,500,000">
             </div>
-
-            <!-- دکمه های سریع تخفیف -->
             <div class="quick-discounts">
                 <button class="quick-discount-btn" data-discount="5">-5%</button>
                 <button class="quick-discount-btn" data-discount="10">-10%</button>
                 <button class="quick-discount-btn" data-discount="15">-15%</button>
                 <button class="quick-discount-btn" data-discount="20">-20%</button>
             </div>
-
             <div id="modalPercentPreview" class="percent-preview"></div>
-
             <div class="form-group">
                 <label class="form-label">🎯 تخفیف دلخواه (درصد)</label>
                 <div class="discount-row">
@@ -665,25 +658,13 @@
                     <button id="modalApplyDiscountBtn">اعمال</button>
                 </div>
             </div>
-
             <div class="form-group">
                 <label class="form-label">📦 موجودی</label>
                 <input type="number" id="modalStockInput" class="form-input" placeholder="تعداد موجودی">
             </div>
-
-            <div class="form-group">
-                <label class="form-label">🏷️ نوع محصول</label>
-                <select id="modalTypeSelect" class="form-select">
-                    <option value="physical">📦 فیزیکی</option>
-                    <option value="download">💿 دانلودی</option>
-                    <option value="package">📦 بسته‌ای</option>
-                </select>
-            </div>
-
             <div class="modal-sparkline">
                 <canvas id="modalSparkline" width="280" height="60"></canvas>
             </div>
-
             <div class="modal-buttons">
                 <button class="btn-cancel" id="modalCancelBtn">انصراف</button>
                 <button class="btn-save" id="modalSaveBtn">💾 ذخیره تغییرات</button>
@@ -691,61 +672,41 @@
         </div>
     </div>
 </div>
+<div id="toastMessage" class="toast-message"></div>
 
 <script>
-    // محصولات
-    let products = [
-        { id: 1, title: "سامسونگ Galaxy A54", imgIcon: "📱", category: "mobile", currentPrice: 27500000, oldPrice: 22500000, stock: 15, type: "physical", enabled: true },
-        { id: 2, title: "اپل iPhone 15 Pro Max", imgIcon: "📱", category: "mobile", currentPrice: 70000000, oldPrice: 65000000, stock: 8, type: "physical", enabled: true },
-        { id: 3, title: "شیائومی پاوربانک 20000", imgIcon: "🔋", category: "powerbank", currentPrice: 1300000, oldPrice: 1200000, stock: 42, type: "physical", enabled: true },
-        { id: 4, title: "هدفون JBL Tune 510BT", imgIcon: "🎧", category: "headphone", currentPrice: 3200000, oldPrice: 3500000, stock: 0, type: "physical", enabled: true },
-        { id: 5, title: "ساعت هوشمند سامسونگ Watch 6", imgIcon: "⌚", category: "watch", currentPrice: 12500000, oldPrice: 11800000, stock: 5, type: "physical", enabled: true },
-        { id: 6, title: "تبلت شیائومی Pad 6", imgIcon: "📟", category: "tablet", currentPrice: 18500000, oldPrice: 17900000, stock: 3, type: "physical", enabled: true },
-        { id: 7, title: "هدفون اپل AirPods Pro", imgIcon: "🎧", category: "headphone", currentPrice: 12500000, oldPrice: 11800000, stock: 0, type: "package", enabled: false },
-        { id: 8, title: "سامسونگ Galaxy S24 Ultra", imgIcon: "📱", category: "mobile", currentPrice: 85000000, oldPrice: 82000000, stock: 12, type: "physical", enabled: true },
-        { id: 9, title: "نرم افزار ادیت ویدیو", imgIcon: "💿", category: "mobile", currentPrice: 2500000, oldPrice: 2300000, stock: 999, type: "download", enabled: true },
-        { id: 10, title: "هدفون سونی WH-1000XM5", imgIcon: "🎧", category: "headphone", currentPrice: 18500000, oldPrice: 17800000, stock: 2, type: "package", enabled: false },
-        { id: 11, title: "تبلت سامسونگ Tab S9", imgIcon: "📟", category: "tablet", currentPrice: 45000000, oldPrice: 43000000, stock: 7, type: "physical", enabled: true },
-        { id: 12, title: "پاوربانک انکر 20000", imgIcon: "🔋", category: "powerbank", currentPrice: 1800000, oldPrice: 1650000, stock: 25, type: "physical", enabled: true }
-    ];
-
+    // ---------- APP STATE ----------
+    let products = [];
     let priceHistory = [];
     let currentView = 'pc';
     let currentSearchTerm = '';
     let currentCategory = 'all';
     let currentModalProduct = null;
+    let saleTypeIdMap = new Map();
 
-    // فرمت عدد با کاما
-    function formatNumber(num) {
-        if (num === undefined || num === null) return "0";
-        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    // ---------- HELPERS ----------
+    function formatNumber(num) { return num?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") || "0"; }
+    function parseNumber(str) { let num = parseInt(str?.toString().replace(/[^0-9]/g, '')); return isNaN(num) ? 0 : num; }
+    function calculatePercent(oldPrice, newPrice) { if (oldPrice === 0) return 0; return ((newPrice - oldPrice) / oldPrice * 100).toFixed(1); }
+
+    function showMessage(msg, isError = false) {
+        let toast = document.getElementById('toastMessage');
+        toast.textContent = msg;
+        toast.style.background = isError ? '#dc2626' : '#16a34a';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    // تبدیل به عدد
-    function parseNumber(str) {
-        if (!str) return 0;
-        let num = parseInt(str.toString().replace(/[^0-9]/g, ''));
-        return isNaN(num) ? 0 : num;
-    }
-
-    // درصد تغییر
-    function calculatePercent(oldPrice, newPrice) {
-        if (oldPrice === 0) return 0;
-        return ((newPrice - oldPrice) / oldPrice * 100).toFixed(1);
-    }
-
-    // هایلایت
     function highlightText(text, search) {
         if (!search) return text;
         const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
         return text.replace(regex, `<span style="background:#fef08a;border-radius:4px;padding:0 2px">$1</span>`);
     }
 
-    // فیلتر محصولات
     function getFilteredProducts() {
         let filtered = [...products];
         if (currentCategory !== 'all') {
-            filtered = filtered.filter(p => p.category === currentCategory);
+            filtered = filtered.filter(p => p.categoryIds && p.categoryIds.includes(parseInt(currentCategory)));
         }
         if (currentSearchTerm.trim()) {
             const search = currentSearchTerm.toLowerCase();
@@ -754,185 +715,243 @@
         return filtered;
     }
 
-    // تاریخچه قیمت
-    function getProductHistory(productId, days = 14) {
-        const ph = priceHistory.filter(h => h.productId === productId);
-        const product = products.find(p => p.id === productId);
-        if (!product) return [];
-        let points = [{ price: product.currentPrice / 1000000, time: Date.now() }];
-        ph.forEach(h => points.push({ price: h.newPrice / 1000000, time: h.timestamp }));
-        points.sort((a, b) => a.time - b.time);
-        return points.slice(-days);
+    // ---------- SPARKLINE (نمودار روند واقعی) ----------
+    async function drawRealSparkline(canvas, productId) {
+        if (!canvas) return;
+        try {
+            let res = await fetch(`/price/api/history/${productId}/?limit=12`);
+            let data = await res.json();
+            if (data.success && data.history && data.history.length > 0) {
+                let prices = data.history.map(h => h.price_new).reverse();
+                drawSparklineOnCanvas(canvas, prices);
+            } else {
+                drawMockSparkline(canvas);
+            }
+        } catch(e) {
+            console.error('Error loading history:', e);
+            drawMockSparkline(canvas);
+        }
     }
 
-    // رسم نمودار
-    function drawSparkline(canvas, productId) {
-        if (!canvas) return;
-        const history = getProductHistory(productId, 12);
-        if (history.length === 0) return;
-        const prices = history.map(h => h.price);
-        const w = canvas.clientWidth || 280;
-        const hgt = canvas.clientHeight || 60;
-        canvas.width = w;
-        canvas.height = hgt;
-        if (w === 0) return;
+    function drawSparklineOnCanvas(canvas, prices) {
         const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, w, hgt);
+        const w = canvas.clientWidth || 100;
+        const h = canvas.clientHeight || 40;
+        canvas.width = w;
+        canvas.height = h;
+        ctx.clearRect(0, 0, w, h);
+
+        if (prices.length < 2) {
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(0, h/2, w, 1);
+            return;
+        }
+
         const minPrice = Math.min(...prices);
         const maxPrice = Math.max(...prices);
         const range = maxPrice - minPrice;
         const isUp = prices[prices.length-1] > prices[0];
         const lineColor = isUp ? "#16a34a" : "#dc2626";
-        if (range === 0) {
-            ctx.beginPath();
-            ctx.strokeStyle = "#94a3b8";
-            ctx.moveTo(0, hgt/2);
-            ctx.lineTo(w, hgt/2);
-            ctx.stroke();
-            return;
-        }
+
         ctx.beginPath();
         ctx.strokeStyle = lineColor;
         ctx.lineWidth = 2;
+
         for (let i = 0; i < prices.length; i++) {
             const x = (i / (prices.length - 1)) * w;
-            const y = hgt - ((prices[i] - minPrice) / range) * hgt;
+            let y = h;
+            if (range > 0) {
+                y = h - ((prices[i] - minPrice) / range) * h;
+            } else {
+                y = h / 2;
+            }
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
         }
         ctx.stroke();
-        ctx.fillStyle = lineColor;
+
+        // نقطه آخر
         const lastX = w;
-        const lastY = hgt - ((prices[prices.length-1] - minPrice) / range) * hgt;
+        let lastY = h;
+        if (range > 0) {
+            lastY = h - ((prices[prices.length-1] - minPrice) / range) * h;
+        } else {
+            lastY = h / 2;
+        }
+        ctx.fillStyle = lineColor;
         ctx.arc(lastX, lastY, 3, 0, 2 * Math.PI);
         ctx.fill();
     }
 
-    // ذخیره در localStorage
-    function saveToLocalStorage() {
-        localStorage.setItem('products', JSON.stringify(products.map(p => ({ id: p.id, currentPrice: p.currentPrice, oldPrice: p.oldPrice, enabled: p.enabled, stock: p.stock, type: p.type }))));
-        localStorage.setItem('history', JSON.stringify(priceHistory));
+    function drawMockSparkline(canvas) {
+        const ctx = canvas.getContext('2d');
+        const w = canvas.clientWidth || 100;
+        const h = canvas.clientHeight || 40;
+        canvas.width = w;
+        canvas.height = h;
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(0, h/2, w, 1);
     }
 
-    function loadFromLocalStorage() {
-        const saved = localStorage.getItem('products');
-        if (saved) {
-            const parsed = JSON.parse(saved);
-            products.forEach(p => {
-                const found = parsed.find(sp => sp.id === p.id);
-                if (found) {
-                    p.currentPrice = found.currentPrice;
-                    p.oldPrice = found.oldPrice;
-                    p.enabled = found.enabled !== undefined ? found.enabled : true;
-                    p.stock = found.stock !== undefined ? found.stock : p.stock;
-                    p.type = found.type || p.type;
+    // ---------- API CALLS ----------
+    async function loadStats() {
+        try {
+            let res = await fetch('/price/api/dashboard/stats/');
+            let data = await res.json();
+            if (data.success) {
+                document.getElementById('totalProducts').innerText = data.stats.total_products;
+                document.getElementById('activeCount').innerText = data.stats.total_products - (data.stats.out_of_stock || 0);
+                document.getElementById('todayChanges').innerText = data.stats.today_changes;
+                let avg = data.stats.avg_change_today;
+                document.getElementById('avgIncrease').innerHTML = avg > 0 ? `🟢 +${avg}%` : (avg < 0 ? `🔴 ${avg}%` : '⚪ 0%');
+
+                if (data.latest_changes) {
+                    priceHistory = data.latest_changes.map(ch => ({
+                        productTitle: ch.product_title,
+                        oldPrice: ch.old_price,
+                        newPrice: ch.new_price,
+                        percent: ch.percent_change,
+                        date: ch.created_at
+                    }));
+                    renderHistory();
                 }
-            });
-        }
-        const savedHistory = localStorage.getItem('history');
-        if (savedHistory) priceHistory = JSON.parse(savedHistory);
-    }
-
-    // اضافه به تاریخچه
-    function addToHistory(productId, oldPrice, newPrice) {
-        const product = products.find(p => p.id === productId);
-        priceHistory.unshift({
-            productId, productTitle: product?.title, oldPrice, newPrice,
-            percent: parseFloat(calculatePercent(oldPrice, newPrice)),
-            date: new Date().toLocaleString('fa-IR'), timestamp: Date.now()
-        });
-        if (priceHistory.length > 200) priceHistory.pop();
-        saveToLocalStorage();
-        renderHistory();
-        updateStats();
-    }
-
-    // به روز رسانی محصول
-    function updateProduct(productId, newPrice, newStock, newType) {
-        const product = products.find(p => p.id === productId);
-        if (!product) return false;
-
-        if (newPrice !== undefined && newPrice > 0 && newPrice !== product.currentPrice) {
-            product.oldPrice = product.currentPrice;
-            product.currentPrice = newPrice;
-            addToHistory(productId, product.oldPrice, product.currentPrice);
-        }
-        if (newStock !== undefined) product.stock = newStock;
-        if (newType !== undefined) product.type = newType;
-
-        saveToLocalStorage();
-        renderAll();
-        return true;
-    }
-
-    // تغییر وضعیت فعال/غیرفعال
-    function toggleProductEnabled(productId) {
-        const product = products.find(p => p.id === productId);
-        if (product) {
-            product.enabled = !product.enabled;
-            saveToLocalStorage();
-            updateStats();
-            renderAll();
-        }
-    }
-
-    // باز کردن مودال
-    function openModal(product) {
-        currentModalProduct = product;
-        document.getElementById('modalImg').innerHTML = product.imgIcon;
-        document.getElementById('modalTitle').innerHTML = product.title;
-        document.getElementById('modalOldPrice').innerHTML = formatNumber(product.oldPrice);
-        document.getElementById('modalPriceInput').value = formatNumber(product.currentPrice);
-        document.getElementById('modalStockInput').value = product.stock;
-        document.getElementById('modalTypeSelect').value = product.type;
-        document.getElementById('modalDiscountInput').value = '';
-
-        // نمایش درصد تغییر فعلی
-        const percent = calculatePercent(product.oldPrice, product.currentPrice);
-        const percentDiv = document.getElementById('modalPercentPreview');
-        if (percent > 0) {
-            percentDiv.innerHTML = `🟢 +${percent}% افزایش (${formatNumber(product.currentPrice)} تومان)`;
-            percentDiv.className = 'percent-preview percent-increase';
-        } else if (percent < 0) {
-            percentDiv.innerHTML = `🔴 ${percent}% کاهش (${formatNumber(product.currentPrice)} تومان)`;
-            percentDiv.className = 'percent-preview percent-decrease';
-        } else {
-            percentDiv.innerHTML = `⚪ بدون تغییر (${formatNumber(product.currentPrice)} تومان)`;
-            percentDiv.className = 'percent-preview';
-        }
-
-        // تغییر لحظه‌ای قیمت
-        const priceInput = document.getElementById('modalPriceInput');
-        const updatePercent = () => {
-            let raw = parseNumber(priceInput.value);
-            priceInput.value = formatNumber(raw);
-            const newPercent = calculatePercent(product.oldPrice, raw);
-            const pDiv = document.getElementById('modalPercentPreview');
-            if (newPercent > 0) {
-                pDiv.innerHTML = `🟢 +${newPercent}% افزایش (${formatNumber(raw)} تومان)`;
-                pDiv.className = 'percent-preview percent-increase';
-            } else if (newPercent < 0) {
-                pDiv.innerHTML = `🔴 ${newPercent}% کاهش (${formatNumber(raw)} تومان)`;
-                pDiv.className = 'percent-preview percent-decrease';
-            } else {
-                pDiv.innerHTML = `⚪ بدون تغییر (${formatNumber(raw)} تومان)`;
-                pDiv.className = 'percent-preview';
             }
-        };
-        priceInput.oninput = updatePercent;
-
-        const canvas = document.getElementById('modalSparkline');
-        if (canvas) drawSparkline(canvas, product.id);
-
-        document.getElementById('fullModal').classList.add('active');
+        } catch(e) { console.error(e); }
     }
 
-    function closeModal() {
-        document.getElementById('fullModal').classList.remove('active');
-        currentModalProduct = null;
+    async function loadCategories() {
+        try {
+            let res = await fetch('/price/api/categories/');
+            let data = await res.json();
+            if (data.success) {
+                let container = document.getElementById('categoryFilter');
+                container.innerHTML = '<button class="category-btn active" data-category="all"><i class="fas fa-layer-group"></i> همه</button>';
+
+                data.categories.forEach(cat => {
+                    // فقط دسته‌بندی‌هایی که parent ندارند (سطح 1)
+                    if (!cat.parent) {
+                        let btn = document.createElement('button');
+                        btn.className = 'category-btn';
+                        btn.dataset.category = cat.id;
+                        btn.innerHTML = `<i class="fas fa-tag"></i> ${cat.title}`;
+                        btn.addEventListener('click', () => {
+                            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                            btn.classList.add('active');
+                            currentCategory = cat.id;
+                            loadProducts(); // بارگذاری مجدد با فیلتر
+                        });
+                        container.appendChild(btn);
+                    }
+                });
+            }
+        } catch(e) { console.error(e); }
     }
 
-    // رندر جدول
+    async function loadProducts() {
+        try {
+            let url = '/price/api/products/';
+            let params = new URLSearchParams();
+            if (currentCategory !== 'all') params.append('category', currentCategory);
+            if (currentSearchTerm) params.append('search', currentSearchTerm);
+            if (params.toString()) url += '?' + params.toString();
+
+            let res = await fetch(url);
+            let data = await res.json();
+            if (data.success) {
+                products = data.products.map(p => ({
+                    id: p.id,
+                    title: p.title,
+                    imgIcon: p.mainImage ? `<img style="width:32px;height:32px;border-radius:8px;" src="${p.mainImage}" />` : '📦',
+                    categoryIds: p.category.map(c => c.id),
+                    currentPrice: p.last_price?.price_new || (p.sale_types[0]?.price || 0),
+                    oldPrice: p.last_price?.price_old || (p.sale_types[0]?.price || 0),
+                    stock: p.stock,
+                    type: p.sale_types[0]?.typeSale_display === 'دانلودی' ? 'download' : (p.sale_types[0]?.typeSale_display === 'بسته‌ای' ? 'package' : 'physical'),
+                    enabled: p.isActive,
+                    sale_type_id: p.sale_types[0]?.id
+                }));
+                products.forEach(p => { if(p.sale_type_id) saleTypeIdMap.set(p.id, p.sale_type_id); });
+                renderAll();
+                loadStats();
+
+                // بارگذاری اسپارک‌لاین برای همه محصولات
+                setTimeout(() => {
+                    document.querySelectorAll('.sparkline-canvas').forEach(canvas => {
+                        let pid = parseInt(canvas.dataset.id);
+                        if (pid) drawRealSparkline(canvas, pid);
+                    });
+                }, 500);
+            } else { showMessage('خطا در دریافت محصولات', true); }
+        } catch(e) { showMessage('خطا در ارتباط با سرور', true); console.error(e); }
+    }
+
+    async function updatePriceOnServer(productId, newPrice, stock = null) {
+        let sid = saleTypeIdMap.get(productId);
+        if (!sid) { showMessage('نوع فروش برای این محصول یافت نشد', true); return false; }
+        try {
+            let res = await fetch('/price/api/price/update/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ product_id: productId, sale_type_id: sid, price: newPrice, source: 'manual_phone' })
+            });
+            let data = await res.json();
+            if (data.success) {
+                let prod = products.find(p => p.id === productId);
+                if (prod) {
+                    prod.oldPrice = prod.currentPrice;
+                    prod.currentPrice = newPrice;
+                    if (stock !== null) prod.stock = stock;
+                }
+                showMessage(`قیمت ${prod?.title} با موفقیت به روز شد`);
+                await loadProducts();
+                return true;
+            } else { showMessage(data.error || 'خطا در بروزرسانی', true); return false; }
+        } catch(e) { showMessage('خطا در شبکه', true); return false; }
+    }
+
+    async function updateStockOnServer(productId, newStock) {
+        try {
+            let res = await fetch(`/price/api/product/${productId}/stock/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ stock: newStock })
+            });
+            let data = await res.json();
+            if (data.success) {
+                let prod = products.find(p => p.id === productId);
+                if (prod) prod.stock = newStock;
+                showMessage(`موجودی ${prod?.title} به ${newStock} تغییر کرد`);
+                return true;
+            } else { showMessage(data.error || 'خطا در بروزرسانی موجودی', true); return false; }
+        } catch(e) { showMessage('خطا در ارتباط', true); return false; }
+    }
+
+    async function toggleProductStatus(productId) {
+    try {
+        let res = await fetch(`/price/api/product/${productId}/toggle/`, { method: 'POST' });
+        let data = await res.json();
+        if (data.success) {
+            let prod = products.find(p => p.id === productId);
+            if (prod) {
+                prod.enabled = data.isActive;
+                // موجودی واقعی که از سرور برگشته را استفاده کن
+                // سرور در پاسخ toggle، stock واقعی (بازیابی شده) را برمی‌گرداند
+                prod.stock = data.stock;
+            }
+            showMessage(data.message);
+            renderAll();
+            loadStats();
+        } else {
+            showMessage(data.error || 'خطا در تغییر وضعیت', true);
+        }
+    } catch(e) {
+        showMessage('خطا در ارتباط', true);
+        console.error(e);
+    }
+}
+
+    // ---------- RENDERING ----------
     function renderTable() {
         const filtered = getFilteredProducts();
         document.getElementById('searchResultsCount').innerHTML = `${filtered.length} محصول`;
@@ -946,24 +965,23 @@
             else if (percent < 0) { badgeClass = 'badge-decrease'; badgeText = `🔴 ${percent}%`; }
 
             const isDisabled = !product.enabled;
-            const typeLabel = { download: 'دانلودی', physical: 'فیزیکی', package: 'بسته‌ای' }[product.type];
-            const typeClass = { download: 'type-download', physical: 'type-physical', package: 'type-package' }[product.type];
+            const typeLabel = { download: 'دانلودی', physical: 'فیزیکی', package: 'بسته‌ای' }[product.type] || 'فیزیکی';
+            const typeClass = { download: 'type-download', physical: 'type-physical', package: 'type-package' }[product.type] || 'type-physical';
 
-            return `
-                <tr class="${isDisabled ? 'disabled' : ''}">
-                    <td><button class="toggle-btn ${!isDisabled ? 'active' : ''}" data-id="${product.id}"></button></td>
-                    <td>${highlightText(product.title, currentSearchTerm)}</td>
-                    <td><span class="type-badge ${typeClass}">${typeLabel}</span></td>
-                    <td>${formatNumber(product.oldPrice)}</td>
-                    <td><input type="text" class="price-input" data-id="${product.id}" value="${formatNumber(product.currentPrice)}" ${isDisabled ? 'disabled' : ''}></td>
-                    <td><input type="number" class="stock-input" data-id="${product.id}" value="${product.stock}" ${isDisabled ? 'disabled' : ''} style="width:90px"></td>
-                    <td><span class="${badgeClass}">${badgeText}</span></td>
-                    <td><canvas class="sparkline-canvas" data-id="${product.id}" width="100" height="40"></canvas></td>
-                 </tr>`;
+            return `<tr class="${isDisabled ? 'disabled' : ''}">
+                        <td><button class="toggle-btn ${!isDisabled ? 'active' : ''}" data-id="${product.id}"></button></td>
+                        <td>${highlightText(product.title, currentSearchTerm)}</td>
+                        <td><span class="type-badge ${typeClass}">${typeLabel}</span></td>
+                        <td>${formatNumber(product.oldPrice)}</td>
+                        <td><input type="text" class="price-input" data-id="${product.id}" value="${formatNumber(product.currentPrice)}" ${isDisabled ? 'disabled' : ''}></td>
+                        <td><input type="number" class="stock-input" data-id="${product.id}" value="${product.stock}" ${isDisabled ? 'disabled' : ''} style="width:90px"></td>
+                        <td><span class="${badgeClass}">${badgeText}</span></td>
+                        <td><canvas class="sparkline-canvas" data-id="${product.id}" width="100" height="40"></canvas></td>
+                     </tr>`;
         }).join('');
 
         document.querySelectorAll('.toggle-btn').forEach(btn => {
-            btn.addEventListener('click', () => toggleProductEnabled(parseInt(btn.dataset.id)));
+            btn.addEventListener('click', () => toggleProductStatus(parseInt(btn.dataset.id)));
         });
 
         document.querySelectorAll('.price-input').forEach(inp => {
@@ -974,27 +992,23 @@
                 let raw = parseNumber(this.value);
                 this.value = formatNumber(raw);
                 clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                    if (raw > 0) updateProduct(pid, raw, undefined, undefined);
-                }, 500);
+                timeout = setTimeout(() => { if (raw > 0) updatePriceOnServer(pid, raw); }, 800);
             });
         });
 
         document.querySelectorAll('.stock-input').forEach(inp => {
             if (inp.disabled) return;
             const pid = parseInt(inp.dataset.id);
-            inp.addEventListener('change', function() {
-                updateProduct(pid, undefined, parseNumber(this.value), undefined);
-            });
+            inp.addEventListener('change', function() { updateStockOnServer(pid, parseNumber(this.value)); });
         });
 
+        // رسم اسپارک‌لاین برای هر محصول
         filtered.forEach(p => {
             const canvas = document.querySelector(`.sparkline-canvas[data-id="${p.id}"]`);
-            if (canvas) drawSparkline(canvas, p.id);
+            if (canvas) drawRealSparkline(canvas, p.id);
         });
     }
 
-    // رندر موبایل با نمایش کامل قیمت قبلی و جدید
     function renderMobile() {
         const filtered = getFilteredProducts();
         const container = document.getElementById('mobileCardsContainer');
@@ -1004,54 +1018,35 @@
         container.innerHTML = filtered.map(product => {
             const percent = calculatePercent(product.oldPrice, product.currentPrice);
             const isDisabled = !product.enabled;
-            const typeLabel = { download: 'دانلودی', physical: 'فیزیکی', package: 'بسته‌ای' }[product.type];
-            const typeClass = { download: 'type-download', physical: 'type-physical', package: 'type-package' }[product.type];
+            const typeLabel = { download: 'دانلودی', physical: 'فیزیکی', package: 'بسته‌ای' }[product.type] || 'فیزیکی';
+            const typeClass = { download: 'type-download', physical: 'type-physical', package: 'type-package' }[product.type] || 'type-physical';
             let changeIcon = percent > 0 ? '🟢' : (percent < 0 ? '🔴' : '⚪');
             let stockClass = product.stock === 0 ? 'low' : '';
             let stockText = product.stock === 0 ? 'ناموجود' : `${formatNumber(product.stock)} عدد`;
 
-            return `
-                <div class="product-card ${isDisabled ? 'disabled' : ''}">
-                    <div class="card-header">
-                        <div class="product-info-header">
-                            <div class="product-img">${product.imgIcon}</div>
-                            <div>
-                                <div class="product-title">${highlightText(product.title, currentSearchTerm)}</div>
-                                <span class="type-badge ${typeClass}">${typeLabel}</span>
+            return `<div class="product-card ${isDisabled ? 'disabled' : ''}">
+                        <div class="card-header">
+                            <div class="product-info-header">
+                                <div class="product-img">${product.imgIcon}</div>
+                                <div>
+                                    <div class="product-title">${highlightText(product.title, currentSearchTerm)}</div>
+                                    <span class="type-badge ${typeClass}">${typeLabel}</span>
+                                </div>
                             </div>
+                            <button class="mobile-toggle-btn ${!isDisabled ? 'active' : ''}" data-id="${product.id}"></button>
                         </div>
-                        <button class="mobile-toggle-btn ${!isDisabled ? 'active' : ''}" data-id="${product.id}"></button>
-                    </div>
-
-                    <div class="price-info-grid">
-                        <div class="price-info-item">
-                            <div class="price-info-label">قیمت قبلی</div>
-                            <div class="price-info-value old-price-value">${formatNumber(product.oldPrice)}</div>
+                        <div class="price-info-grid">
+                            <div class="price-info-item"><div class="price-info-label">قیمت قبلی</div><div class="price-info-value old-price-value">${formatNumber(product.oldPrice)}</div></div>
+                            <div class="price-info-item"><div class="price-info-label">قیمت جدید</div><div class="price-info-value" style="color:${percent > 0 ? '#16a34a' : (percent < 0 ? '#dc2626' : '#475569')}">${formatNumber(product.currentPrice)}</div></div>
+                            <div class="price-info-item"><div class="price-info-label">تغییرات</div><div class="price-info-value">${changeIcon} ${Math.abs(percent)}%</div></div>
+                            <div class="price-info-item"><div class="price-info-label">موجودی</div><div class="price-info-value"><span class="stock-badge ${stockClass}">${stockText}</span></div></div>
                         </div>
-                        <div class="price-info-item">
-                            <div class="price-info-label">قیمت جدید</div>
-                            <div class="price-info-value" style="color:${percent > 0 ? '#16a34a' : (percent < 0 ? '#dc2626' : '#475569')}">${formatNumber(product.currentPrice)}</div>
-                        </div>
-                        <div class="price-info-item">
-                            <div class="price-info-label">تغییرات</div>
-                            <div class="price-info-value">${changeIcon} ${Math.abs(percent)}%</div>
-                        </div>
-                        <div class="price-info-item">
-                            <div class="price-info-label">موجودی</div>
-                            <div class="price-info-value"><span class="stock-badge ${stockClass}">${stockText}</span></div>
-                        </div>
-                    </div>
-
-                    <button class="more-btn" data-id="${product.id}"><i class="fas fa-edit"></i> ویرایش قیمت و موجودی</button>
-                </div>
-            `;
+                        <button class="more-btn" data-id="${product.id}"><i class="fas fa-edit"></i> ویرایش قیمت و موجودی</button>
+                    </div>`;
         }).join('');
 
         document.querySelectorAll('.mobile-toggle-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                toggleProductEnabled(parseInt(btn.dataset.id));
-            });
+            btn.addEventListener('click', (e) => { e.stopPropagation(); toggleProductStatus(parseInt(btn.dataset.id)); });
         });
 
         document.querySelectorAll('.more-btn').forEach(btn => {
@@ -1063,10 +1058,7 @@
 
     function renderHistory() {
         const container = document.getElementById('historyList');
-        if (!priceHistory.length) {
-            container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px">هیچ تغییری ثبت نشده</div>';
-            return;
-        }
+        if (!priceHistory.length) { container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px">هیچ تغییری ثبت نشده</div>'; return; }
         container.innerHTML = priceHistory.slice(0, 15).map(h => `
             <div class="history-item">
                 <strong>${h.productTitle}</strong> : ${formatNumber(h.oldPrice)} → ${formatNumber(h.newPrice)}
@@ -1076,136 +1068,133 @@
         `).join('');
     }
 
-    function updateStats() {
-        const active = products.filter(p => p.enabled).length;
-        document.getElementById('totalProducts').innerText = products.length;
-        document.getElementById('activeCount').innerText = active;
-        const today = new Date().toLocaleDateString('fa-IR');
-        const todayChanges = priceHistory.filter(h => h.date.includes(today.split('،')[0])).length;
-        document.getElementById('todayChanges').innerText = todayChanges;
-        const avg = priceHistory.length ? (priceHistory.reduce((s, h) => s + h.percent, 0) / priceHistory.length).toFixed(1) : 0;
-        document.getElementById('avgIncrease').innerHTML = `${avg > 0 ? `🟢 +${avg}%` : (avg < 0 ? `🔴 ${avg}%` : '⚪ 0%')}`;
-    }
-
     function renderAll() {
         if (currentView === 'pc') renderTable();
         else renderMobile();
-        renderHistory();
-        updateStats();
+        updateStatsUI();
     }
 
-    // رویدادها
+    function updateStatsUI() {
+        document.getElementById('totalProducts').innerText = products.length;
+        let activeCount = products.filter(p => p.enabled).length;
+        document.getElementById('activeCount').innerText = activeCount;
+    }
+
+    // ---------- MODAL ----------
+    async function openModal(product) {
+        currentModalProduct = product;
+        document.getElementById('modalImg').innerHTML = product.imgIcon;
+        document.getElementById('modalTitle').innerHTML = product.title;
+        document.getElementById('modalOldPrice').innerHTML = formatNumber(product.oldPrice);
+        document.getElementById('modalPriceInput').value = formatNumber(product.currentPrice);
+        document.getElementById('modalStockInput').value = product.stock;
+        document.getElementById('modalDiscountInput').value = '';
+        updateModalPercentPreview(product.oldPrice, product.currentPrice);
+
+        // بارگذاری نمودار در مودال
+        const canvas = document.getElementById('modalSparkline');
+        if (canvas) await drawRealSparkline(canvas, product.id);
+
+        document.getElementById('fullModal').classList.add('active');
+    }
+
+    function updateModalPercentPreview(oldPrice, newPrice) {
+        let percent = calculatePercent(oldPrice, newPrice);
+        let div = document.getElementById('modalPercentPreview');
+        if (percent > 0) { div.innerHTML = `🟢 +${percent}% افزایش (${formatNumber(newPrice)} تومان)`; div.className = 'percent-preview percent-increase'; }
+        else if (percent < 0) { div.innerHTML = `🔴 ${percent}% کاهش (${formatNumber(newPrice)} تومان)`; div.className = 'percent-preview percent-decrease'; }
+        else { div.innerHTML = `⚪ بدون تغییر (${formatNumber(newPrice)} تومان)`; div.className = 'percent-preview'; }
+    }
+
+    function closeModal() { document.getElementById('fullModal').classList.remove('active'); currentModalProduct = null; }
+
+    // ---------- EVENT LISTENERS ----------
     document.getElementById('searchInput').addEventListener('input', (e) => {
         currentSearchTerm = e.target.value;
         document.getElementById('searchClearBtn').style.display = currentSearchTerm ? 'block' : 'none';
-        renderAll();
+        loadProducts();
     });
+
     document.getElementById('searchClearBtn').addEventListener('click', () => {
         document.getElementById('searchInput').value = '';
         currentSearchTerm = '';
         document.getElementById('searchClearBtn').style.display = 'none';
-        renderAll();
+        loadProducts();
     });
 
-    function switchView() {
+    document.getElementById('switchViewBtn').addEventListener('click', () => {
         if (currentView === 'pc') {
             document.getElementById('tableView').style.display = 'none';
             document.getElementById('mobileView').classList.add('active');
             currentView = 'mobile';
             document.getElementById('switchViewBtn').innerHTML = '<i class="fas fa-desktop"></i> نمای کامپیوتر';
-            renderMobile();
+            renderAll();
         } else {
             document.getElementById('tableView').style.display = 'block';
             document.getElementById('mobileView').classList.remove('active');
             currentView = 'pc';
             document.getElementById('switchViewBtn').innerHTML = '<i class="fas fa-mobile-alt"></i> نمای موبایل';
-            renderTable();
+            renderAll();
         }
-    }
-    document.getElementById('switchViewBtn').addEventListener('click', switchView);
+    });
 
     document.getElementById('excelPasteBtn').addEventListener('click', () => {
-        let txt = prompt('قیمت‌های جدید را一行一行 وارد کنید (مطابق ترتیب محصولات فیلتر شده):\nمثال:\n27500000\n70000000');
+        let txt = prompt('قیمت‌های جدید را一行一行 وارد کنید (مطابق ترتیب محصولات فیلتر شده):');
         if (txt) {
             let lines = txt.split(/\r?\n/).filter(l => l.trim());
             const filtered = getFilteredProducts();
             for (let i = 0; i < Math.min(lines.length, filtered.length); i++) {
                 let price = parseNumber(lines[i]);
-                if (price) updateProduct(filtered[i].id, price, undefined, undefined);
+                if (price) updatePriceOnServer(filtered[i].id, price);
             }
-            alert('قیمت‌ها با موفقیت به‌روز شد');
+            showMessage('در حال بروزرسانی قیمت‌ها...');
         }
     });
 
-    document.querySelectorAll('.category-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentCategory = btn.dataset.category;
-            renderAll();
-        });
+    // modal events
+    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+    document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
+    document.getElementById('modalSaveBtn').addEventListener('click', async () => {
+        if (currentModalProduct) {
+            let newPrice = parseNumber(document.getElementById('modalPriceInput').value);
+            let newStock = parseNumber(document.getElementById('modalStockInput').value);
+            if (newPrice > 0 && newPrice !== currentModalProduct.currentPrice) {
+                await updatePriceOnServer(currentModalProduct.id, newPrice, newStock);
+            }
+            if (newStock !== currentModalProduct.stock) {
+                await updateStockOnServer(currentModalProduct.id, newStock);
+            }
+            await loadProducts();
+            closeModal();
+        }
     });
 
-    // مودال - دکمه‌های سریع تخفیف
     document.querySelectorAll('.quick-discount-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             if (currentModalProduct) {
                 let percent = parseFloat(btn.dataset.discount);
                 let newPrice = Math.round(currentModalProduct.currentPrice * (1 - percent / 100));
                 document.getElementById('modalPriceInput').value = formatNumber(newPrice);
-                let p = calculatePercent(currentModalProduct.oldPrice, newPrice);
-                let div = document.getElementById('modalPercentPreview');
-                if (p > 0) {
-                    div.innerHTML = `🟢 +${p}% افزایش (${formatNumber(newPrice)} تومان)`;
-                    div.className = 'percent-preview percent-increase';
-                } else if (p < 0) {
-                    div.innerHTML = `🔴 ${p}% کاهش (${formatNumber(newPrice)} تومان)`;
-                    div.className = 'percent-preview percent-decrease';
-                } else {
-                    div.innerHTML = `⚪ بدون تغییر (${formatNumber(newPrice)} تومان)`;
-                    div.className = 'percent-preview';
-                }
+                updateModalPercentPreview(currentModalProduct.oldPrice, newPrice);
             }
         });
-    });
-
-    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
-    document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
-    document.getElementById('modalSaveBtn').addEventListener('click', () => {
-        if (currentModalProduct) {
-            let newPrice = parseNumber(document.getElementById('modalPriceInput').value);
-            let newStock = parseNumber(document.getElementById('modalStockInput').value);
-            let newType = document.getElementById('modalTypeSelect').value;
-            updateProduct(currentModalProduct.id, newPrice, newStock, newType);
-            closeModal();
-        }
     });
 
     document.getElementById('modalApplyDiscountBtn').addEventListener('click', () => {
         if (currentModalProduct) {
             let percent = parseFloat(document.getElementById('modalDiscountInput').value);
-            if (percent && !isNaN(percent)) {
+            if (!isNaN(percent) && percent !== 0) {
                 let newPrice = Math.round(currentModalProduct.currentPrice * (1 - percent / 100));
                 document.getElementById('modalPriceInput').value = formatNumber(newPrice);
-                let p = calculatePercent(currentModalProduct.oldPrice, newPrice);
-                let div = document.getElementById('modalPercentPreview');
-                if (p > 0) {
-                    div.innerHTML = `🟢 +${p}% افزایش (${formatNumber(newPrice)} تومان)`;
-                    div.className = 'percent-preview percent-increase';
-                } else if (p < 0) {
-                    div.innerHTML = `🔴 ${p}% کاهش (${formatNumber(newPrice)} تومان)`;
-                    div.className = 'percent-preview percent-decrease';
-                } else {
-                    div.innerHTML = `⚪ بدون تغییر (${formatNumber(newPrice)} تومان)`;
-                    div.className = 'percent-preview';
-                }
+                updateModalPercentPreview(currentModalProduct.oldPrice, newPrice);
                 document.getElementById('modalDiscountInput').value = '';
             }
         }
     });
 
-    loadFromLocalStorage();
-    renderAll();
+    // مقداردهی اولیه
+    loadCategories();
+    loadProducts();
 </script>
 </body>
 </html>
