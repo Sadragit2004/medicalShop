@@ -23,7 +23,8 @@ def is_staff_or_superuser(user):
     """بررسی staff یا superuser بودن کاربر"""
     return user.is_authenticated and (user.is_staff or user.is_superuser)
 
-
+@login_required
+@user_passes_test(is_superuser)
 def showUiPrice(request):
     """نمایش UI قیمت‌ها - بدون نیاز به احراز هویت (صرفاً صفحه نمایش)"""
     return render(request, 'price_app/price.html')
