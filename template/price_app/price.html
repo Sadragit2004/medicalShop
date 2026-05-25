@@ -820,6 +820,7 @@
         } catch(e) { console.error(e); }
     }
 
+   // تابع loadCategories در HTML - قسمت نمایش دسته‌بندی‌ها
     async function loadCategories() {
         try {
             let res = await fetch('/price/api/categories/');
@@ -829,20 +830,19 @@
                 container.innerHTML = '<button class="category-btn active" data-category="all"><i class="fas fa-layer-group"></i> همه</button>';
 
                 data.categories.forEach(cat => {
-                    // فقط دسته‌بندی‌هایی که parent ندارند (سطح 1)
-                    if (!cat.parent) {
-                        let btn = document.createElement('button');
-                        btn.className = 'category-btn';
-                        btn.dataset.category = cat.id;
-                        btn.innerHTML = `<i class="fas fa-tag"></i> ${cat.title}`;
-                        btn.addEventListener('click', () => {
-                            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-                            btn.classList.add('active');
-                            currentCategory = cat.id;
-                            loadProducts(); // بارگذاری مجدد با فیلتر
-                        });
-                        container.appendChild(btn);
-                    }
+                    // حالا cat.parent وجود دارد (چون سطح 2 هست)
+                    let btn = document.createElement('button');
+                    btn.className = 'category-btn';
+                    btn.dataset.category = cat.id;
+                    // نمایش نام دسته به همراه نام والد
+                    btn.innerHTML = `<i class="fas fa-tag"></i> ${cat.title} ${cat.parent ? `(${cat.parent.title})` : ''}`;
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        currentCategory = cat.id;
+                        loadProducts();
+                    });
+                    container.appendChild(btn);
                 });
             }
         } catch(e) { console.error(e); }

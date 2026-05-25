@@ -505,23 +505,29 @@ def get_dashboard_stats(request):
 @csrf_exempt
 @require_http_methods(["GET"])
 def get_categories_with_stats(request):
-    """دریافت دسته بندی‌های سطح اول با آمار"""
-    categories = Category.objects.filter(isActive=True, parent__isnull=True)
+    """دریافت دسته بندی‌های سطح دو (دسته‌بندی‌هایی که parent دارند) با آمار"""
+    # فقط دسته‌بندی‌هایی که parent دارند (سطح 2)
+    categories = Category.objects.filter(isActive=True, parent__isnull=False)
 
     data = []
     for cat in categories:
-        all_categories = [cat.id]
-        for child in cat.children.filter(isActive=True):
-            all_categories.append(child.id)
+        # تعداد محصولات در این دسته (فقط همین دسته، نه زیردسته‌ها)
+        product_count = Product.objects.filter(category=cat, isActive=True).count()
 
-        product_count = Product.objects.filter(category__id__in=all_categories, isActive=True).distinct().count()
+        # اطلاعات دسته‌بندی والد
+        parent_info = None
+        if cat.parent:
+            parent_info = {
+                'id': cat.parent.id,
+                'title': cat.parent.title
+            }
 
         data.append({
             'id': cat.id,
             'title': cat.title,
+            'parent': parent_info,  # اطلاعات والد
             'image': cat.image.url if cat.image else None,
             'product_count': product_count,
-            'parent': None,
         })
 
     return JsonResponse({'success': True, 'categories': data})
