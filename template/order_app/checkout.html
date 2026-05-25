@@ -369,7 +369,7 @@
                     </div>
                     <div class="flex-between mb-3">
 
-                        
+
                     </div>
                     <div class="flex-between mb-3 {% if discount_amount <= 0 %}hidden{% endif %}" style="color: #ef4444;">
                         <span>تخفیف ({{ discount_percent }}%)</span>
@@ -822,4 +822,42 @@ function clearNoneFields() {
 clearNoneFields();
 </script>
 
+<script>
+    // بررسی می‌کنیم که آیا قبلاً رفرش شده یا نه
+    if (!sessionStorage.getItem('pageRefreshed')) {
+        // اگر رفرش نشده بود، مقدار رو در sessionStorage ذخیره می‌کنیم
+        sessionStorage.setItem('pageRefreshed', 'true');
+        // بعد از 1.5 ثانیه صفحه رو رفرش می‌کنیم
+        setTimeout(function() {
+            location.reload();
+        }, 1500);
+    } else {
+        // اگر قبلاً رفرش شده بود، مقدار رو پاک می‌کنیم برای دفعه بعد
+        sessionStorage.removeItem('pageRefreshed');
+    }
+</script>
+
+
+<script>
+    // رفرش صفحه بعد از کلیک روی هر جای آدرس (کل کارت آدرس)
+    document.querySelectorAll('.address-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            // پیدا کردن رادیو باتن داخل این کارت
+            const radio = this.querySelector('input[name="address_radio"]');
+            if (radio && !radio.checked) {
+                // انتخاب کردن رادیو باتن
+                radio.checked = true;
+                // رفرش صفحه بعد از کلیک
+                setTimeout(function() {
+                    location.reload();
+                }, 300);
+            } else if (radio && radio.checked) {
+                // حتی اگه قبلاً انتخاب شده بود بازم رفرش کن
+                setTimeout(function() {
+                    location.reload();
+                }, 300);
+            }
+        });
+    });
+</script>
 {% endblock content %}
