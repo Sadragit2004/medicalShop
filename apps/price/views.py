@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from django.db import models
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
 from django.db.models import Q, Avg, Count
 import json
@@ -13,14 +14,27 @@ from apps.product.models import Product, ProductSaleType, Category
 from django.shortcuts import render
 
 
+# توابع کمکی برای بررسی دسترسی
+def is_superuser(user):
+    """بررسی سوپریوزر بودن کاربر"""
+    return user.is_authenticated and user.is_superuser
+
+def is_staff_or_superuser(user):
+    """بررسی staff یا superuser بودن کاربر"""
+    return user.is_authenticated and (user.is_staff or user.is_superuser)
+
+
 def showUiPrice(request):
+    """نمایش UI قیمت‌ها - بدون نیاز به احراز هویت (صرفاً صفحه نمایش)"""
     return render(request, 'price_app/price.html')
 
 
 @csrf_exempt
 @require_http_methods(["GET"])
+@login_required
+@user_passes_test(is_superuser)
 def get_products_list(request):
-    """دریافت لیست محصولات با قیمت‌ها"""
+    """دریافت لیست محصولات با قیمت‌ها - فقط سوپریوزر"""
     products = Product.objects.filter(isActive=True).prefetch_related('saleTypes', 'typetitle')
 
     category_id = request.GET.get('category')
@@ -50,7 +64,6 @@ def get_products_list(request):
             product=product, is_current=True
         ).first()
 
-        # دریافت نوع محصول (TypeProductTitle)
         product_type_title = product.typetitle.title if product.typetitle else 'فیزیکی'
 
         data.append({
@@ -63,7 +76,7 @@ def get_products_list(request):
             'category': [{'id': cat.id, 'title': cat.title} for cat in product.category.all()],
             'brand': product.brand.title if product.brand else None,
             'sale_types': sale_types,
-            'product_type_title': product_type_title,  # اضافه کردن نوع محصول
+            'product_type_title': product_type_title,
             'last_price': {
                 'price_old': last_price.price_old if last_price else None,
                 'price_new': last_price.price_new if last_price else sale_types[0]['price'] if sale_types else 0,
@@ -76,8 +89,10 @@ def get_products_list(request):
 
 @csrf_exempt
 @require_http_methods(["GET"])
+@login_required
+@user_passes_test(is_staff_or_superuser)
 def get_product_detail(request, product_id):
-    """دریافت جزئیات یک محصول"""
+    """دریافت جزئیات یک محصول - staff یا superuser"""
     try:
         product = Product.objects.get(id=product_id, isActive=True)
     except Product.DoesNotExist:
@@ -143,8 +158,10 @@ def get_product_detail(request, product_id):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@login_required
+@user_passes_test(is_superuser)
 def update_product_price(request):
-    """به روز رسانی قیمت محصول"""
+    """به روز رسانی قیمت محصول - فقط سوپریوزر"""
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
@@ -156,7 +173,6 @@ def update_product_price(request):
     source = data.get('source', 'manual_phone')
     source_detail = data.get('source_detail', '')
     note = data.get('note', '')
-    user_id = data.get('user_id')
 
     if not product_id or not new_price:
         return JsonResponse({'success': False, 'error': 'product_id و price الزامی هستند'}, status=400)
@@ -196,20 +212,15 @@ def update_product_price(request):
     percent_change = round(((new_price_int - old_price) / old_price) * 100, 2) if old_price > 0 else 0
     change_type = 'increase' if new_price_int > old_price else 'decrease'
 
-    user = None
-    user_name = ''
-    if user_id:
-        try:
-            user = CustomUser.objects.get(id=user_id)
-            user_name = user.get_full_name() or user.username
-        except CustomUser.DoesNotExist:
-            pass
+    # استفاده از کاربر جاری لاگین شده
+    user = request.user
+    user_name = user.get_full_name() or user.username
 
     price_history = ProductPriceHistory.objects.create(
         product=product, sale_type=sale_type,
         price_old=old_price, price_new=new_price_int,
         percent_change=Decimal(str(percent_change)), change_type=change_type,
-        changed_by=user, changed_by_name=user_name or 'سیستم',
+        changed_by=user, changed_by_name=user_name,
         source=source, source_detail=source_detail, note=note,
         is_current=True, created_at=timezone.now()
     )
@@ -227,42 +238,39 @@ def update_product_price(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@login_required
+@user_passes_test(is_superuser)
 def toggle_product_status(request, product_id):
-    """فعال/غیرفعال کردن محصول با ذخیره و بازیابی موجودی"""
+    """فعال/غیرفعال کردن محصول با ذخیره و بازیابی موجودی - فقط سوپریوزر"""
     try:
         product = Product.objects.get(id=product_id)
         old_status = product.isActive
         old_stock = product.stock
 
-        # دریافت کاربر (از session یا token)
-        user = None
-        user_name = 'سیستم'
-        # می‌توانید کاربر لاگین شده را از request دریافت کنید
+        # دریافت کاربر لاگین شده
+        user = request.user
 
         # ذخیره در تاریخچه موجودی قبل از تغییر
         if old_status:  # در حال غیرفعال کردن
-            # موجودی قبلی را ذخیره می‌کنیم برای بازیابی بعدی
             ProductStockHistory.objects.create(
                 product=product,
                 stock_old=old_stock,
                 stock_new=0,
                 change_type='toggle_off',
-                saved_stock_before_disable=old_stock,  # ذخیره موجودی برای بازیابی
+                saved_stock_before_disable=old_stock,
                 changed_by=user,
-                changed_by_name=user_name,
+
                 note=f"محصول غیرفعال شد. موجودی {old_stock} ذخیره شد."
             )
-            product.stock = 0  # موجودی را صفر می‌کنیم
+            product.stock = 0
 
         else:  # در حال فعال کردن
-            # آخرین موجودی ذخیره شده قبل از غیرفعال شدن را پیدا می‌کنیم
             last_toggle_off = ProductStockHistory.objects.filter(
                 product=product,
                 change_type='toggle_off',
                 saved_stock_before_disable__isnull=False
             ).order_by('-created_at').first()
 
-            # موجودی قبلی را بازیابی می‌کنیم (اگر وجود داشته باشد)
             restored_stock = last_toggle_off.saved_stock_before_disable if last_toggle_off else 1
 
             ProductStockHistory.objects.create(
@@ -272,7 +280,7 @@ def toggle_product_status(request, product_id):
                 change_type='toggle_on',
                 saved_stock_before_disable=None,
                 changed_by=user,
-                changed_by_name=user_name,
+
                 note=f"محصول فعال شد. موجودی از {old_stock} به {restored_stock} بازیابی شد."
             )
             product.stock = restored_stock
@@ -295,8 +303,10 @@ def toggle_product_status(request, product_id):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@login_required
+@user_passes_test(is_superuser)
 def update_product_stock(request, product_id):
-    """به روز رسانی موجودی محصول با ثبت در تاریخچه"""
+    """به روز رسانی موجودی محصول با ثبت در تاریخچه - فقط سوپریوزر"""
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
@@ -313,19 +323,21 @@ def update_product_stock(request, product_id):
         product = Product.objects.get(id=product_id)
         old_stock = product.stock
 
-        # اگر تغییری نکرده
         if old_stock == int(new_stock):
             return JsonResponse({'success': True, 'message': 'موجودی تغییری نکرده است'})
 
-        # ثبت در تاریخچه موجودی
+        # استفاده از کاربر جاری
+        user = request.user
+        user_name = user.get_full_name() or user.username
+
         ProductStockHistory.objects.create(
             product=product,
             stock_old=old_stock,
             stock_new=int(new_stock),
             change_type=change_type,
             saved_stock_before_disable=None,
-            changed_by=None,
-            changed_by_name='مدیر سیستم',
+            changed_by=user,
+
             note=note
         )
 
@@ -347,8 +359,10 @@ def update_product_stock(request, product_id):
 
 @csrf_exempt
 @require_http_methods(["GET"])
+@login_required
+@user_passes_test(is_staff_or_superuser)
 def get_product_stock_history(request, product_id):
-    """دریافت تاریخچه موجودی محصول"""
+    """دریافت تاریخچه موجودی محصول - staff یا superuser"""
     try:
         product = Product.objects.get(id=product_id)
     except Product.DoesNotExist:
@@ -384,8 +398,10 @@ def get_product_stock_history(request, product_id):
 
 @csrf_exempt
 @require_http_methods(["GET"])
+@login_required
+@user_passes_test(is_staff_or_superuser)
 def get_price_history(request, product_id):
-    """دریافت تاریخچه قیمت یک محصول"""
+    """دریافت تاریخچه قیمت یک محصول - staff یا superuser"""
     try:
         product = Product.objects.get(id=product_id)
     except Product.DoesNotExist:
@@ -438,8 +454,10 @@ def get_price_history(request, product_id):
 
 @csrf_exempt
 @require_http_methods(["GET"])
+@login_required
+@user_passes_test(is_superuser)
 def get_dashboard_stats(request):
-    """دریافت آمار داشبورد"""
+    """دریافت آمار داشبورد - فقط سوپریوزر"""
     from datetime import timedelta
 
     total_products = Product.objects.filter(isActive=True).count()
@@ -508,17 +526,16 @@ def get_dashboard_stats(request):
 
 @csrf_exempt
 @require_http_methods(["GET"])
+@login_required
+@user_passes_test(is_staff_or_superuser)
 def get_categories_with_stats(request):
-    """دریافت دسته بندی‌های سطح دو (دسته‌بندی‌هایی که parent دارند) با آمار"""
-    # فقط دسته‌بندی‌هایی که parent دارند (سطح 2)
+    """دریافت دسته بندی‌های سطح دو - staff یا superuser"""
     categories = Category.objects.filter(isActive=True, parent__isnull=False)
 
     data = []
     for cat in categories:
-        # تعداد محصولات در این دسته (فقط همین دسته، نه زیردسته‌ها)
         product_count = Product.objects.filter(category=cat, isActive=True).count()
 
-        # اطلاعات دسته‌بندی والد
         parent_info = None
         if cat.parent:
             parent_info = {
@@ -529,7 +546,7 @@ def get_categories_with_stats(request):
         data.append({
             'id': cat.id,
             'title': cat.title,
-            'parent': parent_info,  # اطلاعات والد
+            'parent': parent_info,
             'image': cat.image.url if cat.image else None,
             'product_count': product_count,
         })
@@ -539,8 +556,10 @@ def get_categories_with_stats(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@login_required
+@user_passes_test(is_superuser)
 def bulk_update_prices(request):
-    """به روز رسانی چند قیمت همزمان"""
+    """به روز رسانی چند قیمت همزمان - فقط سوپریوزر"""
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
@@ -587,11 +606,15 @@ def bulk_update_prices(request):
             percent_change = round(((new_price_int - old_price) / old_price) * 100, 2) if old_price > 0 else 0
             change_type = 'increase' if new_price_int > old_price else 'decrease'
 
+            # استفاده از کاربر جاری
+            user = request.user
+            user_name = user.get_full_name() or user.username
+
             price_history = ProductPriceHistory.objects.create(
                 product=product, sale_type=sale_type,
                 price_old=old_price, price_new=new_price_int,
                 percent_change=Decimal(str(percent_change)), change_type=change_type,
-                changed_by_name='سیستم', source='manual_excel',
+                changed_by=user, changed_by_name=user_name, source='manual_excel',
                 is_current=True, created_at=timezone.now()
             )
 
@@ -613,6 +636,3 @@ def bulk_update_prices(request):
         'results': results,
         'errors': errors
     })
-
-
-
