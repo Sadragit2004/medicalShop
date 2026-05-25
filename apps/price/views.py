@@ -21,7 +21,7 @@ def showUiPrice(request):
 @require_http_methods(["GET"])
 def get_products_list(request):
     """دریافت لیست محصولات با قیمت‌ها"""
-    products = Product.objects.filter(isActive=True).prefetch_related('saleTypes')
+    products = Product.objects.filter(isActive=True).prefetch_related('saleTypes', 'typetitle')
 
     category_id = request.GET.get('category')
     if category_id:
@@ -50,6 +50,9 @@ def get_products_list(request):
             product=product, is_current=True
         ).first()
 
+        # دریافت نوع محصول (TypeProductTitle)
+        product_type_title = product.typetitle.title if product.typetitle else 'فیزیکی'
+
         data.append({
             'id': product.id,
             'title': product.title,
@@ -60,6 +63,7 @@ def get_products_list(request):
             'category': [{'id': cat.id, 'title': cat.title} for cat in product.category.all()],
             'brand': product.brand.title if product.brand else None,
             'sale_types': sale_types,
+            'product_type_title': product_type_title,  # اضافه کردن نوع محصول
             'last_price': {
                 'price_old': last_price.price_old if last_price else None,
                 'price_new': last_price.price_new if last_price else sale_types[0]['price'] if sale_types else 0,
