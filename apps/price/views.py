@@ -10,7 +10,7 @@ from decimal import Decimal
 
 from .models import ProductPriceHistory, ProductStockHistory
 from apps.user.models.user import CustomUser
-from apps.product.models import Product, ProductSaleType, Category
+from apps.product.models import Product, ProductSaleType, Category, TypeProductTitle
 from django.shortcuts import render
 
 
@@ -23,10 +23,11 @@ def is_staff_or_superuser(user):
     """بررسی staff یا superuser بودن کاربر"""
     return user.is_authenticated and (user.is_staff or user.is_superuser)
 
+
 @login_required
 @user_passes_test(is_superuser)
 def showUiPrice(request):
-    """نمایش UI قیمت‌ها - بدون نیاز به احراز هویت (صرفاً صفحه نمایش)"""
+    """نمایش UI قیمت‌ها"""
     return render(request, 'price_app/price.html')
 
 
@@ -213,9 +214,8 @@ def update_product_price(request):
     percent_change = round(((new_price_int - old_price) / old_price) * 100, 2) if old_price > 0 else 0
     change_type = 'increase' if new_price_int > old_price else 'decrease'
 
-    # استفاده از کاربر جاری لاگین شده
     user = request.user
-    user_name = user.get_full_name() or user.username
+    user_name = str(user.mobileNumber) or user.username
 
     price_history = ProductPriceHistory.objects.create(
         product=product, sale_type=sale_type,
@@ -241,52 +241,117 @@ def update_product_price(request):
 @require_http_methods(["POST"])
 @login_required
 @user_passes_test(is_superuser)
-def toggle_product_status(request, product_id):
-    """فعال/غیرفعال کردن محصول با ذخیره و بازیابی موجودی - فقط سوپریوزر"""
+def toggle_product_with_stock_management(request, product_id):
+    """
+    مدیریت دکمه خاموش/روشن - فقط موجودی را مدیریت می‌کند:
+    - اگر موجودی > 0: موجودی را ذخیره و صفر می‌کند (خاموش)
+    - اگر موجودی == 0: آخرین موجودی ذخیره شده را بازیابی می‌کند (روشن)
+
+    isActive محصول هرگز تغییر نمی‌کند - دست نمی‌زنیم بهش
+    """
     try:
         product = Product.objects.get(id=product_id)
-        old_status = product.isActive
         old_stock = product.stock
-
-        # دریافت کاربر لاگین شده
         user = request.user
+        user_name = str(user.mobileNumber) or user.username
 
-        # ذخیره در تاریخچه موجودی قبل از تغییر
-        if old_status:  # در حال غیرفعال کردن
+        if old_stock > 0:
+            # ====== خاموش کردن (موجودی را صفر کن) ======
             ProductStockHistory.objects.create(
                 product=product,
                 stock_old=old_stock,
                 stock_new=0,
-                change_type='toggle_off',
+                change_type='stock_off',
                 saved_stock_before_disable=old_stock,
                 changed_by=user,
-
-                note=f"محصول غیرفعال شد. موجودی {old_stock} ذخیره شد."
+                changed_by_name=user_name,
+                note=f"موجودی از {old_stock} به صفر تنظیم شد."
             )
-            product.stock = 0
 
-        else:  # در حال فعال کردن
-            last_toggle_off = ProductStockHistory.objects.filter(
+            product.stock = 0
+            product.save()
+
+            return JsonResponse({
+                'success': True,
+                'product_id': product_id,
+                'isActive': product.isActive,
+                'stock': 0,
+                'old_stock': old_stock,
+                'message': f"موجودی به صفر رسید"
+            })
+
+        else:
+            # ====== روشن کردن (موجودی را بازیابی کن) ======
+            last_record = ProductStockHistory.objects.filter(
                 product=product,
-                change_type='toggle_off',
-                saved_stock_before_disable__isnull=False
+                change_type='stock_off',
+                saved_stock_before_disable__isnull=False,
+                saved_stock_before_disable__gt=0
             ).order_by('-created_at').first()
 
-            restored_stock = last_toggle_off.saved_stock_before_disable if last_toggle_off else 1
+            restored_stock = last_record.saved_stock_before_disable if last_record else 1
 
             ProductStockHistory.objects.create(
                 product=product,
                 stock_old=old_stock,
                 stock_new=restored_stock,
-                change_type='toggle_on',
+                change_type='stock_on',
                 saved_stock_before_disable=None,
                 changed_by=user,
-
-                note=f"محصول فعال شد. موجودی از {old_stock} به {restored_stock} بازیابی شد."
+                changed_by_name=user_name,
+                note=f"موجودی از {old_stock} به {restored_stock} بازیابی شد"
             )
-            product.stock = restored_stock
 
-        product.isActive = not old_status
+            product.stock = restored_stock
+            product.save()
+
+            return JsonResponse({
+                'success': True,
+                'product_id': product_id,
+                'isActive': product.isActive,
+                'stock': restored_stock,
+                'old_stock': old_stock,
+                'restored_from': restored_stock,
+                'message': f"موجودی به {restored_stock} بازگشت"
+            })
+
+    except Product.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'محصول یافت نشد'}, status=404)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+@user_passes_test(is_superuser)
+def set_product_stock_to_zero(request, product_id):
+    """تنظیم موجودی محصول به صفر بدون تغییر وضعیت فعال/غیرفعال - فقط سوپریوزر"""
+    try:
+        product = Product.objects.get(id=product_id)
+        old_stock = product.stock
+
+        if old_stock == 0:
+            return JsonResponse({
+                'success': True,
+                'message': 'موجودی محصول در حال حاضر صفر است',
+                'product_id': product_id,
+                'stock': product.stock,
+                'isActive': product.isActive
+            })
+
+        user = request.user
+        user_name = str(user.mobileNumber) or user.username
+
+        ProductStockHistory.objects.create(
+            product=product,
+            stock_old=old_stock,
+            stock_new=0,
+            change_type='set_to_zero',
+            saved_stock_before_disable=old_stock,
+            changed_by=user,
+            changed_by_name=user_name,
+            note=f"موجودی از {old_stock} به صفر تنظیم شد. محصول فعال باقی ماند."
+        )
+
+        product.stock = 0
         product.save()
 
         return JsonResponse({
@@ -295,7 +360,63 @@ def toggle_product_status(request, product_id):
             'isActive': product.isActive,
             'stock': product.stock,
             'old_stock': old_stock,
-            'message': f"محصول {'فعال' if product.isActive else 'غیرفعال'} شد. موجودی: {product.stock}"
+            'message': f"موجودی محصول با موفقیت به صفر رسید"
+        })
+
+    except Product.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'محصول یافت نشد'}, status=404)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+@user_passes_test(is_superuser)
+def restore_product_stock(request, product_id):
+    """بازیابی موجودی محصول از آخرین مقدار ذخیره شده - فقط سوپریوزر"""
+    try:
+        product = Product.objects.get(id=product_id)
+        old_stock = product.stock
+
+        last_zero_record = ProductStockHistory.objects.filter(
+            product=product,
+            change_type='set_to_zero',
+            saved_stock_before_disable__isnull=False,
+            saved_stock_before_disable__gt=0
+        ).order_by('-created_at').first()
+
+        if not last_zero_record:
+            return JsonResponse({
+                'success': False,
+                'error': 'هیچ موجودی قبلی برای بازیابی یافت نشد'
+            }, status=400)
+
+        restored_stock = last_zero_record.saved_stock_before_disable
+
+        user = request.user
+        user_name = str(user.mobileNumber) or user.username
+
+        ProductStockHistory.objects.create(
+            product=product,
+            stock_old=old_stock,
+            stock_new=restored_stock,
+            change_type='restore_stock',
+            saved_stock_before_disable=None,
+            changed_by=user,
+            changed_by_name=user_name,
+            note=f"موجودی از {old_stock} به {restored_stock} بازیابی شد"
+        )
+
+        product.stock = restored_stock
+        product.save()
+
+        return JsonResponse({
+            'success': True,
+            'product_id': product_id,
+            'isActive': product.isActive,
+            'stock': product.stock,
+            'old_stock': old_stock,
+            'restored_from': restored_stock,
+            'message': f"موجودی محصول با موفقیت به {restored_stock} بازیابی شد"
         })
 
     except Product.DoesNotExist:
@@ -327,9 +448,8 @@ def update_product_stock(request, product_id):
         if old_stock == int(new_stock):
             return JsonResponse({'success': True, 'message': 'موجودی تغییری نکرده است'})
 
-        # استفاده از کاربر جاری
         user = request.user
-        user_name = user.get_full_name() or user.username
+        user_name = str(user.mobileNumber) or user.username
 
         ProductStockHistory.objects.create(
             product=product,
@@ -338,7 +458,7 @@ def update_product_stock(request, product_id):
             change_type=change_type,
             saved_stock_before_disable=None,
             changed_by=user,
-
+            changed_by_name=user_name,
             note=note
         )
 
@@ -459,8 +579,6 @@ def get_price_history(request, product_id):
 @user_passes_test(is_superuser)
 def get_dashboard_stats(request):
     """دریافت آمار داشبورد - فقط سوپریوزر"""
-    from datetime import timedelta
-
     total_products = Product.objects.filter(isActive=True).count()
     out_of_stock = Product.objects.filter(isActive=True, stock=0).count()
 
@@ -607,9 +725,8 @@ def bulk_update_prices(request):
             percent_change = round(((new_price_int - old_price) / old_price) * 100, 2) if old_price > 0 else 0
             change_type = 'increase' if new_price_int > old_price else 'decrease'
 
-            # استفاده از کاربر جاری
             user = request.user
-            user_name = user.get_full_name() or user.username
+            user_name = str(user.mobileNumber) or user.username
 
             price_history = ProductPriceHistory.objects.create(
                 product=product, sale_type=sale_type,

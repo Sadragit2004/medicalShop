@@ -579,6 +579,15 @@
             width: 100px;
             height: 40px;
         }
+
+        .stock-zero-badge {
+            background: #ef4444;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -612,7 +621,18 @@
 
 <div class="table-container" id="tableView">
     <table class="product-table">
-        <thead><tr><th>وضعیت</th><th>محصول</th><th>نوع</th><th>قیمت قبلی</th><th>قیمت جدید</th><th>موجودی</th><th>تغییرات</th><th>روند</th></tr></thead>
+        <thead>
+            <tr>
+                <th>وضعیت موجودی</th>
+                <th>محصول</th>
+                <th>نوع</th>
+                <th>قیمت قبلی</th>
+                <th>قیمت جدید</th>
+                <th>موجودی</th>
+                <th>تغییرات</th>
+                <th>روند</th>
+            </tr>
+        </thead>
         <tbody id="productTableBody"></tbody>
     </table>
 </div>
@@ -719,7 +739,7 @@
     async function drawRealSparkline(canvas, productId) {
         if (!canvas) return;
         try {
-            let res = await fetch(`/price/api/history/${productId}/?limit=12`);
+            let res = await fetch(`/price/api/product/${productId}/price-history/?limit=12`);
             let data = await res.json();
             if (data.success && data.history && data.history.length > 0) {
                 let prices = data.history.map(h => h.price_new).reverse();
@@ -770,7 +790,6 @@
         }
         ctx.stroke();
 
-        // نقطه آخر
         const lastX = w;
         let lastY = h;
         if (range > 0) {
@@ -797,7 +816,7 @@
     // ---------- API CALLS ----------
     async function loadStats() {
         try {
-            let res = await fetch('/price/api/dashboard/stats/');
+            let res = await fetch('/price/api/dashboard-stats/');
             let data = await res.json();
             if (data.success) {
                 document.getElementById('totalProducts').innerText = data.stats.total_products;
@@ -820,7 +839,6 @@
         } catch(e) { console.error(e); }
     }
 
-   // تابع loadCategories در HTML - قسمت نمایش دسته‌بندی‌ها
     async function loadCategories() {
         try {
             let res = await fetch('/price/api/categories/');
@@ -830,11 +848,9 @@
                 container.innerHTML = '<button class="category-btn active" data-category="all"><i class="fas fa-layer-group"></i> همه</button>';
 
                 data.categories.forEach(cat => {
-                    // حالا cat.parent وجود دارد (چون سطح 2 هست)
                     let btn = document.createElement('button');
                     btn.className = 'category-btn';
                     btn.dataset.category = cat.id;
-                    // نمایش نام دسته به همراه نام والد
                     btn.innerHTML = `<i class="fas fa-tag"></i> ${cat.title} ${cat.parent ? `(${cat.parent.title})` : ''}`;
                     btn.addEventListener('click', () => {
                         document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
@@ -867,9 +883,10 @@
                     currentPrice: p.last_price?.price_new || (p.sale_types[0]?.price || 0),
                     oldPrice: p.last_price?.price_old || (p.sale_types[0]?.price || 0),
                     stock: p.stock,
-                    product_type_title: p.product_type_title || 'فیزیکی',  // استفاده از type محصول واقعی
+                    product_type_title: p.product_type_title || 'فیزیکی',
                     enabled: p.isActive,
-                    sale_type_id: p.sale_types[0]?.id
+                    sale_type_id: p.sale_types[0]?.id,
+                    isStockZero: p.stock === 0
                 }));
                 products.forEach(p => { if(p.sale_type_id) saleTypeIdMap.set(p.id, p.sale_type_id); });
                 renderAll();
@@ -889,7 +906,7 @@
         let sid = saleTypeIdMap.get(productId);
         if (!sid) { showMessage('نوع فروش برای این محصول یافت نشد', true); return false; }
         try {
-            let res = await fetch('/price/api/price/update/', {
+            let res = await fetch('/price/api/product/update-price/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ product_id: productId, sale_type_id: sid, price: newPrice, source: 'manual_phone' })
@@ -911,10 +928,10 @@
 
     async function updateStockOnServer(productId, newStock) {
         try {
-            let res = await fetch(`/price/api/product/${productId}/stock/`, {
+            let res = await fetch(`/price/api/product/${productId}/update-stock/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ stock: newStock })
+                body: JSON.stringify({ stock: newStock, change_type: 'manual' })
             });
             let data = await res.json();
             if (data.success) {
@@ -926,142 +943,140 @@
         } catch(e) { showMessage('خطا در ارتباط', true); return false; }
     }
 
-    async function toggleProductStatus(productId) {
-    try {
-        let res = await fetch(`/price/api/product/${productId}/toggle/`, { method: 'POST' });
-        let data = await res.json();
-        if (data.success) {
-            let prod = products.find(p => p.id === productId);
-            if (prod) {
-                prod.enabled = data.isActive;
-                // موجودی واقعی که از سرور برگشته را استفاده کن
-                // سرور در پاسخ toggle، stock واقعی (بازیابی شده) را برمی‌گرداند
-                prod.stock = data.stock;
+    // تابع اصلی برای دکمه خاموش/روشن موجودی
+    async function toggleProductStock(productId) {
+        try {
+            let res = await fetch(`/price/api/product/${productId}/toggle/`, { method: 'POST' });
+            let data = await res.json();
+            if (data.success) {
+                let prod = products.find(p => p.id === productId);
+                if (prod) {
+                    prod.stock = data.stock;
+                    prod.isStockZero = data.stock === 0;
+                }
+                showMessage(data.message);
+                renderAll();
+                loadStats();
+            } else {
+                showMessage(data.error || 'خطا در تغییر وضعیت موجودی', true);
             }
-            showMessage(data.message);
-            renderAll();
-            loadStats();
-        } else {
-            showMessage(data.error || 'خطا در تغییر وضعیت', true);
+        } catch(e) {
+            showMessage('خطا در ارتباط', true);
+            console.error(e);
         }
-    } catch(e) {
-        showMessage('خطا در ارتباط', true);
-        console.error(e);
     }
-}
 
     // ---------- RENDERING ----------
     function renderTable() {
-    const filtered = getFilteredProducts();
-    document.getElementById('searchResultsCount').innerHTML = `${filtered.length} محصول`;
-    const tbody = document.getElementById('productTableBody');
-    if (!tbody) return;
+        const filtered = getFilteredProducts();
+        document.getElementById('searchResultsCount').innerHTML = `${filtered.length} محصول`;
+        const tbody = document.getElementById('productTableBody');
+        if (!tbody) return;
 
-    tbody.innerHTML = filtered.map(product => {
-        const percent = calculatePercent(product.oldPrice, product.currentPrice);
-        let badgeClass = 'badge-same', badgeText = '۰%';
-        if (percent > 0) { badgeClass = 'badge-increase'; badgeText = `🟢 +${percent}%`; }
-        else if (percent < 0) { badgeClass = 'badge-decrease'; badgeText = `🔴 ${percent}%`; }
+        tbody.innerHTML = filtered.map(product => {
+            const percent = calculatePercent(product.oldPrice, product.currentPrice);
+            let badgeClass = 'badge-same', badgeText = '۰%';
+            if (percent > 0) { badgeClass = 'badge-increase'; badgeText = `🟢 +${percent}%`; }
+            else if (percent < 0) { badgeClass = 'badge-decrease'; badgeText = `🔴 ${percent}%`; }
 
-        const isDisabled = !product.enabled;
-        // استفاده از product_type_title واقعی که از دیتابیس میاد
-        const typeLabel = product.product_type_title;
+            const isStockZero = product.stock === 0;
+            const typeLabel = product.product_type_title;
 
-        // کلاس‌های مختلف برای انواع مختلف محصول
-        let typeClass = 'type-physical';
-        if (typeLabel === 'دانلودی' || typeLabel === 'نرم افزاری') typeClass = 'type-download';
-        else if (typeLabel === 'بسته‌ای' || typeLabel === 'کارتنی') typeClass = 'type-package';
+            let typeClass = 'type-physical';
+            if (typeLabel === 'دانلودی' || typeLabel === 'نرم افزاری') typeClass = 'type-download';
+            else if (typeLabel === 'بسته‌ای' || typeLabel === 'کارتنی') typeClass = 'type-package';
 
-        return `<tr class="${isDisabled ? 'disabled' : ''}">
-                    <td><button class="toggle-btn ${!isDisabled ? 'active' : ''}" data-id="${product.id}"></button></td>
-                    <td>${highlightText(product.title, currentSearchTerm)}</td>
-                    <td><span class="type-badge ${typeClass}">${typeLabel}</span></td>
-                    <td>${formatNumber(product.oldPrice)}</td>
-                    <td><input type="text" class="price-input" data-id="${product.id}" value="${formatNumber(product.currentPrice)}" ${isDisabled ? 'disabled' : ''}></td>
-                    <td><input type="number" class="stock-input" data-id="${product.id}" value="${product.stock}" ${isDisabled ? 'disabled' : ''} style="width:90px"></td>
-                    <td><span class="${badgeClass}">${badgeText}</span></td>
-                    <td><canvas class="sparkline-canvas" data-id="${product.id}" width="100" height="40"></canvas></td>
-                  </tr>`;
-    }).join('');
+            return `<tr>
+                        <td>
+                            <button class="toggle-btn ${!isStockZero ? 'active' : ''}" data-id="${product.id}"></button>
+                            ${isStockZero ? '<span class="stock-zero-badge">خاموش</span>' : '<span class="stock-zero-badge" style="background:#22c55e">روشن</span>'}
+                        </td>
+                        <td>${highlightText(product.title, currentSearchTerm)}</td>
+                        <td><span class="type-badge ${typeClass}">${typeLabel}</span></td>
+                        <td>${formatNumber(product.oldPrice)}</td>
+                        <td><input type="text" class="price-input" data-id="${product.id}" value="${formatNumber(product.currentPrice)}"></td>
+                        <td><input type="number" class="stock-input" data-id="${product.id}" value="${product.stock}" style="width:90px"></td>
+                        <td><span class="${badgeClass}">${badgeText}</span></td>
+                        <td><canvas class="sparkline-canvas" data-id="${product.id}" width="100" height="40"></canvas></td>
+                    </tr>`;
+        }).join('');
 
-    document.querySelectorAll('.toggle-btn').forEach(btn => {
-        btn.addEventListener('click', () => toggleProductStatus(parseInt(btn.dataset.id)));
-    });
-
-    document.querySelectorAll('.price-input').forEach(inp => {
-        if (inp.disabled) return;
-        const pid = parseInt(inp.dataset.id);
-        let timeout;
-        inp.addEventListener('input', function() {
-            let raw = parseNumber(this.value);
-            this.value = formatNumber(raw);
-            clearTimeout(timeout);
-            timeout = setTimeout(() => { if (raw > 0) updatePriceOnServer(pid, raw); }, 800);
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => toggleProductStock(parseInt(btn.dataset.id)));
         });
-    });
 
-    document.querySelectorAll('.stock-input').forEach(inp => {
-        if (inp.disabled) return;
-        const pid = parseInt(inp.dataset.id);
-        inp.addEventListener('change', function() { updateStockOnServer(pid, parseNumber(this.value)); });
-    });
+        document.querySelectorAll('.price-input').forEach(inp => {
+            const pid = parseInt(inp.dataset.id);
+            let timeout;
+            inp.addEventListener('input', function() {
+                let raw = parseNumber(this.value);
+                this.value = formatNumber(raw);
+                clearTimeout(timeout);
+                timeout = setTimeout(() => { if (raw > 0) updatePriceOnServer(pid, raw); }, 800);
+            });
+        });
 
-    filtered.forEach(p => {
-        const canvas = document.querySelector(`.sparkline-canvas[data-id="${p.id}"]`);
-        if (canvas) drawRealSparkline(canvas, p.id);
-    });
-}
+        document.querySelectorAll('.stock-input').forEach(inp => {
+            const pid = parseInt(inp.dataset.id);
+            inp.addEventListener('change', function() { updateStockOnServer(pid, parseNumber(this.value)); });
+        });
+
+        filtered.forEach(p => {
+            const canvas = document.querySelector(`.sparkline-canvas[data-id="${p.id}"]`);
+            if (canvas) drawRealSparkline(canvas, p.id);
+        });
+    }
 
     function renderMobile() {
-    const filtered = getFilteredProducts();
-    const container = document.getElementById('mobileCardsContainer');
-    if (!container) return;
-    document.getElementById('searchResultsCount').innerHTML = `${filtered.length} محصول`;
+        const filtered = getFilteredProducts();
+        const container = document.getElementById('mobileCardsContainer');
+        if (!container) return;
+        document.getElementById('searchResultsCount').innerHTML = `${filtered.length} محصول`;
 
-    container.innerHTML = filtered.map(product => {
-        const percent = calculatePercent(product.oldPrice, product.currentPrice);
-        const isDisabled = !product.enabled;
-        const typeLabel = product.product_type_title;
+        container.innerHTML = filtered.map(product => {
+            const percent = calculatePercent(product.oldPrice, product.currentPrice);
+            const isStockZero = product.stock === 0;
+            const typeLabel = product.product_type_title;
 
-        let typeClass = 'type-physical';
-        if (typeLabel === 'دانلودی' || typeLabel === 'نرم افزاری') typeClass = 'type-download';
-        else if (typeLabel === 'بسته‌ای' || typeLabel === 'کارتنی') typeClass = 'type-package';
+            let typeClass = 'type-physical';
+            if (typeLabel === 'دانلودی' || typeLabel === 'نرم افزاری') typeClass = 'type-download';
+            else if (typeLabel === 'بسته‌ای' || typeLabel === 'کارتنی') typeClass = 'type-package';
 
-        let changeIcon = percent > 0 ? '🟢' : (percent < 0 ? '🔴' : '⚪');
-        let stockClass = product.stock === 0 ? 'low' : '';
-        let stockText = product.stock === 0 ? 'ناموجود' : `${formatNumber(product.stock)} عدد`;
+            let changeIcon = percent > 0 ? '🟢' : (percent < 0 ? '🔴' : '⚪');
+            let stockClass = product.stock === 0 ? 'low' : '';
+            let stockText = product.stock === 0 ? 'خاموش' : `${formatNumber(product.stock)} عدد`;
 
-        return `<div class="product-card ${isDisabled ? 'disabled' : ''}">
-                    <div class="card-header">
-                        <div class="product-info-header">
-                            <div class="product-img">${product.imgIcon}</div>
-                            <div>
-                                <div class="product-title">${highlightText(product.title, currentSearchTerm)}</div>
-                                <span class="type-badge ${typeClass}">${typeLabel}</span>
+            return `<div class="product-card">
+                        <div class="card-header">
+                            <div class="product-info-header">
+                                <div class="product-img">${product.imgIcon}</div>
+                                <div>
+                                    <div class="product-title">${highlightText(product.title, currentSearchTerm)}</div>
+                                    <span class="type-badge ${typeClass}">${typeLabel}</span>
+                                </div>
                             </div>
+                            <button class="mobile-toggle-btn ${!isStockZero ? 'active' : ''}" data-id="${product.id}"></button>
                         </div>
-                        <button class="mobile-toggle-btn ${!isDisabled ? 'active' : ''}" data-id="${product.id}"></button>
-                    </div>
-                    <div class="price-info-grid">
-                        <div class="price-info-item"><div class="price-info-label">قیمت قبلی</div><div class="price-info-value old-price-value">${formatNumber(product.oldPrice)}</div></div>
-                        <div class="price-info-item"><div class="price-info-label">قیمت جدید</div><div class="price-info-value" style="color:${percent > 0 ? '#16a34a' : (percent < 0 ? '#dc2626' : '#475569')}">${formatNumber(product.currentPrice)}</div></div>
-                        <div class="price-info-item"><div class="price-info-label">تغییرات</div><div class="price-info-value">${changeIcon} ${Math.abs(percent)}%</div></div>
-                        <div class="price-info-item"><div class="price-info-label">موجودی</div><div class="price-info-value"><span class="stock-badge ${stockClass}">${stockText}</span></div></div>
-                    </div>
-                    <button class="more-btn" data-id="${product.id}"><i class="fas fa-edit"></i> ویرایش قیمت و موجودی</button>
-                </div>`;
-    }).join('');
+                        <div class="price-info-grid">
+                            <div class="price-info-item"><div class="price-info-label">قیمت قبلی</div><div class="price-info-value old-price-value">${formatNumber(product.oldPrice)}</div></div>
+                            <div class="price-info-item"><div class="price-info-label">قیمت جدید</div><div class="price-info-value" style="color:${percent > 0 ? '#16a34a' : (percent < 0 ? '#dc2626' : '#475569')}">${formatNumber(product.currentPrice)}</div></div>
+                            <div class="price-info-item"><div class="price-info-label">تغییرات</div><div class="price-info-value">${changeIcon} ${Math.abs(percent)}%</div></div>
+                            <div class="price-info-item"><div class="price-info-label">وضعیت</div><div class="price-info-value"><span class="stock-badge ${stockClass}">${stockText}</span></div></div>
+                        </div>
+                        <button class="more-btn" data-id="${product.id}"><i class="fas fa-edit"></i> ویرایش قیمت و موجودی</button>
+                    </div>`;
+        }).join('');
 
-    document.querySelectorAll('.mobile-toggle-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => { e.stopPropagation(); toggleProductStatus(parseInt(btn.dataset.id)); });
-    });
+        document.querySelectorAll('.mobile-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => { e.stopPropagation(); toggleProductStock(parseInt(btn.dataset.id)); });
+        });
 
-    document.querySelectorAll('.more-btn').forEach(btn => {
-        const pid = parseInt(btn.dataset.id);
-        const product = products.find(p => p.id === pid);
-        btn.addEventListener('click', () => openModal(product));
-    });
-}
+        document.querySelectorAll('.more-btn').forEach(btn => {
+            const pid = parseInt(btn.dataset.id);
+            const product = products.find(p => p.id === pid);
+            btn.addEventListener('click', () => openModal(product));
+        });
+    }
 
     function renderHistory() {
         const container = document.getElementById('historyList');
@@ -1098,7 +1113,6 @@
         document.getElementById('modalDiscountInput').value = '';
         updateModalPercentPreview(product.oldPrice, product.currentPrice);
 
-        // بارگذاری نمودار در مودال
         const canvas = document.getElementById('modalSparkline');
         if (canvas) await drawRealSparkline(canvas, product.id);
 
@@ -1158,7 +1172,6 @@
         }
     });
 
-    // modal events
     document.getElementById('closeModalBtn').addEventListener('click', closeModal);
     document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
     document.getElementById('modalSaveBtn').addEventListener('click', async () => {
