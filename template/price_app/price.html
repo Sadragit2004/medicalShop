@@ -1007,12 +1007,20 @@
 
         document.querySelectorAll('.price-input').forEach(inp => {
             const pid = parseInt(inp.dataset.id);
-            let timeout;
+            let lastValue = inp.value;
+
+            // فرمت کردن هنگام تایپ (بدون آپدیت سرور)
             inp.addEventListener('input', function() {
                 let raw = parseNumber(this.value);
                 this.value = formatNumber(raw);
-                clearTimeout(timeout);
-                timeout = setTimeout(() => { if (raw > 0) updatePriceOnServer(pid, raw); }, 800);
+            });
+
+            // آپدیت فقط هنگام blur (برداشتن موس)
+            inp.addEventListener('blur', function() {
+                let raw = parseNumber(this.value);
+                if (raw > 0 && raw !== products.find(p => p.id === pid)?.currentPrice) {
+                    updatePriceOnServer(pid, raw);
+                }
             });
         });
 
