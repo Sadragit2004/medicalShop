@@ -122,6 +122,24 @@
             color: #4a5568;
         }
 
+        .btn-discount {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-discount.has-discount {
+            background: #22c55e;
+        }
+
         .search-wrapper {
             flex: 1;
             min-width: 200px;
@@ -174,7 +192,7 @@
         .product-table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 900px;
+            min-width: 1100px;
         }
 
         .product-table th {
@@ -191,11 +209,6 @@
             border-bottom: 1px solid #f1f5f9;
             vertical-align: middle;
             font-size: 0.85rem;
-        }
-
-        .product-table tr.disabled td:not(:first-child) {
-            opacity: 0.5;
-            background: #f8fafc;
         }
 
         .price-input, .stock-input {
@@ -252,6 +265,18 @@
         .type-download { background: #dbeafe; color: #2563eb; }
         .type-package { background: #fef3c7; color: #d97706; }
 
+        .price-discount {
+            color: #22c55e;
+            font-weight: bold;
+        }
+
+        .price-original {
+            text-decoration: line-through;
+            color: #94a3b8;
+            font-size: 0.7rem;
+            margin-right: 5px;
+        }
+
         .mobile-view {
             display: none;
             flex-direction: column;
@@ -269,9 +294,383 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
 
-        .product-card.disabled {
-            opacity: 0.5;
+        /* ========== مودال بهبود یافته ========== */
+        .full-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .full-modal.active {
+            display: flex;
+        }
+
+        .full-modal-content {
+            background: white;
+            border-radius: 28px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: fadeInScale 0.25s ease;
+            box-shadow: 0 20px 35px -10px rgba(0,0,0,0.3);
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* حالت موبایل: از پایین بالا میاد */
+        @media (max-width: 768px) {
+            .full-modal {
+                align-items: flex-end;
+            }
+
+            .full-modal-content {
+                width: 100%;
+                max-width: 100%;
+                border-radius: 28px 28px 0 0;
+                animation: slideUp 0.3s ease;
+                max-height: 90vh;
+            }
+
+            @keyframes slideUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(100%);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 28px 28px 0 0;
+            position: sticky;
+            top: 0;
+        }
+
+        .modal-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .modal-header-top h3 {
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .close-modal-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 18px;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .close-modal-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+
+        .modal-product-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .modal-product-img {
+            font-size: 42px;
+            background: rgba(255,255,255,0.15);
+            width: 60px;
+            height: 60px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-product-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .modal-body {
+            padding: 22px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 8px;
+            display: block;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 1rem;
+            text-align: center;
+            font-family: monospace;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+
+        .info-box {
             background: #f8fafc;
+            border-radius: 16px;
+            padding: 14px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1rem;
+        }
+
+        .info-box strong {
+            font-size: 1.1rem;
+            color: #1e293b;
+        }
+
+        .quick-discounts {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 16px 0;
+        }
+
+        .quick-discount-preset {
+            flex: 1;
+            min-width: 65px;
+            padding: 10px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-discount-preset:hover {
+            background: #f59e0b;
+            color: white;
+            border-color: #f59e0b;
+            transform: translateY(-1px);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 14px;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-save {
+            background: #22c55e;
+            color: white;
+            border: none;
+        }
+
+        .btn-save:hover {
+            background: #16a34a;
+            transform: translateY(-1px);
+        }
+
+        .btn-cancel {
+            background: transparent;
+            border: 1px solid #cbd5e0;
+            color: #475569;
+        }
+
+        .btn-cancel:hover {
+            background: #f1f5f9;
+        }
+
+        .history-panel {
+            background: white;
+            border-radius: 20px;
+            margin-top: 16px;
+            padding: 14px;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        .history-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        .history-item {
+            padding: 8px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.75rem;
+        }
+
+        .toast-message {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: #323232;
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            z-index: 3000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast-message.show {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .table-container {
+                display: none;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-view {
+                display: none !important;
+            }
+            .table-container {
+                display: block !important;
+            }
+        }
+
+        .sparkline-canvas {
+            width: 100px;
+            height: 40px;
+        }
+
+        .stock-zero-badge {
+            background: #ef4444;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            margin-right: 5px;
+        }
+
+        .discount-badge {
+            background: #f59e0b;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            margin-right: 5px;
+        }
+
+        .price-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 12px 0;
+        }
+
+        .price-info-item {
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 14px;
+            text-align: center;
+        }
+
+        .price-info-label {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .price-info-value {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .stock-badge {
+            display: inline-block;
+            background: #e2e8f0;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+        }
+
+        .stock-badge.low {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .more-btn {
+            width: 100%;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .card-header {
@@ -317,7 +716,11 @@
             position: relative;
             flex-shrink: 0;
         }
-        .mobile-toggle-btn.active { background: #22c55e; }
+
+        .mobile-toggle-btn.active {
+            background: #22c55e;
+        }
+
         .mobile-toggle-btn::after {
             content: '';
             width: 20px;
@@ -329,264 +732,9 @@
             right: 2px;
             transition: all 0.2s;
         }
-        .mobile-toggle-btn.active::after { right: 22px; }
 
-        .price-info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin: 12px 0;
-        }
-
-        .price-info-item {
-            background: #f8fafc;
-            padding: 10px;
-            border-radius: 14px;
-            text-align: center;
-        }
-
-        .price-info-label {
-            font-size: 0.7rem;
-            color: #64748b;
-            margin-bottom: 4px;
-        }
-
-        .price-info-value {
-            font-weight: 700;
-            font-size: 0.9rem;
-        }
-
-        .old-price-value {
-            text-decoration: line-through;
-            color: #94a3b8;
-            font-weight: normal;
-        }
-
-        .stock-badge {
-            display: inline-block;
-            background: #e2e8f0;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-        }
-
-        .stock-badge.low {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-
-        .more-btn {
-            width: 100%;
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 40px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            cursor: pointer;
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .full-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.7);
-            z-index: 2000;
-            display: none;
-            justify-content: center;
-            align-items: flex-end;
-        }
-        .full-modal.active { display: flex; }
-        .full-modal-content {
-            background: white;
-            border-radius: 28px 28px 0 0;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            animation: slideUp 0.3s ease;
-        }
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-        .modal-header {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: white;
-            padding: 18px;
-            border-radius: 28px 28px 0 0;
-            position: sticky;
-            top: 0;
-        }
-        .modal-header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .close-modal-btn {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            width: 34px;
-            height: 34px;
-            border-radius: 17px;
-            color: white;
-            font-size: 1.1rem;
-            cursor: pointer;
-        }
-        .modal-product-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 6px;
-        }
-        .modal-product-img {
-            font-size: 36px;
-            background: rgba(255,255,255,0.15);
-            width: 54px;
-            height: 54px;
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-body { padding: 18px; }
-        .form-group { margin-bottom: 16px; }
-        .form-label {
-            font-size: 0.75rem;
-            color: #64748b;
-            margin-bottom: 6px;
-            display: block;
-            font-weight: 500;
-        }
-        .form-input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 14px;
-            font-size: 0.95rem;
-            text-align: center;
-            font-family: monospace;
-        }
-        .form-input:focus { outline: none; border-color: #3b82f6; }
-        .form-select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 14px;
-            font-size: 0.9rem;
-            background: white;
-        }
-        .info-box {
-            background: #f8fafc;
-            border-radius: 14px;
-            padding: 10px;
-            margin-bottom: 14px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .percent-preview {
-            text-align: center;
-            padding: 10px;
-            border-radius: 40px;
-            font-weight: 500;
-            margin: 12px 0;
-            font-size: 0.85rem;
-        }
-        .percent-increase { background: #dcfce7; color: #16a34a; }
-        .percent-decrease { background: #fee2e2; color: #dc2626; }
-
-        .quick-discounts {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 8px;
-        }
-        .quick-discount-btn {
-            flex: 1;
-            padding: 10px;
-            background: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            border-radius: 40px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .quick-discount-btn:hover {
-            background: #3b82f6;
-            color: white;
-            border-color: #3b82f6;
-        }
-
-        .discount-row { display: flex; gap: 8px; align-items: center; }
-        .discount-row .form-input { flex: 1; }
-        .discount-row button {
-            padding: 12px 16px;
-            background: #f59e0b;
-            color: white;
-            border: none;
-            border-radius: 14px;
-            font-weight: 500;
-            cursor: pointer;
-        }
-        .modal-sparkline { margin: 14px 0; text-align: center; }
-        .modal-sparkline canvas { width: 100%; max-width: 280px; height: 60px; }
-        .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
-        .modal-buttons button { flex: 1; padding: 12px; border-radius: 40px; font-size: 0.9rem; font-weight: 500; cursor: pointer; }
-        .btn-save { background: #22c55e; color: white; border: none; }
-        .btn-cancel { background: transparent; border: 1px solid #cbd5e0; color: #475569; }
-
-        .history-panel {
-            background: white;
-            border-radius: 20px;
-            margin-top: 16px;
-            padding: 14px;
-            max-height: 260px;
-            overflow-y: auto;
-        }
-        .history-title { font-weight: 600; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0; font-size: 0.9rem; }
-        .history-item { padding: 8px; border-bottom: 1px solid #f1f5f9; font-size: 0.75rem; }
-
-        .toast-message {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            background: #323232;
-            color: white;
-            padding: 12px;
-            border-radius: 12px;
-            text-align: center;
-            z-index: 3000;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-        }
-        .toast-message.show { opacity: 1; }
-
-        @media (max-width: 768px) { .table-container { display: none; } }
-        @media (min-width: 769px) { .mobile-view { display: none !important; } .table-container { display: block !important; } }
-
-        .sparkline-canvas {
-            width: 100px;
-            height: 40px;
-        }
-
-        .stock-zero-badge {
-            background: #ef4444;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-size: 0.65rem;
-            margin-right: 5px;
+        .mobile-toggle-btn.active::after {
+            right: 22px;
         }
     </style>
 </head>
@@ -623,14 +771,15 @@
     <table class="product-table">
         <thead>
             <tr>
-                <th>وضعیت موجودی</th>
+                <th>وضعیت</th>
                 <th>محصول</th>
                 <th>نوع</th>
-                <th>قیمت قبلی</th>
-                <th>قیمت جدید</th>
+                <th>قیمت</th>
+                <th>ویرایش قیمت</th>
                 <th>موجودی</th>
                 <th>تغییرات</th>
                 <th>روند</th>
+                <th>تخفیف</th>
             </tr>
         </thead>
         <tbody id="productTableBody"></tbody>
@@ -642,56 +791,54 @@
 </div>
 
 <div class="history-panel">
-    <div class="history-title"><i class="fas fa-history"></i> آخرین تغییرات</div>
+    <div class="history-title"><i class="fas fa-history"></i> آخرین تغییرات قیمت</div>
     <div id="historyList"></div>
 </div>
 
-<div class="full-modal" id="fullModal">
+<!-- مودال تنظیم تخفیف - بهبود یافته -->
+<div class="full-modal" id="discountModal">
     <div class="full-modal-content">
         <div class="modal-header">
             <div class="modal-header-top">
-                <h3><i class="fas fa-edit"></i> ویرایش محصول</h3>
-                <button class="close-modal-btn" id="closeModalBtn"><i class="fas fa-times"></i></button>
+                <h3><i class="fas fa-tag"></i> تنظیم تخفیف محصول</h3>
+                <button class="close-modal-btn" id="closeDiscountModalBtn"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-product-row">
-                <div class="modal-product-img" id="modalImg">📱</div>
-                <div><div class="modal-product-title" id="modalTitle" style="font-weight:600;font-size:1rem"></div></div>
+                <div class="modal-product-img">🏷️</div>
+                <div><div class="modal-product-title" id="discountProductTitle"></div></div>
             </div>
         </div>
         <div class="modal-body">
-            <div class="info-box"><span>قیمت قبلی:</span><strong id="modalOldPrice"></strong></div>
+            <div class="info-box">
+                <span>💰 قیمت اصلی:</span>
+                <strong id="originalPriceDisplay"></strong>
+            </div>
+            <div class="info-box" style="background:#dcfce7;">
+                <span>✨ قیمت پس از تخفیف:</span>
+                <strong id="discountedPriceDisplay" style="color:#16a34a; font-size:1.2rem;"></strong>
+            </div>
             <div class="form-group">
-                <label class="form-label">💰 قیمت جدید (تومان)</label>
-                <input type="text" id="modalPriceInput" class="form-input" placeholder="مثال: 27,500,000">
+                <label class="form-label">درصد تخفیف (0 تا 100)</label>
+                <input type="number" id="discountPercentInput" class="form-input" placeholder="مثال: 15" min="0" max="100" value="0">
             </div>
             <div class="quick-discounts">
-                <button class="quick-discount-btn" data-discount="5">-5%</button>
-                <button class="quick-discount-btn" data-discount="10">-10%</button>
-                <button class="quick-discount-btn" data-discount="15">-15%</button>
-                <button class="quick-discount-btn" data-discount="20">-20%</button>
-            </div>
-            <div id="modalPercentPreview" class="percent-preview"></div>
-            <div class="form-group">
-                <label class="form-label">🎯 تخفیف دلخواه (درصد)</label>
-                <div class="discount-row">
-                    <input type="number" id="modalDiscountInput" class="form-input" placeholder="درصد تخفیف">
-                    <button id="modalApplyDiscountBtn">اعمال</button>
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">📦 موجودی</label>
-                <input type="number" id="modalStockInput" class="form-input" placeholder="تعداد موجودی">
-            </div>
-            <div class="modal-sparkline">
-                <canvas id="modalSparkline" width="280" height="60"></canvas>
+                <button class="quick-discount-preset" data-discount="5">5%</button>
+                <button class="quick-discount-preset" data-discount="10">10%</button>
+                <button class="quick-discount-preset" data-discount="15">15%</button>
+                <button class="quick-discount-preset" data-discount="20">20%</button>
+                <button class="quick-discount-preset" data-discount="25">25%</button>
+                <button class="quick-discount-preset" data-discount="30">30%</button>
+                <button class="quick-discount-preset" data-discount="50">50%</button>
+                <button class="quick-discount-preset" data-discount="70">70%</button>
             </div>
             <div class="modal-buttons">
-                <button class="btn-cancel" id="modalCancelBtn">انصراف</button>
-                <button class="btn-save" id="modalSaveBtn">💾 ذخیره تغییرات</button>
+                <button class="btn-cancel" id="discountModalCancelBtn">انصراف</button>
+                <button class="btn-save" id="discountModalSaveBtn">💾 اعمال تخفیف</button>
             </div>
         </div>
     </div>
 </div>
+
 <div id="toastMessage" class="toast-message"></div>
 
 <script>
@@ -701,7 +848,7 @@
     let currentView = 'pc';
     let currentSearchTerm = '';
     let currentCategory = 'all';
-    let currentModalProduct = null;
+    let currentDiscountProduct = null;
     let saleTypeIdMap = new Map();
 
     // ---------- HELPERS ----------
@@ -735,7 +882,7 @@
         return filtered;
     }
 
-    // ---------- SPARKLINE (نمودار روند واقعی) ----------
+    // ---------- SPARKLINE (نمودار روند) ----------
     async function drawRealSparkline(canvas, productId) {
         if (!canvas) return;
         try {
@@ -880,7 +1027,11 @@
                     title: p.title,
                     imgIcon: p.mainImage ? `<img style="width:32px;height:32px;border-radius:8px;" src="${p.mainImage}" />` : '📦',
                     categoryIds: p.category.map(c => c.id),
-                    currentPrice: p.last_price?.price_new || (p.sale_types[0]?.price || 0),
+                    original_price: p.original_price || (p.sale_types[0]?.price || 0),
+                    discounted_price: p.discounted_price || (p.sale_types[0]?.price || 0),
+                    discount_percent: p.discount_percent || 0,
+                    has_active_discount: p.has_active_discount || false,
+                    currentPrice: p.discounted_price || (p.sale_types[0]?.price || 0),
                     oldPrice: p.last_price?.price_old || (p.sale_types[0]?.price || 0),
                     stock: p.stock,
                     product_type_title: p.product_type_title || 'فیزیکی',
@@ -902,7 +1053,7 @@
         } catch(e) { showMessage('خطا در ارتباط با سرور', true); console.error(e); }
     }
 
-    async function updatePriceOnServer(productId, newPrice, stock = null) {
+    async function updatePriceOnServer(productId, newPrice) {
         let sid = saleTypeIdMap.get(productId);
         if (!sid) { showMessage('نوع فروش برای این محصول یافت نشد', true); return false; }
         try {
@@ -913,13 +1064,7 @@
             });
             let data = await res.json();
             if (data.success) {
-                let prod = products.find(p => p.id === productId);
-                if (prod) {
-                    prod.oldPrice = prod.currentPrice;
-                    prod.currentPrice = newPrice;
-                    if (stock !== null) prod.stock = stock;
-                }
-                showMessage(`قیمت ${prod?.title} با موفقیت به روز شد`);
+                showMessage(`قیمت با موفقیت به روز شد`);
                 await loadProducts();
                 return true;
             } else { showMessage(data.error || 'خطا در بروزرسانی', true); return false; }
@@ -935,28 +1080,19 @@
             });
             let data = await res.json();
             if (data.success) {
-                let prod = products.find(p => p.id === productId);
-                if (prod) prod.stock = newStock;
-                showMessage(`موجودی ${prod?.title} به ${newStock} تغییر کرد`);
+                showMessage(`موجودی به ${newStock} تغییر کرد`);
                 return true;
             } else { showMessage(data.error || 'خطا در بروزرسانی موجودی', true); return false; }
         } catch(e) { showMessage('خطا در ارتباط', true); return false; }
     }
 
-    // تابع اصلی برای دکمه خاموش/روشن موجودی
     async function toggleProductStock(productId) {
         try {
             let res = await fetch(`/price/api/product/${productId}/toggle/`, { method: 'POST' });
             let data = await res.json();
             if (data.success) {
-                let prod = products.find(p => p.id === productId);
-                if (prod) {
-                    prod.stock = data.stock;
-                    prod.isStockZero = data.stock === 0;
-                }
                 showMessage(data.message);
-                renderAll();
-                loadStats();
+                await loadProducts();
             } else {
                 showMessage(data.error || 'خطا در تغییر وضعیت موجودی', true);
             }
@@ -964,6 +1100,68 @@
             showMessage('خطا در ارتباط', true);
             console.error(e);
         }
+    }
+
+    // ========== تنظیم تخفیف محصول ==========
+    async function saveProductDiscount() {
+        if (!currentDiscountProduct) return;
+
+        let discountPercent = parseInt(document.getElementById('discountPercentInput').value) || 0;
+
+        if (discountPercent < 0 || discountPercent > 100) {
+            showMessage('درصد تخفیف باید بین 0 تا 100 باشد', true);
+            return;
+        }
+
+        try {
+            let res = await fetch('/price/api/product/set-discount/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    product_id: currentDiscountProduct.id,
+                    discount_percent: discountPercent
+                })
+            });
+
+            let data = await res.json();
+            if (data.success) {
+                showMessage(data.message);
+                await loadProducts();
+                closeDiscountModal();
+            } else {
+                showMessage(data.error || 'خطا در ثبت تخفیف', true);
+            }
+        } catch(e) {
+            showMessage('خطا در ارتباط با سرور', true);
+            console.error(e);
+        }
+    }
+
+    function openDiscountModal(product) {
+        currentDiscountProduct = product;
+        document.getElementById('discountProductTitle').innerText = product.title;
+        document.getElementById('discountPercentInput').value = product.discount_percent || 0;
+        document.getElementById('originalPriceDisplay').innerText = formatNumber(product.original_price);
+
+        let discountedPrice = product.has_active_discount ?
+            product.original_price - Math.floor((product.original_price * product.discount_percent) / 100) :
+            product.original_price;
+        document.getElementById('discountedPriceDisplay').innerText = formatNumber(discountedPrice);
+
+        document.getElementById('discountModal').classList.add('active');
+    }
+
+    function closeDiscountModal() {
+        document.getElementById('discountModal').classList.remove('active');
+        currentDiscountProduct = null;
+    }
+
+    // پیش‌نمایش قیمت تخفیف‌خورده هنگام تغییر درصد
+    function updateDiscountPreview() {
+        if (!currentDiscountProduct) return;
+        let percent = parseInt(document.getElementById('discountPercentInput').value) || 0;
+        let discountedPrice = currentDiscountProduct.original_price - Math.floor((currentDiscountProduct.original_price * percent) / 100);
+        document.getElementById('discountedPriceDisplay').innerText = formatNumber(discountedPrice);
     }
 
     // ---------- RENDERING ----------
@@ -981,24 +1179,39 @@
 
             const isStockZero = product.stock === 0;
             const typeLabel = product.product_type_title;
+            const hasDiscount = product.has_active_discount && product.discount_percent > 0;
+
+            let priceDisplay = '';
+            if (hasDiscount) {
+                priceDisplay = `<span class="price-discount">${formatNumber(product.discounted_price)}</span>
+                               <span class="price-original">${formatNumber(product.original_price)}</span>
+                               <span class="discount-badge">-${product.discount_percent}%</span>`;
+            } else {
+                priceDisplay = `<span>${formatNumber(product.original_price)}</span>`;
+            }
 
             let typeClass = 'type-physical';
             if (typeLabel === 'دانلودی' || typeLabel === 'نرم افزاری') typeClass = 'type-download';
             else if (typeLabel === 'بسته‌ای' || typeLabel === 'کارتنی') typeClass = 'type-package';
 
             return `<tr>
-                        <td>
-                            <button class="toggle-btn ${!isStockZero ? 'active' : ''}" data-id="${product.id}"></button>
-                            ${isStockZero ? '<span class="stock-zero-badge">خاموش</span>' : '<span class="stock-zero-badge" style="background:#22c55e">روشن</span>'}
-                        </td>
-                        <td>${highlightText(product.title, currentSearchTerm)}</td>
-                        <td><span class="type-badge ${typeClass}">${typeLabel}</span></td>
-                        <td>${formatNumber(product.oldPrice)}</td>
-                        <td><input type="text" class="price-input" data-id="${product.id}" value="${formatNumber(product.currentPrice)}"></td>
-                        <td><input type="number" class="stock-input" data-id="${product.id}" value="${product.stock}" style="width:90px"></td>
-                        <td><span class="${badgeClass}">${badgeText}</span></td>
-                        <td><canvas class="sparkline-canvas" data-id="${product.id}" width="100" height="40"></canvas></td>
-                    </tr>`;
+                <td style="white-space: nowrap;">
+                    <button class="toggle-btn ${!isStockZero ? 'active' : ''}" data-id="${product.id}"></button>
+                    ${isStockZero ? '<span class="stock-zero-badge">خاموش</span>' : '<span class="stock-zero-badge" style="background:#22c55e">روشن</span>'}
+                  </td>
+                  <td>${highlightText(product.title, currentSearchTerm)}</td>
+                  <td><span class="type-badge ${typeClass}">${typeLabel}</span></td>
+                  <td>${priceDisplay}</td>
+                  <td><input type="text" class="price-input" data-id="${product.id}" value="${formatNumber(product.currentPrice)}" style="width:130px"></td>
+                  <td><input type="number" class="stock-input" data-id="${product.id}" value="${product.stock}" style="width:80px"></td>
+                  <td><span class="${badgeClass}">${badgeText}</span></td>
+                  <td><canvas class="sparkline-canvas" data-id="${product.id}" width="100" height="40"></canvas></td>
+                  <td>
+                    <button class="btn-discount ${hasDiscount ? 'has-discount' : ''}" data-id="${product.id}">
+                        <i class="fas fa-tag"></i> ${hasDiscount ? `${product.discount_percent}%` : 'تنظیم تخفیف'}
+                    </button>
+                  </td>
+            </tr>`;
         }).join('');
 
         document.querySelectorAll('.toggle-btn').forEach(btn => {
@@ -1007,18 +1220,14 @@
 
         document.querySelectorAll('.price-input').forEach(inp => {
             const pid = parseInt(inp.dataset.id);
-            let lastValue = inp.value;
-
-            // فرمت کردن هنگام تایپ (بدون آپدیت سرور)
             inp.addEventListener('input', function() {
                 let raw = parseNumber(this.value);
                 this.value = formatNumber(raw);
             });
-
-            // آپدیت فقط هنگام blur (برداشتن موس)
             inp.addEventListener('blur', function() {
                 let raw = parseNumber(this.value);
-                if (raw > 0 && raw !== products.find(p => p.id === pid)?.currentPrice) {
+                let product = products.find(p => p.id === pid);
+                if (raw > 0 && product && raw !== product.currentPrice) {
                     updatePriceOnServer(pid, raw);
                 }
             });
@@ -1026,7 +1235,15 @@
 
         document.querySelectorAll('.stock-input').forEach(inp => {
             const pid = parseInt(inp.dataset.id);
-            inp.addEventListener('change', function() { updateStockOnServer(pid, parseNumber(this.value)); });
+            inp.addEventListener('change', function() {
+                updateStockOnServer(pid, parseNumber(this.value));
+            });
+        });
+
+        document.querySelectorAll('.btn-discount').forEach(btn => {
+            const pid = parseInt(btn.dataset.id);
+            const product = products.find(p => p.id === pid);
+            btn.addEventListener('click', () => openDiscountModal(product));
         });
 
         filtered.forEach(p => {
@@ -1045,6 +1262,7 @@
             const percent = calculatePercent(product.oldPrice, product.currentPrice);
             const isStockZero = product.stock === 0;
             const typeLabel = product.product_type_title;
+            const hasDiscount = product.has_active_discount && product.discount_percent > 0;
 
             let typeClass = 'type-physical';
             if (typeLabel === 'دانلودی' || typeLabel === 'نرم افزاری') typeClass = 'type-download';
@@ -1053,6 +1271,26 @@
             let changeIcon = percent > 0 ? '🟢' : (percent < 0 ? '🔴' : '⚪');
             let stockClass = product.stock === 0 ? 'low' : '';
             let stockText = product.stock === 0 ? 'خاموش' : `${formatNumber(product.stock)} عدد`;
+
+            let priceDisplay = '';
+            if (hasDiscount) {
+                priceDisplay = `<div class="price-info-item">
+                                    <div class="price-info-label">قیمت</div>
+                                    <div class="price-info-value">
+                                        <span class="price-discount">${formatNumber(product.discounted_price)}</span>
+                                        <span class="price-original">${formatNumber(product.original_price)}</span>
+                                    </div>
+                                </div>
+                                <div class="price-info-item">
+                                    <div class="price-info-label">تخفیف</div>
+                                    <div class="price-info-value" style="color:#f59e0b">-${product.discount_percent}%</div>
+                                </div>`;
+            } else {
+                priceDisplay = `<div class="price-info-item">
+                                    <div class="price-info-label">قیمت</div>
+                                    <div class="price-info-value">${formatNumber(product.original_price)}</div>
+                                </div>`;
+            }
 
             return `<div class="product-card">
                         <div class="card-header">
@@ -1066,12 +1304,16 @@
                             <button class="mobile-toggle-btn ${!isStockZero ? 'active' : ''}" data-id="${product.id}"></button>
                         </div>
                         <div class="price-info-grid">
-                            <div class="price-info-item"><div class="price-info-label">قیمت قبلی</div><div class="price-info-value old-price-value">${formatNumber(product.oldPrice)}</div></div>
-                            <div class="price-info-item"><div class="price-info-label">قیمت جدید</div><div class="price-info-value" style="color:${percent > 0 ? '#16a34a' : (percent < 0 ? '#dc2626' : '#475569')}">${formatNumber(product.currentPrice)}</div></div>
+                            ${priceDisplay}
                             <div class="price-info-item"><div class="price-info-label">تغییرات</div><div class="price-info-value">${changeIcon} ${Math.abs(percent)}%</div></div>
                             <div class="price-info-item"><div class="price-info-label">وضعیت</div><div class="price-info-value"><span class="stock-badge ${stockClass}">${stockText}</span></div></div>
                         </div>
-                        <button class="more-btn" data-id="${product.id}"><i class="fas fa-edit"></i> ویرایش قیمت و موجودی</button>
+                        <div style="display: flex; gap: 8px; margin-top: 10px;">
+                            <button class="more-btn" data-id="${product.id}" style="flex:2"><i class="fas fa-edit"></i> ویرایش قیمت</button>
+                            <button class="discount-mobile-btn ${hasDiscount ? 'has-discount' : ''}" data-id="${product.id}" style="flex:1; background:${hasDiscount ? '#22c55e' : '#f59e0b'}; color:white; border:none; border-radius:40px; padding:10px; cursor:pointer;">
+                                <i class="fas fa-tag"></i> ${hasDiscount ? `${product.discount_percent}%` : 'تخفیف'}
+                            </button>
+                        </div>
                     </div>`;
         }).join('');
 
@@ -1082,7 +1324,15 @@
         document.querySelectorAll('.more-btn').forEach(btn => {
             const pid = parseInt(btn.dataset.id);
             const product = products.find(p => p.id === pid);
-            btn.addEventListener('click', () => openModal(product));
+            btn.addEventListener('click', () => {
+                showMessage('در حال توسعه...');
+            });
+        });
+
+        document.querySelectorAll('.discount-mobile-btn').forEach(btn => {
+            const pid = parseInt(btn.dataset.id);
+            const product = products.find(p => p.id === pid);
+            btn.addEventListener('click', () => openDiscountModal(product));
         });
     }
 
@@ -1109,33 +1359,6 @@
         let activeCount = products.filter(p => p.enabled).length;
         document.getElementById('activeCount').innerText = activeCount;
     }
-
-    // ---------- MODAL ----------
-    async function openModal(product) {
-        currentModalProduct = product;
-        document.getElementById('modalImg').innerHTML = product.imgIcon;
-        document.getElementById('modalTitle').innerHTML = product.title;
-        document.getElementById('modalOldPrice').innerHTML = formatNumber(product.oldPrice);
-        document.getElementById('modalPriceInput').value = formatNumber(product.currentPrice);
-        document.getElementById('modalStockInput').value = product.stock;
-        document.getElementById('modalDiscountInput').value = '';
-        updateModalPercentPreview(product.oldPrice, product.currentPrice);
-
-        const canvas = document.getElementById('modalSparkline');
-        if (canvas) await drawRealSparkline(canvas, product.id);
-
-        document.getElementById('fullModal').classList.add('active');
-    }
-
-    function updateModalPercentPreview(oldPrice, newPrice) {
-        let percent = calculatePercent(oldPrice, newPrice);
-        let div = document.getElementById('modalPercentPreview');
-        if (percent > 0) { div.innerHTML = `🟢 +${percent}% افزایش (${formatNumber(newPrice)} تومان)`; div.className = 'percent-preview percent-increase'; }
-        else if (percent < 0) { div.innerHTML = `🔴 ${percent}% کاهش (${formatNumber(newPrice)} تومان)`; div.className = 'percent-preview percent-decrease'; }
-        else { div.innerHTML = `⚪ بدون تغییر (${formatNumber(newPrice)} تومان)`; div.className = 'percent-preview'; }
-    }
-
-    function closeModal() { document.getElementById('fullModal').classList.remove('active'); currentModalProduct = null; }
 
     // ---------- EVENT LISTENERS ----------
     document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -1180,47 +1403,26 @@
         }
     });
 
-    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
-    document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
-    document.getElementById('modalSaveBtn').addEventListener('click', async () => {
-        if (currentModalProduct) {
-            let newPrice = parseNumber(document.getElementById('modalPriceInput').value);
-            let newStock = parseNumber(document.getElementById('modalStockInput').value);
-            if (newPrice > 0 && newPrice !== currentModalProduct.currentPrice) {
-                await updatePriceOnServer(currentModalProduct.id, newPrice, newStock);
-            }
-            if (newStock !== currentModalProduct.stock) {
-                await updateStockOnServer(currentModalProduct.id, newStock);
-            }
-            await loadProducts();
-            closeModal();
-        }
-    });
+    // مودال تخفیف
+    document.getElementById('closeDiscountModalBtn').addEventListener('click', closeDiscountModal);
+    document.getElementById('discountModalCancelBtn').addEventListener('click', closeDiscountModal);
+    document.getElementById('discountModalSaveBtn').addEventListener('click', saveProductDiscount);
+    document.getElementById('discountPercentInput').addEventListener('input', updateDiscountPreview);
 
-    document.querySelectorAll('.quick-discount-btn').forEach(btn => {
+    document.querySelectorAll('.quick-discount-preset').forEach(btn => {
         btn.addEventListener('click', () => {
-            if (currentModalProduct) {
-                let percent = parseFloat(btn.dataset.discount);
-                let newPrice = Math.round(currentModalProduct.currentPrice * (1 - percent / 100));
-                document.getElementById('modalPriceInput').value = formatNumber(newPrice);
-                updateModalPercentPreview(currentModalProduct.oldPrice, newPrice);
-            }
+            let discount = btn.dataset.discount;
+            document.getElementById('discountPercentInput').value = discount;
+            updateDiscountPreview();
         });
     });
 
-    document.getElementById('modalApplyDiscountBtn').addEventListener('click', () => {
-        if (currentModalProduct) {
-            let percent = parseFloat(document.getElementById('modalDiscountInput').value);
-            if (!isNaN(percent) && percent !== 0) {
-                let newPrice = Math.round(currentModalProduct.currentPrice * (1 - percent / 100));
-                document.getElementById('modalPriceInput').value = formatNumber(newPrice);
-                updateModalPercentPreview(currentModalProduct.oldPrice, newPrice);
-                document.getElementById('modalDiscountInput').value = '';
-            }
+    document.getElementById('discountModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('discountModal')) {
+            closeDiscountModal();
         }
     });
 
-    // مقداردهی اولیه
     loadCategories();
     loadProducts();
 </script>

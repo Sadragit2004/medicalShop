@@ -158,8 +158,6 @@ def price_by_delivery_tax(price, discount=0):
 
 
 
-
-
 from sms_ir import SmsIr
 def send_sms(number,code):
 
@@ -176,5 +174,32 @@ def send_sms(number,code):
                 "value": str(code)
 
             }
+        ],
+    )
+
+
+from sms_ir import SmsIr
+
+def sendVerfiryOrder(number,fullname,orderid,mobilenumber):
+
+    pass
+    sms_ir = SmsIr('aOdP7bVrffnd5D56iRlaYbtKs6Cm4zIcsaxhoe3aQXLT04u8')
+
+    result = sms_ir.send_verify_code(
+        number=str(number),
+        template_id=910718,
+        parameters=[
+             {
+                "name": "FULLNAME",
+                "value": str(fullname)
+            },
+            {
+                "name": "ORDERID",
+                "value": str(orderid)
+            },
+            {
+                "name": "MOBILENUMBER",
+                "value": str(mobilenumber)
+            },
         ],
     )

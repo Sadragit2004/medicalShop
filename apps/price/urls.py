@@ -28,4 +28,6 @@ urlpatterns = [
     # آمار و دسته‌بندی
     path('api/dashboard-stats/', views.get_dashboard_stats, name='api_dashboard_stats'),
     path('api/categories/', views.get_categories_with_stats, name='api_categories_stats'),
+      path('api/product/set-discount/', views.set_product_discount, name='set_product_discount'),
+    path('api/product/<int:product_id>/discount-info/', views.get_product_discount_info, name='get_product_discount_info'),
 ]

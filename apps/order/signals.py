@@ -106,6 +106,39 @@ def decrease_stock_on_successful_payment(sender, instance, created, **kwargs):
         # علامت بزن که موجودی کم شده (با یه attr موقت یا فیلد جدید)
         order.stock_decreased = True
 
+        # ======================== ارسال پیامک بعد از پرداخت موفق ========================
+        import utils
+
+        # گرفتن اطلاعات کاربر
+        user = order.customer
+        fullname = f"{user.name or ''} {user.family or ''}".strip()
+        if not fullname:
+            fullname = user.mobileNumber
+
+        mobilenumber = user.mobileNumber
+        order_uuid = str(order.orderCode)
+
+        # شماره‌های هدف
+        target_numbers = ['09309087909', '09149308005']
+
+        # ارسال دو بار پیامک متفاوت به هر شماره
+        for number in target_numbers:
+            # بار اول
+            utils.sendVerfiryOrder(
+                number=number,
+                fullname=fullname,
+                orderid=order_uuid,
+                mobilenumber=mobilenumber,
+            )
+
+            # بار دوم با تغییر
+            utils.sendVerfiryOrder(
+                number=number,
+                fullname=f"{fullname}",
+                orderid=f"0",
+                mobilenumber=mobilenumber,
+            )
+
 
 @receiver(post_save, sender=Order)
 def prevent_double_stock_decrease(sender, instance, created, **kwargs):

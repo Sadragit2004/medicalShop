@@ -10,8 +10,10 @@ from decimal import Decimal
 
 from .models import ProductPriceHistory, ProductStockHistory
 from apps.user.models.user import CustomUser
-from apps.product.models import Product, ProductSaleType, Category, TypeProductTitle
+from apps.product.models import Product, ProductSaleType
+from apps.product.models import Category
 from django.shortcuts import render
+from apps.discount.models import DiscountBasket,DiscountDetail
 
 
 # توابع کمکی برای بررسی دسترسی
@@ -36,7 +38,7 @@ def showUiPrice(request):
 @login_required
 @user_passes_test(is_superuser)
 def get_products_list(request):
-    """دریافت لیست محصولات با قیمت‌ها - فقط سوپریوزر"""
+    """دریافت لیست محصولات با قیمت‌ها و تخفیف‌ها - فقط سوپریوزر"""
     products = Product.objects.filter(isActive=True).prefetch_related('saleTypes', 'typetitle')
 
     category_id = request.GET.get('category')
@@ -68,6 +70,32 @@ def get_products_list(request):
 
         product_type_title = product.typetitle.title if product.typetitle else 'فیزیکی'
 
+        # ========== محاسبه تخفیف محصول از DiscountBasket ==========
+        original_price = sale_types[0]['price'] if sale_types else 0
+        discounted_price = original_price
+        discount_percent = 0
+        has_active_discount = False
+        discount_basket_id = None
+        discount_detail_id = None
+
+        now = timezone.now()
+
+        # جستجوی DiscountDetail مربوط به این محصول که سبد تخفیف آن فعال باشد
+        discount_detail = DiscountDetail.objects.filter(
+            product=product,
+            discountBasket__isActive=True,
+            discountBasket__startDate__lte=now,
+            discountBasket__endDate__gte=now
+        ).select_related('discountBasket').first()
+
+        if discount_detail:
+            has_active_discount = True
+            discount_basket = discount_detail.discountBasket
+            discount_percent = discount_basket.discount
+            discounted_price = original_price - int((original_price * discount_percent) / 100)
+            discount_basket_id = discount_basket.id
+            discount_detail_id = discount_detail.id
+
         data.append({
             'id': product.id,
             'title': product.title,
@@ -79,9 +107,15 @@ def get_products_list(request):
             'brand': product.brand.title if product.brand else None,
             'sale_types': sale_types,
             'product_type_title': product_type_title,
+            'original_price': original_price,
+            'discounted_price': discounted_price,
+            'discount_percent': discount_percent,
+            'has_active_discount': has_active_discount,
+            'discount_basket_id': discount_basket_id,
+            'discount_detail_id': discount_detail_id,
             'last_price': {
                 'price_old': last_price.price_old if last_price else None,
-                'price_new': last_price.price_new if last_price else sale_types[0]['price'] if sale_types else 0,
+                'price_new': last_price.price_new if last_price else original_price,
                 'percent_change': float(last_price.percent_change) if last_price and last_price.percent_change else 0,
             } if last_price or sale_types else None
         })
@@ -140,6 +174,29 @@ def get_product_detail(request, product_id):
             'changed_by': stock.changed_by_name,
         })
 
+    # دریافت اطلاعات تخفیف محصول
+    now = timezone.now()
+    discount_info = None
+    discount_detail = DiscountDetail.objects.filter(
+        product=product,
+        discountBasket__isActive=True,
+        discountBasket__startDate__lte=now,
+        discountBasket__endDate__gte=now
+    ).select_related('discountBasket').first()
+
+    if discount_detail:
+        basket = discount_detail.discountBasket
+        original_price = sale_types[0]['price'] if sale_types else 0
+        discount_info = {
+            'discount_percent': basket.discount,
+            'original_price': original_price,
+            'discounted_price': original_price - int((original_price * basket.discount) / 100),
+            'start_date': basket.startDate.strftime('%Y-%m-%d %H:%M:%S'),
+            'end_date': basket.endDate.strftime('%Y-%m-%d %H:%M:%S'),
+            'discount_basket_id': basket.id,
+            'discount_detail_id': discount_detail.id
+        }
+
     return JsonResponse({
         'success': True,
         'product': {
@@ -154,6 +211,7 @@ def get_product_detail(request, product_id):
             'sale_types': sale_types,
             'price_history': history_data,
             'stock_history': stock_history_data,
+            'discount_info': discount_info
         }
     })
 
@@ -317,6 +375,208 @@ def toggle_product_with_stock_management(request, product_id):
 
     except Product.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'محصول یافت نشد'}, status=404)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+@user_passes_test(is_superuser)
+def set_product_discount(request):
+    """
+    تنظیم یا به‌روزرسانی تخفیف یک محصول در سبد تخفیف
+    اگر محصول قبلاً در یک سبد تخفیف بود، آن را به‌روزرسانی می‌کند
+    اگر نبود، یک سبد تخفیف جدید می‌سازد
+    اگر درصد تخفیف 0 بود، تخفیف را حذف می‌کند
+    """
+    try:
+        data = json.loads(request.body)
+        product_id = data.get('product_id')
+        discount_percent = data.get('discount_percent')
+
+        if not product_id:
+            return JsonResponse({'success': False, 'error': 'product_id الزامی است'}, status=400)
+
+        if discount_percent is None:
+            return JsonResponse({'success': False, 'error': 'درصد تخفیف الزامی است'}, status=400)
+
+        discount_percent = int(discount_percent)
+        if discount_percent < 0 or discount_percent > 100:
+            return JsonResponse({'success': False, 'error': 'درصد تخفیف باید بین 0 تا 100 باشد'}, status=400)
+
+        product = Product.objects.get(id=product_id)
+        user = request.user
+        now = timezone.now()
+
+        # قیمت اصلی محصول
+        sale_type = product.saleTypes.filter(isActive=True).first()
+        if not sale_type:
+            return JsonResponse({'success': False, 'error': 'نوع فروشی برای این محصول تعریف نشده'}, status=400)
+
+        original_price = sale_type.price
+
+        # بررسی آیا این محصول قبلاً در یک سبد تخفیف فعال هست
+        existing_detail = DiscountDetail.objects.filter(
+            product=product,
+            discountBasket__isActive=True
+        ).select_related('discountBasket').first()
+
+        if discount_percent == 0:
+            # اگر درصد تخفیف صفر است، تخفیف را حذف کن
+            if existing_detail:
+                basket = existing_detail.discountBasket
+                basket.isActive = False
+                basket.save()
+                existing_detail.delete()
+
+                return JsonResponse({
+                    'success': True,
+                    'message': 'تخفیف محصول با موفقیت حذف شد',
+                    'data': {
+                        'product_id': product_id,
+                        'product_title': product.title,
+                        'discount_percent': 0,
+                        'original_price': original_price,
+                        'discounted_price': original_price,
+                        'has_discount': False
+                    }
+                })
+            else:
+                return JsonResponse({
+                    'success': True,
+                    'message': 'محصول تخفیفی ندارد',
+                    'data': {
+                        'product_id': product_id,
+                        'product_title': product.title,
+                        'discount_percent': 0,
+                        'original_price': original_price,
+                        'discounted_price': original_price,
+                        'has_discount': False
+                    }
+                })
+
+        # اگر درصد تخفیف بیشتر از صفر است
+        discounted_price = original_price - int((original_price * discount_percent) / 100)
+
+        if existing_detail:
+            # به‌روزرسانی سبد تخفیف موجود
+            basket = existing_detail.discountBasket
+            basket.discount = discount_percent
+            basket.startDate = now
+            basket.endDate = now + timezone.timedelta(days=30)
+            basket.isActive = True
+            basket.discountTitle = f"تخفیف ویژه {product.title} - {discount_percent}%"
+            basket.save()
+
+            return JsonResponse({
+                'success': True,
+                'message': 'تخفیف محصول با موفقیت به‌روزرسانی شد',
+                'data': {
+                    'product_id': product_id,
+                    'product_title': product.title,
+                    'discount_percent': discount_percent,
+                    'original_price': original_price,
+                    'discounted_price': discounted_price,
+                    'discount_basket_id': basket.id,
+                    'discount_detail_id': existing_detail.id,
+                    'has_discount': True,
+                    'start_date': basket.startDate.strftime('%Y-%m-%d %H:%M:%S'),
+                    'end_date': basket.endDate.strftime('%Y-%m-%d %H:%M:%S'),
+                }
+            })
+        else:
+            # ایجاد سبد تخفیف جدید
+            basket = DiscountBasket.objects.create(
+                discountTitle=f"تخفیف ویژه {product.title} - {discount_percent}%",
+                startDate=now,
+                endDate=now + timezone.timedelta(days=30),
+                discount=discount_percent,
+                isActive=True,
+                isamzing=False
+            )
+
+            detail = DiscountDetail.objects.create(
+                discountBasket=basket,
+                product=product
+            )
+
+            return JsonResponse({
+                'success': True,
+                'message': 'تخفیف محصول با موفقیت ایجاد شد',
+                'data': {
+                    'product_id': product_id,
+                    'product_title': product.title,
+                    'discount_percent': discount_percent,
+                    'original_price': original_price,
+                    'discounted_price': discounted_price,
+                    'discount_basket_id': basket.id,
+                    'discount_detail_id': detail.id,
+                    'has_discount': True,
+                    'start_date': basket.startDate.strftime('%Y-%m-%d %H:%M:%S'),
+                    'end_date': basket.endDate.strftime('%Y-%m-%d %H:%M:%S'),
+                }
+            })
+
+    except Product.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'محصول یافت نشد'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+@user_passes_test(is_staff_or_superuser)
+def get_product_discount_info(request, product_id):
+    """دریافت اطلاعات تخفیف یک محصول"""
+    try:
+        product = Product.objects.get(id=product_id)
+        now = timezone.now()
+
+        sale_type = product.saleTypes.filter(isActive=True).first()
+        if not sale_type:
+            return JsonResponse({'success': False, 'error': 'نوع فروشی برای این محصول تعریف نشده'}, status=400)
+
+        original_price = sale_type.price
+
+        discount_detail = DiscountDetail.objects.filter(
+            product=product,
+            discountBasket__isActive=True,
+            discountBasket__startDate__lte=now,
+            discountBasket__endDate__gte=now
+        ).select_related('discountBasket').first()
+
+        if discount_detail:
+            basket = discount_detail.discountBasket
+            discounted_price = original_price - int((original_price * basket.discount) / 100)
+
+            return JsonResponse({
+                'success': True,
+                'has_discount': True,
+                'data': {
+                    'discount_percent': basket.discount,
+                    'original_price': original_price,
+                    'discounted_price': discounted_price,
+                    'start_date': basket.startDate.strftime('%Y-%m-%d %H:%M:%S'),
+                    'end_date': basket.endDate.strftime('%Y-%m-%d %H:%M:%S'),
+                    'discount_basket_id': basket.id,
+                    'discount_detail_id': discount_detail.id,
+                    'is_active': basket.isActive
+                }
+            })
+        else:
+            return JsonResponse({
+                'success': True,
+                'has_discount': False,
+                'data': {
+                    'original_price': original_price,
+                    'discounted_price': original_price,
+                    'discount_percent': 0
+                }
+            })
+
+    except Product.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'محصول یافت نشد'}, status=404)
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
