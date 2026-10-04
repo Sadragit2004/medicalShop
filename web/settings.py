@@ -48,8 +48,12 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'django_cleanup.apps.CleanupConfig',
     'django_celery_results',
+    'django.contrib.sites',
+    'django.contrib.sitemaps'
 
 ]
+
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
