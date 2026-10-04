@@ -4,7 +4,8 @@ import datetime
 import django.core.validators
 from django.db import migrations, models
 import django.db.models.deletion
-from django.utils.timezone import utc
+from datetime import timezone
+utc = timezone.utc
 
 
 class Migration(migrations.Migration):
