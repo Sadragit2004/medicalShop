@@ -72,7 +72,7 @@
                     {% if second_image %}
                     <img loading="lazy" class="product-card_img opacity-0 group-hover:opacity-100"
                          src="{{ second_image.image.url }}"
-                         alt="{{ second_image.alt_text|default:item.product.title }}">
+                         alt="{{ second_image.alt_text|default:item.product.title }}-hover image">
                     {% else %}
                     <!-- اگر تصویر دوم نداریم، همان تصویر اول را نمایش می‌دهیم -->
                     <img loading="lazy" class="product-card_img opacity-0 group-hover:opacity-100"
