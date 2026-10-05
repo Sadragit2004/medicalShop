@@ -1,147 +1,582 @@
+
+{% extends 'main_template.html' %}
+
+{% block content %}
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="referrer" content="origin">
-    <title>تایید و پرداخت سفارش</title>
+    <title>تأیید و پرداخت سفارش</title>
+
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #f6f8f7;
+            --card: #ffffff;
+            --text: #18211d;
+            --muted: #7a8580;
+            --soft: #eef5f1;
+            --border: #e7ece9;
+            --green: #176b4d;
+            --green-dark: #10533b;
+            --green-soft: #e8f3ee;
+        }
+
+        html {
+            min-height: 100%;
+            background: var(--bg);
+        }
+
         body {
-            font-family: Tahoma, Arial, sans-serif;
-            background: linear-gradient(135deg, #e8f5e9 0%, #f5f5f5 100%);
             min-height: 100vh;
+            background:
+                radial-gradient(
+                    circle at 50% -10%,
+                    rgba(34, 126, 91, 0.07),
+                    transparent 38%
+                ),
+                var(--bg);
+
+            color: var(--text);
+            font-family:
+                Tahoma,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+
+            padding: 20px 14px;
         }
-        .box {
-            max-width: 520px;
+
+        .payment-page {
             width: 100%;
-            background: #ffffff;
-            padding: 40px 30px;
-            border-radius: 16px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            max-width: 470px;
+        }
+
+        /* ─────────────────────────────
+           Card
+        ───────────────────────────── */
+
+        .payment-card {
+            width: 100%;
+            background: var(--card);
+            border: 1px solid rgba(30, 70, 55, 0.06);
+            border-radius: 26px;
+            padding: 22px;
+
+            box-shadow:
+                0 20px 60px rgba(22, 55, 42, 0.07),
+                0 4px 14px rgba(22, 55, 42, 0.035);
+
+            animation: cardIn 0.55s ease both;
+        }
+
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ─────────────────────────────
+           Header
+        ───────────────────────────── */
+
+        .header {
             text-align: center;
+            padding: 6px 4px 20px;
         }
-        .icon {
-            font-size: 60px;
-            margin-bottom: 15px;
-        }
-        h2 {
-            color: #2e7d32;
-            font-size: 22px;
-            margin-bottom: 25px;
-        }
-        .info-row {
+
+        .icon-wrap {
+            width: 58px;
+            height: 58px;
+            margin: 0 auto 14px;
+
             display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px dashed #e0e0e0;
-            font-size: 15px;
-            color: #555;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 18px;
+            background: var(--green-soft);
+
+            color: var(--green);
+
+            font-size: 25px;
+
+            box-shadow:
+                inset 0 0 0 1px rgba(23, 107, 77, 0.04);
         }
-        .info-row:last-of-type {
+
+        .header h1 {
+            font-size: 20px;
+            line-height: 1.7;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 13px;
+            line-height: 1.8;
+            color: var(--muted);
+        }
+
+        /* ─────────────────────────────
+           Order info
+        ───────────────────────────── */
+
+        .order-info {
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            overflow: hidden;
+            background: #fcfdfc;
+        }
+
+        .info-row {
+            min-height: 52px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+
+            padding: 13px 15px;
+
+            border-bottom: 1px solid var(--border);
+
+            font-size: 13px;
+        }
+
+        .info-row:last-child {
             border-bottom: none;
         }
-        .info-row span:last-child {
-            font-weight: bold;
-            color: #333;
+
+        .info-label {
+            color: var(--muted);
+            white-space: nowrap;
         }
+
+        .info-value {
+            color: var(--text);
+            font-weight: 600;
+            text-align: left;
+            direction: rtl;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+
+            color: #87651d;
+            background: #fff8e7;
+
+            padding: 5px 9px;
+            border-radius: 999px;
+
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #d9a82e;
+        }
+
+        /* ─────────────────────────────
+           Amount
+        ───────────────────────────── */
+
         .amount-box {
-            background: #f1f8e9;
-            border: 1px solid #c5e1a5;
-            border-radius: 10px;
-            padding: 15px;
-            margin: 20px 0;
+            margin-top: 14px;
+
+            padding: 19px 17px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #f0f7f3,
+                    #f7faf8
+                );
+
+            border: 1px solid #e1eee7;
+            border-radius: 20px;
+
+            text-align: center;
         }
-        .amount-box .label {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-        .amount-box .value {
-            font-size: 24px;
-            color: #2e7d32;
-            font-weight: bold;
-        }
-        .amount-box .value small {
-            font-size: 14px;
-            color: #777;
-            font-weight: normal;
-        }
-        .btn-pay {
-            display: block;
-            width: 100%;
-            background: #2e7d32;
-            color: #fff;
-            padding: 16px;
-            border-radius: 10px;
-            text-decoration: none;
-            font-size: 17px;
-            font-weight: bold;
-            margin-top: 20px;
-            transition: background 0.2s;
-        }
-        .btn-pay:hover {
-            background: #1b5e20;
-        }
-        .btn-cancel {
-            display: inline-block;
-            margin-top: 15px;
-            color: #888;
-            text-decoration: none;
-            font-size: 14px;
-        }
-        .btn-cancel:hover {
-            color: #d32f2f;
-        }
-        .note {
-            margin-top: 25px;
+
+        .amount-label {
+            color: var(--muted);
             font-size: 12px;
-            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .amount {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 7px;
+
+            color: var(--green);
+
+            line-height: 1;
+        }
+
+        .amount-number {
+            font-size: clamp(27px, 8vw, 34px);
+            font-weight: 800;
+            letter-spacing: -0.7px;
+        }
+
+        .amount-currency {
+            font-size: 12px;
+            color: #718079;
+            font-weight: 500;
+        }
+
+        /* ─────────────────────────────
+           Pay button
+        ───────────────────────────── */
+
+        .actions {
+            margin-top: 16px;
+        }
+
+        .btn-pay {
+            position: relative;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            width: 100%;
+            min-height: 56px;
+
+            padding: 14px 18px;
+
+            border-radius: 17px;
+
+            background: var(--green);
+            color: #fff;
+
+            text-decoration: none;
+
+            font-size: 15px;
+            font-weight: 700;
+
+            box-shadow:
+                0 8px 20px rgba(23, 107, 77, 0.16);
+
+            transition:
+                transform 0.2s ease,
+                background 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+        .btn-pay::after {
+            content: "←";
+
+            position: absolute;
+            left: 17px;
+
+            font-size: 18px;
+            opacity: 0.85;
+
+            transition: transform 0.2s ease;
+        }
+
+        .btn-pay:hover {
+            background: var(--green-dark);
+            box-shadow:
+                0 10px 24px rgba(23, 107, 77, 0.2);
+        }
+
+        .btn-pay:hover::after {
+            transform: translateX(-3px);
+        }
+
+        .btn-pay:active {
+            transform: scale(0.985);
+        }
+
+        /* ─────────────────────────────
+           Cancel
+        ───────────────────────────── */
+
+        .btn-cancel {
+            display: block;
+
+            width: fit-content;
+
+            margin: 14px auto 0;
+
+            color: #7d8782;
+
+            text-decoration: none;
+
+            font-size: 12px;
             line-height: 1.8;
+
+            transition:
+                color 0.2s ease,
+                opacity 0.2s ease;
+        }
+
+        .btn-cancel:hover {
+            color: #b04a4a;
+        }
+
+        /* ─────────────────────────────
+           Security note
+        ───────────────────────────── */
+
+        .security {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 8px;
+
+            margin-top: 20px;
+            padding-top: 17px;
+
+            border-top: 1px solid #edf0ee;
+
+            color: #929b96;
+
+            font-size: 11px;
+            line-height: 1.9;
+
+            text-align: center;
+        }
+
+        .security-icon {
+            flex: 0 0 auto;
+
+            width: 18px;
+            height: 18px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 50%;
+
+            background: #edf5f1;
+            color: var(--green);
+
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        /* ─────────────────────────────
+           Desktop
+        ───────────────────────────── */
+
+        @media (min-width: 600px) {
+            body {
+                padding: 35px 20px;
+            }
+
+            .payment-card {
+                padding: 27px;
+                border-radius: 30px;
+            }
+
+            .header {
+                padding-bottom: 23px;
+            }
+        }
+
+        /* ─────────────────────────────
+           Small phones
+        ───────────────────────────── */
+
+        @media (max-width: 360px) {
+            body {
+                padding: 12px 10px;
+            }
+
+            .payment-card {
+                padding: 17px;
+                border-radius: 22px;
+            }
+
+            .header h1 {
+                font-size: 18px;
+            }
+
+            .info-row {
+                padding: 12px;
+            }
+
+            .amount-box {
+                padding: 17px 13px;
+            }
+
+            .btn-pay {
+                min-height: 54px;
+            }
+        }
+
+        /* ─────────────────────────────
+           Reduced motion
+        ───────────────────────────── */
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
         }
     </style>
 </head>
+
 <body>
-    <div class="box">
-        <div class="icon">🛒</div>
-        <h2>تایید و پرداخت سفارش</h2>
 
-        <div class="info-row">
-            <span>شماره سفارش:</span>
-            <span>{{ order.id }}</span>
-        </div>
-        <div class="info-row">
-            <span>تعداد اقلام:</span>
-            <span>{{ order.orderdetail_set.count }} عدد</span>
-        </div>
-        <div class="info-row">
-            <span>وضعیت:</span>
-            <span>در انتظار پرداخت</span>
-        </div>
+    <main class="payment-page">
 
-        <div class="amount-box">
-            <div class="label">مبلغ قابل پرداخت</div>
-            <div class="value">
-                {{ amount }} <small>ریال</small>
+        <section class="payment-card">
+
+            <!-- Header -->
+            <header class="header">
+
+                <div class="icon-wrap" aria-hidden="true">
+                    🛍️
+                </div>
+
+                <h1>
+                    تأیید و پرداخت سفارش
+                </h1>
+
+                <p>
+                    اطلاعات سفارش را بررسی کنید و سپس پرداخت را انجام دهید.
+                </p>
+
+            </header>
+
+
+            <!-- Order information -->
+            <div class="order-info">
+
+                <div class="info-row">
+                    <span class="info-label">
+                        شماره سفارش
+                    </span>
+
+                    <span class="info-value">
+                        {{ order.id }}
+                    </span>
+                </div>
+
+
+                <div class="info-row">
+                    <span class="info-label">
+                        تعداد اقلام
+                    </span>
+
+                    <span class="info-value">
+                        {{ order.orderdetail_set.count }} عدد
+                    </span>
+                </div>
+
+
+                <div class="info-row">
+                    <span class="info-label">
+                        وضعیت سفارش
+                    </span>
+
+                    <span class="status">
+                        <span class="status-dot"></span>
+                        در انتظار پرداخت
+                    </span>
+                </div>
+
             </div>
-        </div>
 
-        <!-- ⭐ این لینک از همین صفحه (روی sayamedical.com) به زرین‌پال می‌رود -->
-        <a href="{{ gateway_url }}" class="btn-pay">
-            تایید و پرداخت
-        </a>
-        <a href="{% url 'order:cart_page' %}" class="btn-cancel">
-            انصراف و بازگشت به سبد خرید
-        </a>
 
-        <p class="note">
-            با کلیک روی «تایید و پرداخت»، به درگاه امن زرین‌پال هدایت می‌شوید.<br>
-            پس از پرداخت، به همین سایت بازمی‌گردید.
-        </p>
-    </div>
+            <!-- Amount -->
+            <div class="amount-box">
+
+                <div class="amount-label">
+                    مبلغ قابل پرداخت
+                </div>
+
+                <div class="amount">
+
+                    <span class="amount-number">
+                        {{ amount }}
+                    </span>
+
+                    <span class="amount-currency">
+                        ریال
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- Actions -->
+            <div class="actions">
+
+                <a
+                    href="{{ gateway_url }}"
+                    class="btn-pay"
+                >
+                    تأیید و پرداخت
+                </a>
+
+
+                <a
+                    href="{% url 'order:cart_page' %}"
+                    class="btn-cancel"
+                >
+                    انصراف و بازگشت به سبد خرید
+                </a>
+
+            </div>
+
+
+            <!-- Security -->
+            <div class="security">
+
+                <span class="security-icon">
+                    ✓
+                </span>
+
+                <span>
+                    پرداخت شما از طریق درگاه امن زرین‌پال انجام می‌شود.
+                    پس از پرداخت، به همین سایت بازمی‌گردید.
+                </span>
+
+            </div>
+
+        </section>
+
+    </main>
+
 </body>
 </html>
+
+{% endblock content %}
+
