@@ -1,6 +1,7 @@
 
 
 
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -473,7 +474,7 @@
             </header>
 
 
-       
+
 
 
                 <div class="info-row">
@@ -500,7 +501,7 @@
                 <div class="amount">
 
                     <span class="amount-number">
-                        {{ amount }}
+                        {{ amount|intcomma }}
                     </span>
 
                     <span class="amount-currency">
