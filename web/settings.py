@@ -1,0 +1,231 @@
+from pathlib import Path
+import os
+
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = 'django-insecure--1vp=*0n5l^8+h)2)!2ooy7_2sw#_@q^uw8tlv!x4-x9du&=51'
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = True
+
+ALLOWED_HOSTS = [
+    '*'
+]
+
+
+
+# Application definition
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.humanize',
+    'django_render_partial',
+    'ckeditor',
+    'ckeditor_uploader',
+    'apps.main.apps.MainConfig',
+    'apps.user.apps.UserConfig',
+    'apps.product.apps.ProductConfig',
+    'apps.discount.apps.DiscountConfig',
+    'apps.order.apps.OrderConfig',
+    'apps.peyment.apps.PeymentConfig',
+    'apps.search.apps.SearchConfig',
+    'apps.blog.apps.BlogConfig',
+    'apps.dashboard.apps.DashboardConfig',
+    'apps.panelAdmin.apps.PaneladminConfig',
+    'apps.price.apps.PriceConfig',
+    'django_celery_beat',
+    'django_cleanup.apps.CleanupConfig',
+    'django_celery_results',
+    'django.contrib.sites',
+    'django.contrib.sitemaps'
+
+]
+
+SITE_ID = 1
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.main.uniqvisi.UniqueVisitMiddleware',
+
+]
+
+ROOT_URLCONF = 'web.urls'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [os.path.join(BASE_DIR,'template/'),],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'apps.main.views.media_admin',
+                # 'apps.main.views.get_is_call_status'
+
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = 'web.wsgi.application'
+
+
+# Database
+# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'mysql.connector.django',
+        'NAME': 'medical',
+        'USER': 'root',
+        'PASSWORD': 'sadra1383@gmail.com',
+        'HOST': 'localhost',
+        'PORT': '3306',
+
+
+    }
+}
+# Password validation
+# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
+
+
+# Internationalization
+# https://docs.djangoproject.com/en/5.1/topics/i18n/
+
+LANGUAGE_CODE = 'fa-ir'
+TIME_ZONE = 'Asia/Tehran'  # این خیلی مهمه - باید Tehran باشه
+USE_I18N = True
+
+USE_TZ = True
+
+THOUSAND_SEPARATOR = ','
+NUMBER_GROUPING = 3
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.1/howto/static-files/
+
+
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'   # ✅ خیلی مهم
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
+
+AUTH_USER_MODEL = 'user.CustomUser'
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+
+
+
+
+CKEDITOR_UPLOAD_PATH = 'images/cheditor/upload_files/'
+CKEDITOR_STORAGE_BACKEND = 'django.core.files.storage.FileSystemStorage'
+CKEDITOR_CONFIGS = {
+    'default':{
+        'toolbar':'Custom',
+        'toolbar_Custom':[
+            ['Bold','Link','Unlink','Image'],
+        ],
+    },
+
+    'special':{
+        'toolbar':'Special','height':500,
+        'toolbar':'full',
+        'toolbar_Special':
+            [
+                ['Bold','Link','Unlink','Image'],
+                ['CodeSnippet'],
+
+            ],'extraPlugins':','.join(['codesnippet','clipboard',])
+    },
+    'special_an':
+        {
+
+            'toolbar':'Special','height':500,
+            'toolbar_Special':
+                [
+                    ['Bold'],
+                    ['CodeSnippet']
+
+                ],'extraPlugins':','.join(['codesnippet',])
+         }
+}
+
+
+
+
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Tehran'
+
+# تنظیمات Celery Beat
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# ❗ تنظیمات مهم برای حل مشکل MySQL
+CELERY_TASK_ALWAYS_EAGER = False
+CELERY_TASK_EAGER_PROPAGATES = True
+
+# تنظیمات اتصال به دیتابیس برای Celery Beat
+CELERY_BEAT_SYNC_SECONDS = 60  # همگام‌سازی هر 60 ثانیه
+
+# ❗❗ راه حل مشکل SQL syntax در MySQL
+# این تنظیمات باعث می‌شود Celery Beat از کوئری‌های ساده‌تر استفاده کند
+CELERY_BEAT_MAX_LOOP_INTERVAL = 60  # حداکثر فاصله بین چک کردن تسک‌ها
+
+# تنظیمات لاگ
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+CELERY_REDIRECT_STDOUTS = True
+CELERY_REDIRECT_STDOUTS_LEVEL = 'INFO'
+
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
