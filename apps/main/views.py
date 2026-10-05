@@ -93,3 +93,27 @@ def get_is_call_status(request):
         'is_call':setting.is_call
     }
     return context
+
+
+
+@require_GET
+def api_shop_about(request):
+    """
+    API دریافت فقط فیلد توضیحات (about_shop) فروشگاه
+    """
+    setting = SettingShop.objects.first()
+
+    if not setting:
+        return JsonResponse({
+            "success": False,
+            "message": "تنظیمات فروشگاه یافت نشد.",
+            "data": None,
+        }, status=404)
+
+    return JsonResponse({
+        "success": True,
+        "message": "توضیحات فروشگاه با موفقیت دریافت شد.",
+        "data": {
+            "about_shop": setting.description2 or "",
+        },
+    }, status=200)

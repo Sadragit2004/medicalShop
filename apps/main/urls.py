@@ -22,6 +22,7 @@ urlpatterns = [
     path('api/stats/chart/', uniqvisi.GetChartDataAPI.as_view(), name='api_stats_chart'),
     path('api/stats/export/', uniqvisi.ExportStatsAPI.as_view(), name='api_stats_export'),
     path('api/stats/reset/', uniqvisi.ResetStatsAPI.as_view(), name='api_stats_reset'),
+    path('shop-about/', views.api_shop_about, name='api_shop_about'),
 
 
 

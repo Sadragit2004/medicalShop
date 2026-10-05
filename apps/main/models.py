@@ -5,6 +5,7 @@ from PIL import Image
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 import utils
+from ckeditor_uploader.fields import RichTextUploadingField
 
 # Create your models here.
 class SliderSite(models.Model):
@@ -18,6 +19,9 @@ class SliderSite(models.Model):
     registerData = models.DateTimeField(verbose_name='تاریخ شروع', default=timezone.now)
     endData = models.DateTimeField(verbose_name='تاریخ پایان', default=timezone.now)
     link = models.CharField(max_length=300, verbose_name='لینک', null=True, blank=True)
+    description = RichTextUploadingField(
+            verbose_name="توضیحات محصول", config_name="special", blank=True, null=True
+        )
 
     def __str__(self) -> str:
         return self.textSlider
@@ -141,8 +145,6 @@ class ContactPhone(models.Model):
         return f"{self.title} - {self.phone_number}"
 
 
-
-
 class SettingShop(models.Model):
     name_shop = models.CharField(
         max_length=200,
@@ -189,12 +191,25 @@ class SettingShop(models.Model):
         verbose_name="آخرین بروزرسانی"
     )
 
+    # ✅ فیلد جدید که جای درستش اینجاست، نه توی اسلایدر
+    description = RichTextUploadingField(
+        verbose_name="توضیحات تکمیلی فروشگاه",
+        config_name="special",
+        blank=True,
+        null=True
+    )
+
     class Meta:
         verbose_name = "تنظیمات فروشگاه"
         verbose_name_plural = "تنظیمات فروشگاه"
 
     def __str__(self):
         return self.name_shop
+
+    # 🔁 سازگاری با ویو قدیمی که از description2 استفاده می‌کرد
+    @property
+    def description2(self):
+        return self.description
 
 
 
