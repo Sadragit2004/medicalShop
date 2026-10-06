@@ -1,279 +1,1149 @@
 {% extends "main_template.html" %}
 
 {% block content %}
-<main class="container">
-    <!-- Breadcrumb -->
-    <nav class="flex mt-8" aria-label="Breadcrumb">
-        <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
-            <li class="inline-flex items-center">
-                <a href="{% url 'main:index' %}"
-                    class="inline-flex items-center text-sm gap-x-1 text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-                    <svg class="size-4 mb-0.5">
-                        <use href="#home" />
-                    </svg>
-                    صفحه اصلی
-                </a>
-            </li>
-            <li aria-current="page">
-                <div class="flex items-center">
-                    <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="m1 9 4-4-4-4" />
-                    </svg>
-                    <span class="ms-1 text-sm text-gray-500 md:ms-2 dark:text-gray-400">درباره سایا مِد</span>
-                </div>
-            </li>
-        </ol>
+
+<style>
+    .saya-about {
+        --saya-brand: #22adbd;
+        --saya-brand-dark: #168b9a;
+        --saya-brand-soft: #e9f9fb;
+        --saya-ink: #102b31;
+        --saya-text: #42585d;
+        --saya-muted: #789096;
+        --saya-line: #e3edef;
+        --saya-surface: #ffffff;
+        --saya-surface-soft: #f7fbfc;
+        --saya-dark: #10282d;
+        --saya-radius: 24px;
+        width: 100%;
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 0 20px 80px;
+        color: var(--saya-ink);
+        direction: rtl;
+    }
+
+    .saya-about *,
+    .saya-about *::before,
+    .saya-about *::after {
+        box-sizing: border-box;
+    }
+
+    .saya-about a {
+        text-decoration: none;
+    }
+
+    .saya-about img {
+        display: block;
+        max-width: 100%;
+    }
+
+    .saya-breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding-top: 26px;
+        margin-bottom: 54px;
+        color: var(--saya-muted);
+        font-size: 13px;
+    }
+
+    .saya-breadcrumb a {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--saya-muted);
+        transition: color .2s ease;
+    }
+
+    .saya-breadcrumb a:hover {
+        color: var(--saya-brand);
+    }
+
+    .saya-breadcrumb svg {
+        width: 15px;
+        height: 15px;
+    }
+
+    .saya-breadcrumb .saya-chevron {
+        width: 12px;
+        height: 12px;
+        opacity: .45;
+    }
+
+    .saya-hero {
+        position: relative;
+        text-align: center;
+        max-width: 820px;
+        margin: 0 auto 62px;
+    }
+
+    .saya-hero::before {
+        content: "";
+        position: absolute;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        background: rgba(34, 173, 189, .07);
+        filter: blur(2px);
+        top: -100px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: -1;
+    }
+
+    .saya-hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding: 8px 13px 8px 15px;
+        border: 1px solid rgba(34, 173, 189, .18);
+        border-radius: 999px;
+        background: rgba(34, 173, 189, .07);
+        color: var(--saya-brand-dark);
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 18px;
+    }
+
+    .saya-hero-badge span {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--saya-brand);
+        box-shadow: 0 0 0 5px rgba(34, 173, 189, .09);
+    }
+
+    .saya-hero h1 {
+        margin: 0;
+        font-family: inherit;
+        font-size: clamp(32px, 4vw, 54px);
+        line-height: 1.25;
+        letter-spacing: -.8px;
+        font-weight: 900;
+        color: var(--saya-ink);
+    }
+
+    .saya-hero h1 strong {
+        color: var(--saya-brand);
+        font-weight: 900;
+    }
+
+    .saya-hero p {
+        margin: 15px auto 0;
+        max-width: 620px;
+        color: var(--saya-muted);
+        font-size: 16px;
+        line-height: 2;
+    }
+
+    .saya-intro {
+        display: grid;
+        grid-template-columns: minmax(0, 1.08fr) minmax(340px, .92fr);
+        gap: 18px;
+        margin-bottom: 78px;
+    }
+
+    .saya-story {
+        min-width: 0;
+    }
+
+    .saya-kicker {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--saya-brand-dark);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: .2px;
+        margin-bottom: 15px;
+    }
+
+    .saya-kicker::before {
+        content: "";
+        width: 28px;
+        height: 2px;
+        background: var(--saya-brand);
+        border-radius: 999px;
+    }
+
+    .saya-story h2 {
+        margin: 0 0 19px;
+        font-size: clamp(26px, 3vw, 38px);
+        line-height: 1.45;
+        font-weight: 900;
+        color: var(--saya-ink);
+    }
+
+    .saya-story h2 span {
+        color: var(--saya-brand);
+    }
+
+    .saya-story p {
+        max-width: 680px;
+        margin: 0;
+        color: var(--saya-text);
+        font-size: 15px;
+        line-height: 2.35;
+    }
+
+    .saya-story strong {
+        color: var(--saya-ink);
+        font-weight: 800;
+    }
+
+    .saya-proof {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-top: 30px;
+    }
+
+    .saya-proof-item {
+        padding: 17px 18px;
+        border: 1px solid var(--saya-line);
+        border-radius: 17px;
+        background: var(--saya-surface-soft);
+    }
+
+    .saya-proof-item strong {
+        display: block;
+        color: var(--saya-brand-dark);
+        font-size: 21px;
+        margin-bottom: 4px;
+    }
+
+    .saya-proof-item span {
+        color: var(--saya-muted);
+        font-size: 12px;
+    }
+
+    .saya-image-card {
+        position: relative;
+        min-height: 470px;
+        overflow: hidden;
+        border-radius: 28px;
+        background: var(--saya-dark);
+        box-shadow: 0 22px 55px rgba(16, 43, 49, .12);
+    }
+
+    .saya-image-card img {
+        width: 100%;
+        height: 100%;
+        min-height: 470px;
+        object-fit: cover;
+        transition: transform .7s cubic-bezier(.2,.7,.2,1);
+    }
+
+    .saya-image-card:hover img {
+        transform: scale(1.025);
+    }
+
+    .saya-image-overlay {
+        position: absolute;
+        inset: auto 16px 16px;
+        padding: 21px;
+        border: 1px solid rgba(255,255,255,.16);
+        border-radius: 20px;
+        background: rgba(10, 35, 40, .72);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        color: white;
+    }
+
+    .saya-image-overlay-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        margin-bottom: 8px;
+    }
+
+    .saya-image-overlay strong {
+        font-size: 17px;
+    }
+
+    .saya-image-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 9px;
+        border-radius: 999px;
+        background: rgba(34, 173, 189, .18);
+        color: #aaf3fa;
+        font-size: 10px;
+        white-space: nowrap;
+    }
+
+    .saya-image-status::before {
+        content: "";
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--saya-brand);
+    }
+
+    .saya-image-overlay p {
+        margin: 0;
+        color: rgba(255,255,255,.68);
+        font-size: 12px;
+        line-height: 1.9;
+    }
+
+    .saya-advantage {
+        margin-top: 27px;
+        padding: 22px;
+        border-radius: 20px;
+        background: var(--saya-dark);
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .saya-advantage::after {
+        content: "";
+        position: absolute;
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: rgba(34,173,189,.11);
+        left: -60px;
+        bottom: -80px;
+    }
+
+    .saya-advantage-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 17px;
+    }
+
+    .saya-advantage-icon {
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        flex: 0 0 40px;
+        border-radius: 13px;
+        background: rgba(34,173,189,.14);
+        color: var(--saya-brand);
+    }
+
+    .saya-advantage-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .saya-advantage h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 800;
+    }
+
+    .saya-advantage-list {
+        display: grid;
+        gap: 10px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .saya-advantage-list div {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        color: rgba(255,255,255,.76);
+        font-size: 12px;
+        line-height: 1.8;
+    }
+
+    .saya-advantage-list svg {
+        width: 15px;
+        height: 15px;
+        flex: 0 0 15px;
+        margin-top: 3px;
+        color: var(--saya-brand);
+    }
+
+    .saya-section {
+        margin-top: 82px;
+    }
+
+    .saya-section-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 30px;
+        margin-bottom: 27px;
+    }
+
+    .saya-section-title {
+        margin: 0;
+        font-size: clamp(24px, 3vw, 34px);
+        font-weight: 900;
+        color: var(--saya-ink);
+    }
+
+    .saya-section-title span {
+        color: var(--saya-brand);
+    }
+
+    .saya-section-desc {
+        max-width: 430px;
+        margin: 0;
+        color: var(--saya-muted);
+        font-size: 13px;
+        line-height: 2;
+    }
+
+    .saya-services {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+
+    .saya-service {
+        position: relative;
+        min-height: 215px;
+        padding: 23px;
+        border: 1px solid var(--saya-line);
+        border-radius: 21px;
+        background: var(--saya-surface);
+        overflow: hidden;
+        transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+    }
+
+    .saya-service::before {
+        content: "";
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: rgba(34,173,189,.06);
+        left: -35px;
+        bottom: -35px;
+        transition: transform .3s ease;
+    }
+
+    .saya-service:hover {
+        transform: translateY(-4px);
+        border-color: rgba(34,173,189,.28);
+        box-shadow: 0 17px 40px rgba(16,43,49,.08);
+    }
+
+    .saya-service:hover::before {
+        transform: scale(1.6);
+    }
+
+    .saya-service-number {
+        position: absolute;
+        top: 18px;
+        left: 20px;
+        color: #dcebed;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .saya-service-icon {
+        width: 43px;
+        height: 43px;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        background: var(--saya-brand-soft);
+        color: var(--saya-brand-dark);
+        margin-bottom: 22px;
+    }
+
+    .saya-service-icon svg {
+        width: 21px;
+        height: 21px;
+    }
+
+    .saya-service h3 {
+        position: relative;
+        margin: 0 0 8px;
+        font-size: 15px;
+        font-weight: 850;
+        color: var(--saya-ink);
+    }
+
+    .saya-service p {
+        position: relative;
+        margin: 0;
+        color: var(--saya-muted);
+        font-size: 12px;
+        line-height: 2;
+    }
+
+    .saya-values {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+
+    .saya-value {
+        position: relative;
+        padding: 31px;
+        border: 1px solid var(--saya-line);
+        border-radius: 24px;
+        overflow: hidden;
+        background: var(--saya-surface-soft);
+    }
+
+    .saya-value::after {
+        content: "";
+        position: absolute;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        background: rgba(34,173,189,.06);
+        left: -75px;
+        bottom: -95px;
+    }
+
+    .saya-value-head {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        margin-bottom: 19px;
+    }
+
+    .saya-value-icon {
+        width: 47px;
+        height: 47px;
+        display: grid;
+        place-items: center;
+        border-radius: 15px;
+        background: white;
+        color: var(--saya-brand);
+        box-shadow: 0 7px 20px rgba(16,43,49,.06);
+    }
+
+    .saya-value-icon svg {
+        width: 23px;
+        height: 23px;
+    }
+
+    .saya-value h3 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 900;
+    }
+
+    .saya-value p {
+        position: relative;
+        z-index: 1;
+        margin: 0;
+        color: var(--saya-text);
+        font-size: 13px;
+        line-height: 2.35;
+    }
+
+    .saya-value strong {
+        color: var(--saya-ink);
+    }
+
+    .saya-cta {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 30px;
+        margin-top: 82px;
+        padding: 31px 34px;
+        overflow: hidden;
+        border-radius: 26px;
+        background: var(--saya-dark);
+        color: white;
+    }
+
+    .saya-cta::before {
+        content: "";
+        position: absolute;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        background: rgba(34,173,189,.13);
+        left: -110px;
+        top: -140px;
+    }
+
+    .saya-cta-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .saya-cta h3 {
+        margin: 0 0 8px;
+        font-size: clamp(22px, 3vw, 30px);
+        font-weight: 900;
+    }
+
+    .saya-cta p {
+        margin: 0;
+        color: rgba(255,255,255,.64);
+        font-size: 13px;
+        line-height: 2;
+    }
+
+    .saya-cta-actions {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+    }
+
+    .saya-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 45px;
+        padding: 0 18px;
+        border-radius: 13px;
+        font-size: 12px;
+        font-weight: 800;
+        transition: transform .2s ease, background .2s ease;
+        white-space: nowrap;
+    }
+
+    .saya-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .saya-btn svg {
+        width: 17px;
+        height: 17px;
+    }
+
+    .saya-btn-primary {
+        background: var(--saya-brand);
+        color: white;
+    }
+
+    .saya-btn-primary:hover {
+        background: #1d9eac;
+    }
+
+    .saya-btn-light {
+        background: white;
+        color: var(--saya-dark);
+    }
+
+    .saya-btn-light:hover {
+        background: #f2fbfc;
+    }
+
+    @media (max-width: 1000px) {
+        .saya-intro {
+            grid-template-columns: 1fr;
+        }
+
+        .saya-image-card {
+            min-height: 390px;
+        }
+
+        .saya-image-card img {
+            min-height: 390px;
+        }
+
+        .saya-services {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 700px) {
+        .saya-about {
+            padding: 0 14px 55px;
+        }
+
+        .saya-breadcrumb {
+            margin-bottom: 38px;
+        }
+
+        .saya-hero {
+            margin-bottom: 48px;
+        }
+
+        .saya-hero h1 {
+            font-size: 31px;
+        }
+
+        .saya-hero p {
+            font-size: 13px;
+        }
+
+        .saya-proof {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .saya-image-card,
+        .saya-image-card img {
+            min-height: 330px;
+        }
+
+        .saya-section {
+            margin-top: 60px;
+        }
+
+        .saya-section-head {
+            display: block;
+        }
+
+        .saya-section-desc {
+            margin-top: 10px;
+        }
+
+        .saya-services {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .saya-service {
+            min-height: 205px;
+            padding: 19px;
+        }
+
+        .saya-values {
+            grid-template-columns: 1fr;
+        }
+
+        .saya-value {
+            padding: 24px;
+        }
+
+        .saya-cta {
+            grid-template-columns: 1fr;
+            padding: 26px 22px;
+        }
+
+        .saya-cta-actions {
+            width: 100%;
+        }
+
+        .saya-btn {
+            flex: 1;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .saya-services {
+            grid-template-columns: 1fr;
+        }
+
+        .saya-service {
+            min-height: auto;
+        }
+
+        .saya-proof {
+            grid-template-columns: 1fr;
+        }
+
+        .saya-image-overlay {
+            inset: auto 10px 10px;
+            padding: 16px;
+        }
+
+        .saya-cta-actions {
+            flex-direction: column;
+        }
+
+        .saya-btn {
+            width: 100%;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .saya-about *,
+        .saya-about *::before,
+        .saya-about *::after {
+            scroll-behavior: auto !important;
+            transition: none !important;
+            animation: none !important;
+        }
+    }
+</style>
+
+<main class="saya-about">
+
+    <nav class="saya-breadcrumb" aria-label="Breadcrumb">
+        <a href="{% url 'main:index' %}">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M3 10.8 12 3l9 7.8v9.1a1.1 1.1 0 0 1-1.1 1.1h-5.2v-6.4H9.3V21H4.1A1.1 1.1 0 0 1 3 19.9v-9.1Z"
+                      stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+            </svg>
+            صفحه اصلی
+        </a>
+
+        <svg class="saya-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+
+        <span>درباره سایا مِد</span>
     </nav>
 
-    <!-- Header Section -->
-    <div class="mt-8 text-center">
-        <div class="inline-block p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl mb-6">
-            <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path fill-rule="evenodd" d="M12 2a1 1 0 011 1v1h2a1 1 0 110 2h-2v2a1 1 0 11-2 0V6H9a1 1 0 110-2h2V3a1 1 0 011-1zM5 9a1 1 0 011 1v8a1 1 0 01-1 1h14a1 1 0 01-1-1v-8a1 1 0 011-1h2a1 1 0 011 1v9a3 3 0 01-3 3H5a3 3 0 01-3-3v-9a1 1 0 011-1h2zm7 7a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
-            </svg>
+    <header class="saya-hero">
+        <div class="saya-hero-badge">
+            <span></span>
+            مرکز تخصصی تجهیزات پزشکی
         </div>
-        <h1 class="text-3xl md:text-4xl font-MorabbaBold text-gray-900 dark:text-white">
-            درباره <span class="text-blue-600 dark:text-blue-400">سایا مِد</span>
+
+        <h1>
+            درباره <strong>سایا مِد</strong>
         </h1>
-        <p class="text-lg text-gray-600 dark:text-gray-300 mt-3">
-           یک دهه سابقه درخشان
+
+        <p>
+            بیش از یک دهه تجربه، تعهد و تمرکز بر کیفیت؛
+            برای اینکه انتخاب تجهیزات پزشکی ساده‌تر و مطمئن‌تر باشد.
         </p>
-    </div>
+    </header>
 
-    <!-- about us -->
-    <section class="w-full flex flex-col lg:flex-row gap-8 p-6 md:p-8 rounded-2xl shadow-xl bg-gradient-to-br from-white to-blue-50 dark:from-gray-800 dark:to-gray-900 mt-8">
-        <div class="w-full lg:w-2/4 space-y-6">
-            <!-- Logo & Tagline -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
-                <a href="{% url 'main:index' %}" class="flex flex-col items-center text-center">
-                    <div class="flex items-center gap-2">
-                        <span class="font-MorabbaBold text-4xl">
-                            <span class="text-blue-500">سایا</span>
-                            <span class="text-gray-800 dark:text-white">مد</span>
-                        </span>
-                        <div class="px-3 py-1 bg-emerald-100 dark:bg-emerald-900 rounded-full">
-                            <span class="text-emerald-600 dark:text-emerald-400 font-DanaDemiBold text-sm"> یک دهه  </span>
-                        </div>
-                    </div>
-                    <p class="font-DanaMedium text-gray-500 dark:text-gray-400 mt-2">مرکز تخصصی تجهیزات پزشکی</p>
-                </a>
+    <section class="saya-intro">
+
+        <div class="saya-story">
+
+            <div class="saya-kicker">
+                داستان سایا مِد
             </div>
 
-            <!-- Introduction -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
-                <h2 class="text-2xl font-DanaDemiBold text-gray-900 dark:text-white mb-4">
-                    <span class="text-blue-600">سایا مِد</span> کیست؟
-                </h2>
-                <p class="leading-8 text-gray-700 dark:text-gray-300">
-                    مجموعه <strong class="text-blue-600 dark:text-blue-400">سایا مِد</strong> با بیش از <strong>یک دهه  تجربه</strong> در حوزه تجهیزات پزشکی،
-                    به عنوان یکی از معتبرترین و پیشروترین تأمین‌کنندگان این صنعت شناخته می‌شود.
-                    ما با تکیه بر دانش فنی، تعهد به کیفیت و پشتیبانی بی‌وقفه،
-                    در خدمت مراکز درمانی، مطب‌ها، بیمارستان‌ها و عموم مردم هستیم.
-                </p>
-            </div>
-
-            <!-- Competitive Advantage -->
-            <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="p-2 bg-white/20 rounded-lg">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                            <path fill-rule="evenodd" d="M12 2a1 1 0 011 1v1h2a1 1 0 110 2h-2v2a1 1 0 11-2 0V6H9a1 1 0 110-2h2V3a1 1 0 011-1zM5 9a1 1 0 011 1v8a1 1 0 01-1 1h14a1 1 0 01-1-1v-8a1 1 0 011-1h2a1 1 0 011 1v9a3 3 0 01-3 3H5a3 3 0 01-3-3v-9a1 1 0 011-1h2zm7 7a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-DanaDemiBold">مزیت رقابتی ما</h3>
-                </div>
-                <div class="space-y-2">
-                    <p class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
-                        <span class="font-DanaMedium">کمترین قیمت بازار تجهیزات پزشکی</span>
-                    </p>
-                    <p class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
-                        <span class="font-DanaMedium">کالاهای کاملاً اصل و دست‌اول</span>
-                    </p>
-                    <p class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
-                        <span class="font-DanaMedium">گارانتی معتبر و خدمات پس از فروش کامل</span>
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Image Section -->
-        <div class="w-full lg:w-2/4">
-            <div class="relative rounded-2xl overflow-hidden shadow-2xl h-full">
-                <img src="{{ media_url }}/images/about/saya-med-1.jpg"
-                     class="w-full h-full object-cover"
-                     alt="نمای داخلی سایا مِد - مرکز تجهیزات پزشکی">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
-                    <div class="p-6 text-white">
-                        <p class="text-lg font-DanaDemiBold">با اطمینان خرید کنید</p>
-                        <p class="text-sm opacity-90">تضمین کیفیت و اصالت کالا</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Services Section -->
-    <section class="mt-12">
-        <div class="text-center mb-8">
-            <h2 class="text-2xl md:text-3xl font-DanaDemiBold text-gray-900 dark:text-white">
-                خدمات <span class="text-blue-600">سایا مِد</span>
+            <h2>
+                تجربه‌ای که به
+                <span>اعتماد</span>
+                تبدیل شده است.
             </h2>
-            <p class="text-gray-600 dark:text-gray-300 mt-2">سایا مِد ، همراه سلامتی شما</p>
+
+            <p>
+                مجموعه <strong>سایا مِد</strong> با بیش از
+                <strong>یک دهه تجربه</strong> در حوزه تجهیزات پزشکی،
+                به عنوان یکی از معتبرترین و پیشروترین تأمین‌کنندگان این صنعت شناخته می‌شود.
+                ما با تکیه بر دانش فنی، تعهد به کیفیت و پشتیبانی بی‌وقفه،
+                در خدمت مراکز درمانی، مطب‌ها، بیمارستان‌ها و عموم مردم هستیم.
+            </p>
+
+            <div class="saya-proof">
+                <div class="saya-proof-item">
+                    <strong>۱۰+</strong>
+                    <span>سال تجربه و فعالیت</span>
+                </div>
+
+                <div class="saya-proof-item">
+                    <strong>اصل</strong>
+                    <span>تضمین اصالت کالا</span>
+                </div>
+
+                <div class="saya-proof-item">
+                    <strong>معتبر</strong>
+                    <span>گارانتی و خدمات پس از فروش</span>
+                </div>
+
+                <div class="saya-proof-item">
+                    <strong>همراه</strong>
+                    <span>پشتیبانی تخصصی مشتریان</span>
+                </div>
+            </div>
+
+            <div class="saya-advantage">
+
+                <div class="saya-advantage-head">
+                    <div class="saya-advantage-icon">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1m-8.6 8.6-2.1 2.1"
+                                  stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/>
+                        </svg>
+                    </div>
+
+                    <h3>چرا سایا مِد؟</h3>
+                </div>
+
+                <div class="saya-advantage-list">
+
+                    <div>
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="m5 12 4 4L19 6"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+                        </svg>
+                        کمترین قیمت بازار تجهیزات پزشکی
+                    </div>
+
+                    <div>
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="m5 12 4 4L19 6"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+                        </svg>
+                        کالاهای کاملاً اصل و دست‌اول
+                    </div>
+
+                    <div>
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="m5 12 4 4L19 6"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+                        </svg>
+                        گارانتی معتبر و خدمات پس از فروش کامل
+                    </div>
+
+                </div>
+            </div>
+
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <!-- Service 1 -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mb-4">
-                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                        <path fill-rule="evenodd" d="M12 2a1 1 0 011 1v1h2a1 1 0 110 2h-2v2a1 1 0 11-2 0V6H9a1 1 0 110-2h2V3a1 1 0 011-1zM5 9a1 1 0 011 1v8a1 1 0 01-1 1h14a1 1 0 01-1-1v-8a1 1 0 011-1h2a1 1 0 011 1v9a3 3 0 01-3 3H5a3 3 0 01-3-3v-9a1 1 0 011-1h2zm7 7a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
-                <h3 class="font-DanaDemiBold text-gray-900 dark:text-white mb-2">فروش تخصصی</h3>
-                <p class="text-gray-600 dark:text-gray-300 text-sm">
-                    تأمین کامل تجهیزات پزشکی مورد نیاز مراکز درمانی و بیمارستان‌ها با بهترین قیمت
-                </p>
-            </div>
+        <div class="saya-image-card">
 
-            <!-- Service 2 -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mb-4">
-                    <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 24 24">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
-                <h3 class="font-DanaDemiBold text-gray-900 dark:text-white mb-2">تضمین کیفیت</h3>
-                <p class="text-gray-600 dark:text-gray-300 text-sm">
-                    ارائه کالاهای کاملاً اصل با گارانتی معتبر و تضمین اصالت محصول
-                </p>
-            </div>
+            <img
+                src="{{ media_url }}/images/about/saya-med-1.jpg"
+                alt="نمای داخلی سایا مِد - مرکز تجهیزات پزشکی"
+                loading="lazy"
+            >
 
-            <!-- Service 3 -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mb-4">
-                    <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 24 24">
-                        <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
-                <h3 class="font-DanaDemiBold text-gray-900 dark:text-white mb-2">مشاوره رایگان</h3>
-                <p class="text-gray-600 dark:text-gray-300 text-sm">
-                    مشاوره تخصصی توسط کارشناسان مجرب برای انتخاب بهترین تجهیزات
-                </p>
-            </div>
+            <div class="saya-image-overlay">
 
-            <!-- Service 4 -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center mb-4">
-                    <svg class="w-6 h-6 text-orange-600 dark:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                        <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" clip-rule="evenodd"/>
-                    </svg>
+                <div class="saya-image-overlay-top">
+                    <strong>با اطمینان انتخاب کنید</strong>
+
+                    <span class="saya-image-status">
+                        تضمین کیفیت
+                    </span>
                 </div>
-                <h3 class="font-DanaDemiBold text-gray-900 dark:text-white mb-2">پشتیبانی</h3>
-                <p class="text-gray-600 dark:text-gray-300 text-sm">
-                    خدمات پس از فروش و پشتیبانی دائمی برای تمامی محصولات
+
+                <p>
+                    اصالت کالا، قیمت منصفانه و پشتیبانی واقعی؛
+                    سه اصل مهم در تجربه خرید از سایا مِد.
                 </p>
+
             </div>
         </div>
+
     </section>
 
-    <!-- Vision & Mission -->
-    <section class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Vision -->
-        <div class="bg-gradient-to-br from-blue-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 shadow-xl">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="p-3 bg-blue-100 dark:bg-blue-900 rounded-xl">
-                    <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                        <path fill-rule="evenodd" d="M12 2a1 1 0 011 1v1h2a1 1 0 110 2h-2v2a1 1 0 11-2 0V6H9a1 1 0 110-2h2V3a1 1 0 011-1zM5 9a1 1 0 011 1v8a1 1 0 01-1 1h14a1 1 0 01-1-1v-8a1 1 0 011-1h2a1 1 0 011 1v9a3 3 0 01-3 3H5a3 3 0 01-3-3v-9a1 1 0 011-1h2zm7 7a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
-                    </svg>
+    <section class="saya-section">
+
+        <div class="saya-section-head">
+
+            <div>
+                <div class="saya-kicker">
+                    آنچه ارائه می‌دهیم
                 </div>
-                <h3 class="text-2xl font-DanaDemiBold text-gray-900 dark:text-white">چشم‌انداز ما</h3>
+
+                <h2 class="saya-section-title">
+                    خدمات <span>سایا مِد</span>
+                </h2>
             </div>
-            <p class="text-gray-700 dark:text-gray-300 leading-8">
-                ما در <strong class="text-blue-600 dark:text-blue-400">سایا مِد</strong> به دنبال تبدیل شدن به برترین مرجع تأمین تجهیزات پزشکی در سطح کشور هستیم.
-                هدف ما ارائه محصولاتی با <strong>کمترین قیمت بازار</strong>، <strong>بالاترین کیفیت</strong> و
-                <strong>بهترین خدمات پس از فروش</strong> است تا اعتماد مشتریان را جلب کرده
-                و در حوزه سلامت جامعه نقش مؤثری ایفا کنیم.
+
+            <p class="saya-section-desc">
+                از انتخاب محصول تا خدمات پس از فروش،
+                در تمام مسیر خرید کنار شما هستیم.
             </p>
+
         </div>
 
-        <!-- Mission -->
-        <div class="bg-gradient-to-br from-emerald-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 shadow-xl">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="p-3 bg-emerald-100 dark:bg-emerald-900 rounded-xl">
-                    <svg class="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 24 24">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        <div class="saya-services">
+
+            <article class="saya-service">
+                <span class="saya-service-number">01</span>
+
+                <div class="saya-service-icon">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M3 7.5h18M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"
+                              stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                        <path d="M8 11h8M8 15h5"
+                              stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
                     </svg>
                 </div>
-                <h3 class="text-2xl font-DanaDemiBold text-gray-900 dark:text-white">ماموریت ما</h3>
-            </div>
-            <p class="text-gray-700 dark:text-gray-300 leading-8">
-                ماموریت ما در <strong class="text-emerald-600 dark:text-emerald-400">سایا مِد</strong> تأمین <strong>تجهیزات پزشکی دست‌اول</strong> با
-                <strong>قیمت استثنایی</strong> و ارائه <strong>خدمات حرفه‌ای</strong> به تمامی مراکز درمانی و هموطنان عزیز است.
-                ما متعهدیم که با شفافیت، صداقت و تعهد، نیازهای حوزه سلامت را به بهترین شکل ممکن برطرف کنیم.
-            </p>
+
+                <h3>فروش تخصصی</h3>
+
+                <p>
+                    تأمین کامل تجهیزات پزشکی مورد نیاز مراکز درمانی و بیمارستان‌ها با بهترین قیمت.
+                </p>
+            </article>
+
+            <article class="saya-service">
+                <span class="saya-service-number">02</span>
+
+                <div class="saya-service-icon">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M12 3 5 6v5c0 4.4 2.9 8.3 7 10 4.1-1.7 7-5.6 7-10V6l-7-3Z"
+                              stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                        <path d="m8.5 12 2.2 2.2 4.8-5"
+                              stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+
+                <h3>تضمین کیفیت</h3>
+
+                <p>
+                    ارائه کالاهای کاملاً اصل با گارانتی معتبر و تضمین اصالت محصول.
+                </p>
+            </article>
+
+            <article class="saya-service">
+                <span class="saya-service-number">03</span>
+
+                <div class="saya-service-icon">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M4 5a2 2 0 0 1 2-2h2.2a1 1 0 0 1 1 .7l1.2 3.2a1 1 0 0 1-.5 1.2L8.1 9a12 12 0 0 0 6.9 6.9l.9-1.8a1 1 0 0 1 1.2-.5l3.2 1.2a1 1 0 0 1 .7 1V18a2 2 0 0 1-2 2h-.5C10.5 20 4 13.5 4 5.5V5Z"
+                              stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+
+                <h3>مشاوره رایگان</h3>
+
+                <p>
+                    مشاوره تخصصی توسط کارشناسان مجرب برای انتخاب بهترین تجهیزات.
+                </p>
+            </article>
+
+            <article class="saya-service">
+                <span class="saya-service-number">04</span>
+
+                <div class="saya-service-icon">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M5 5h14v11H5z"
+                              stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                        <path d="M8 20h8M9 16v4m6-4v4M8 9h8M8 12h5"
+                              stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                    </svg>
+                </div>
+
+                <h3>پشتیبانی</h3>
+
+                <p>
+                    خدمات پس از فروش و پشتیبانی دائمی برای تمامی محصولات.
+                </p>
+            </article>
+
         </div>
+
     </section>
 
-    <!-- Contact CTA -->
-    <div class="mt-12 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-2xl p-8 text-center">
-        <h3 class="text-2xl md:text-3xl font-MorabbaBold text-white mb-4">
-           یک دهه تعهد و اعتبار
-        </h3>
-        <p class="text-blue-100 text-lg mb-6 max-w-2xl mx-auto">
-            با اطمینان از اصالت کالا و کمترین قیمت بازار، همراه ما باشید
-        </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="{% url 'main:contact' %}" class="inline-flex items-center gap-2 bg-white text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-xl font-DanaDemiBold transition-all duration-300 hover:scale-105">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" clip-rule="evenodd"/>
+    <section class="saya-section">
+
+        <div class="saya-section-head">
+
+            <div>
+                <div class="saya-kicker">
+                    مسیر ما
+                </div>
+
+                <h2 class="saya-section-title">
+                    چشم‌انداز و <span>ماموریت</span>
+                </h2>
+            </div>
+
+            <p class="saya-section-desc">
+                چیزی فراتر از فروش؛ ساختن یک رابطه بلندمدت بر پایه اعتماد.
+            </p>
+
+        </div>
+
+        <div class="saya-values">
+
+            <article class="saya-value">
+
+                <div class="saya-value-head">
+
+                    <div class="saya-value-icon">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"
+                                  stroke="currentColor" stroke-width="1.7"/>
+                            <circle cx="12" cy="12" r="2.8"
+                                    stroke="currentColor" stroke-width="1.7"/>
+                        </svg>
+                    </div>
+
+                    <h3>چشم‌انداز ما</h3>
+
+                </div>
+
+                <p>
+                    ما در <strong>سایا مِد</strong> به دنبال تبدیل شدن به برترین مرجع
+                    تأمین تجهیزات پزشکی در سطح کشور هستیم.
+                    هدف ما ارائه محصولاتی با <strong>کمترین قیمت بازار</strong>،
+                    <strong>بالاترین کیفیت</strong> و
+                    <strong>بهترین خدمات پس از فروش</strong> است تا اعتماد مشتریان را جلب کرده
+                    و در حوزه سلامت جامعه نقش مؤثری ایفا کنیم.
+                </p>
+
+            </article>
+
+            <article class="saya-value">
+
+                <div class="saya-value-head">
+
+                    <div class="saya-value-icon">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M12 3 5 6v5c0 4.4 2.9 8.3 7 10 4.1-1.7 7-5.6 7-10V6l-7-3Z"
+                                  stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                            <path d="m8.5 12 2.2 2.2 4.8-5"
+                                  stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+
+                    <h3>ماموریت ما</h3>
+
+                </div>
+
+                <p>
+                    ماموریت ما در <strong>سایا مِد</strong> تأمین
+                    <strong>تجهیزات پزشکی دست‌اول</strong> با
+                    <strong>قیمت استثنایی</strong> و ارائه
+                    <strong>خدمات حرفه‌ای</strong> به تمامی مراکز درمانی و هموطنان عزیز است.
+                    ما متعهدیم که با شفافیت، صداقت و تعهد،
+                    نیازهای حوزه سلامت را به بهترین شکل ممکن برطرف کنیم.
+                </p>
+
+            </article>
+
+        </div>
+
+    </section>
+
+    <section class="saya-cta">
+
+        <div class="saya-cta-content">
+
+            <h3>
+                یک دهه تعهد، برای انتخابی مطمئن
+            </h3>
+
+            <p>
+                با اطمینان از اصالت کالا، قیمت مناسب و پشتیبانی تخصصی،
+                همراه سایا مِد باشید.
+            </p>
+
+        </div>
+
+        <div class="saya-cta-actions">
+
+            <a href="{% url 'main:contact' %}" class="saya-btn saya-btn-light">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M5 4h3l1.5 4-2 1.4a12 12 0 0 0 7.1 7.1L16 14l4 1.5v3a1.5 1.5 0 0 1-1.5 1.5C11 20 4 13 4 5.5A1.5 1.5 0 0 1 5 4Z"
+                          stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
                 </svg>
                 تماس با ما
             </a>
-            <a href=" " class="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-xl font-DanaDemiBold transition-all duration-300 hover:scale-105">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"/>
-                </svg>
+
+            <a href="" class="saya-btn saya-btn-primary">
                 مشاهده محصولات
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M5 12h14M13 6l6 6-6 6"
+                          stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
             </a>
+
         </div>
-    </div>
+
+    </section>
+
 </main>
-
-<style>
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    section, .grid > div {
-        animation: fadeIn 0.6s ease-out;
-    }
-
-    .hover-scale:hover {
-        transform: scale(1.02);
-        transition: transform 0.3s ease;
-    }
-
-    .shadow-soft {
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-    }
-</style>
 
 {% endblock content %}
