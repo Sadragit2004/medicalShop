@@ -9,11 +9,16 @@
 
         دسته بندی ها
 
+        <!-- کلاس transition برای اطمینان از اعمال شدن در صورت تداخل با Tailwind -->
+
         <svg class="size-4" style="transition: transform 0.3s ease;">
+
             <use href="#chevron" />
+
         </svg>
 
     </a>
+
 
     <div class="megamenu">
 
@@ -27,12 +32,14 @@
                     class="megamenu_category-item {% if forloop.first %}active{% endif %}"
                     onclick="showCategory('{{ data.main.id }}')"
                 >
+
                     <a
                         style="color:#333;"
                         href="/product/category/{{ data.main.slug }}/"
                     >
                         {{ data.main.title }}
                     </a>
+
                 </li>
 
                 {% endfor %}
@@ -40,9 +47,11 @@
             {% else %}
 
                 <li class="megamenu_category-item active">
+
                     <a href="#">
                         دسته‌بندی‌ای یافت نشد
                     </a>
+
                 </li>
 
             {% endif %}
@@ -70,8 +79,12 @@
 
                             مشاهده همه {{ data.main.title }}
 
+                            <!-- فلش آبی داخل مگامنو -->
+
                             <svg class="size-4 rotate-90">
+
                                 <use href="#chevron" />
+
                             </svg>
 
                         </a>
@@ -189,17 +202,26 @@
 </li>
 
 
-<!-- ===================== CSS ===================== -->
+<!-- ===================== CSS (PC Only) ===================== -->
 
 <style>
 
+/* =========================
+   Main Arrow
+   ========================= */
+
 .menu-item_link svg {
+
     transition: transform 0.3s ease;
+
     transform-origin: center;
+
 }
 
 .megamenu-link:hover .menu-item_link svg {
+
     transform: rotate(180deg);
+
 }
 
 
@@ -208,45 +230,51 @@
    ========================= */
 
 .megamenu_left-item {
+
     display: none;
+
 }
 
 .megamenu_left-item.active {
+
     display: block;
+
 }
 
 .megamenu_category-item.active {
+
     background-color: #f3f4f6;
+
 }
 
 
 /* =========================
-   Main Mega Menu
+   Mega Menu
    ========================= */
 
 .megamenu {
+
     box-sizing: border-box;
 
-    width: 100%;
-    max-width: 100%;
-
-    overflow-x: hidden;
     overflow-y: auto;
 
-    max-height: calc(100dvh - 100px);
+    overflow-x: hidden;
+
+    max-height: calc(100dvh - 110px);
+
 }
 
 
 /* =========================
-   Left Content
+   Mega Menu Content
    ========================= */
 
 .megamenu_left {
+
     width: 100%;
-    max-width: 100%;
+
     min-width: 0;
 
-    box-sizing: border-box;
 }
 
 
@@ -259,24 +287,29 @@
     display: grid;
 
     /*
-     * سه ستون همیشه داخل عرض موجود قرار می‌گیرند
+     * همان سه ستون قبلی،
+     * ولی عرض ستون‌ها متناسب با فضای موجود می‌شود.
      */
+
     grid-template-columns:
-        repeat(3, minmax(0, 1fr));
+        repeat(3, minmax(0, 240px));
 
-    width: 100%;
-    max-width: 100%;
-
-    min-width: 0;
-
-    box-sizing: border-box;
+    justify-content: space-between;
 
     column-gap: 24px;
-    row-gap: 20px;
+
+    row-gap: 24px;
+
+    width: 100%;
+
+    max-width: 100%;
+
+    box-sizing: border-box;
 
     padding: 8px 0 16px 0;
 
     overflow: hidden;
+
 }
 
 
@@ -287,50 +320,54 @@
 .megamenu_left-column {
 
     width: 100%;
+
     min-width: 0;
 
-    box-sizing: border-box;
-}
+    max-width: 240px;
 
-
-.megamenu_left-menu {
-
-    display: flex;
-    flex-direction: column;
-
-    width: 100%;
-    min-width: 0;
 }
 
 
 /* =========================
-   Category Title
+   Column Menu
+   ========================= */
+
+.megamenu_left-menu {
+
+    display: flex;
+
+    flex-direction: column;
+
+    min-width: 0;
+
+}
+
+
+/* =========================
+   Titles
    ========================= */
 
 .megamenu_left-title {
 
-    display: block;
-
-    width: 100%;
-    min-width: 0;
-
-    box-sizing: border-box;
-
     font-weight: 600;
+
     font-size: 14px;
 
     color: #333;
 
-    margin-bottom: 10px;
-    padding-bottom: 7px;
+    margin-bottom: 12px;
+
+    padding-bottom: 8px;
 
     border-bottom: 1px solid #e5e7eb;
 
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
-}
 
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+}
 
 .megamenu_left-title a {
 
@@ -338,16 +375,11 @@
 
     text-decoration: none;
 
-    display: block;
-
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 
 /* =========================
-   Sub Menu
+   Submenu
    ========================= */
 
 .megamenu_submenu {
@@ -355,54 +387,43 @@
     list-style: none;
 
     padding: 0;
+
     margin: 0;
 
-    width: 100%;
-    min-width: 0;
 }
-
 
 .megamenu_submenu-item {
 
-    width: 100%;
-    min-width: 0;
+    margin-bottom: 8px;
 
-    margin-bottom: 6px;
 }
-
 
 .megamenu_submenu-item a {
 
     display: block;
 
-    width: 100%;
-    min-width: 0;
-
-    box-sizing: border-box;
-
     font-size: 13px;
 
     color: #666;
 
-    padding: 3px 0;
+    padding: 4px 0;
 
     text-decoration: none;
 
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
 
-    transition:
-        color 0.2s ease,
-        padding-right 0.2s ease;
-}
+    overflow: hidden;
 
+    text-overflow: ellipsis;
+
+}
 
 .megamenu_submenu-item a:hover {
 
     color: #3b82f6;
 
-    padding-right: 6px;
+    padding-right: 8px;
+
 }
 
 
@@ -412,11 +433,10 @@
 
 .megamenu_no-children {
 
-    width: 100%;
-
     padding: 20px 0;
 
     text-align: center;
+
 }
 
 
@@ -428,53 +448,15 @@
 
     .megamenu_horizontal-scroll {
 
-        column-gap: 18px;
-        row-gap: 16px;
+        /*
+         * در لپ‌تاپ فقط فاصله بین ستون‌ها کمتر می‌شود.
+         * اندازه فونت و ظاهر دست نمی‌خورد.
+         */
+
+        column-gap: 16px;
+
     }
 
-    .megamenu_left-title {
-
-        font-size: 13px;
-
-        margin-bottom: 8px;
-        padding-bottom: 6px;
-    }
-
-    .megamenu_submenu-item {
-
-        margin-bottom: 4px;
-    }
-
-    .megamenu_submenu-item a {
-
-        font-size: 12px;
-
-        padding: 2px 0;
-    }
-}
-
-
-/* =====================================================
-   Small Laptop
-   ===================================================== */
-
-@media (max-width: 1100px) {
-
-    .megamenu_horizontal-scroll {
-
-        column-gap: 14px;
-        row-gap: 14px;
-    }
-
-    .megamenu_left-title {
-
-        font-size: 12px;
-    }
-
-    .megamenu_submenu-item a {
-
-        font-size: 11px;
-    }
 }
 
 
@@ -486,35 +468,10 @@
 
     .megamenu {
 
-        max-height: calc(100dvh - 80px);
+        max-height: calc(100dvh - 90px);
+
     }
 
-    .megamenu_horizontal-scroll {
-
-        row-gap: 12px;
-
-        padding-top: 4px;
-        padding-bottom: 10px;
-    }
-
-    .megamenu_left-title {
-
-        margin-bottom: 6px;
-        padding-bottom: 5px;
-    }
-
-    .megamenu_submenu-item {
-
-        margin-bottom: 3px;
-    }
-
-    .megamenu_submenu-item a {
-
-        padding-top: 2px;
-        padding-bottom: 2px;
-
-        line-height: 1.45;
-    }
 }
 
 
@@ -526,37 +483,10 @@
 
     .megamenu {
 
-        max-height: calc(100dvh - 65px);
+        max-height: calc(100dvh - 75px);
+
     }
 
-    .megamenu_horizontal-scroll {
-
-        row-gap: 8px;
-
-        padding-top: 2px;
-        padding-bottom: 6px;
-    }
-
-    .megamenu_left-title {
-
-        margin-bottom: 4px;
-        padding-bottom: 4px;
-    }
-
-    .megamenu_submenu-item {
-
-        margin-bottom: 1px;
-    }
-
-    .megamenu_submenu-item a {
-
-        font-size: 11px;
-
-        padding-top: 1px;
-        padding-bottom: 1px;
-
-        line-height: 1.35;
-    }
 }
 
 </style>
@@ -577,7 +507,9 @@ function showCategory(categoryId) {
     const content = document.getElementById('content-' + categoryId);
 
     if (content) {
+
         content.classList.add('active');
+
     }
 
     const tab = document.querySelector(
@@ -585,8 +517,11 @@ function showCategory(categoryId) {
     );
 
     if (tab) {
+
         tab.classList.add('active');
+
     }
+
 }
 
 
@@ -595,7 +530,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const first = document.querySelector('.megamenu_category-item');
 
     if (first) {
+
         first.click();
+
     }
 
 });
