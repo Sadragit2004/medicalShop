@@ -635,6 +635,29 @@
         background: #f2fbfc;
     }
 
+    .saya-shop-cta {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 76px;
+        margin-top: 18px;
+        padding: 0 30px;
+        border-radius: 20px;
+        background: var(--saya-brand);
+        color: white;
+        font-size: 20px;
+        font-weight: 900;
+        transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
+        box-shadow: 0 14px 35px rgba(34,173,189,.18);
+    }
+
+    .saya-shop-cta:hover {
+        transform: translateY(-3px);
+        background: var(--saya-brand-dark);
+        box-shadow: 0 18px 42px rgba(34,173,189,.24);
+    }
+
     @media (max-width: 1000px) {
         .saya-intro {
             grid-template-columns: 1fr;
@@ -724,6 +747,12 @@
         .saya-btn {
             flex: 1;
         }
+
+        .saya-shop-cta {
+            min-height: 68px;
+            padding: 0 20px;
+            font-size: 17px;
+        }
     }
 
     @media (max-width: 480px) {
@@ -750,6 +779,11 @@
 
         .saya-btn {
             width: 100%;
+        }
+
+        .saya-shop-cta {
+            min-height: 64px;
+            font-size: 16px;
         }
     }
 
@@ -1136,7 +1170,7 @@
                 مشاهده محصولات
                 <svg viewBox="0 0 24 24" fill="none">
                     <path d="M5 12h14M13 6l6 6-6 6"
-                          stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                          stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                 </svg>
             </a>
 
@@ -1144,6 +1178,11 @@
 
     </section>
 
+    <a href="" class="saya-shop-cta">
+        خرید تجهیزات پزشکی و سلامت
+    </a>
+
 </main>
 
 {% endblock content %}
+
