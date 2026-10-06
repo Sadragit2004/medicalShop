@@ -6,13 +6,13 @@
     <!-- لینک اصلی دسته بندی ها -->
 
     <a href="" class="menu-item_link flex items-center justify-center gap-x-1">
-        دسته بندی ها
 
-        <!-- کلاس transition برای اطمینان از اعمال شدن در صورت تداخل با Tailwind -->
+        دسته بندی ها
 
         <svg class="size-4" style="transition: transform 0.3s ease;">
             <use href="#chevron" />
         </svg>
+
     </a>
 
     <div class="megamenu">
@@ -27,7 +27,10 @@
                     class="megamenu_category-item {% if forloop.first %}active{% endif %}"
                     onclick="showCategory('{{ data.main.id }}')"
                 >
-                    <a style="color:#333;" href="/product/category/{{ data.main.slug }}/">
+                    <a
+                        style="color:#333;"
+                        href="/product/category/{{ data.main.slug }}/"
+                    >
                         {{ data.main.title }}
                     </a>
                 </li>
@@ -37,12 +40,15 @@
             {% else %}
 
                 <li class="megamenu_category-item active">
-                    <a href="#">دسته‌بندی‌ای یافت نشد</a>
+                    <a href="#">
+                        دسته‌بندی‌ای یافت نشد
+                    </a>
                 </li>
 
             {% endif %}
 
         </ul>
+
 
         <div class="megamenu_left">
 
@@ -61,16 +67,17 @@
                             href="/product/category/{{ data.main.slug }}/"
                             class="text-blue-400 flex items-center gap-x-0.5 text-sm"
                         >
-                            مشاهده همه {{ data.main.title }}
 
-                            <!-- فلش آبی داخل مگامنو -->
+                            مشاهده همه {{ data.main.title }}
 
                             <svg class="size-4 rotate-90">
                                 <use href="#chevron" />
                             </svg>
+
                         </a>
 
                     </div>
+
 
                     {% if data.children %}
 
@@ -84,11 +91,14 @@
 
                                 <span class="megamenu_left-title">
 
-                                    <a href="/product/category/{{ child_data.child.slug }}/">
+                                    <a
+                                        href="/product/category/{{ child_data.child.slug }}/"
+                                    >
                                         {{ child_data.child.title }}
                                     </a>
 
                                 </span>
+
 
                                 {% if child_data.grandchildren %}
 
@@ -98,7 +108,9 @@
 
                                     <li class="megamenu_submenu-item">
 
-                                        <a href="/product/category/{{ grandchild.slug }}/">
+                                        <a
+                                            href="/product/category/{{ grandchild.slug }}/"
+                                        >
                                             {{ grandchild.title }}
                                         </a>
 
@@ -114,7 +126,9 @@
 
                                     <li class="megamenu_submenu-item">
 
-                                        <a href="/product/category/{{ child_data.child.slug }}/">
+                                        <a
+                                            href="/product/category/{{ child_data.child.slug }}/"
+                                        >
                                             مشاهده همه {{ child_data.child.title }}
                                         </a>
 
@@ -146,7 +160,9 @@
 
                                 <li class="megamenu_submenu-item">
 
-                                    <a href="/product/category/{{ data.main.slug }}/">
+                                    <a
+                                        href="/product/category/{{ data.main.slug }}/"
+                                    >
                                         مشاهده محصولات {{ data.main.title }}
                                     </a>
 
@@ -173,7 +189,7 @@
 </li>
 
 
-<!-- ===================== CSS (PC Only) ===================== -->
+<!-- ===================== CSS ===================== -->
 
 <style>
 
@@ -205,76 +221,188 @@
 
 
 /* =========================
-   Horizontal Category Grid
+   Main Mega Menu
+   ========================= */
+
+.megamenu {
+    box-sizing: border-box;
+
+    width: 100%;
+    max-width: 100%;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    max-height: calc(100dvh - 100px);
+}
+
+
+/* =========================
+   Left Content
+   ========================= */
+
+.megamenu_left {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    box-sizing: border-box;
+}
+
+
+/* =========================
+   Category Grid
    ========================= */
 
 .megamenu_horizontal-scroll {
+
     display: grid;
-    grid-template-columns: repeat(3, 240px);
-    column-gap: 32px;
-    row-gap: 24px;
+
+    /*
+     * سه ستون همیشه داخل عرض موجود قرار می‌گیرند
+     */
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    width: 100%;
+    max-width: 100%;
+
+    min-width: 0;
+
+    box-sizing: border-box;
+
+    column-gap: 24px;
+    row-gap: 20px;
+
     padding: 8px 0 16px 0;
-    overflow: visible;
-}
 
-.megamenu_left-column {
-    width: 240px;
-}
-
-.megamenu_left-menu {
-    display: flex;
-    flex-direction: column;
+    overflow: hidden;
 }
 
 
 /* =========================
-   Category Titles
+   Columns
+   ========================= */
+
+.megamenu_left-column {
+
+    width: 100%;
+    min-width: 0;
+
+    box-sizing: border-box;
+}
+
+
+.megamenu_left-menu {
+
+    display: flex;
+    flex-direction: column;
+
+    width: 100%;
+    min-width: 0;
+}
+
+
+/* =========================
+   Category Title
    ========================= */
 
 .megamenu_left-title {
+
+    display: block;
+
+    width: 100%;
+    min-width: 0;
+
+    box-sizing: border-box;
+
     font-weight: 600;
     font-size: 14px;
+
     color: #333;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
+
+    margin-bottom: 10px;
+    padding-bottom: 7px;
+
     border-bottom: 1px solid #e5e7eb;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
+
 .megamenu_left-title a {
+
     color: inherit;
+
     text-decoration: none;
+
+    display: block;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 
 /* =========================
-   Sub Categories
+   Sub Menu
    ========================= */
 
 .megamenu_submenu {
+
     list-style: none;
+
     padding: 0;
     margin: 0;
+
+    width: 100%;
+    min-width: 0;
 }
+
 
 .megamenu_submenu-item {
-    margin-bottom: 8px;
+
+    width: 100%;
+    min-width: 0;
+
+    margin-bottom: 6px;
 }
 
+
 .megamenu_submenu-item a {
+
     display: block;
+
+    width: 100%;
+    min-width: 0;
+
+    box-sizing: border-box;
+
     font-size: 13px;
+
     color: #666;
-    padding: 4px 0;
+
+    padding: 3px 0;
+
     text-decoration: none;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
     transition:
         color 0.2s ease,
         padding-right 0.2s ease;
 }
 
+
 .megamenu_submenu-item a:hover {
+
     color: #3b82f6;
-    padding-right: 8px;
+
+    padding-right: 6px;
 }
 
 
@@ -283,133 +411,151 @@
    ========================= */
 
 .megamenu_no-children {
+
+    width: 100%;
+
     padding: 20px 0;
+
     text-align: center;
 }
 
 
-/* =========================
-   Main Mega Menu
-   ========================= */
-
-.megamenu {
-    overflow-x: hidden;
-    overflow-y: auto;
-    max-height: calc(100dvh - 110px);
-}
-
-
 /* =====================================================
-   Laptop Screens
+   Laptop
    ===================================================== */
 
-@media (max-height: 850px) {
-
-    .megamenu {
-        max-height: calc(100dvh - 90px);
-    }
+@media (max-width: 1250px) {
 
     .megamenu_horizontal-scroll {
-        row-gap: 18px;
-        padding-top: 5px;
-        padding-bottom: 10px;
+
+        column-gap: 18px;
+        row-gap: 16px;
     }
 
     .megamenu_left-title {
+
+        font-size: 13px;
+
         margin-bottom: 8px;
         padding-bottom: 6px;
     }
 
     .megamenu_submenu-item {
+
         margin-bottom: 4px;
     }
 
     .megamenu_submenu-item a {
-        padding: 3px 0;
+
+        font-size: 12px;
+
+        padding: 2px 0;
     }
 }
 
 
 /* =====================================================
-   Short Laptop Screens
+   Small Laptop
    ===================================================== */
 
-@media (max-height: 720px) {
-
-    .megamenu {
-        max-height: calc(100dvh - 70px);
-    }
+@media (max-width: 1100px) {
 
     .megamenu_horizontal-scroll {
-        row-gap: 12px;
-        padding-top: 2px;
-        padding-bottom: 8px;
+
+        column-gap: 14px;
+        row-gap: 14px;
     }
 
     .megamenu_left-title {
+
+        font-size: 12px;
+    }
+
+    .megamenu_submenu-item a {
+
+        font-size: 11px;
+    }
+}
+
+
+/* =====================================================
+   Short Laptop
+   ===================================================== */
+
+@media (max-height: 800px) {
+
+    .megamenu {
+
+        max-height: calc(100dvh - 80px);
+    }
+
+    .megamenu_horizontal-scroll {
+
+        row-gap: 12px;
+
+        padding-top: 4px;
+        padding-bottom: 10px;
+    }
+
+    .megamenu_left-title {
+
         margin-bottom: 6px;
         padding-bottom: 5px;
     }
 
     .megamenu_submenu-item {
-        margin-bottom: 2px;
+
+        margin-bottom: 3px;
     }
 
     .megamenu_submenu-item a {
-        padding: 2px 0;
-        line-height: 1.5;
+
+        padding-top: 2px;
+        padding-bottom: 2px;
+
+        line-height: 1.45;
     }
 }
 
 
 /* =====================================================
-   Smaller Desktop Width
+   Very Short Laptop
    ===================================================== */
 
-@media (max-width: 1200px) {
+@media (max-height: 700px) {
+
+    .megamenu {
+
+        max-height: calc(100dvh - 65px);
+    }
 
     .megamenu_horizontal-scroll {
-        grid-template-columns: repeat(
-            3,
-            minmax(190px, 240px)
-        );
 
-        column-gap: 20px;
-    }
+        row-gap: 8px;
 
-    .megamenu_left-column {
-        width: auto;
-        min-width: 190px;
-    }
-}
-
-
-/* =====================================================
-   Very Small Laptop
-   ===================================================== */
-
-@media (max-width: 1050px) {
-
-    .megamenu_horizontal-scroll {
-        grid-template-columns: repeat(
-            3,
-            minmax(170px, 1fr)
-        );
-
-        column-gap: 16px;
-    }
-
-    .megamenu_left-column {
-        min-width: 0;
-        width: auto;
+        padding-top: 2px;
+        padding-bottom: 6px;
     }
 
     .megamenu_left-title {
-        font-size: 13px;
+
+        margin-bottom: 4px;
+        padding-bottom: 4px;
+    }
+
+    .megamenu_submenu-item {
+
+        margin-bottom: 1px;
     }
 
     .megamenu_submenu-item a {
-        font-size: 12px;
+
+        font-size: 11px;
+
+        padding-top: 1px;
+        padding-bottom: 1px;
+
+        line-height: 1.35;
     }
 }
 
