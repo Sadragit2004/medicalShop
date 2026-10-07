@@ -1,36 +1,99 @@
-from django.http import JsonResponse
-from django.db import models
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.utils import timezone
-from django.db.models import Q, Avg, Count
 import json
 from decimal import Decimal
 
-from .models import ProductPriceHistory, ProductStockHistory
-from apps.user.models.user import CustomUser
-from apps.product.models import Product, ProductSaleType
-from apps.product.models import Category
+from django.core.cache import cache
+from django.db import models, transaction
+from django.db.models import Avg, Count, Prefetch, Q
+from django.http import JsonResponse
 from django.shortcuts import render
-from apps.discount.models import DiscountBasket,DiscountDetail
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required, user_passes_test
+
+from .models import (
+    ProductPriceHistory,
+    ProductStockHistory,
+)
+
+from apps.user.models.user import CustomUser
+
+from apps.product.models import (
+    Product,
+    ProductSaleType,
+    Category,
+)
+
+from apps.discount.models import (
+    DiscountBasket,
+    DiscountDetail,
+)
+
+from .cache import (
+    cache,
+    build_price_panel_cache_key,
+    invalidate_price_panel_cache,
+    PRODUCT_LIST_CACHE_TIMEOUT,
+    PRODUCT_DETAIL_CACHE_TIMEOUT,
+    HISTORY_CACHE_TIMEOUT,
+    DASHBOARD_CACHE_TIMEOUT,
+    CATEGORIES_CACHE_TIMEOUT,
+)
 
 
-# توابع کمکی برای بررسی دسترسی
 def is_superuser(user):
-    """بررسی سوپریوزر بودن کاربر"""
     return user.is_authenticated and user.is_superuser
 
+
 def is_staff_or_superuser(user):
-    """بررسی staff یا superuser بودن کاربر"""
-    return user.is_authenticated and (user.is_staff or user.is_superuser)
+    return user.is_authenticated and (
+        user.is_staff or user.is_superuser
+    )
+
+
+def json_error(message, status=400):
+    return JsonResponse(
+        {
+            "success": False,
+            "error": message,
+        },
+        status=status,
+    )
+
+
+def parse_json_body(request):
+    try:
+        return json.loads(request.body)
+    except (json.JSONDecodeError, TypeError):
+        return None
+
+
+def get_user_name(user):
+    mobile = getattr(user, "mobileNumber", None)
+
+    if mobile:
+        return str(mobile)
+
+    return getattr(user, "username", str(user))
+
+
+def safe_image_url(image):
+    if not image:
+        return None
+
+    try:
+        return image.url
+    except (ValueError, AttributeError):
+        return None
 
 
 @login_required
 @user_passes_test(is_superuser)
 def showUiPrice(request):
-    """نمایش UI قیمت‌ها"""
-    return render(request, 'price_app/price.html')
+    return render(
+        request,
+        "price_app/price.html",
+    )
 
 
 @csrf_exempt
@@ -38,89 +101,277 @@ def showUiPrice(request):
 @login_required
 @user_passes_test(is_superuser)
 def get_products_list(request):
-    """دریافت لیست محصولات با قیمت‌ها و تخفیف‌ها - فقط سوپریوزر"""
-    products = Product.objects.filter(isActive=True).prefetch_related('saleTypes', 'typetitle')
+    """
+    Optimized product list.
 
-    category_id = request.GET.get('category')
+    The important difference from the previous implementation is:
+    - select_related for FK/OneToOne relations
+    - Prefetch with to_attr
+    - no Query inside product loop
+    - current price history loaded in bulk
+    - active discounts loaded in bulk
+    - categories loaded in bulk
+    - response cached
+    """
+
+    category_id = request.GET.get("category")
+    search = request.GET.get("search", "").strip()
+
+    cache_key = build_price_panel_cache_key(
+        "products",
+        category_id or "",
+        search,
+    )
+
+    cached_data = cache.get(cache_key)
+
+    if cached_data is not None:
+        return JsonResponse(
+            cached_data,
+            json_dumps_params={
+                "ensure_ascii": False,
+            },
+        )
+
+    now = timezone.now()
+
+    current_history_queryset = (
+        ProductPriceHistory.objects
+        .filter(is_current=True)
+        .only(
+            "id",
+            "product_id",
+            "sale_type_id",
+            "price_old",
+            "price_new",
+            "percent_change",
+        )
+    )
+
+    active_sale_types_queryset = (
+        ProductSaleType.objects
+        .filter(isActive=True)
+        .only(
+            "id",
+            "product_id",
+            "typeSale",
+            "price",
+            "finalPrice",
+            "memberCarton",
+            "limitedSale",
+            "title",
+        )
+    )
+
+    active_discount_queryset = (
+        DiscountDetail.objects
+        .filter(
+            discountBasket__isActive=True,
+            discountBasket__startDate__lte=now,
+            discountBasket__endDate__gte=now,
+        )
+        .select_related("discountBasket")
+        .only(
+            "id",
+            "product_id",
+            "discountBasket_id",
+            "discountBasket__id",
+            "discountBasket__discount",
+            "discountBasket__startDate",
+            "discountBasket__endDate",
+        )
+    )
+
+    products = (
+        Product.objects
+        .filter(isActive=True)
+        .select_related(
+            "brand",
+            "typetitle",
+        )
+        .prefetch_related(
+            Prefetch(
+                "saleTypes",
+                queryset=active_sale_types_queryset,
+                to_attr="price_panel_sale_types",
+            ),
+            Prefetch(
+                "category",
+                queryset=Category.objects.only(
+                    "id",
+                    "title",
+                ),
+                to_attr="price_panel_categories",
+            ),
+            Prefetch(
+                "price_history",
+                queryset=current_history_queryset,
+                to_attr="price_panel_current_history",
+            ),
+            Prefetch(
+                "productOfDiscount",
+                queryset=active_discount_queryset,
+                to_attr="price_panel_discounts",
+            ),
+        )
+        .only(
+            "id",
+            "title",
+            "slug",
+            "mainImage",
+            "stock",
+            "isActive",
+            "brand_id",
+            "brand__id",
+            "brand__title",
+            "typetitle_id",
+            "typetitle__id",
+            "typetitle__title",
+        )
+    )
+
     if category_id:
-        products = products.filter(category__id=category_id)
+        products = products.filter(
+            category__id=category_id
+        )
 
-    search = request.GET.get('search', '')
     if search:
-        products = products.filter(title__icontains=search)
+        products = products.filter(
+            title__icontains=search
+        )
+
+    products = products.distinct()
 
     data = []
+
     for product in products:
         sale_types = []
-        for sale in product.saleTypes.filter(isActive=True):
-            sale_types.append({
-                'id': sale.id,
-                'typeSale': sale.typeSale,
-                'typeSale_display': sale.get_typeSale_display(),
-                'price': sale.price,
-                'finalPrice': sale.finalPrice,
-                'memberCarton': sale.memberCarton,
-                'limitedSale': sale.limitedSale,
-                'title': sale.title or 'پایه',
-            })
 
-        last_price = ProductPriceHistory.objects.filter(
-            product=product, is_current=True
-        ).first()
+        for sale in product.price_panel_sale_types:
+            sale_types.append(
+                {
+                    "id": sale.id,
+                    "typeSale": sale.typeSale,
+                    "typeSale_display": sale.get_typeSale_display(),
+                    "price": sale.price,
+                    "finalPrice": sale.finalPrice,
+                    "memberCarton": sale.memberCarton,
+                    "limitedSale": sale.limitedSale,
+                    "title": sale.title or "پایه",
+                }
+            )
 
-        product_type_title = product.typetitle.title if product.typetitle else 'فیزیکی'
+        categories = [
+            {
+                "id": category.id,
+                "title": category.title,
+            }
+            for category in product.price_panel_categories
+        ]
 
-        # ========== محاسبه تخفیف محصول از DiscountBasket ==========
-        original_price = sale_types[0]['price'] if sale_types else 0
+        current_history = (
+            product.price_panel_current_history[0]
+            if product.price_panel_current_history
+            else None
+        )
+
+        original_price = (
+            sale_types[0]["price"]
+            if sale_types
+            else 0
+        )
+
         discounted_price = original_price
         discount_percent = 0
         has_active_discount = False
         discount_basket_id = None
         discount_detail_id = None
 
-        now = timezone.now()
+        if product.price_panel_discounts:
+            discount_detail = product.price_panel_discounts[0]
+            basket = discount_detail.discountBasket
 
-        # جستجوی DiscountDetail مربوط به این محصول که سبد تخفیف آن فعال باشد
-        discount_detail = DiscountDetail.objects.filter(
-            product=product,
-            discountBasket__isActive=True,
-            discountBasket__startDate__lte=now,
-            discountBasket__endDate__gte=now
-        ).select_related('discountBasket').first()
-
-        if discount_detail:
             has_active_discount = True
-            discount_basket = discount_detail.discountBasket
-            discount_percent = discount_basket.discount
-            discounted_price = original_price - int((original_price * discount_percent) / 100)
-            discount_basket_id = discount_basket.id
+            discount_percent = basket.discount
+
+            discounted_price = (
+                original_price
+                - int(
+                    (
+                        original_price
+                        * discount_percent
+                    )
+                    / 100
+                )
+            )
+
+            discount_basket_id = basket.id
             discount_detail_id = discount_detail.id
 
-        data.append({
-            'id': product.id,
-            'title': product.title,
-            'slug': product.slug,
-            'mainImage': product.mainImage.url if product.mainImage else None,
-            'stock': product.stock,
-            'isActive': product.isActive,
-            'category': [{'id': cat.id, 'title': cat.title} for cat in product.category.all()],
-            'brand': product.brand.title if product.brand else None,
-            'sale_types': sale_types,
-            'product_type_title': product_type_title,
-            'original_price': original_price,
-            'discounted_price': discounted_price,
-            'discount_percent': discount_percent,
-            'has_active_discount': has_active_discount,
-            'discount_basket_id': discount_basket_id,
-            'discount_detail_id': discount_detail_id,
-            'last_price': {
-                'price_old': last_price.price_old if last_price else None,
-                'price_new': last_price.price_new if last_price else original_price,
-                'percent_change': float(last_price.percent_change) if last_price and last_price.percent_change else 0,
-            } if last_price or sale_types else None
-        })
+        data.append(
+            {
+                "id": product.id,
+                "title": product.title,
+                "slug": product.slug,
+                "mainImage": safe_image_url(
+                    product.mainImage
+                ),
+                "stock": product.stock,
+                "isActive": product.isActive,
+                "category": categories,
+                "brand": (
+                    product.brand.title
+                    if product.brand
+                    else None
+                ),
+                "sale_types": sale_types,
+                "product_type_title": (
+                    product.typetitle.title
+                    if product.typetitle
+                    else "فیزیکی"
+                ),
+                "original_price": original_price,
+                "discounted_price": discounted_price,
+                "discount_percent": discount_percent,
+                "has_active_discount": has_active_discount,
+                "discount_basket_id": discount_basket_id,
+                "discount_detail_id": discount_detail_id,
+                "last_price": (
+                    {
+                        "price_old": current_history.price_old,
+                        "price_new": current_history.price_new,
+                        "percent_change": (
+                            float(
+                                current_history.percent_change
+                            )
+                            if current_history.percent_change
+                            else 0
+                        ),
+                    }
+                    if current_history or sale_types
+                    else None
+                ),
+            }
+        )
 
-    return JsonResponse({'success': True, 'count': len(data), 'products': data})
+    response_data = {
+        "success": True,
+        "count": len(data),
+        "products": data,
+    }
+
+    cache.set(
+        cache_key,
+        response_data,
+        timeout=PRODUCT_LIST_CACHE_TIMEOUT,
+    )
+
+    return JsonResponse(
+        response_data,
+        json_dumps_params={
+            "ensure_ascii": False,
+        },
+    )
 
 
 @csrf_exempt
@@ -128,92 +379,241 @@ def get_products_list(request):
 @login_required
 @user_passes_test(is_staff_or_superuser)
 def get_product_detail(request, product_id):
-    """دریافت جزئیات یک محصول - staff یا superuser"""
+    cache_key = build_price_panel_cache_key(
+        "product-detail",
+        product_id,
+    )
+
+    cached_data = cache.get(cache_key)
+
+    if cached_data is not None:
+        return JsonResponse(
+            cached_data,
+            json_dumps_params={
+                "ensure_ascii": False,
+            },
+        )
+
     try:
-        product = Product.objects.get(id=product_id, isActive=True)
+        product = (
+            Product.objects
+            .filter(
+                id=product_id,
+                isActive=True,
+            )
+            .select_related()
+            .prefetch_related(
+                Prefetch(
+                    "saleTypes",
+                    queryset=ProductSaleType.objects.filter(
+                        isActive=True
+                    ).only(
+                        "id",
+                        "product_id",
+                        "typeSale",
+                        "price",
+                        "finalPrice",
+                        "memberCarton",
+                        "limitedSale",
+                        "title",
+                    ),
+                    to_attr="price_panel_sale_types",
+                )
+            )
+            .only(
+                "id",
+                "title",
+                "slug",
+                "mainImage",
+                "description",
+                "shortDescription",
+                "stock",
+                "isActive",
+            )
+            .first()
+        )
     except Product.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'محصول یافت نشد'}, status=404)
+        product = None
+
+    if not product:
+        return json_error(
+            "محصول یافت نشد",
+            status=404,
+        )
 
     sale_types = []
-    for sale in product.saleTypes.filter(isActive=True):
-        sale_types.append({
-            'id': sale.id,
-            'typeSale': sale.typeSale,
-            'typeSale_display': sale.get_typeSale_display(),
-            'price': sale.price,
-            'finalPrice': sale.finalPrice,
-            'memberCarton': sale.memberCarton,
-            'limitedSale': sale.limitedSale,
-            'title': sale.title or 'پایه',
-        })
 
-    price_history = ProductPriceHistory.objects.filter(product=product).order_by('-created_at')[:20]
-    stock_history = ProductStockHistory.objects.filter(product=product).order_by('-created_at')[:10]
+    for sale in product.price_panel_sale_types:
+        sale_types.append(
+            {
+                "id": sale.id,
+                "typeSale": sale.typeSale,
+                "typeSale_display": sale.get_typeSale_display(),
+                "price": sale.price,
+                "finalPrice": sale.finalPrice,
+                "memberCarton": sale.memberCarton,
+                "limitedSale": sale.limitedSale,
+                "title": sale.title or "پایه",
+            }
+        )
 
-    history_data = []
-    for hist in price_history:
-        history_data.append({
-            'id': hist.id,
-            'price_old': hist.price_old,
-            'price_new': hist.price_new,
-            'percent_change': float(hist.percent_change) if hist.percent_change else 0,
-            'change_type': hist.change_type,
-            'created_at': hist.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'source': hist.get_source_display(),
-            'note': hist.note,
-        })
+    price_history = (
+        ProductPriceHistory.objects
+        .filter(product_id=product_id)
+        .select_related("sale_type")
+        .only(
+            "id",
+            "product_id",
+            "sale_type_id",
+            "price_old",
+            "price_new",
+            "percent_change",
+            "change_type",
+            "created_at",
+            "source",
+            "note",
+        )
+        .order_by("-created_at")[:20]
+    )
 
-    stock_history_data = []
-    for stock in stock_history:
-        stock_history_data.append({
-            'id': stock.id,
-            'stock_old': stock.stock_old,
-            'stock_new': stock.stock_new,
-            'change_type': stock.get_change_type_display(),
-            'created_at': stock.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'changed_by': stock.changed_by_name,
-        })
+    stock_history = (
+        ProductStockHistory.objects
+        .filter(product_id=product_id)
+        .only(
+            "id",
+            "product_id",
+            "stock_old",
+            "stock_new",
+            "change_type",
+            "created_at",
+            "changed_by_name",
+        )
+        .order_by("-created_at")[:10]
+    )
 
-    # دریافت اطلاعات تخفیف محصول
+    history_data = [
+        {
+            "id": hist.id,
+            "price_old": hist.price_old,
+            "price_new": hist.price_new,
+            "percent_change": (
+                float(hist.percent_change)
+                if hist.percent_change
+                else 0
+            ),
+            "change_type": hist.change_type,
+            "created_at": hist.created_at.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            "source": hist.get_source_display(),
+            "note": hist.note,
+        }
+        for hist in price_history
+    ]
+
+    stock_history_data = [
+        {
+            "id": stock.id,
+            "stock_old": stock.stock_old,
+            "stock_new": stock.stock_new,
+            "change_type": stock.get_change_type_display(),
+            "created_at": stock.created_at.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            "changed_by": stock.changed_by_name,
+        }
+        for stock in stock_history
+    ]
+
     now = timezone.now()
+
+    discount_detail = (
+        DiscountDetail.objects
+        .filter(
+            product_id=product_id,
+            discountBasket__isActive=True,
+            discountBasket__startDate__lte=now,
+            discountBasket__endDate__gte=now,
+        )
+        .select_related("discountBasket")
+        .only(
+            "id",
+            "product_id",
+            "discountBasket_id",
+            "discountBasket__id",
+            "discountBasket__discount",
+            "discountBasket__startDate",
+            "discountBasket__endDate",
+        )
+        .first()
+    )
+
     discount_info = None
-    discount_detail = DiscountDetail.objects.filter(
-        product=product,
-        discountBasket__isActive=True,
-        discountBasket__startDate__lte=now,
-        discountBasket__endDate__gte=now
-    ).select_related('discountBasket').first()
 
     if discount_detail:
         basket = discount_detail.discountBasket
-        original_price = sale_types[0]['price'] if sale_types else 0
+
+        original_price = (
+            sale_types[0]["price"]
+            if sale_types
+            else 0
+        )
+
         discount_info = {
-            'discount_percent': basket.discount,
-            'original_price': original_price,
-            'discounted_price': original_price - int((original_price * basket.discount) / 100),
-            'start_date': basket.startDate.strftime('%Y-%m-%d %H:%M:%S'),
-            'end_date': basket.endDate.strftime('%Y-%m-%d %H:%M:%S'),
-            'discount_basket_id': basket.id,
-            'discount_detail_id': discount_detail.id
+            "discount_percent": basket.discount,
+            "original_price": original_price,
+            "discounted_price": (
+                original_price
+                - int(
+                    (
+                        original_price
+                        * basket.discount
+                    )
+                    / 100
+                )
+            ),
+            "start_date": basket.startDate.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            "end_date": basket.endDate.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            "discount_basket_id": basket.id,
+            "discount_detail_id": discount_detail.id,
         }
 
-    return JsonResponse({
-        'success': True,
-        'product': {
-            'id': product.id,
-            'title': product.title,
-            'slug': product.slug,
-            'mainImage': product.mainImage.url if product.mainImage else None,
-            'description': product.description,
-            'shortDescription': product.shortDescription,
-            'stock': product.stock,
-            'isActive': product.isActive,
-            'sale_types': sale_types,
-            'price_history': history_data,
-            'stock_history': stock_history_data,
-            'discount_info': discount_info
-        }
-    })
+    response_data = {
+        "success": True,
+        "product": {
+            "id": product.id,
+            "title": product.title,
+            "slug": product.slug,
+            "mainImage": safe_image_url(
+                product.mainImage
+            ),
+            "description": product.description,
+            "shortDescription": product.shortDescription,
+            "stock": product.stock,
+            "isActive": product.isActive,
+            "sale_types": sale_types,
+            "price_history": history_data,
+            "stock_history": stock_history_data,
+            "discount_info": discount_info,
+        },
+    }
+
+    cache.set(
+        cache_key,
+        response_data,
+        timeout=PRODUCT_DETAIL_CACHE_TIMEOUT,
+    )
+
+    return JsonResponse(
+        response_data,
+        json_dumps_params={
+            "ensure_ascii": False,
+        },
+    )
 
 
 @csrf_exempt
@@ -221,160 +621,324 @@ def get_product_detail(request, product_id):
 @login_required
 @user_passes_test(is_superuser)
 def update_product_price(request):
-    """به روز رسانی قیمت محصول - فقط سوپریوزر"""
-    try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'error': 'داده نامعتبر'}, status=400)
+    data = parse_json_body(request)
 
-    product_id = data.get('product_id')
-    sale_type_id = data.get('sale_type_id')
-    new_price = data.get('price')
-    source = data.get('source', 'manual_phone')
-    source_detail = data.get('source_detail', '')
-    note = data.get('note', '')
+    if data is None:
+        return json_error(
+            "داده نامعتبر",
+            status=400,
+        )
 
-    if not product_id or not new_price:
-        return JsonResponse({'success': False, 'error': 'product_id و price الزامی هستند'}, status=400)
+    product_id = data.get("product_id")
+    sale_type_id = data.get("sale_type_id")
+    new_price = data.get("price")
 
-    try:
-        product = Product.objects.get(id=product_id)
-    except Product.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'محصول یافت نشد'}, status=404)
-
-    if not sale_type_id:
-        sale_type = product.saleTypes.filter(isActive=True).first()
-        if not sale_type:
-            return JsonResponse({'success': False, 'error': 'نوع فروشی برای این محصول تعریف نشده'}, status=400)
-    else:
-        try:
-            sale_type = ProductSaleType.objects.get(id=sale_type_id, product=product)
-        except ProductSaleType.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'نوع فروش یافت نشد'}, status=404)
-
-    old_price = sale_type.price
-    new_price_int = int(new_price)
-
-    if old_price == new_price_int:
-        return JsonResponse({
-            'success': True,
-            'message': 'قیمت تغییری نکرده است',
-            'data': {'product_id': product_id, 'old_price': old_price, 'new_price': new_price_int, 'percent_change': 0}
-        })
-
-    sale_type.price = new_price_int
-    sale_type.finalPrice = new_price_int
-    sale_type.updatedAt = timezone.now()
-    sale_type.save()
-
-    ProductPriceHistory.objects.filter(product=product, sale_type=sale_type, is_current=True).update(is_current=False)
-
-    percent_change = round(((new_price_int - old_price) / old_price) * 100, 2) if old_price > 0 else 0
-    change_type = 'increase' if new_price_int > old_price else 'decrease'
-
-    user = request.user
-    user_name = str(user.mobileNumber) or user.username
-
-    price_history = ProductPriceHistory.objects.create(
-        product=product, sale_type=sale_type,
-        price_old=old_price, price_new=new_price_int,
-        percent_change=Decimal(str(percent_change)), change_type=change_type,
-        changed_by=user, changed_by_name=user_name,
-        source=source, source_detail=source_detail, note=note,
-        is_current=True, created_at=timezone.now()
+    source = data.get(
+        "source",
+        "manual_phone",
     )
 
-    return JsonResponse({
-        'success': True, 'message': 'قیمت با موفقیت به روز شد',
-        'data': {
-            'id': price_history.id, 'product_id': product_id, 'product_title': product.title,
-            'sale_type_id': sale_type.id, 'old_price': old_price, 'new_price': new_price_int,
-            'percent_change': float(percent_change), 'change_type': change_type,
-            'created_at': price_history.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-        }
-    })
+    source_detail = data.get(
+        "source_detail",
+        "",
+    )
+
+    note = data.get(
+        "note",
+        "",
+    )
+
+    if product_id is None or new_price is None:
+        return json_error(
+            "product_id و price الزامی هستند",
+            status=400,
+        )
+
+    try:
+        new_price_int = int(new_price)
+
+        if new_price_int < 0:
+            raise ValueError
+
+    except (TypeError, ValueError):
+        return json_error(
+            "قیمت نامعتبر است",
+            status=400,
+        )
+
+    now = timezone.now()
+    user = request.user
+    user_name = get_user_name(user)
+
+    with transaction.atomic():
+
+        try:
+            product = (
+                Product.objects
+                .select_for_update()
+                .get(id=product_id)
+            )
+        except Product.DoesNotExist:
+            return json_error(
+                "محصول یافت نشد",
+                status=404,
+            )
+
+        if sale_type_id:
+            try:
+                sale_type = (
+                    ProductSaleType.objects
+                    .select_for_update()
+                    .get(
+                        id=sale_type_id,
+                        product_id=product_id,
+                    )
+                )
+            except ProductSaleType.DoesNotExist:
+                return json_error(
+                    "نوع فروش یافت نشد",
+                    status=404,
+                )
+        else:
+            sale_type = (
+                ProductSaleType.objects
+                .select_for_update()
+                .filter(
+                    product_id=product_id,
+                    isActive=True,
+                )
+                .first()
+            )
+
+            if not sale_type:
+                return json_error(
+                    "نوع فروشی برای این محصول تعریف نشده",
+                    status=400,
+                )
+
+        old_price = sale_type.price
+
+        if old_price == new_price_int:
+            return JsonResponse(
+                {
+                    "success": True,
+                    "message": "قیمت تغییری نکرده است",
+                    "data": {
+                        "product_id": product_id,
+                        "old_price": old_price,
+                        "new_price": new_price_int,
+                        "percent_change": 0,
+                    },
+                },
+                json_dumps_params={
+                    "ensure_ascii": False,
+                },
+            )
+
+        percent_change = (
+            round(
+                (
+                    (new_price_int - old_price)
+                    / old_price
+                )
+                * 100,
+                2,
+            )
+            if old_price > 0
+            else 0
+        )
+
+        change_type = (
+            "increase"
+            if new_price_int > old_price
+            else "decrease"
+        )
+
+        sale_type.price = new_price_int
+        sale_type.finalPrice = new_price_int
+        sale_type.updatedAt = now
+
+        sale_type.save(
+            update_fields=[
+                "price",
+                "finalPrice",
+                "updatedAt",
+            ]
+        )
+
+        ProductPriceHistory.objects.filter(
+            product_id=product_id,
+            sale_type_id=sale_type.id,
+            is_current=True,
+        ).update(
+            is_current=False
+        )
+
+        price_history = ProductPriceHistory.objects.create(
+            product_id=product_id,
+            sale_type_id=sale_type.id,
+            price_old=old_price,
+            price_new=new_price_int,
+            percent_change=Decimal(
+                str(percent_change)
+            ),
+            change_type=change_type,
+            changed_by=user,
+            changed_by_name=user_name,
+            source=source,
+            source_detail=source_detail,
+            note=note,
+            is_current=True,
+            created_at=now,
+        )
+
+    invalidate_price_panel_cache()
+
+    return JsonResponse(
+        {
+            "success": True,
+            "message": "قیمت با موفقیت به روز شد",
+            "data": {
+                "id": price_history.id,
+                "product_id": product_id,
+                "product_title": product.title,
+                "sale_type_id": sale_type.id,
+                "old_price": old_price,
+                "new_price": new_price_int,
+                "percent_change": float(
+                    percent_change
+                ),
+                "change_type": change_type,
+                "created_at": price_history.created_at.strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
+            },
+        },
+        json_dumps_params={
+            "ensure_ascii": False,
+        },
+    )
 
 
 @csrf_exempt
 @require_http_methods(["POST"])
 @login_required
 @user_passes_test(is_superuser)
-def toggle_product_with_stock_management(request, product_id):
-    """
-    مدیریت دکمه خاموش/روشن - فقط موجودی را مدیریت می‌کند:
-    - اگر موجودی > 0: موجودی را ذخیره و صفر می‌کند (خاموش)
-    - اگر موجودی == 0: آخرین موجودی ذخیره شده را بازیابی می‌کند (روشن)
+def toggle_product_with_stock_management(
+    request,
+    product_id,
+):
+    with transaction.atomic():
 
-    isActive محصول هرگز تغییر نمی‌کند - دست نمی‌زنیم بهش
-    """
-    try:
-        product = Product.objects.get(id=product_id)
+        try:
+            product = (
+                Product.objects
+                .select_for_update()
+                .get(id=product_id)
+            )
+        except Product.DoesNotExist:
+            return json_error(
+                "محصول یافت نشد",
+                status=404,
+            )
+
         old_stock = product.stock
         user = request.user
-        user_name = str(user.mobileNumber) or user.username
+        user_name = get_user_name(user)
 
         if old_stock > 0:
-            # ====== خاموش کردن (موجودی را صفر کن) ======
+
             ProductStockHistory.objects.create(
-                product=product,
+                product_id=product_id,
                 stock_old=old_stock,
                 stock_new=0,
-                change_type='stock_off',
+                change_type="stock_off",
                 saved_stock_before_disable=old_stock,
                 changed_by=user,
                 changed_by_name=user_name,
-                note=f"موجودی از {old_stock} به صفر تنظیم شد."
+                note=(
+                    f"موجودی از {old_stock} "
+                    "به صفر تنظیم شد."
+                ),
             )
 
             product.stock = 0
-            product.save()
 
-            return JsonResponse({
-                'success': True,
-                'product_id': product_id,
-                'isActive': product.isActive,
-                'stock': 0,
-                'old_stock': old_stock,
-                'message': f"موجودی به صفر رسید"
-            })
+            product.save(
+                update_fields=["stock"]
+            )
+
+            new_stock = 0
+            message = "موجودی به صفر رسید"
 
         else:
-            # ====== روشن کردن (موجودی را بازیابی کن) ======
-            last_record = ProductStockHistory.objects.filter(
-                product=product,
-                change_type='stock_off',
-                saved_stock_before_disable__isnull=False,
-                saved_stock_before_disable__gt=0
-            ).order_by('-created_at').first()
 
-            restored_stock = last_record.saved_stock_before_disable if last_record else 1
+            last_record = (
+                ProductStockHistory.objects
+                .filter(
+                    product_id=product_id,
+                    change_type="stock_off",
+                    saved_stock_before_disable__isnull=False,
+                    saved_stock_before_disable__gt=0,
+                )
+                .order_by("-created_at")
+                .only(
+                    "saved_stock_before_disable"
+                )
+                .first()
+            )
+
+            restored_stock = (
+                last_record.saved_stock_before_disable
+                if last_record
+                else 1
+            )
 
             ProductStockHistory.objects.create(
-                product=product,
+                product_id=product_id,
                 stock_old=old_stock,
                 stock_new=restored_stock,
-                change_type='stock_on',
+                change_type="stock_on",
                 saved_stock_before_disable=None,
                 changed_by=user,
                 changed_by_name=user_name,
-                note=f"موجودی از {old_stock} به {restored_stock} بازیابی شد"
+                note=(
+                    f"موجودی از {old_stock} "
+                    f"به {restored_stock} بازیابی شد"
+                ),
             )
 
             product.stock = restored_stock
-            product.save()
 
-            return JsonResponse({
-                'success': True,
-                'product_id': product_id,
-                'isActive': product.isActive,
-                'stock': restored_stock,
-                'old_stock': old_stock,
-                'restored_from': restored_stock,
-                'message': f"موجودی به {restored_stock} بازگشت"
-            })
+            product.save(
+                update_fields=["stock"]
+            )
 
-    except Product.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'محصول یافت نشد'}, status=404)
+            new_stock = restored_stock
+            message = (
+                f"موجودی به {restored_stock} بازگشت"
+            )
+
+    invalidate_price_panel_cache()
+
+    return JsonResponse(
+        {
+            "success": True,
+            "product_id": product_id,
+            "isActive": product.isActive,
+            "stock": new_stock,
+            "old_stock": old_stock,
+            "restored_from": (
+                new_stock
+                if old_stock == 0
+                else None
+            ),
+            "message": message,
+        },
+        json_dumps_params={
+            "ensure_ascii": False,
+        },
+    )
 
 
 @csrf_exempt
@@ -382,455 +946,956 @@ def toggle_product_with_stock_management(request, product_id):
 @login_required
 @user_passes_test(is_superuser)
 def set_product_discount(request):
-    """
-    تنظیم یا به‌روزرسانی تخفیف یک محصول در سبد تخفیف
-    اگر محصول قبلاً در یک سبد تخفیف بود، آن را به‌روزرسانی می‌کند
-    اگر نبود، یک سبد تخفیف جدید می‌سازد
-    اگر درصد تخفیف 0 بود، تخفیف را حذف می‌کند
-    """
+    data = parse_json_body(request)
+
+    if data is None:
+        return json_error(
+            "داده نامعتبر",
+            status=400,
+        )
+
+    product_id = data.get("product_id")
+    discount_percent = data.get(
+        "discount_percent"
+    )
+
+    if not product_id:
+        return json_error(
+            "product_id الزامی است",
+            status=400,
+        )
+
+    if discount_percent is None:
+        return json_error(
+            "درصد تخفیف الزامی است",
+            status=400,
+        )
+
     try:
-        data = json.loads(request.body)
-        product_id = data.get('product_id')
-        discount_percent = data.get('discount_percent')
+        discount_percent = int(
+            discount_percent
+        )
+    except (TypeError, ValueError):
+        return json_error(
+            "درصد تخفیف نامعتبر است",
+            status=400,
+        )
 
-        if not product_id:
-            return JsonResponse({'success': False, 'error': 'product_id الزامی است'}, status=400)
+    if not 0 <= discount_percent <= 100:
+        return json_error(
+            "درصد تخفیف باید بین 0 تا 100 باشد",
+            status=400,
+        )
 
-        if discount_percent is None:
-            return JsonResponse({'success': False, 'error': 'درصد تخفیف الزامی است'}, status=400)
+    now = timezone.now()
 
-        discount_percent = int(discount_percent)
-        if discount_percent < 0 or discount_percent > 100:
-            return JsonResponse({'success': False, 'error': 'درصد تخفیف باید بین 0 تا 100 باشد'}, status=400)
+    with transaction.atomic():
 
-        product = Product.objects.get(id=product_id)
-        user = request.user
-        now = timezone.now()
+        try:
+            product = (
+                Product.objects
+                .select_for_update()
+                .get(id=product_id)
+            )
+        except Product.DoesNotExist:
+            return json_error(
+                "محصول یافت نشد",
+                status=404,
+            )
 
-        # قیمت اصلی محصول
-        sale_type = product.saleTypes.filter(isActive=True).first()
+        sale_type = (
+            ProductSaleType.objects
+            .filter(
+                product_id=product_id,
+                isActive=True,
+            )
+            .only(
+                "id",
+                "price",
+            )
+            .first()
+        )
+
         if not sale_type:
-            return JsonResponse({'success': False, 'error': 'نوع فروشی برای این محصول تعریف نشده'}, status=400)
+            return json_error(
+                "نوع فروشی برای این محصول تعریف نشده",
+                status=400,
+            )
 
         original_price = sale_type.price
 
-        # بررسی آیا این محصول قبلاً در یک سبد تخفیف فعال هست
-        existing_detail = DiscountDetail.objects.filter(
-            product=product,
-            discountBasket__isActive=True
-        ).select_related('discountBasket').first()
+        existing_detail = (
+            DiscountDetail.objects
+            .select_for_update()
+            .filter(
+                product_id=product_id,
+                discountBasket__isActive=True,
+            )
+            .select_related("discountBasket")
+            .first()
+        )
 
         if discount_percent == 0:
-            # اگر درصد تخفیف صفر است، تخفیف را حذف کن
+
             if existing_detail:
-                basket = existing_detail.discountBasket
+                basket = (
+                    existing_detail.discountBasket
+                )
+
                 basket.isActive = False
-                basket.save()
+
+                basket.save(
+                    update_fields=["isActive"]
+                )
+
                 existing_detail.delete()
 
-                return JsonResponse({
-                    'success': True,
-                    'message': 'تخفیف محصول با موفقیت حذف شد',
-                    'data': {
-                        'product_id': product_id,
-                        'product_title': product.title,
-                        'discount_percent': 0,
-                        'original_price': original_price,
-                        'discounted_price': original_price,
-                        'has_discount': False
-                    }
-                })
-            else:
-                return JsonResponse({
-                    'success': True,
-                    'message': 'محصول تخفیفی ندارد',
-                    'data': {
-                        'product_id': product_id,
-                        'product_title': product.title,
-                        'discount_percent': 0,
-                        'original_price': original_price,
-                        'discounted_price': original_price,
-                        'has_discount': False
-                    }
-                })
+            invalidate_price_panel_cache()
 
-        # اگر درصد تخفیف بیشتر از صفر است
-        discounted_price = original_price - int((original_price * discount_percent) / 100)
+            return JsonResponse(
+                {
+                    "success": True,
+                    "message": (
+                        "تخفیف محصول با موفقیت حذف شد"
+                        if existing_detail
+                        else "محصول تخفیفی ندارد"
+                    ),
+                    "data": {
+                        "product_id": product_id,
+                        "product_title": product.title,
+                        "discount_percent": 0,
+                        "original_price": original_price,
+                        "discounted_price": original_price,
+                        "has_discount": False,
+                    },
+                },
+                json_dumps_params={
+                    "ensure_ascii": False,
+                },
+            )
+
+        discounted_price = (
+            original_price
+            - int(
+                (
+                    original_price
+                    * discount_percent
+                )
+                / 100
+            )
+        )
 
         if existing_detail:
-            # به‌روزرسانی سبد تخفیف موجود
+
             basket = existing_detail.discountBasket
+
             basket.discount = discount_percent
             basket.startDate = now
-            basket.endDate = now + timezone.timedelta(days=30)
+            basket.endDate = (
+                now + timezone.timedelta(days=30)
+            )
             basket.isActive = True
-            basket.discountTitle = f"تخفیف ویژه {product.title} - {discount_percent}%"
-            basket.save()
+            basket.discountTitle = (
+                f"تخفیف ویژه "
+                f"{product.title} - "
+                f"{discount_percent}%"
+            )
 
-            return JsonResponse({
-                'success': True,
-                'message': 'تخفیف محصول با موفقیت به‌روزرسانی شد',
-                'data': {
-                    'product_id': product_id,
-                    'product_title': product.title,
-                    'discount_percent': discount_percent,
-                    'original_price': original_price,
-                    'discounted_price': discounted_price,
-                    'discount_basket_id': basket.id,
-                    'discount_detail_id': existing_detail.id,
-                    'has_discount': True,
-                    'start_date': basket.startDate.strftime('%Y-%m-%d %H:%M:%S'),
-                    'end_date': basket.endDate.strftime('%Y-%m-%d %H:%M:%S'),
-                }
-            })
+            basket.save(
+                update_fields=[
+                    "discount",
+                    "startDate",
+                    "endDate",
+                    "isActive",
+                    "discountTitle",
+                ]
+            )
+
+            detail_id = existing_detail.id
+            basket_id = basket.id
+
         else:
-            # ایجاد سبد تخفیف جدید
+
             basket = DiscountBasket.objects.create(
-                discountTitle=f"تخفیف ویژه {product.title} - {discount_percent}%",
+                discountTitle=(
+                    f"تخفیف ویژه "
+                    f"{product.title} - "
+                    f"{discount_percent}%"
+                ),
                 startDate=now,
-                endDate=now + timezone.timedelta(days=30),
+                endDate=(
+                    now + timezone.timedelta(days=30)
+                ),
                 discount=discount_percent,
                 isActive=True,
-                isamzing=False
+                isamzing=False,
             )
 
             detail = DiscountDetail.objects.create(
                 discountBasket=basket,
-                product=product
+                product_id=product_id,
             )
 
-            return JsonResponse({
-                'success': True,
-                'message': 'تخفیف محصول با موفقیت ایجاد شد',
-                'data': {
-                    'product_id': product_id,
-                    'product_title': product.title,
-                    'discount_percent': discount_percent,
-                    'original_price': original_price,
-                    'discounted_price': discounted_price,
-                    'discount_basket_id': basket.id,
-                    'discount_detail_id': detail.id,
-                    'has_discount': True,
-                    'start_date': basket.startDate.strftime('%Y-%m-%d %H:%M:%S'),
-                    'end_date': basket.endDate.strftime('%Y-%m-%d %H:%M:%S'),
-                }
-            })
+            detail_id = detail.id
+            basket_id = basket.id
 
-    except Product.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'محصول یافت نشد'}, status=404)
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    invalidate_price_panel_cache()
+
+    return JsonResponse(
+        {
+            "success": True,
+            "message": (
+                "تخفیف محصول با موفقیت "
+                "به‌روزرسانی شد"
+                if existing_detail
+                else "تخفیف محصول با موفقیت ایجاد شد"
+            ),
+            "data": {
+                "product_id": product_id,
+                "product_title": product.title,
+                "discount_percent": discount_percent,
+                "original_price": original_price,
+                "discounted_price": discounted_price,
+                "discount_basket_id": basket_id,
+                "discount_detail_id": detail_id,
+                "has_discount": True,
+                "start_date": basket.startDate.strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
+                "end_date": basket.endDate.strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
+            },
+        },
+        json_dumps_params={
+            "ensure_ascii": False,
+        },
+    )
 
 
 @csrf_exempt
 @require_http_methods(["GET"])
 @login_required
 @user_passes_test(is_staff_or_superuser)
-def get_product_discount_info(request, product_id):
-    """دریافت اطلاعات تخفیف یک محصول"""
+def get_product_discount_info(
+    request,
+    product_id,
+):
+    cache_key = build_price_panel_cache_key(
+        "product-discount",
+        product_id,
+    )
+
+    cached_data = cache.get(cache_key)
+
+    if cached_data is not None:
+        return JsonResponse(
+            cached_data,
+            json_dumps_params={
+                "ensure_ascii": False,
+            },
+        )
+
     try:
-        product = Product.objects.get(id=product_id)
-        now = timezone.now()
+        product = (
+            Product.objects
+            .only(
+                "id",
+            )
+            .get(id=product_id)
+        )
+    except Product.DoesNotExist:
+        return json_error(
+            "محصول یافت نشد",
+            status=404,
+        )
 
-        sale_type = product.saleTypes.filter(isActive=True).first()
-        if not sale_type:
-            return JsonResponse({'success': False, 'error': 'نوع فروشی برای این محصول تعریف نشده'}, status=400)
+    sale_type = (
+        ProductSaleType.objects
+        .filter(
+            product_id=product_id,
+            isActive=True,
+        )
+        .only("price")
+        .first()
+    )
 
-        original_price = sale_type.price
+    if not sale_type:
+        return json_error(
+            "نوع فروشی برای این محصول تعریف نشده",
+            status=400,
+        )
 
-        discount_detail = DiscountDetail.objects.filter(
-            product=product,
+    original_price = sale_type.price
+    now = timezone.now()
+
+    discount_detail = (
+        DiscountDetail.objects
+        .filter(
+            product_id=product_id,
             discountBasket__isActive=True,
             discountBasket__startDate__lte=now,
-            discountBasket__endDate__gte=now
-        ).select_related('discountBasket').first()
+            discountBasket__endDate__gte=now,
+        )
+        .select_related("discountBasket")
+        .only(
+            "id",
+            "discountBasket_id",
+            "discountBasket__discount",
+            "discountBasket__startDate",
+            "discountBasket__endDate",
+            "discountBasket__isActive",
+        )
+        .first()
+    )
 
-        if discount_detail:
-            basket = discount_detail.discountBasket
-            discounted_price = original_price - int((original_price * basket.discount) / 100)
+    if discount_detail:
+        basket = discount_detail.discountBasket
 
-            return JsonResponse({
-                'success': True,
-                'has_discount': True,
-                'data': {
-                    'discount_percent': basket.discount,
-                    'original_price': original_price,
-                    'discounted_price': discounted_price,
-                    'start_date': basket.startDate.strftime('%Y-%m-%d %H:%M:%S'),
-                    'end_date': basket.endDate.strftime('%Y-%m-%d %H:%M:%S'),
-                    'discount_basket_id': basket.id,
-                    'discount_detail_id': discount_detail.id,
-                    'is_active': basket.isActive
-                }
-            })
-        else:
-            return JsonResponse({
-                'success': True,
-                'has_discount': False,
-                'data': {
-                    'original_price': original_price,
-                    'discounted_price': original_price,
-                    'discount_percent': 0
-                }
-            })
+        discounted_price = (
+            original_price
+            - int(
+                (
+                    original_price
+                    * basket.discount
+                )
+                / 100
+            )
+        )
 
-    except Product.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'محصول یافت نشد'}, status=404)
+        response_data = {
+            "success": True,
+            "has_discount": True,
+            "data": {
+                "discount_percent": basket.discount,
+                "original_price": original_price,
+                "discounted_price": discounted_price,
+                "start_date": basket.startDate.strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
+                "end_date": basket.endDate.strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
+                "discount_basket_id": basket.id,
+                "discount_detail_id": discount_detail.id,
+                "is_active": basket.isActive,
+            },
+        }
+
+    else:
+
+        response_data = {
+            "success": True,
+            "has_discount": False,
+            "data": {
+                "original_price": original_price,
+                "discounted_price": original_price,
+                "discount_percent": 0,
+            },
+        }
+
+    cache.set(
+        cache_key,
+        response_data,
+        timeout=PRODUCT_DETAIL_CACHE_TIMEOUT,
+    )
+
+    return JsonResponse(
+        response_data,
+        json_dumps_params={
+            "ensure_ascii": False,
+        },
+    )
 
 
 @csrf_exempt
 @require_http_methods(["POST"])
 @login_required
 @user_passes_test(is_superuser)
-def set_product_stock_to_zero(request, product_id):
-    """تنظیم موجودی محصول به صفر بدون تغییر وضعیت فعال/غیرفعال - فقط سوپریوزر"""
-    try:
-        product = Product.objects.get(id=product_id)
+def set_product_stock_to_zero(
+    request,
+    product_id,
+):
+    with transaction.atomic():
+
+        try:
+            product = (
+                Product.objects
+                .select_for_update()
+                .get(id=product_id)
+            )
+        except Product.DoesNotExist:
+            return json_error(
+                "محصول یافت نشد",
+                status=404,
+            )
+
         old_stock = product.stock
 
         if old_stock == 0:
-            return JsonResponse({
-                'success': True,
-                'message': 'موجودی محصول در حال حاضر صفر است',
-                'product_id': product_id,
-                'stock': product.stock,
-                'isActive': product.isActive
-            })
+            return JsonResponse(
+                {
+                    "success": True,
+                    "message": (
+                        "موجودی محصول در حال حاضر صفر است"
+                    ),
+                    "product_id": product_id,
+                    "stock": 0,
+                    "isActive": product.isActive,
+                },
+                json_dumps_params={
+                    "ensure_ascii": False,
+                },
+            )
 
         user = request.user
-        user_name = str(user.mobileNumber) or user.username
+        user_name = get_user_name(user)
 
         ProductStockHistory.objects.create(
-            product=product,
+            product_id=product_id,
             stock_old=old_stock,
             stock_new=0,
-            change_type='set_to_zero',
+            change_type="set_to_zero",
             saved_stock_before_disable=old_stock,
             changed_by=user,
             changed_by_name=user_name,
-            note=f"موجودی از {old_stock} به صفر تنظیم شد. محصول فعال باقی ماند."
+            note=(
+                f"موجودی از {old_stock} "
+                "به صفر تنظیم شد. "
+                "محصول فعال باقی ماند."
+            ),
         )
 
         product.stock = 0
-        product.save()
 
-        return JsonResponse({
-            'success': True,
-            'product_id': product_id,
-            'isActive': product.isActive,
-            'stock': product.stock,
-            'old_stock': old_stock,
-            'message': f"موجودی محصول با موفقیت به صفر رسید"
-        })
+        product.save(
+            update_fields=["stock"]
+        )
 
-    except Product.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'محصول یافت نشد'}, status=404)
+    invalidate_price_panel_cache()
+
+    return JsonResponse(
+        {
+            "success": True,
+            "product_id": product_id,
+            "isActive": product.isActive,
+            "stock": 0,
+            "old_stock": old_stock,
+            "message": (
+                "موجودی محصول با موفقیت به صفر رسید"
+            ),
+        },
+        json_dumps_params={
+            "ensure_ascii": False,
+        },
+    )
 
 
 @csrf_exempt
 @require_http_methods(["POST"])
 @login_required
 @user_passes_test(is_superuser)
-def restore_product_stock(request, product_id):
-    """بازیابی موجودی محصول از آخرین مقدار ذخیره شده - فقط سوپریوزر"""
-    try:
-        product = Product.objects.get(id=product_id)
+def restore_product_stock(
+    request,
+    product_id,
+):
+    with transaction.atomic():
+
+        try:
+            product = (
+                Product.objects
+                .select_for_update()
+                .get(id=product_id)
+            )
+        except Product.DoesNotExist:
+            return json_error(
+                "محصول یافت نشد",
+                status=404,
+            )
+
         old_stock = product.stock
 
-        last_zero_record = ProductStockHistory.objects.filter(
-            product=product,
-            change_type='set_to_zero',
-            saved_stock_before_disable__isnull=False,
-            saved_stock_before_disable__gt=0
-        ).order_by('-created_at').first()
+        last_zero_record = (
+            ProductStockHistory.objects
+            .filter(
+                product_id=product_id,
+                change_type="set_to_zero",
+                saved_stock_before_disable__isnull=False,
+                saved_stock_before_disable__gt=0,
+            )
+            .order_by("-created_at")
+            .only(
+                "saved_stock_before_disable"
+            )
+            .first()
+        )
 
         if not last_zero_record:
-            return JsonResponse({
-                'success': False,
-                'error': 'هیچ موجودی قبلی برای بازیابی یافت نشد'
-            }, status=400)
+            return json_error(
+                "هیچ موجودی قبلی برای بازیابی یافت نشد",
+                status=400,
+            )
 
-        restored_stock = last_zero_record.saved_stock_before_disable
+        restored_stock = (
+            last_zero_record.saved_stock_before_disable
+        )
 
         user = request.user
-        user_name = str(user.mobileNumber) or user.username
+        user_name = get_user_name(user)
 
         ProductStockHistory.objects.create(
-            product=product,
+            product_id=product_id,
             stock_old=old_stock,
             stock_new=restored_stock,
-            change_type='restore_stock',
+            change_type="restore_stock",
             saved_stock_before_disable=None,
             changed_by=user,
             changed_by_name=user_name,
-            note=f"موجودی از {old_stock} به {restored_stock} بازیابی شد"
+            note=(
+                f"موجودی از {old_stock} "
+                f"به {restored_stock} بازیابی شد"
+            ),
         )
 
         product.stock = restored_stock
-        product.save()
 
-        return JsonResponse({
-            'success': True,
-            'product_id': product_id,
-            'isActive': product.isActive,
-            'stock': product.stock,
-            'old_stock': old_stock,
-            'restored_from': restored_stock,
-            'message': f"موجودی محصول با موفقیت به {restored_stock} بازیابی شد"
-        })
+        product.save(
+            update_fields=["stock"]
+        )
 
-    except Product.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'محصول یافت نشد'}, status=404)
+    invalidate_price_panel_cache()
+
+    return JsonResponse(
+        {
+            "success": True,
+            "product_id": product_id,
+            "isActive": product.isActive,
+            "stock": product.stock,
+            "old_stock": old_stock,
+            "restored_from": restored_stock,
+            "message": (
+                f"موجودی محصول با موفقیت "
+                f"به {restored_stock} بازیابی شد"
+            ),
+        },
+        json_dumps_params={
+            "ensure_ascii": False,
+        },
+    )
 
 
 @csrf_exempt
 @require_http_methods(["POST"])
 @login_required
 @user_passes_test(is_superuser)
-def update_product_stock(request, product_id):
-    """به روز رسانی موجودی محصول با ثبت در تاریخچه - فقط سوپریوزر"""
-    try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'error': 'داده نامعتبر'}, status=400)
+def update_product_stock(
+    request,
+    product_id,
+):
+    data = parse_json_body(request)
 
-    new_stock = data.get('stock')
-    change_type = data.get('change_type', 'manual')
-    note = data.get('note', '')
+    if data is None:
+        return json_error(
+            "داده نامعتبر",
+            status=400,
+        )
+
+    new_stock = data.get("stock")
+    change_type = data.get(
+        "change_type",
+        "manual",
+    )
+    note = data.get(
+        "note",
+        "",
+    )
 
     if new_stock is None:
-        return JsonResponse({'success': False, 'error': 'مقدار stock الزامی است'}, status=400)
+        return json_error(
+            "مقدار stock الزامی است",
+            status=400,
+        )
 
     try:
-        product = Product.objects.get(id=product_id)
+        new_stock = int(new_stock)
+
+        if new_stock < 0:
+            raise ValueError
+
+    except (TypeError, ValueError):
+        return json_error(
+            "مقدار stock نامعتبر است",
+            status=400,
+        )
+
+    with transaction.atomic():
+
+        try:
+            product = (
+                Product.objects
+                .select_for_update()
+                .get(id=product_id)
+            )
+        except Product.DoesNotExist:
+            return json_error(
+                "محصول یافت نشد",
+                status=404,
+            )
+
         old_stock = product.stock
 
-        if old_stock == int(new_stock):
-            return JsonResponse({'success': True, 'message': 'موجودی تغییری نکرده است'})
+        if old_stock == new_stock:
+            return JsonResponse(
+                {
+                    "success": True,
+                    "message": (
+                        "موجودی تغییری نکرده است"
+                    ),
+                },
+                json_dumps_params={
+                    "ensure_ascii": False,
+                },
+            )
 
         user = request.user
-        user_name = str(user.mobileNumber) or user.username
+        user_name = get_user_name(user)
 
         ProductStockHistory.objects.create(
-            product=product,
+            product_id=product_id,
             stock_old=old_stock,
-            stock_new=int(new_stock),
+            stock_new=new_stock,
             change_type=change_type,
             saved_stock_before_disable=None,
             changed_by=user,
             changed_by_name=user_name,
-            note=note
+            note=note,
         )
 
-        product.stock = int(new_stock)
-        product.save()
+        product.stock = new_stock
 
-        return JsonResponse({
-            'success': True,
-            'product_id': product_id,
-            'product_title': product.title,
-            'old_stock': old_stock,
-            'new_stock': product.stock,
-            'message': 'موجودی با موفقیت به روز شد'
-        })
+        product.save(
+            update_fields=["stock"]
+        )
 
-    except Product.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'محصول یافت نشد'}, status=404)
+    invalidate_price_panel_cache()
 
-
-@csrf_exempt
-@require_http_methods(["GET"])
-@login_required
-@user_passes_test(is_staff_or_superuser)
-def get_product_stock_history(request, product_id):
-    """دریافت تاریخچه موجودی محصول - staff یا superuser"""
-    try:
-        product = Product.objects.get(id=product_id)
-    except Product.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'محصول یافت نشد'}, status=404)
-
-    limit = int(request.GET.get('limit', 20))
-    stock_history = ProductStockHistory.objects.filter(product=product).order_by('-created_at')[:limit]
-
-    history_data = []
-    for hist in stock_history:
-        history_data.append({
-            'id': hist.id,
-            'stock_old': hist.stock_old,
-            'stock_new': hist.stock_new,
-            'saved_stock_before_disable': hist.saved_stock_before_disable,
-            'change_type': hist.change_type,
-            'change_type_display': hist.get_change_type_display(),
-            'changed_by': hist.changed_by_name,
-            'note': hist.note,
-            'created_at': hist.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-        })
-
-    return JsonResponse({
-        'success': True,
-        'product_id': product_id,
-        'product_title': product.title,
-        'current_stock': product.stock,
-        'isActive': product.isActive,
-        'history': history_data,
-        'count': len(history_data)
-    })
+    return JsonResponse(
+        {
+            "success": True,
+            "product_id": product_id,
+            "product_title": product.title,
+            "old_stock": old_stock,
+            "new_stock": product.stock,
+            "message": (
+                "موجودی با موفقیت به روز شد"
+            ),
+        },
+        json_dumps_params={
+            "ensure_ascii": False,
+        },
+    )
 
 
 @csrf_exempt
 @require_http_methods(["GET"])
 @login_required
 @user_passes_test(is_staff_or_superuser)
-def get_price_history(request, product_id):
-    """دریافت تاریخچه قیمت یک محصول - staff یا superuser"""
+def get_product_stock_history(
+    request,
+    product_id,
+):
     try:
-        product = Product.objects.get(id=product_id)
+        limit = int(
+            request.GET.get(
+                "limit",
+                20,
+            )
+        )
+    except ValueError:
+        limit = 20
+
+    limit = max(
+        1,
+        min(limit, 100),
+    )
+
+    cache_key = build_price_panel_cache_key(
+        "stock-history",
+        product_id,
+        limit,
+    )
+
+    cached_data = cache.get(cache_key)
+
+    if cached_data is not None:
+        return JsonResponse(
+            cached_data,
+            json_dumps_params={
+                "ensure_ascii": False,
+            },
+        )
+
+    try:
+        product = (
+            Product.objects
+            .only(
+                "id",
+                "title",
+                "stock",
+                "isActive",
+            )
+            .get(id=product_id)
+        )
     except Product.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'محصول یافت نشد'}, status=404)
+        return json_error(
+            "محصول یافت نشد",
+            status=404,
+        )
 
-    limit = int(request.GET.get('limit', 30))
-    sale_type_id = request.GET.get('sale_type_id')
+    stock_history = (
+        ProductStockHistory.objects
+        .filter(product_id=product_id)
+        .only(
+            "id",
+            "stock_old",
+            "stock_new",
+            "saved_stock_before_disable",
+            "change_type",
+            "changed_by_name",
+            "note",
+            "created_at",
+        )
+        .order_by("-created_at")[:limit]
+    )
 
-    query = ProductPriceHistory.objects.filter(product=product)
-    if sale_type_id:
-        query = query.filter(sale_type_id=sale_type_id)
-    query = query.order_by('-created_at')[:limit]
+    history_data = [
+        {
+            "id": hist.id,
+            "stock_old": hist.stock_old,
+            "stock_new": hist.stock_new,
+            "saved_stock_before_disable": (
+                hist.saved_stock_before_disable
+            ),
+            "change_type": hist.change_type,
+            "change_type_display": (
+                hist.get_change_type_display()
+            ),
+            "changed_by": hist.changed_by_name,
+            "note": hist.note,
+            "created_at": hist.created_at.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+        }
+        for hist in stock_history
+    ]
 
-    history_data = []
-    for hist in query:
-        history_data.append({
-            'id': hist.id,
-            'price_old': hist.price_old,
-            'price_new': hist.price_new,
-            'percent_change': float(hist.percent_change) if hist.percent_change else 0,
-            'change_type': hist.change_type,
-            'change_type_display': hist.get_change_type_display(),
-            'source': hist.get_source_display(),
-            'source_detail': hist.source_detail,
-            'changed_by': hist.changed_by_name,
-            'note': hist.note,
-            'created_at': hist.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-        })
-
-    stats = {
-        'total_changes': ProductPriceHistory.objects.filter(product=product).count(),
-        'last_change': history_data[0]['created_at'] if history_data else None,
-        'avg_percent_change': 0,
-        'increase_count': ProductPriceHistory.objects.filter(product=product, change_type='increase').count(),
-        'decrease_count': ProductPriceHistory.objects.filter(product=product, change_type='decrease').count(),
+    response_data = {
+        "success": True,
+        "product_id": product_id,
+        "product_title": product.title,
+        "current_stock": product.stock,
+        "isActive": product.isActive,
+        "history": history_data,
+        "count": len(history_data),
     }
 
-    avg_result = ProductPriceHistory.objects.filter(product=product, percent_change__isnull=False).aggregate(avg=models.Avg('percent_change'))
-    stats['avg_percent_change'] = float(avg_result['avg'] or 0)
+    cache.set(
+        cache_key,
+        response_data,
+        timeout=HISTORY_CACHE_TIMEOUT,
+    )
 
-    return JsonResponse({
-        'success': True,
-        'product_id': product_id,
-        'product_title': product.title,
-        'stats': stats,
-        'history': history_data,
-        'count': len(history_data)
-    })
+    return JsonResponse(
+        response_data,
+        json_dumps_params={
+            "ensure_ascii": False,
+        },
+    )
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+@user_passes_test(is_staff_or_superuser)
+def get_price_history(
+    request,
+    product_id,
+):
+    try:
+        limit = int(
+            request.GET.get(
+                "limit",
+                30,
+            )
+        )
+    except ValueError:
+        limit = 30
+
+    limit = max(
+        1,
+        min(limit, 100),
+    )
+
+    sale_type_id = request.GET.get(
+        "sale_type_id"
+    )
+
+    cache_key = build_price_panel_cache_key(
+        "price-history",
+        product_id,
+        sale_type_id or "",
+        limit,
+    )
+
+    cached_data = cache.get(cache_key)
+
+    if cached_data is not None:
+        return JsonResponse(
+            cached_data,
+            json_dumps_params={
+                "ensure_ascii": False,
+            },
+        )
+
+    try:
+        product = (
+            Product.objects
+            .only(
+                "id",
+                "title",
+            )
+            .get(id=product_id)
+        )
+    except Product.DoesNotExist:
+        return json_error(
+            "محصول یافت نشد",
+            status=404,
+        )
+
+    history_queryset = (
+        ProductPriceHistory.objects
+        .filter(product_id=product_id)
+        .only(
+            "id",
+            "product_id",
+            "sale_type_id",
+            "price_old",
+            "price_new",
+            "percent_change",
+            "change_type",
+            "source",
+            "source_detail",
+            "changed_by_name",
+            "note",
+            "created_at",
+        )
+    )
+
+    if sale_type_id:
+        history_queryset = (
+            history_queryset.filter(
+                sale_type_id=sale_type_id
+            )
+        )
+
+    history_queryset = (
+        history_queryset
+        .order_by("-created_at")
+        [:limit]
+    )
+
+    history_data = [
+        {
+            "id": hist.id,
+            "price_old": hist.price_old,
+            "price_new": hist.price_new,
+            "percent_change": (
+                float(hist.percent_change)
+                if hist.percent_change
+                else 0
+            ),
+            "change_type": hist.change_type,
+            "change_type_display": (
+                hist.get_change_type_display()
+            ),
+            "source": hist.get_source_display(),
+            "source_detail": hist.source_detail,
+            "changed_by": hist.changed_by_name,
+            "note": hist.note,
+            "created_at": hist.created_at.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+        }
+        for hist in history_queryset
+    ]
+
+    stats_queryset = ProductPriceHistory.objects.filter(
+        product_id=product_id
+    )
+
+    if sale_type_id:
+        stats_queryset = stats_queryset.filter(
+            sale_type_id=sale_type_id
+        )
+
+    stats = stats_queryset.aggregate(
+        total_changes=Count("id"),
+        avg_percent_change=Avg(
+            "percent_change"
+        ),
+        increase_count=Count(
+            "id",
+            filter=Q(
+                change_type="increase"
+            ),
+        ),
+        decrease_count=Count(
+            "id",
+            filter=Q(
+                change_type="decrease"
+            ),
+        ),
+    )
+
+    response_data = {
+        "success": True,
+        "product_id": product_id,
+        "product_title": product.title,
+        "stats": {
+            "total_changes": (
+                stats["total_changes"] or 0
+            ),
+            "last_change": (
+                history_data[0]["created_at"]
+                if history_data
+                else None
+            ),
+            "avg_percent_change": float(
+                stats["avg_percent_change"] or 0
+            ),
+            "increase_count": (
+                stats["increase_count"] or 0
+            ),
+            "decrease_count": (
+                stats["decrease_count"] or 0
+            ),
+        },
+        "history": history_data,
+        "count": len(history_data),
+    }
+
+    cache.set(
+        cache_key,
+        response_data,
+        timeout=HISTORY_CACHE_TIMEOUT,
+    )
+
+    return JsonResponse(
+        response_data,
+        json_dumps_params={
+            "ensure_ascii": False,
+        },
+    )
 
 
 @csrf_exempt
@@ -838,69 +1903,214 @@ def get_price_history(request, product_id):
 @login_required
 @user_passes_test(is_superuser)
 def get_dashboard_stats(request):
-    """دریافت آمار داشبورد - فقط سوپریوزر"""
-    total_products = Product.objects.filter(isActive=True).count()
-    out_of_stock = Product.objects.filter(isActive=True, stock=0).count()
+    cache_key = build_price_panel_cache_key(
+        "dashboard"
+    )
 
-    today = timezone.now().date()
-    today_changes = ProductPriceHistory.objects.filter(created_at__date=today).count()
+    cached_data = cache.get(cache_key)
 
-    avg_change_today = ProductPriceHistory.objects.filter(
-        created_at__date=today, percent_change__isnull=False
-    ).aggregate(avg=Avg('percent_change'))
+    if cached_data is not None:
+        return JsonResponse(
+            cached_data,
+            json_dumps_params={
+                "ensure_ascii": False,
+            },
+        )
 
-    biggest_increase = ProductPriceHistory.objects.filter(
-        created_at__date=today, change_type='increase'
-    ).order_by('-percent_change').first()
+    today = timezone.localdate()
 
-    biggest_decrease = ProductPriceHistory.objects.filter(
-        created_at__date=today, change_type='decrease'
-    ).order_by('percent_change').first()
+    total_products = (
+        Product.objects
+        .filter(isActive=True)
+        .count()
+    )
 
-    latest_changes = ProductPriceHistory.objects.all().order_by('-created_at')[:10]
-    latest_data = []
-    for change in latest_changes:
-        latest_data.append({
-            'id': change.id,
-            'product_title': change.product.title,
-            'old_price': change.price_old,
-            'new_price': change.price_new,
-            'percent_change': float(change.percent_change) if change.percent_change else 0,
-            'change_type': change.change_type,
-            'created_at': change.created_at.strftime('%H:%M %Y/%m/%d'),
-            'source': change.get_source_display(),
-        })
+    out_of_stock = (
+        Product.objects
+        .filter(
+            isActive=True,
+            stock=0,
+        )
+        .count()
+    )
 
-    categories = []
-    for cat in Category.objects.filter(isActive=True, parent__isnull=True):
-        product_count = Product.objects.filter(category=cat, isActive=True).count()
-        if product_count > 0:
-            categories.append({
-                'id': cat.id,
-                'title': cat.title,
-                'product_count': product_count,
-                'parent': None,
-            })
+    today_queryset = (
+        ProductPriceHistory.objects
+        .filter(
+            created_at__date=today
+        )
+    )
 
-    return JsonResponse({
-        'success': True,
-        'stats': {
-            'total_products': total_products,
-            'out_of_stock': out_of_stock,
-            'today_changes': today_changes,
-            'avg_change_today': float(avg_change_today['avg'] or 0),
-            'biggest_increase': {
-                'product': biggest_increase.product.title if biggest_increase else None,
-                'percent': float(biggest_increase.percent_change) if biggest_increase else 0,
-            } if biggest_increase else None,
-            'biggest_decrease': {
-                'product': biggest_decrease.product.title if biggest_decrease else None,
-                'percent': float(biggest_decrease.percent_change) if biggest_decrease else 0,
-            } if biggest_decrease else None,
+    today_stats = today_queryset.aggregate(
+        today_changes=Count("id"),
+        avg_change=Avg("percent_change"),
+    )
+
+    biggest_increase = (
+        today_queryset
+        .filter(
+            change_type="increase"
+        )
+        .order_by(
+            "-percent_change"
+        )
+        .values(
+            "product__title",
+            "percent_change",
+        )
+        .first()
+    )
+
+    biggest_decrease = (
+        today_queryset
+        .filter(
+            change_type="decrease"
+        )
+        .order_by(
+            "percent_change"
+        )
+        .values(
+            "product__title",
+            "percent_change",
+        )
+        .first()
+    )
+
+    latest_changes = (
+        ProductPriceHistory.objects
+        .select_related("product")
+        .only(
+            "id",
+            "product_id",
+            "product__title",
+            "price_old",
+            "price_new",
+            "percent_change",
+            "change_type",
+            "created_at",
+            "source",
+        )
+        .order_by("-created_at")[:10]
+    )
+
+    latest_data = [
+        {
+            "id": change.id,
+            "product_title": (
+                change.product.title
+            ),
+            "old_price": change.price_old,
+            "new_price": change.price_new,
+            "percent_change": (
+                float(change.percent_change)
+                if change.percent_change
+                else 0
+            ),
+            "change_type": change.change_type,
+            "created_at": change.created_at.strftime(
+                "%H:%M %Y/%m/%d"
+            ),
+            "source": change.get_source_display(),
+        }
+        for change in latest_changes
+    ]
+
+    categories = list(
+        Category.objects
+        .filter(
+            isActive=True,
+            parent__isnull=True,
+            products__isActive=True,
+        )
+        .annotate(
+            product_count=Count(
+                "products",
+                filter=Q(
+                    products__isActive=True
+                ),
+                distinct=True,
+            )
+        )
+        .filter(
+            product_count__gt=0
+        )
+        .values(
+            "id",
+            "title",
+            "product_count",
+        )
+    )
+
+    response_data = {
+        "success": True,
+        "stats": {
+            "total_products": total_products,
+            "out_of_stock": out_of_stock,
+            "today_changes": (
+                today_stats["today_changes"]
+                or 0
+            ),
+            "avg_change_today": float(
+                today_stats["avg_change"]
+                or 0
+            ),
+            "biggest_increase": (
+                {
+                    "product": biggest_increase[
+                        "product__title"
+                    ],
+                    "percent": float(
+                        biggest_increase[
+                            "percent_change"
+                        ]
+                        or 0
+                    ),
+                }
+                if biggest_increase
+                else None
+            ),
+            "biggest_decrease": (
+                {
+                    "product": biggest_decrease[
+                        "product__title"
+                    ],
+                    "percent": float(
+                        biggest_decrease[
+                            "percent_change"
+                        ]
+                        or 0
+                    ),
+                }
+                if biggest_decrease
+                else None
+            ),
         },
-        'latest_changes': latest_data,
-        'categories': categories
-    })
+        "latest_changes": latest_data,
+        "categories": [
+            {
+                "id": category["id"],
+                "title": category["title"],
+                "product_count": category[
+                    "product_count"
+                ],
+                "parent": None,
+            }
+            for category in categories
+        ],
+    }
+
+    cache.set(
+        cache_key,
+        response_data,
+        timeout=DASHBOARD_CACHE_TIMEOUT,
+    )
+
+    return JsonResponse(
+        response_data,
+        json_dumps_params={
+            "ensure_ascii": False,
+        },
+    )
 
 
 @csrf_exempt
@@ -908,29 +2118,88 @@ def get_dashboard_stats(request):
 @login_required
 @user_passes_test(is_staff_or_superuser)
 def get_categories_with_stats(request):
-    """دریافت دسته بندی‌های سطح دو - staff یا superuser"""
-    categories = Category.objects.filter(isActive=True, parent__isnull=False)
+    cache_key = build_price_panel_cache_key(
+        "categories"
+    )
+
+    cached_data = cache.get(cache_key)
+
+    if cached_data is not None:
+        return JsonResponse(
+            cached_data,
+            json_dumps_params={
+                "ensure_ascii": False,
+            },
+        )
+
+    categories = (
+        Category.objects
+        .filter(
+            isActive=True,
+            parent__isnull=False,
+        )
+        .select_related("parent")
+        .annotate(
+            product_count=Count(
+                "products",
+                filter=Q(
+                    products__isActive=True
+                ),
+                distinct=True,
+            )
+        )
+        .only(
+            "id",
+            "title",
+            "parent_id",
+            "parent__id",
+            "parent__title",
+            "image",
+        )
+    )
 
     data = []
-    for cat in categories:
-        product_count = Product.objects.filter(category=cat, isActive=True).count()
 
+    for category in categories:
         parent_info = None
-        if cat.parent:
+
+        if category.parent:
             parent_info = {
-                'id': cat.parent.id,
-                'title': cat.parent.title
+                "id": category.parent.id,
+                "title": category.parent.title,
             }
 
-        data.append({
-            'id': cat.id,
-            'title': cat.title,
-            'parent': parent_info,
-            'image': cat.image.url if cat.image else None,
-            'product_count': product_count,
-        })
+        data.append(
+            {
+                "id": category.id,
+                "title": category.title,
+                "parent": parent_info,
+                "image": safe_image_url(
+                    category.image
+                ),
+                "product_count": (
+                    category.product_count
+                ),
+            }
+        )
 
-    return JsonResponse({'success': True, 'categories': data})
+    response_data = {
+        "success": True,
+        "categories": data,
+    }
+
+    cache.set(
+        cache_key,
+        response_data,
+        timeout=CATEGORIES_CACHE_TIMEOUT,
+    )
+
+    return JsonResponse(
+        response_data,
+        json_dumps_params={
+            "ensure_ascii": False,
+        },
+    )
 
 
 @csrf_exempt
@@ -938,79 +2207,348 @@ def get_categories_with_stats(request):
 @login_required
 @user_passes_test(is_superuser)
 def bulk_update_prices(request):
-    """به روز رسانی چند قیمت همزمان - فقط سوپریوزر"""
-    try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'error': 'داده نامعتبر'}, status=400)
+    data = parse_json_body(request)
 
-    updates = data.get('updates', [])
+    if data is None:
+        return json_error(
+            "داده نامعتبر",
+            status=400,
+        )
+
+    updates = data.get(
+        "updates",
+        [],
+    )
+
     if not updates:
-        return JsonResponse({'success': False, 'error': 'لیست به‌روزرسانی خالی است'}, status=400)
+        return json_error(
+            "لیست به‌روزرسانی خالی است",
+            status=400,
+        )
 
-    results = []
-    errors = []
+    user = request.user
+    user_name = get_user_name(user)
+    now = timezone.now()
 
-    for update in updates:
-        product_id = update.get('product_id')
-        new_price = update.get('price')
-        sale_type_id = update.get('sale_type_id')
+    product_ids = {
+        item.get("product_id")
+        for item in updates
+        if item.get("product_id") is not None
+    }
 
-        try:
-            product = Product.objects.get(id=product_id)
+    sale_type_ids = {
+        item.get("sale_type_id")
+        for item in updates
+        if item.get("sale_type_id") is not None
+    }
 
-            if not sale_type_id:
-                sale_type = product.saleTypes.filter(isActive=True).first()
+    with transaction.atomic():
+
+        products = {
+            product.id: product
+            for product in (
+                Product.objects
+                .select_for_update()
+                .filter(
+                    id__in=product_ids
+                )
+                .only(
+                    "id",
+                    "title",
+                )
+            )
+        }
+
+        sale_types_queryset = (
+            ProductSaleType.objects
+            .select_for_update()
+            .filter(
+                product_id__in=product_ids
+            )
+        )
+
+        if sale_type_ids:
+            sale_types_queryset = (
+                sale_types_queryset.filter(
+                    Q(id__in=sale_type_ids)
+                    | Q(
+                        product_id__in=product_ids,
+                        isActive=True,
+                    )
+                )
+            )
+
+        sale_types = {
+            sale.id: sale
+            for sale in sale_types_queryset
+        }
+
+        default_sale_types = {}
+
+        for sale in sale_types.values():
+            if (
+                sale.product_id not in default_sale_types
+                and sale.isActive
+            ):
+                default_sale_types[
+                    sale.product_id
+                ] = sale
+
+        results = []
+        errors = []
+
+        sale_types_to_update = []
+        history_to_create = []
+
+        for update in updates:
+
+            product_id = update.get(
+                "product_id"
+            )
+
+            sale_type_id = update.get(
+                "sale_type_id"
+            )
+
+            new_price = update.get(
+                "price"
+            )
+
+            if product_id is None:
+                errors.append(
+                    {
+                        "product_id": product_id,
+                        "error": "product_id الزامی است",
+                    }
+                )
+                continue
+
+            if product_id not in products:
+                errors.append(
+                    {
+                        "product_id": product_id,
+                        "error": "محصول یافت نشد",
+                    }
+                )
+                continue
+
+            try:
+                new_price_int = int(
+                    new_price
+                )
+
+                if new_price_int < 0:
+                    raise ValueError
+
+            except (TypeError, ValueError):
+                errors.append(
+                    {
+                        "product_id": product_id,
+                        "error": "قیمت نامعتبر است",
+                    }
+                )
+                continue
+
+            if sale_type_id:
+                sale_type = sale_types.get(
+                    sale_type_id
+                )
+
+                if (
+                    not sale_type
+                    or sale_type.product_id != product_id
+                ):
+                    errors.append(
+                        {
+                            "product_id": product_id,
+                            "error": "نوع فروش یافت نشد",
+                        }
+                    )
+                    continue
+
             else:
-                sale_type = ProductSaleType.objects.get(id=sale_type_id, product=product)
+                sale_type = default_sale_types.get(
+                    product_id
+                )
 
             if not sale_type:
-                errors.append({'product_id': product_id, 'error': 'نوع فروش یافت نشد'})
+                errors.append(
+                    {
+                        "product_id": product_id,
+                        "error": "نوع فروش یافت نشد",
+                    }
+                )
                 continue
 
             old_price = sale_type.price
-            new_price_int = int(new_price)
 
             if old_price == new_price_int:
-                results.append({'product_id': product_id, 'status': 'skipped', 'message': 'قیمت تغییری نکرد'})
+                results.append(
+                    {
+                        "product_id": product_id,
+                        "status": "skipped",
+                        "message": (
+                            "قیمت تغییری نکرد"
+                        ),
+                    }
+                )
                 continue
+
+            percent_change = (
+                round(
+                    (
+                        (
+                            new_price_int
+                            - old_price
+                        )
+                        / old_price
+                    )
+                    * 100,
+                    2,
+                )
+                if old_price > 0
+                else 0
+            )
+
+            change_type = (
+                "increase"
+                if new_price_int > old_price
+                else "decrease"
+            )
 
             sale_type.price = new_price_int
             sale_type.finalPrice = new_price_int
-            sale_type.updatedAt = timezone.now()
-            sale_type.save()
+            sale_type.updatedAt = now
 
-            ProductPriceHistory.objects.filter(product=product, sale_type=sale_type, is_current=True).update(is_current=False)
-
-            percent_change = round(((new_price_int - old_price) / old_price) * 100, 2) if old_price > 0 else 0
-            change_type = 'increase' if new_price_int > old_price else 'decrease'
-
-            user = request.user
-            user_name = str(user.mobileNumber) or user.username
-
-            price_history = ProductPriceHistory.objects.create(
-                product=product, sale_type=sale_type,
-                price_old=old_price, price_new=new_price_int,
-                percent_change=Decimal(str(percent_change)), change_type=change_type,
-                changed_by=user, changed_by_name=user_name, source='manual_excel',
-                is_current=True, created_at=timezone.now()
+            sale_types_to_update.append(
+                sale_type
             )
 
-            results.append({
-                'product_id': product_id, 'product_title': product.title, 'status': 'success',
-                'old_price': old_price, 'new_price': new_price_int,
-                'percent_change': float(percent_change), 'history_id': price_history.id
-            })
+            history_to_create.append(
+                ProductPriceHistory(
+                    product_id=product_id,
+                    sale_type_id=sale_type.id,
+                    price_old=old_price,
+                    price_new=new_price_int,
+                    percent_change=Decimal(
+                        str(percent_change)
+                    ),
+                    change_type=change_type,
+                    changed_by=user,
+                    changed_by_name=user_name,
+                    source="manual_excel",
+                    is_current=True,
+                    created_at=now,
+                )
+            )
 
-        except Product.DoesNotExist:
-            errors.append({'product_id': product_id, 'error': 'محصول یافت نشد'})
-        except Exception as e:
-            errors.append({'product_id': product_id, 'error': str(e)})
+            results.append(
+                {
+                    "product_id": product_id,
+                    "product_title": products[
+                        product_id
+                    ].title,
+                    "status": "success",
+                    "old_price": old_price,
+                    "new_price": new_price_int,
+                    "percent_change": float(
+                        percent_change
+                    ),
+                }
+            )
 
-    return JsonResponse({
-        'success': True,
-        'total': len(updates),
-        'success_count': len([r for r in results if r.get('status') == 'success']),
-        'results': results,
-        'errors': errors
-    })
+        if sale_types_to_update:
+            ProductSaleType.objects.bulk_update(
+                sale_types_to_update,
+                [
+                    "price",
+                    "finalPrice",
+                    "updatedAt",
+                ],
+                batch_size=500,
+            )
+
+        history_sale_pairs = [
+            (
+                history.product_id,
+                history.sale_type_id,
+            )
+            for history in history_to_create
+        ]
+
+        if history_sale_pairs:
+            for product_id, sale_type_id in history_sale_pairs:
+                ProductPriceHistory.objects.filter(
+                    product_id=product_id,
+                    sale_type_id=sale_type_id,
+                    is_current=True,
+                ).update(
+                    is_current=False
+                )
+
+        if history_to_create:
+            created_history = (
+                ProductPriceHistory.objects.bulk_create(
+                    history_to_create,
+                    batch_size=500,
+                )
+            )
+
+            created_by_product = {
+                (
+                    history.product_id,
+                    history.sale_type_id,
+                ): history
+                for history in created_history
+            }
+
+            for result in results:
+                if result.get("status") != "success":
+                    continue
+
+                key = (
+                    result["product_id"],
+                    next(
+                        (
+                            history.sale_type_id
+                            for history in created_history
+                            if history.product_id
+                            == result["product_id"]
+                            and history.price_new
+                            == result["new_price"]
+                        ),
+                        None,
+                    ),
+                )
+
+                history = created_by_product.get(
+                    key
+                )
+
+                if history:
+                    result[
+                        "history_id"
+                    ] = history.id
+
+    if history_to_create:
+        invalidate_price_panel_cache()
+
+    return JsonResponse(
+        {
+            "success": True,
+            "total": len(updates),
+            "success_count": len(
+                [
+                    result
+                    for result in results
+                    if result.get("status")
+                    == "success"
+                ]
+            ),
+            "results": results,
+            "errors": errors,
+        },
+        json_dumps_params={
+            "ensure_ascii": False,
+        },
+    )
