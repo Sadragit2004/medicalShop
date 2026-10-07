@@ -348,7 +348,7 @@ def get_products_list(request):
                             else 0
                         ),
                     }
-                    if current_history or sale_types
+                    if current_history
                     else None
                 ),
             }
