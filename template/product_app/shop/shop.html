@@ -548,38 +548,63 @@
             {% endif %}
 
             <!-- توضیحات دسته‌بندی (بعد از محصولات) -->
-            {% if group.description %}
-            <div class="mt-10">
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <!-- هدر با دکمه جمع‌شونده -->
-                    <button onclick="toggleDescription()"
-                            id="toggle-description-btn"
-                            class="w-full flex items-center justify-between p-4 text-right hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <div class="flex items-center gap-2">
-                            <svg id="toggle-icon" class="w-5 h-5 transform transition-transform text-gray-500 dark:text-gray-400"
-                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                            <h2 class="text-lg font-DanaDemiBold text-gray-800 dark:text-gray-200">
-                                درباره {{ group.title }}
-                            </h2>
-                        </div>
-                        <span id="toggle-text" class="text-blue-600 dark:text-blue-400 text-sm font-DanaMedium">
-                            نمایش توضیحات
-                        </span>
-                    </button>
+            <!-- توضیحات دسته‌بندی (بعد از محصولات) -->
+{% if group.description %}
+<div class="mt-10">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <!-- هدر با دکمه جمع‌شونده -->
+        <button onclick="toggleDescription()"
+                id="toggle-description-btn"
+                class="w-full flex items-center justify-between p-4 text-right hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <div class="flex items-center gap-2">
+                <svg id="toggle-icon" class="w-5 h-5 transform transition-transform text-gray-500 dark:text-gray-400 rotate-180"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+                <h2 class="text-lg font-DanaDemiBold text-gray-800 dark:text-gray-200">
+                    درباره {{ group.title }}
+                </h2>
+            </div>
+            <span id="toggle-text" class="text-blue-600 dark:text-blue-400 text-sm font-DanaMedium">
+                بستن توضیحات
+            </span>
+        </button>
 
-                    <!-- محتوای توضیحات (به طور پیش‌فرض مخفی) -->
-                    <div id="description-content" class="hidden overflow-hidden transition-all duration-300">
-                        <div class="p-4 pt-0 border-t border-gray-200 dark:border-gray-700">
-                            <div class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed text-justify prose prose-sm dark:prose-invert max-w-none">
-                                {{ group.description|safe }}
-                            </div>
-                        </div>
-                    </div>
+        <!-- محتوای توضیحات (پیش‌فرض کاملاً باز) -->
+        <div id="description-content">
+            <div class="p-4 pt-0 border-t border-gray-200 dark:border-gray-700">
+                <div class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed text-justify prose prose-sm dark:prose-invert max-w-none">
+                    {{ group.description|safe }}
                 </div>
             </div>
-            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+let isDescriptionExpanded = true;
+
+function toggleDescription() {
+    const content = document.getElementById('description-content');
+    const toggleIcon = document.getElementById('toggle-icon');
+    const toggleText = document.getElementById('toggle-text');
+
+    if (!content) return;
+
+    if (isDescriptionExpanded) {
+        content.style.display = 'none';
+        if (toggleIcon) toggleIcon.style.transform = 'rotate(0deg)';
+        if (toggleText) toggleText.textContent = 'نمایش توضیحات';
+        isDescriptionExpanded = false;
+    } else {
+        content.style.display = 'block';
+        if (toggleIcon) toggleIcon.style.transform = 'rotate(180deg)';
+        if (toggleText) toggleText.textContent = 'بستن توضیحات';
+        isDescriptionExpanded = true;
+    }
+}
+</script>
+{% endif %}
         </div>
     </div>
 
