@@ -573,13 +573,68 @@
         <!-- محتوای توضیحات (پیش‌فرض کاملاً باز) -->
         <div id="description-content">
             <div class="p-4 pt-0 border-t border-gray-200 dark:border-gray-700">
-                <div class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed text-justify prose prose-sm dark:prose-invert max-w-none">
+                <div class="category-description text-gray-600 dark:text-gray-300 text-sm leading-relaxed text-justify prose prose-sm dark:prose-invert max-w-none">
                     {{ group.description|safe }}
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+/* متن‌ها justify و مرتب */
+.category-description,
+.category-description p,
+.category-description li,
+.category-description div {
+    text-align: justify;
+    text-justify: inter-word;
+    line-height: 1.9;
+    word-break: break-word;
+}
+
+/* عکس‌ها همیشه وسط، متعادل و ریسپانسیو */
+.category-description img {
+    display: block;
+    margin: 1rem auto;
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+/* در دسکتاپ حداکثر عرض متعادل */
+@media (min-width: 768px) {
+    .category-description img {
+        max-width: 70%;
+    }
+}
+
+/* در موبایل تمام عرض */
+@media (max-width: 767px) {
+    .category-description img {
+        max-width: 100%;
+        margin: 0.75rem auto;
+    }
+}
+
+/* اگر عکس داخل پاراگراف یا لینک بود */
+.category-description a img,
+.category-description p img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* جدول‌ها و ویدیوها هم وسط‌چین */
+.category-description table,
+.category-description iframe,
+.category-description video {
+    display: block;
+    margin: 1rem auto;
+    max-width: 100%;
+}
+</style>
 
 <script>
 let isDescriptionExpanded = true;
