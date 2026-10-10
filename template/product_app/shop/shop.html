@@ -2140,7 +2140,22 @@ document.addEventListener("DOMContentLoaded", function () {
                 const href = link ? link.href : "";
                 if (href && existingLinks.has(href)) return;
                 if (href) existingLinks.add(href);
-                container.appendChild(document.importNode(card, true));
+                const cardToAdd = document.importNode(card, true);
+                container.appendChild(cardToAdd);
+                if (typeof cardToAdd.animate === "function") {
+                    cardToAdd.animate(
+                        [
+                            { opacity: 0, transform: "translateY(12px) scale(0.985)" },
+                            { opacity: 1, transform: "translateY(0) scale(1)" }
+                        ],
+                        {
+                            duration: 360,
+                            delay: Math.min(addedCount * 35, 280),
+                            easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+                            fill: "both"
+                        }
+                    );
+                }
                 addedCount += 1;
             });
 
@@ -2185,7 +2200,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }, {
             root: null,
-            rootMargin: "500px 0px",
+            rootMargin: "1000px 0px",
             threshold: 0
         });
         observer.observe(wrapper);
