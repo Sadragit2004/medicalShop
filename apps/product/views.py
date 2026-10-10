@@ -611,7 +611,7 @@ def show_by_filter(request, slug):
         filtered_products = filtered_products.order_by("-createdAt")
 
     paginator = Paginator(filtered_products, 1)
-    page_obj = paginator.get_page(request.GET.get("page", 1))
+    page_obj = paginator.get_page(request.GET.get("page", 12))
 
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return render(
