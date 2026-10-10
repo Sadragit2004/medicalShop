@@ -728,21 +728,23 @@
 
                     <a href="{{ product.get_absolute_url }}">
 
+                        {% if product.mainImage %}
                         <img loading="lazy" class="product-card_img group-hover:opacity-0 absolute"
-
                              src="{{ product.mainImage.url }}"
-
                              alt="{{ product.title }}"
-
-                             onerror="this.src='{{ media_url }}/images/default-product.jpg'">
-
+                             onerror="this.onerror=null;this.src='{{ media_url }}/images/default-product.jpg'">
                         <img loading="lazy" class="product-card_img opacity-0 group-hover:opacity-100"
-
                              src="{{ product.mainImage.url }}"
-
                              alt="{{ product.title }}"
-
-                             onerror="this.src='{{ media_url }}/images/default-product.jpg'">
+                             onerror="this.onerror=null;this.src='{{ media_url }}/images/default-product.jpg'">
+                        {% else %}
+                        <img loading="lazy" class="product-card_img group-hover:opacity-0 absolute"
+                             src="{{ media_url }}/images/default-product.jpg"
+                             alt="{{ product.title }}">
+                        <img loading="lazy" class="product-card_img opacity-0 group-hover:opacity-100"
+                             src="{{ media_url }}/images/default-product.jpg"
+                             alt="{{ product.title }}">
+                        {% endif %}
 
                     </a>
 
@@ -2058,15 +2060,25 @@ document.addEventListener("DOMContentLoaded", function () {
     const spinner = document.getElementById("load-more-spinner");
     const error = document.getElementById("load-more-error");
 
-    if (!button || !container || !label || !spinner || !error) return;
+    if (!button || !container || !wrapper || !label || !spinner || !error) return;
 
     let isLoading = false;
+    let finished = false;
+    let observer = null;
+    const loadedPages = new Set([1]);
 
-    button.addEventListener("click", async function () {
-        if (isLoading) return;
+    async function loadNextPage() {
+        if (isLoading || finished || !document.body.contains(button)) return;
 
         const nextPage = Number(button.dataset.nextPage);
-        if (!Number.isInteger(nextPage) || nextPage < 2) {
+        if (!Number.isInteger(nextPage) || nextPage < 2 || loadedPages.has(nextPage)) {
+            if (loadedPages.has(nextPage)) {
+                finished = true;
+                observer?.disconnect();
+                wrapper.remove();
+                error.remove();
+                return;
+            }
             error.textContent = "شماره صفحه بعد معتبر نیست. صفحه را تازه‌سازی کنید.";
             error.classList.remove("hidden");
             return;
@@ -2085,44 +2097,58 @@ document.addEventListener("DOMContentLoaded", function () {
             const response = await fetch(url.toString(), {
                 method: "GET",
                 credentials: "same-origin",
-                cache: "no-store",
                 headers: {
-                    "X-Requested-With": "XMLHttpRequest",
                     "Accept": "text/html"
                 }
             });
 
-            if (!response.ok) {
-                throw new Error("HTTP " + response.status);
-            }
+            if (!response.ok) throw new Error("HTTP " + response.status);
 
             const html = await response.text();
             const parsed = new DOMParser().parseFromString(html, "text/html");
-            let newCards = parsed.querySelectorAll("#products-container .product-card");
+            let newCards = Array.from(parsed.querySelectorAll("#products-container .product-card"));
 
             if (!newCards.length) {
-                newCards = parsed.querySelectorAll(".product-card");
+                newCards = Array.from(parsed.querySelectorAll(".product-card"));
             }
 
-            if (!newCards.length) {
-                throw new Error("No product cards found on page " + nextPage);
-            }
+            const existingLinks = new Set(
+                Array.from(container.querySelectorAll(".product-card a[href]"))
+                    .map(function (link) { return link.href; })
+            );
 
+            let addedCount = 0;
             newCards.forEach(function (card) {
+                const link = card.querySelector("a[href]");
+                const href = link ? link.href : "";
+                if (href && existingLinks.has(href)) return;
+                if (href) existingLinks.add(href);
                 container.appendChild(document.importNode(card, true));
+                addedCount += 1;
             });
 
-            const fetchedButton = parsed.querySelector("#load-more-btn");
-            const fetchedNextPage = fetchedButton ? Number(fetchedButton.dataset.nextPage) : null;
+            if (addedCount === 0) {
+                finished = true;
+                observer?.disconnect();
+                wrapper.remove();
+                error.remove();
+                return;
+            }
 
-            if (fetchedButton && Number.isInteger(fetchedNextPage) && fetchedNextPage > nextPage) {
+            loadedPages.add(nextPage);
+            const fetchedButton = parsed.querySelector("#load-more-btn");
+            const fetchedNextPage = fetchedButton ? Number(fetchedButton.dataset.nextPage) : NaN;
+
+            if (Number.isInteger(fetchedNextPage) && fetchedNextPage > nextPage) {
                 button.dataset.nextPage = String(fetchedNextPage);
             } else {
+                finished = true;
+                observer?.disconnect();
                 wrapper.remove();
                 error.remove();
             }
         } catch (exception) {
-            error.textContent = "محصولات جدید دریافت نشدند. صفحه بعد از سمت سرور خالی است یا خطایی رخ داده؛ صفحه را تازه‌سازی کنید و دوباره تلاش کنید.";
+            error.textContent = "دریافت محصولات انجام نشد. دوباره تلاش کنید.";
             error.classList.remove("hidden");
             console.error("Load more products failed:", exception);
         } finally {
@@ -2133,7 +2159,22 @@ document.addEventListener("DOMContentLoaded", function () {
                 spinner.classList.add("hidden");
             }
         }
-    });
+    }
+
+    button.addEventListener("click", loadNextPage);
+
+    if ("IntersectionObserver" in window) {
+        observer = new IntersectionObserver(function (entries) {
+            if (entries.some(function (entry) { return entry.isIntersecting; })) {
+                loadNextPage();
+            }
+        }, {
+            root: null,
+            rootMargin: "500px 0px",
+            threshold: 0
+        });
+        observer.observe(wrapper);
+    }
 });
 </script>
 
