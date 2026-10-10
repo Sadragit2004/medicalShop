@@ -857,6 +857,7 @@
                 <button
                     type="button"
                     id="load-more-btn"
+                    data-current-page="{{ products.number }}"
                     data-next-page="{{ products.next_page_number }}"
                     data-total-pages="{{ products.paginator.num_pages }}"
                     class="inline-flex min-w-52 items-center justify-center gap-3 px-6 py-3 rounded-xl bg-blue-600 text-white shadow-sm hover:bg-blue-700 hover:shadow-md transition-all duration-200 disabled:opacity-80 disabled:cursor-wait disabled:shadow-none"
@@ -890,6 +891,27 @@
             <p id="load-more-error" class="hidden mt-3 text-center text-sm text-red-500" role="alert">
                 دریافت محصولات ناموفق بود. دوباره تلاش کنید.
             </p>
+            {% endif %}
+
+            {% if products.paginator.num_pages > 1 %}
+            <nav class="mt-6 flex flex-wrap items-center justify-center gap-2" aria-label="صفحه‌بندی محصولات">
+                {% if products.has_previous %}
+                <a
+                    href="?{% for key, values in request.GET.lists %}{% if key != 'page' %}{% for value in values %}{{ key|urlencode }}={{ value|urlencode }}&amp;{% endfor %}{% endif %}{% endfor %}page={{ products.previous_page_number }}"
+                    rel="prev"
+                    class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition hover:border-blue-500 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                >صفحه قبل</a>
+                {% endif %}
+
+                {% if products.has_next %}
+                <a
+                    id="seo-next-page"
+                    href="?{% for key, values in request.GET.lists %}{% if key != 'page' %}{% for value in values %}{{ key|urlencode }}={{ value|urlencode }}&amp;{% endfor %}{% endif %}{% endfor %}page={{ products.next_page_number }}"
+                    rel="next"
+                    class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition hover:border-blue-500 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                >صفحه بعد</a>
+                {% endif %}
+            </nav>
             {% endif %}
 
             {% if group.description %}
@@ -2078,33 +2100,30 @@ document.addEventListener("DOMContentLoaded", function () {
     const label = document.getElementById("load-more-text");
     const spinner = document.getElementById("load-more-spinner");
     const error = document.getElementById("load-more-error");
+    const nextPageLink = document.getElementById("seo-next-page");
 
     if (!button || !container || !wrapper || !label || !spinner || !error) return;
 
     let isLoading = false;
     let finished = false;
     let observer = null;
-    const loadedPages = new Set([1]);
+    const currentPage = Number(button.dataset.currentPage) || 1;
+    const loadedPages = new Set([currentPage]);
 
     async function loadNextPage() {
         if (isLoading || finished || !document.body.contains(button)) return;
 
         const nextPage = Number(button.dataset.nextPage);
-        if (!Number.isInteger(nextPage) || nextPage < 2 || loadedPages.has(nextPage)) {
-            if (loadedPages.has(nextPage)) {
-                finished = true;
-                observer?.disconnect();
-                wrapper.remove();
-                error.remove();
-                return;
-            }
+        if (!Number.isInteger(nextPage) || nextPage <= currentPage || loadedPages.has(nextPage)) {
             error.textContent = "شماره صفحه بعد معتبر نیست. صفحه را تازه‌سازی کنید.";
             error.classList.remove("hidden");
             return;
         }
 
         isLoading = true;
+        button.disabled = true;
         spinner.classList.remove("hidden");
+        label.textContent = "در حال دریافت محصولات...";
         error.classList.add("hidden");
 
         try {
@@ -2114,19 +2133,17 @@ document.addEventListener("DOMContentLoaded", function () {
             const response = await fetch(url.toString(), {
                 method: "GET",
                 credentials: "same-origin",
-                headers: {
-                    "Accept": "text/html"
-                }
+                headers: { "Accept": "text/html" }
             });
 
             if (!response.ok) throw new Error("HTTP " + response.status);
 
             const html = await response.text();
             const parsed = new DOMParser().parseFromString(html, "text/html");
-            let newCards = Array.from(parsed.querySelectorAll("#products-container .product-card"));
+            const newCards = Array.from(parsed.querySelectorAll("#products-container .product-card"));
 
             if (!newCards.length) {
-                newCards = Array.from(parsed.querySelectorAll(".product-card"));
+                throw new Error("No product cards found in the requested page");
             }
 
             const existingLinks = new Set(
@@ -2140,8 +2157,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 const href = link ? link.href : "";
                 if (href && existingLinks.has(href)) return;
                 if (href) existingLinks.add(href);
+
                 const cardToAdd = document.importNode(card, true);
                 container.appendChild(cardToAdd);
+
                 if (typeof cardToAdd.animate === "function") {
                     cardToAdd.animate(
                         [
@@ -2168,25 +2187,34 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             loadedPages.add(nextPage);
+
             const fetchedButton = parsed.querySelector("#load-more-btn");
             const fetchedNextPage = fetchedButton ? Number(fetchedButton.dataset.nextPage) : NaN;
+            const fetchedNextLink = parsed.querySelector("#seo-next-page");
 
             if (Number.isInteger(fetchedNextPage) && fetchedNextPage > nextPage) {
+                button.dataset.currentPage = String(nextPage);
                 button.dataset.nextPage = String(fetchedNextPage);
+                if (nextPageLink && fetchedNextLink) {
+                    nextPageLink.href = fetchedNextLink.href;
+                }
             } else {
                 finished = true;
                 observer?.disconnect();
                 wrapper.remove();
                 error.remove();
+                if (nextPageLink) nextPageLink.remove();
             }
         } catch (exception) {
-            error.textContent = "دریافت محصولات انجام نشد. دوباره تلاش کنید.";
+            error.textContent = "دریافت محصولات ناموفق بود. دوباره تلاش کنید.";
             error.classList.remove("hidden");
             console.error("Load more products failed:", exception);
         } finally {
             isLoading = false;
             if (document.body.contains(button)) {
+                button.disabled = false;
                 spinner.classList.add("hidden");
+                label.textContent = "نمایش محصولات بیشتر";
             }
         }
     }
