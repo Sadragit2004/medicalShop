@@ -2058,7 +2058,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const spinner = document.getElementById("load-more-spinner");
     const error = document.getElementById("load-more-error");
 
-    if (!button || !container) return;
+    if (!button || !container || !label || !spinner || !error) return;
 
     let isLoading = false;
 
@@ -2066,17 +2066,15 @@ document.addEventListener("DOMContentLoaded", function () {
         if (isLoading) return;
 
         const nextPage = Number(button.dataset.nextPage);
-        const totalPages = Number(button.dataset.totalPages);
-
-        if (!nextPage || nextPage > totalPages) {
-            wrapper?.remove();
-            error?.remove();
+        if (!Number.isInteger(nextPage) || nextPage < 2) {
+            error.textContent = "شماره صفحه بعد معتبر نیست. صفحه را تازه‌سازی کنید.";
+            error.classList.remove("hidden");
             return;
         }
 
         isLoading = true;
         button.disabled = true;
-        label.textContent = "در حال دریافت...";
+        label.textContent = "در حال دریافت محصولات...";
         spinner.classList.remove("hidden");
         error.classList.add("hidden");
 
@@ -2087,33 +2085,46 @@ document.addEventListener("DOMContentLoaded", function () {
             const response = await fetch(url.toString(), {
                 method: "GET",
                 credentials: "same-origin",
-                headers: { "X-Requested-With": "XMLHttpRequest" }
+                cache: "no-store",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                    "Accept": "text/html"
+                }
             });
 
-            if (!response.ok) throw new Error("Request failed");
+            if (!response.ok) {
+                throw new Error("HTTP " + response.status);
+            }
 
             const html = await response.text();
             const parsed = new DOMParser().parseFromString(html, "text/html");
-            const newCards = parsed.querySelectorAll("#products-container .product-card");
+            let newCards = parsed.querySelectorAll("#products-container .product-card");
 
             if (!newCards.length) {
-                wrapper?.remove();
-                error?.remove();
-                return;
+                newCards = parsed.querySelectorAll(".product-card");
+            }
+
+            if (!newCards.length) {
+                throw new Error("No product cards found on page " + nextPage);
             }
 
             newCards.forEach(function (card) {
                 container.appendChild(document.importNode(card, true));
             });
 
-            if (nextPage >= totalPages) {
-                wrapper?.remove();
-                error?.remove();
+            const fetchedButton = parsed.querySelector("#load-more-btn");
+            const fetchedNextPage = fetchedButton ? Number(fetchedButton.dataset.nextPage) : null;
+
+            if (fetchedButton && Number.isInteger(fetchedNextPage) && fetchedNextPage > nextPage) {
+                button.dataset.nextPage = String(fetchedNextPage);
             } else {
-                button.dataset.nextPage = String(nextPage + 1);
+                wrapper.remove();
+                error.remove();
             }
         } catch (exception) {
+            error.textContent = "محصولات جدید دریافت نشدند. صفحه بعد از سمت سرور خالی است یا خطایی رخ داده؛ صفحه را تازه‌سازی کنید و دوباره تلاش کنید.";
             error.classList.remove("hidden");
+            console.error("Load more products failed:", exception);
         } finally {
             isLoading = false;
             if (document.body.contains(button)) {
