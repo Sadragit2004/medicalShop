@@ -514,94 +514,86 @@ def load_more_comments(request, product_slug):
             'error': str(e)
         })
 
-# prodfrom django.db.models import Min, Max, OuterRef, Subquery
-from django.shortcuts import render, get_object_or_404
-from django.core.paginator import Paginator
-from .models import Product, Category, ProductSaleType, Brand
-from .filters import ProductFilter
 
 
 def show_by_filter(request, slug):
     category = get_object_or_404(Category, slug=slug)
 
-    # ========================
-    # محصولات فعال این دسته
-    # ========================
-    products = Product.objects.filter(
-        isActive=True,
-        category__slug=slug
-    ).select_related('brand').prefetch_related(
-        'saleTypes',
-        'featuresValue'
-    ).distinct()
+    products = (
+        Product.objects.filter(
+            isActive=True,
+            category__slug=slug,
+        )
+        .select_related("brand")
+        .prefetch_related("saleTypes", "featuresValue")
+        .distinct()
+    )
 
-    # ========================
-    # زیرکوئری قیمت (price فقط)
-    # ========================
-    price_subquery = ProductSaleType.objects.filter(
-        product=OuterRef('pk'),
-        isActive=True
-    ).order_by('price').values('price')[:1]
+    price_subquery = (
+        ProductSaleType.objects.filter(
+            product=OuterRef("pk"),
+            isActive=True,
+        )
+        .order_by("price")
+        .values("price")[:1]
+    )
 
-    # 🔥 این خط کلیدی است
     products = products.annotate(
-        price=Subquery(price_subquery)
+        price=Subquery(price_subquery),
     ).filter(price__isnull=False)
 
-    # ========================
-    # تخفیف فعال برای هر محصول
-    # ========================
     now = timezone.now()
-    discount_subquery = DiscountBasket.objects.filter(
-        isActive=True,
-        startDate__lte=now,
-        endDate__gte=now,
-        discountOfBasket__product=OuterRef('pk')
-    ).order_by('-discount').values('discount')[:1]
+
+    discount_subquery = (
+        DiscountBasket.objects.filter(
+            isActive=True,
+            startDate__lte=now,
+            endDate__gte=now,
+            discountOfBasket__product=OuterRef("pk"),
+        )
+        .order_by("-discount")
+        .values("discount")[:1]
+    )
 
     products = products.annotate(
         discount_percent=Subquery(discount_subquery),
+    ).annotate(
         final_price=ExpressionWrapper(
-            Floor(F('price') * (100 - Coalesce(Subquery(discount_subquery), Value(0))) / Value(100)),
-            output_field=PositiveIntegerField()
-        )
+            Floor(
+                F("price")
+                * (
+                    Value(100)
+                    - Coalesce(F("discount_percent"), Value(0))
+                )
+                / Value(100)
+            ),
+            output_field=PositiveIntegerField(),
+        ),
     )
 
-    # ========================
-    # min / max قیمت واقعی
-    # ========================
     price_stats = ProductSaleType.objects.filter(
         product__in=products,
-        isActive=True
+        isActive=True,
     ).aggregate(
-        min_price=Min('price'),
-        max_price=Max('price')
+        min_price=Min("price"),
+        max_price=Max("price"),
     )
 
-    price_min = price_stats['min_price'] or 0
-    price_max = price_stats['max_price'] or 0
+    price_min = price_stats["min_price"] or 0
+    price_max = price_stats["max_price"] or 0
 
-    # ========================
-    # فیلترهای django-filter (برند و ...)
-    # ========================
     filter_obj = ProductFilter(request.GET, queryset=products)
     filtered_products = filter_obj.qs
 
-    # ========================
-    # فیلتر ویژگی‌ها (feature checkboxes)
-    # ========================
-    feature_values = request.GET.getlist('feature')
+    feature_values = request.GET.getlist("feature")
+
     if feature_values:
-        # هر مقدار در URL یک FeatureValue.id است
         filtered_products = filtered_products.filter(
-            featuresValue__filterValue_id__in=feature_values
+            featuresValue__filterValue_id__in=feature_values,
         ).distinct()
 
-    # ========================
-    # فیلتر قیمت
-    # ========================
-    req_min = request.GET.get('price_min')
-    req_max = request.GET.get('price_max')
+    req_min = request.GET.get("price_min")
+    req_max = request.GET.get("price_max")
 
     if req_min:
         filtered_products = filtered_products.filter(price__gte=req_min)
@@ -609,47 +601,51 @@ def show_by_filter(request, slug):
     if req_max:
         filtered_products = filtered_products.filter(price__lte=req_max)
 
-    # ========================
-    # مرتب‌سازی
-    # ========================
-    sort = request.GET.get('sort', '1')
+    sort = request.GET.get("sort", "1")
 
-    # پشتیبانی از هر دو حالت: مقادیر عددی (1,2,3) و متنی (cheap, expensive, new)
-    if sort in ['3', 'cheap']:
-        filtered_products = filtered_products.order_by('price')
-    elif sort in ['2', 'expensive']:
-        filtered_products = filtered_products.order_by('-price')
-    else:  # '1' یا 'new' و هر مقدار نامعتبر دیگر
-        filtered_products = filtered_products.order_by('-createdAt')
+    if sort in ("3", "cheap"):
+        filtered_products = filtered_products.order_by("price")
+    elif sort in ("2", "expensive"):
+        filtered_products = filtered_products.order_by("-price")
+    else:
+        filtered_products = filtered_products.order_by("-createdAt")
 
-    # ========================
-    # صفحه‌بندی
-    # ========================
     paginator = Paginator(filtered_products, 12)
-    page_obj = paginator.get_page(request.GET.get('page'))
+    page_obj = paginator.get_page(request.GET.get("page", 1))
 
-    # ========================
-    # برندها
-    # ========================
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return render(
+            request,
+            "product_app/shop/_load_more_products.html",
+            {
+                "products": page_obj,
+            },
+        )
+
     brands = Brand.objects.filter(
-        products__in=filtered_products
+        products__in=filtered_products,
     ).distinct()
 
     context = {
-        'products': page_obj,
-        'group': category,
-        'filter': filter_obj,
-        'brands': brands,
-        'price_min': price_min,
-        'price_max': price_max,
-        'selected_min': req_min or price_min,
-        'selected_max': req_max or price_max,
-        'sort_option': sort,
-        'total_products': paginator.count,
-        'slug': slug,
+        "products": page_obj,
+        "group": category,
+        "filter": filter_obj,
+        "brands": brands,
+        "price_min": price_min,
+        "price_max": price_max,
+        "selected_min": req_min or price_min,
+        "selected_max": req_max or price_max,
+        "sort_option": sort,
+        "total_products": paginator.count,
+        "slug": slug,
     }
 
-    return render(request, 'product_app/shop/shop.html', context)
+    return render(
+        request,
+        "product_app/shop/shop.html",
+        context,
+    )
+
 
 
 def show_brand_products(request, slug):

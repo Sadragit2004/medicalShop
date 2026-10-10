@@ -1,0 +1,30 @@
+{% for product in products %}
+    <article class="product-card">
+        <a href="{{ product.get_absolute_url }}" class="block">
+            {% if product.image %}
+                <img
+                    src="{{ product.image.url }}"
+                    alt="{{ product.name }}"
+                    loading="lazy"
+                    class="w-full h-auto object-contain"
+                >
+            {% endif %}
+
+            <h3>{{ product.name }}</h3>
+
+            {% if product.brand %}
+                <p>{{ product.brand }}</p>
+            {% endif %}
+
+            {% if product.discount_percent %}
+                <p class="line-through">
+                    {{ product.price }}
+                </p>
+            {% endif %}
+
+            <p>
+                {{ product.final_price|default:product.price }}
+            </p>
+        </a>
+    </article>
+{% endfor %}
