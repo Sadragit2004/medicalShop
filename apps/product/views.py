@@ -515,7 +515,6 @@ def load_more_comments(request, product_slug):
         })
 
 
-
 def show_by_filter(request, slug):
     category = get_object_or_404(Category, slug=slug)
 
@@ -534,13 +533,14 @@ def show_by_filter(request, slug):
             product=OuterRef("pk"),
             isActive=True,
         )
-        .order_by("price")
+        .order_by("price", "pk")
         .values("price")[:1]
     )
 
-    products = products.annotate(
-        price=Subquery(price_subquery),
-    ).filter(price__isnull=False)
+    products = (
+        products.annotate(price=Subquery(price_subquery))
+        .filter(price__isnull=False)
+    )
 
     now = timezone.now()
 
@@ -590,37 +590,34 @@ def show_by_filter(request, slug):
     if feature_values:
         filtered_products = filtered_products.filter(
             featuresValue__filterValue_id__in=feature_values,
-        ).distinct()
+        )
 
     req_min = request.GET.get("price_min")
     req_max = request.GET.get("price_max")
 
     if req_min:
-        filtered_products = filtered_products.filter(price__gte=req_min)
+        filtered_products = filtered_products.filter(
+            price__gte=req_min,
+        )
 
     if req_max:
-        filtered_products = filtered_products.filter(price__lte=req_max)
+        filtered_products = filtered_products.filter(
+            price__lte=req_max,
+        )
 
     sort = request.GET.get("sort", "1")
 
     if sort in ("3", "cheap"):
-        filtered_products = filtered_products.order_by("price")
+        filtered_products = filtered_products.order_by("price", "pk")
     elif sort in ("2", "expensive"):
-        filtered_products = filtered_products.order_by("-price")
+        filtered_products = filtered_products.order_by("-price", "pk")
     else:
-        filtered_products = filtered_products.order_by("-createdAt")
+        filtered_products = filtered_products.order_by("-createdAt", "-pk")
+
+    filtered_products = filtered_products.distinct()
 
     paginator = Paginator(filtered_products, 12)
     page_obj = paginator.get_page(request.GET.get("page", 1))
-
-    if request.headers.get("x-requested-with") == "XMLHttpRequest":
-        return render(
-            request,
-            "product_app/shop/_load_more_products.html",
-            {
-                "products": page_obj,
-            },
-        )
 
     brands = Brand.objects.filter(
         products__in=filtered_products,
