@@ -862,7 +862,28 @@
                     class="inline-flex min-w-52 items-center justify-center gap-3 px-6 py-3 rounded-xl bg-blue-600 text-white shadow-sm hover:bg-blue-700 hover:shadow-md transition-all duration-200 disabled:opacity-80 disabled:cursor-wait disabled:shadow-none"
                     aria-live="polite"
                 >
-                    <span id="load-more-spinner" class="hidden size-5 shrink-0 rounded-full border-2 border-white/35 border-t-white animate-spin" role="status" aria-label="در حال بارگذاری"></span>
+                    <svg
+                        id="load-more-spinner"
+                        class="hidden size-5 shrink-0 animate-spin"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <circle
+                            class="opacity-20"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            stroke-width="3"
+                        />
+                        <path
+                            class="opacity-90"
+                            fill="currentColor"
+                            d="M12 2a10 10 0 0 1 10 10h-3a7 7 0 0 0-7-7V2z"
+                        />
+                    </svg>
                     <span id="load-more-text">نمایش محصولات بیشتر</span>
                 </button>
             </div>
@@ -2083,9 +2104,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         isLoading = true;
-        button.disabled = true;
-        button.classList.add("opacity-90");
-        label.textContent = "در حال بارگذاری محصولات...";
         spinner.classList.remove("hidden");
         error.classList.add("hidden");
 
@@ -2153,9 +2171,6 @@ document.addEventListener("DOMContentLoaded", function () {
         } finally {
             isLoading = false;
             if (document.body.contains(button)) {
-                button.disabled = false;
-                button.classList.remove("opacity-90");
-                label.textContent = "نمایش محصولات بیشتر";
                 spinner.classList.add("hidden");
             }
         }
