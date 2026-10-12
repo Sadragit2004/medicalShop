@@ -17,119 +17,251 @@ from apps.discount.models import DiscountBasket, DiscountDetail
 
 
 # 1. محبوب‌ترین برندها
+
+from django.core.cache import cache
+from django.db.models import  Avg
+
+
+
+POPULAR_BRANDS_CACHE_KEY = "product_app:popular_brands:v1"
+POPULAR_BRANDS_CACHE_TIMEOUT = 60 * 60
+
+RICH_CATEGORIES_CACHE_KEY = "product_app:rich_categories:v1"
+RICH_CATEGORIES_CACHE_TIMEOUT = 60 * 60
+
+LATEST_PRODUCTS_CACHE_KEY = "product_app:latest_products:v1"
+LATEST_PRODUCTS_CACHE_TIMEOUT = 60 * 60
+
+
 def popular_brands(request):
-    """
-    محبوب‌ترین برندها بر اساس تعداد محصولات
-    """
-    from .models import Brand
+    brands = cache.get(POPULAR_BRANDS_CACHE_KEY)
 
-    brands = Brand.objects.filter(
-        isActive=True
-    ).annotate(
-        product_count=Count('products', filter=Q(products__isActive=True))
-    ).filter(
-        product_count__gt=0
-    ).order_by('-product_count')[:10]
+    if brands is not None:
+        print("comeeeeeeee")
+    else:
+        print("cache miss")
 
-    return render(request, 'product_app/brand/popular_brands.html', {'brands': brands})
+        brands = list(
+            Brand.objects.filter(
+                isActive=True
+            ).annotate(
+                product_count=Count(
+                    "products",
+                    filter=Q(products__isActive=True),
+                    distinct=True,
+                )
+            ).filter(
+                product_count__gt=0
+            ).order_by(
+                "-product_count"
+            )[:10]
+        )
 
-# 2. پر محتواترین دسته‌بندی‌ها
+        cache.set(
+            POPULAR_BRANDS_CACHE_KEY,
+            brands,
+            POPULAR_BRANDS_CACHE_TIMEOUT,
+        )
+
+    return render(
+        request,
+        "product_app/brand/popular_brands.html",
+        {"brands": brands},
+    )
+
+
 def rich_categories(request):
-    """
-    پر محتواترین دسته‌بندی‌ها بر اساس تعداد محصولات
-    فقط دسته‌بندی‌های لایه دوم (که والد آنها یک دسته‌بندی سطح اول است)
-    """
-    from .models import Category
-    from django.db.models import Count, Q
+    categories = cache.get(RICH_CATEGORIES_CACHE_KEY)
 
+    if categories is not None:
+        print("comeeeeeeee")
+    else:
+        print("cache miss")
 
-    categories = Category.objects.filter(
-        isActive=True,
-        parent__isnull=False,  # خودش زیردسته باشد
-        parent__parent__isnull=True  # والد آن، یک دسته‌بندی سطح اول (بدون والد) باشد
-    ).annotate(
-        total_products=Count('products', filter=Q(products__isActive=True))
-    ).filter(
-        total_products__gt=0
-    ).order_by('-total_products')[:10]
+        categories = list(
+            Category.objects.filter(
+                isActive=True,
+                parent__isnull=False,
+                parent__parent__isnull=True,
+            ).annotate(
+                total_products=Count(
+                    "products",
+                    filter=Q(products__isActive=True),
+                    distinct=True,
+                )
+            ).filter(
+                total_products__gt=0
+            ).order_by(
+                "-total_products"
+            )[:10]
+        )
 
-    return render(request, 'product_app/category/popular_categories.html', {'categories': categories})
+        cache.set(
+            RICH_CATEGORIES_CACHE_KEY,
+            categories,
+            RICH_CATEGORIES_CACHE_TIMEOUT,
+        )
+
+    return render(
+        request,
+        "product_app/category/popular_categories.html",
+        {"categories": categories},
+    )
 
 
 def latest_products(request):
-    """
-    جدیدترین محصولات
-    """
-    from .models import Product, ProductGallery
+    product_list = cache.get(LATEST_PRODUCTS_CACHE_KEY)
 
-    now = timezone.now()
-    discount_subquery = DiscountBasket.objects.filter(
-        isActive=True,
-        startDate__lte=now,
-        endDate__gte=now,
-        discountOfBasket__product=OuterRef('pk')
-    ).order_by('-discount').values('discount')[:1]
+    if product_list is not None:
+        print("comeeeeeeee")
+    else:
+        print("cache miss")
 
-    # گرفتن محصولات جدید + قیمت پایه و تخفیف
-    products = Product.objects.filter(
-        isActive=True
-    ).select_related('brand').prefetch_related(
-        'category', 'saleTypes'
-    ).annotate(
-        price=Subquery(
-            ProductSaleType.objects.filter(
-                product=OuterRef('pk'),
+        now = timezone.now()
+
+        discount_subquery = DiscountBasket.objects.filter(
+            isActive=True,
+            startDate__lte=now,
+            endDate__gte=now,
+            discountOfBasket__product=OuterRef("pk"),
+        ).order_by(
+            "-discount"
+        ).values(
+            "discount"
+        )[:1]
+
+        products = (
+            Product.objects.filter(
                 isActive=True
-            ).order_by('price').values('price')[:1]
-        ),
-        discount_percent=Subquery(discount_subquery),
-        final_price=ExpressionWrapper(
-            Floor(F('price') * (100 - Coalesce(Subquery(discount_subquery), Value(0))) / Value(100)),
-            output_field=PositiveIntegerField()
+            ).select_related(
+                "brand",
+                "typetitle",
+            ).prefetch_related(
+                "category",
+                "saleTypes",
+                "galleries",
+            ).annotate(
+                price=Subquery(
+                    ProductSaleType.objects.filter(
+                        product=OuterRef("pk"),
+                        isActive=True,
+                    ).order_by(
+                        "price"
+                    ).values(
+                        "price"
+                    )[:1],
+                    output_field=PositiveIntegerField(),
+                ),
+                discount_percent=Subquery(
+                    discount_subquery,
+                    output_field=PositiveIntegerField(),
+                ),
+            ).annotate(
+                final_price=ExpressionWrapper(
+                    Floor(
+                        F("price")
+                        * (
+                            Value(100)
+                            - Coalesce(
+                                F("discount_percent"),
+                                Value(0),
+                            )
+                        )
+                        / Value(100)
+                    ),
+                    output_field=PositiveIntegerField(),
+                )
+            ).order_by(
+                "-createdAt"
+            )[:12]
         )
-    ).order_by('-createdAt')[:12]
 
-    # آماده کردن داده‌ها برای تمپلیت
-    product_list = []
-    for product in products:
-        base_price = product.price or 0
-        discount_percent = product.discount_percent or 0
-        final_price = product.final_price or base_price
+        product_list = []
 
-        # گرفتن تصویر اصلی
-        main_image = product.mainImage.url if product.mainImage else ''
+        for product in products:
+            base_price = product.price or 0
+            discount_percent = product.discount_percent or 0
 
-        # گرفتن تصویر hover (اولین تصویر گالری)
-        hover_image = main_image
-        try:
-            gallery_image = product.galleries.filter(isActive=True).first()
-            if gallery_image and gallery_image.image:
-                hover_image = gallery_image.image.url
-        except:
-            pass
+            final_price = (
+                product.final_price
+                if product.price is not None
+                else 0
+            )
 
-        product_list.append({
-            'id': product.id,
-            'slug': product.slug,
-            'title': product.title,
-            'short_title': product.title[:40] + '...' if len(product.title) > 40 else product.title,
-            'main_image': main_image,
-            'hover_image': hover_image,  # این مهمه
-            'final_price': int(final_price),
-            'base_price': int(base_price),
-            'discount_percentage': int(discount_percent),
-            'rating': product.average_rating,
-            'comments_count': product.total_comments,
-            'shipping_today': True,
-            'brand': product.brand.title if product.brand else None,
-        })
+            main_image = (
+                product.mainImage.url
+                if product.mainImage
+                else ""
+            )
 
-    context = {
-        'latest_products': product_list,
-        'title': 'جدیدترین محصولات',
-    }
+            gallery_image = next(
+                (
+                    gallery
+                    for gallery in product.galleries.all()
+                    if gallery.isActive and gallery.image
+                ),
+                None,
+            )
 
-    return render(request, 'product_app/product/latest_products.html', context)
+            hover_image = (
+                gallery_image.image.url
+                if gallery_image
+                else main_image
+            )
+
+            average_rating = Rating.objects.filter(
+                product=product
+            ).aggregate(
+                avg=Avg("rating")
+            )["avg"]
+
+            comments_count = Comment.objects.filter(
+                product=product,
+                isActive=True,
+            ).count()
+
+            product_list.append({
+                "id": product.id,
+                "slug": product.slug,
+                "title": product.title,
+                "short_title": (
+                    product.title[:40] + "..."
+                    if len(product.title) > 40
+                    else product.title
+                ),
+                "main_image": main_image,
+                "hover_image": hover_image,
+                "final_price": int(
+                    final_price
+                    if final_price is not None
+                    else base_price
+                ),
+                "base_price": int(base_price),
+                "discount_percentage": int(discount_percent),
+                "rating": round(float(average_rating or 0), 1),
+                "comments_count": comments_count,
+                "shipping_today": True,
+                "brand": (
+                    product.brand.title
+                    if product.brand
+                    else None
+                ),
+            })
+
+        cache.set(
+            LATEST_PRODUCTS_CACHE_KEY,
+            product_list,
+            LATEST_PRODUCTS_CACHE_TIMEOUT,
+        )
+
+    return render(
+        request,
+        "product_app/product/latest_products.html",
+        {
+            "latest_products": product_list,
+            "title": "جدیدترین محصولات",
+        },
+    )
 
 # views.py
 # views.py
