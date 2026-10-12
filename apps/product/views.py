@@ -141,6 +141,12 @@ from django.core.paginator import Paginator
 from django.db.models import Count, Q, OuterRef, Subquery, ExpressionWrapper, F, Value, PositiveIntegerField
 from django.db.models.functions import Floor, Coalesce
 from django.utils import timezone
+import re
+from django.shortcuts import get_object_or_404, render
+from django.core.paginator import Paginator
+from django.utils import timezone
+from django.db.models import OuterRef, Subquery, F, Value, ExpressionWrapper, PositiveIntegerField
+from django.db.models.functions import Floor, Coalesce
 
 
 def product_detail(request, slug):
@@ -148,235 +154,336 @@ def product_detail(request, slug):
     صفحه جزئیات محصول
     آدرس: /products/<slug>/
     """
-    # 1. اطلاعات اولیه محصول
-    product = get_object_or_404(Product, slug=slug, isActive=True)
 
-    # 2. گالری محصول
+    # 1. اطلاعات اولیه محصول
+    product = get_object_or_404(
+        Product,
+        slug=slug,
+        isActive=True,
+    )
+
+    # 2. لینک ویدیو آپارات از دیتابیس - تبدیل به لینک Embed
+    video_link = (product.vidiolink or "").strip()
+    video_embed_url = ""
+    video_hash = ""
+
+    if video_link:
+        match = re.search(r'aparat\.com/v/([a-zA-Z0-9]+)', video_link)
+        if match:
+            video_hash = match.group(1)
+            video_embed_url = (
+                f"https://www.aparat.com/video/video/embed/videohash/"
+                f"{video_hash}/vt/frame?config=%7B%22skin%22%3A%22modern%22%7D"
+            )
+
+    # 3. گالری محصول
     galleries = ProductGallery.objects.filter(
         product=product,
-        isActive=True
-    ).order_by('createdAt')
+        isActive=True,
+    ).order_by("createdAt")
 
-    # 3. ویژگی‌های محصول
+    # 4. ویژگی‌های محصول
     product_features = ProductFeature.objects.filter(
         product=product
-    ).select_related('feature', 'filterValue')
+    ).select_related("feature", "filterValue")
 
-    # 4. لیست کامنت‌ها
+    # 5. کامنت‌ها
     comments = Comment.objects.filter(
         product=product,
-        isActive=True
-    ).select_related('user').order_by('-createdAt')
+        isActive=True,
+    ).select_related("user").order_by("-createdAt")
 
-    # صفحه‌بندی کامنت‌ها
-    page = request.GET.get('page', 1)
+    page = request.GET.get("page", 1)
     paginator = Paginator(comments, 10)
     page_comments = paginator.get_page(page)
 
-    # 5. آمارهای امتیاز و کامنت (از propertyهای خود مدل Product استفاده می‌کنیم)
+    # 6. آمار امتیاز و کامنت
     comment_stats = product.comment_stats
 
-    # 6. قیمت‌ها + تخفیف
+    # 7. تخفیف محصول
     now = timezone.now()
-    discount_percent = DiscountBasket.objects.filter(
-        isActive=True,
-        startDate__lte=now,
-        endDate__gte=now,
-        discountOfBasket__product=product
-    ).order_by('-discount').values_list('discount', flat=True).first() or 0
 
-    sale_types = ProductSaleType.objects.filter(
-        product=product,
-        isActive=True
-    ).order_by('typeSale')
+    discount_percent = (
+        DiscountBasket.objects.filter(
+            isActive=True,
+            startDate__lte=now,
+            endDate__gte=now,
+            discountOfBasket__product=product,
+        )
+        .order_by("-discount")
+        .values_list("discount", flat=True)
+        .first()
+        or 0
+    )
 
-    # نوع پیش‌فرض فروش
-    default_sale_type = sale_types.filter(typeSale=SaleType.SINGLE).first()
-    if not default_sale_type and sale_types.exists():
-        default_sale_type = sale_types.first()
+    # 8. انواع فروش
+    sale_types = list(
+        ProductSaleType.objects.filter(
+            product=product,
+            isActive=True,
+        ).order_by("typeSale")
+    )
 
-    # محاسبه finalPrice برای هر نوع فروش
+    default_sale_type = next(
+        (
+            sale
+            for sale in sale_types
+            if sale.typeSale == SaleType.SINGLE
+        ),
+        None,
+    )
+
+    if default_sale_type is None and sale_types:
+        default_sale_type = sale_types[0]
+
+    # محاسبه قیمت نهایی هر نوع فروش
     for sale in sale_types:
-        # قیمت پایه هر نوع فروش (همیشه قیمت واحد نمایش داده می‌شود)
-        base_price = sale.price
+        sale.final_price = (
+            int(sale.price * (100 - discount_percent) / 100)
+            if discount_percent
+            else sale.price
+        )
 
-        # قیمت نهایی پس از تخفیف
-        discounted_price = base_price
-        if discount_percent:
-            discounted_price = int(base_price * (100 - discount_percent) / 100)
-
-        # تخصیص قیمت نهایی به شی فروش برای استفاده در تمپلیت
-        sale.final_price = discounted_price
-
-    # محاسبه finalPrice برای نوع پیش‌فرض
     if default_sale_type:
-        # قیمت پایه همیشه قیمت واحد است (برای همه نوع فروش)
         default_base_price = default_sale_type.price
 
-        default_final_price = default_base_price
-        if discount_percent:
-            default_final_price = int(default_base_price * (100 - discount_percent) / 100)
+        default_final_price = (
+            int(default_base_price * (100 - discount_percent) / 100)
+            if discount_percent
+            else default_base_price
+        )
 
-        # تخصیص قیمت نهایی به شی default_sale_type برای استفاده در تمپلیت
         default_sale_type.final_price = default_final_price
     else:
         default_base_price = 0
         default_final_price = 0
 
-    # ========== محاسبات مربوط به موجودی و محدودیت‌ها ==========
-
-    # محاسبه مقادیر مربوط به کارتن
+    # 9. محاسبات موجودی و محدودیت فروش
     max_cartons = 0
     total_units = 0
-    if default_sale_type and default_sale_type.typeSale == SaleType.CARTON:
-        if default_sale_type.memberCarton and default_sale_type.memberCarton > 0:
-            max_cartons = product.stock // default_sale_type.memberCarton
-            total_units = default_sale_type.memberCarton
-        else:
-            max_cartons = 0
-            total_units = 0
-
-    # محاسبه حداکثر تعداد برای limited sale
     max_limited = 0
     step_limited = 0
-    if default_sale_type and default_sale_type.typeSale == SaleType.LIMITED:
+
+    if (
+        default_sale_type
+        and default_sale_type.typeSale == SaleType.CARTON
+    ):
+        if (
+            default_sale_type.memberCarton
+            and default_sale_type.memberCarton > 0
+        ):
+            max_cartons = product.stock // default_sale_type.memberCarton
+            total_units = default_sale_type.memberCarton
+
+    if (
+        default_sale_type
+        and default_sale_type.typeSale == SaleType.LIMITED
+    ):
         max_limited = product.stock
         step_limited = default_sale_type.limitedSale or 1
 
-    # بررسی اینکه آیا کاربر این محصول را قبلاً کامنت کرده است
+    # 10. وضعیت کامنت کاربر
     user_has_commented = False
+
     if request.user.is_authenticated:
         user_has_commented = Comment.objects.filter(
             user=request.user,
-            product=product
+            product=product,
         ).exists()
 
-    # بررسی اینکه آیا محصول در لیست علاقه‌مندی‌های کاربر هست
+    # 11. وضعیت علاقه‌مندی
     is_favorite = False
+
     if request.user.is_authenticated:
-        is_favorite = request.user.favorites.filter(id=product.id).exists()
+        is_favorite = request.user.favorites.filter(
+            id=product.id
+        ).exists()
 
-    # 7. محصولات مرتبط (از همان دسته‌بندی‌ها) + تخفیف
-    discount_subquery = DiscountBasket.objects.filter(
-        isActive=True,
-        startDate__lte=now,
-        endDate__gte=now,
-        discountOfBasket__product=OuterRef('pk')
-    ).order_by('-discount').values('discount')[:1]
-
-    related_products = Product.objects.filter(
-        isActive=True,
-        category__in=product.category.all()
-    ).exclude(
-        id=product.id  # محصول فعلی رو حذف کن
-    ).annotate(
-        price=Subquery(
-            ProductSaleType.objects.filter(
-                product=OuterRef('pk'),
-                isActive=True
-            ).order_by('price').values('price')[:1]
-        ),
-        discount_percent=Subquery(discount_subquery),
-        final_price=ExpressionWrapper(
-            Floor(F('price') * (100 - Coalesce(Subquery(discount_subquery), Value(0))) / Value(100)),
-            output_field=PositiveIntegerField()
+    # 12. محصولات مرتبط و تخفیف آن‌ها
+    discount_subquery = (
+        DiscountBasket.objects.filter(
+            isActive=True,
+            startDate__lte=now,
+            endDate__gte=now,
+            discountOfBasket__product=OuterRef("pk"),
         )
-    ).filter(price__isnull=False).distinct()[:8]
+        .order_by("-discount")
+        .values("discount")[:1]
+    )
 
-    # 8. آماده کردن متا تگ‌ها
+    related_products = (
+        Product.objects.filter(
+            isActive=True,
+            category__in=product.category.all(),
+        )
+        .exclude(id=product.id)
+        .annotate(
+            price=Subquery(
+                ProductSaleType.objects.filter(
+                    product=OuterRef("pk"),
+                    isActive=True,
+                )
+                .order_by("price")
+                .values("price")[:1]
+            ),
+            discount_percent=Subquery(discount_subquery),
+        )
+        .annotate(
+            final_price=ExpressionWrapper(
+                Floor(
+                    F("price")
+                    * (
+                        Value(100)
+                        - Coalesce(
+                            F("discount_percent"),
+                            Value(0),
+                        )
+                    )
+                    / Value(100)
+                ),
+                output_field=PositiveIntegerField(),
+            )
+        )
+        .filter(price__isnull=False)
+        .distinct()[:8]
+    )
+
+    # 13. متاتگ‌های محصول
+    image_url = (
+        request.build_absolute_uri(product.mainImage.url)
+        if product.mainImage
+        else ""
+    )
+
     meta_data = {
-        'title': product.title,
-        'description': product.shortDescription[:160],
-        'robots': 'index, follow',
-        'og_type': 'product',
-        'og_site_name': 'فروشگاه شما',
-        'og_title': product.title,
-        'og_description': product.shortDescription[:100],
-        'og_image': request.build_absolute_uri(product.mainImage.url) if product.mainImage else '',
-        'og_url': request.build_absolute_uri(product.get_absolute_url()),
-        'twitter_card': 'summary_large_image',
-        'twitter_title': product.title,
-        'twitter_description': product.shortDescription[:100],
-        'twitter_image': request.build_absolute_uri(product.mainImage.url) if product.mainImage else '',
+        "title": product.title,
+        "description": (product.shortDescription or "")[:160],
+        "robots": "index, follow",
+        "og_type": "product",
+        "og_site_name": "فروشگاه شما",
+        "og_title": product.title,
+        "og_description": (product.shortDescription or "")[:100],
+        "og_image": image_url,
+        "og_url": request.build_absolute_uri(
+            product.get_absolute_url()
+        ),
+        "twitter_card": "summary_large_image",
+        "twitter_title": product.title,
+        "twitter_description": (product.shortDescription or "")[:100],
+        "twitter_image": image_url,
     }
 
-    # 9. مشخصات کلی محصول (از ویژگی‌های خاص)
+    # 14. مشخصات کلی محصول
     specifications = {}
+
     for pf in product_features:
-        if pf.feature.title in ['مدل', 'نمایشگر', 'چیپست', 'دوربین', 'باتری']:
+        if pf.feature.title in [
+            "مدل",
+            "نمایشگر",
+            "چیپست",
+            "دوربین",
+            "باتری",
+        ]:
             specifications[pf.feature.title] = pf.value
 
-    # 10. تنظیمات فروشگاه
-    shop_setting = SettingShop.objects.select_related('emergency_phone').first()
+    # 15. تنظیمات فروشگاه
+    shop_setting = SettingShop.objects.select_related(
+        "emergency_phone"
+    ).first()
 
     is_call = shop_setting.is_call if shop_setting else False
-    emergency_phone = shop_setting.emergency_phone if shop_setting else None
+    emergency_phone = (
+        shop_setting.emergency_phone
+        if shop_setting
+        else None
+    )
 
-    # 11. نوع بسته بندی محصول (TypeProductTitle)
+    # 16. نوع بسته‌بندی محصول
     product_type_title = product.typetitle
 
-    # 12. context نهایی
+    # 17. اطلاعات ارسالی به تمپلیت
     context = {
-        # اطلاعات اصلی محصول
-        'product': product,
-        'is_call': is_call,
-        'emergency_phone': emergency_phone,
+        "product": product,
+
+        # لینک ویدیو آپارات
+        "video_link": video_link,
+        "video_embed_url": video_embed_url,
+        "video_hash": video_hash,
+        "has_video": bool(video_embed_url),
+
+        # تنظیمات فروشگاه
+        "is_call": is_call,
+        "emergency_phone": emergency_phone,
 
         # گالری
-        'galleries': galleries,
+        "galleries": galleries,
 
         # ویژگی‌ها
-        'product_features': product_features,
+        "product_features": product_features,
 
         # کامنت‌ها
-        'comments': page_comments,
-        'total_comments': paginator.count,
+        "comments": page_comments,
+        "total_comments": paginator.count,
 
-        # آمارها
-        'comment_stats': comment_stats,
-        'average_rating': product.average_rating,
-        'recommendation_stats': product.recommendation_stats,
-        'rating_distribution': product.rating_distribution,
+        # آمار
+        "comment_stats": comment_stats,
+        "average_rating": product.average_rating,
+        "recommendation_stats": product.recommendation_stats,
+        "rating_distribution": product.rating_distribution,
 
         # قیمت‌ها
-        'sale_types': sale_types,
-        'default_sale_type': default_sale_type,
-        'default_final_price': default_final_price,
-        'default_base_price': default_base_price,
-        'discount_percent': discount_percent,
-        'has_multiple_prices': sale_types.count() > 1,
+        "sale_types": sale_types,
+        "default_sale_type": default_sale_type,
+        "default_final_price": default_final_price,
+        "default_base_price": default_base_price,
+        "discount_percent": discount_percent,
+        "has_multiple_prices": len(sale_types) > 1,
 
         # محصولات مرتبط
-        'related_products': related_products,
+        "related_products": related_products,
 
-        # متا تگ‌ها
-        'meta': meta_data,
+        # متاتگ‌ها
+        "meta": meta_data,
 
-        # مشخصات کلی
-        'specifications': specifications,
+        # مشخصات
+        "specifications": specifications,
 
-        # برای فرم کامنت
-        'user_has_commented': user_has_commented,
+        # کامنت کاربر
+        "user_has_commented": user_has_commented,
 
-        # وضعیت علاقه‌مندی
-        'is_favorite': is_favorite,
+        # علاقه‌مندی
+        "is_favorite": is_favorite,
 
-        # ========== مقادیر محاسبه شده برای موجودی و محدودیت‌ها ==========
-        'max_cartons': max_cartons,
-        'total_units': total_units,
-        'max_limited': max_limited,
-        'step_limited': step_limited,
+        # موجودی و محدودیت‌ها
+        "max_cartons": max_cartons,
+        "total_units": total_units,
+        "max_limited": max_limited,
+        "step_limited": step_limited,
+        "product_stock": product.stock,
 
-        # اطلاعات اضافی برای استفاده در جاوااسکریپت
-        'product_stock': product.stock,
-        'member_carton': default_sale_type.memberCarton if default_sale_type and default_sale_type.typeSale == SaleType.CARTON else 0,
-        'limited_sale': default_sale_type.limitedSale if default_sale_type and default_sale_type.typeSale == SaleType.LIMITED else 0,
+        "member_carton": (
+            default_sale_type.memberCarton
+            if default_sale_type
+            and default_sale_type.typeSale == SaleType.CARTON
+            else 0
+        ),
 
-        # نوع بسته بندی محصول
-        'product_type_title': product_type_title,
+        "limited_sale": (
+            default_sale_type.limitedSale
+            if default_sale_type
+            and default_sale_type.typeSale == SaleType.LIMITED
+            else 0
+        ),
+
+        "product_type_title": product_type_title,
     }
 
-    return render(request, 'product_app/product/product_detail.html', context)
+    return render(
+        request,
+        "product_app/product/product_detail.html",
+        context,
+    )
+
 
 
 # ========================

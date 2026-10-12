@@ -211,7 +211,7 @@ class FeatureValueAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('title', 'brand', 'main_image_preview', 'price_range', 'average_rating_display', 'isActive', 'createdAt')
+    list_display = ('title', 'brand', 'main_image_preview', 'price_range', 'average_rating_display', 'isActive', 'createdAt','vidiolink')
     list_filter = (IsActiveFilter, 'brand', 'category')
     search_fields = ('title', 'slug', 'description', 'shortDescription')
     prepopulated_fields = {'slug': ('title',)}
@@ -222,7 +222,7 @@ class ProductAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('اطلاعات اصلی', {
-            'fields': ('title', 'slug', 'brand', 'category', 'isActive','stock')
+            'fields': ('title', 'slug', 'brand', 'category', 'isActive','stock','vidiolink')
         }),
         ('تصاویر', {
             'fields': ('mainImage', 'main_image_preview'),
