@@ -92,7 +92,7 @@ class Product(BaseModel):
     )
 
 
-    vidiolink = models.CharField(max_length=200, verbose_name="عنوان",blank=True,null=True)
+    vidiolink = models.CharField(max_length=200, verbose_name="ادرس اپارات ویدیو",blank=True,null=True)
     typetitle = models.ForeignKey(TypeProductTitle,on_delete=models.CASCADE,verbose_name='نوع بسته بندی محصول',blank=True,null=True)
     stock = models.PositiveIntegerField(verbose_name="موجودی", default=0)
     shortDescription = models.TextField(verbose_name="توضیح کوتاه", max_length=500)
