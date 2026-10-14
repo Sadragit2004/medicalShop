@@ -1,6 +1,221 @@
-<!-- templates/search/results.html -->
 {% extends "main_template.html" %}
 {% load humanize %}
+{% load static %}
+
+{% block meta1 %}
+<!-- ==================== Primary Meta Tags ==================== -->
+<title>نتایج جستجو برای "{{ query }}" | سایا مِد</title>
+<meta name="title" content="نتایج جستجو برای «{{ query }}» | سایا مِد">
+<meta name="description" content="نتایج جستجو برای «{{ query }}» در سایا مِد - {{ total_results|intcomma }} مورد یافت شد{% if product_count %} شامل {{ product_count }} محصول{% endif %}{% if category_count %}، {{ category_count }} دسته‌بندی{% endif %}{% if brand_count %}، {{ brand_count }} برند{% endif %}.">
+<meta name="keywords" content="{{ query }}{% for product in products|slice:":15" %}, {{ product.title }}{% endfor %}{% for category in categories|slice:":5" %}, {{ category.title }}{% endfor %}{% for brand in brands|slice:":5" %}, {{ brand.title }}{% endfor %}">
+<meta name="robots" content="noindex, follow, max-image-preview:large">
+<meta name="author" content="سایا مِد">
+<meta name="language" content="Persian">
+<meta name="revisit-after" content="7 days">
+<link rel="canonical" href="{{ request.build_absolute_uri }}">
+
+<!-- ==================== Open Graph / Facebook ==================== -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="سایا مِد">
+<meta property="og:title" content="نتایج جستجو برای «{{ query }}»">
+<meta property="og:description" content="{{ total_results|intcomma }} مورد یافت شد برای «{{ query }}» در سایا مِد">
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+<meta property="og:locale" content="fa_IR">
+{% if products.0.mainImage %}
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ products.0.mainImage.url }}">
+<meta property="og:image:alt" content="{{ products.0.title }}">
+{% endif %}
+
+<!-- ==================== Twitter Card ==================== -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="نتایج جستجو برای «{{ query }}»">
+<meta name="twitter:description" content="{{ total_results|intcomma }} مورد یافت شد">
+{% if products.0.mainImage %}
+<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ products.0.mainImage.url }}">
+{% endif %}
+
+<!-- ==================== Schema.org: SearchResultsPage ==================== -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "SearchResultsPage",
+    "name": "نتایج جستجو برای {{ query|escapejs }}",
+    "description": "{{ total_results|intcomma }} مورد یافت شد برای {{ query|escapejs }}",
+    "url": "{{ request.build_absolute_uri }}",
+    "inLanguage": "fa-IR",
+    "isPartOf": {
+        "@type": "WebSite",
+        "name": "سایا مِد",
+        "url": "{{ request.scheme }}://{{ request.get_host }}"
+    }
+}
+</script>
+
+<!-- ==================== Schema.org: BreadcrumbList ==================== -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "صفحه اصلی",
+            "item": "{{ request.scheme }}://{{ request.get_host }}/"
+        },
+        {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "نتایج جستجو برای {{ query|escapejs }}",
+            "item": "{{ request.build_absolute_uri }}"
+        }
+    ]
+}
+</script>
+
+<!-- ==================== Schema.org: ItemList محصولات ==================== -->
+{% if products %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "نتایج جستجو برای {{ query|escapejs }}",
+    "numberOfItems": {{ product_count|default:0 }},
+    "itemListOrder": "https://schema.org/ItemListOrderDescending",
+    "itemListElement": [
+        {% for product in products %}
+        {
+            "@type": "ListItem",
+            "position": {{ forloop.counter }},
+            "item": {
+                "@type": "Product",
+                "name": "{{ product.title|escapejs }}",
+                "url": "{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}"
+                {% if product.mainImage %},
+                "image": "{{ request.scheme }}://{{ request.get_host }}{{ product.mainImage.url }}"
+                {% endif %}
+                {% if product.shortDescription %},
+                "description": "{{ product.shortDescription|striptags|truncatechars:200|escapejs }}"
+                {% endif %}
+                {% if product.brand %},
+                "brand": {
+                    "@type": "Brand",
+                    "name": "{{ product.brand.title|escapejs }}"
+                }
+                {% endif %}
+                {% if product.average_rating %},
+                "aggregateRating": {
+                    "@type": "AggregateRating",
+                    "ratingValue": "{{ product.average_rating|floatformat:1 }}",
+                    "reviewCount": "{{ product.total_ratings|default:0 }}",
+                    "bestRating": "5",
+                    "worstRating": "1"
+                }
+                {% endif %}
+                {% if product.price %},
+                "offers": {
+                    "@type": "Offer",
+                    "price": "{{ product.price }}",
+                    "priceCurrency": "IRR",
+                    "availability": "{% if product.stock > 0 %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
+                    "url": "{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}"
+                }
+                {% endif %}
+            }
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+}
+</script>
+{% endif %}
+
+<!-- ==================== Schema.org: ItemList دسته‌بندی‌ها ==================== -->
+{% if categories %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "دسته‌بندی‌های مرتبط با {{ query|escapejs }}",
+    "numberOfItems": {{ category_count|default:0 }},
+    "itemListElement": [
+        {% for category in categories %}
+        {
+            "@type": "ListItem",
+            "position": {{ forloop.counter }},
+            "item": {
+                "@type": "CollectionPage",
+                "name": "{{ category.title|escapejs }}",
+                "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'product:show_by_filter' category.slug %}"
+                {% if category.image %},
+                "image": "{{ request.scheme }}://{{ request.get_host }}{{ category.image.url }}"
+                {% endif %}
+            }
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+}
+</script>
+{% endif %}
+
+<!-- ==================== Schema.org: ItemList برندها ==================== -->
+{% if brands %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "برندهای مرتبط با {{ query|escapejs }}",
+    "numberOfItems": {{ brand_count|default:0 }},
+    "itemListElement": [
+        {% for brand in brands %}
+        {
+            "@type": "ListItem",
+            "position": {{ forloop.counter }},
+            "item": {
+                "@type": "Brand",
+                "name": "{{ brand.title|escapejs }}"
+                {% if brand.logo %},
+                "logo": "{{ request.scheme }}://{{ request.get_host }}{{ brand.logo.url }}"
+                {% endif %}
+            }
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+}
+</script>
+{% endif %}
+
+<!-- ==================== Schema.org: WebSite + SearchAction ==================== -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "سایا مِد",
+    "alternateName": "سایا مِد؛ مرجع خرید تجهیزات پزشکی و سلامت",
+    "url": "{{ request.scheme }}://{{ request.get_host }}",
+    "inLanguage": "fa-IR",
+    "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "{{ request.scheme }}://{{ request.get_host }}{% url 'search:search_results' %}?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+    }
+}
+</script>
+
+<!-- ==================== Schema.org: Organization ==================== -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "سایا مِد",
+    "url": "{{ request.scheme }}://{{ request.get_host }}",
+    "description": "مرجع خرید تجهیزات پزشکی و سلامت",
+    "inLanguage": "fa-IR"
+}
+</script>
+{% endblock %}
 
 {% block content %}
 
