@@ -6,19 +6,19 @@ from django.db.models import Avg, Count, Q
 from django.utils import timezone
 from ckeditor_uploader.fields import RichTextUploadingField
 
+
 # ========================
 # مدل پایه (Base Model)
 # ========================
 class BaseModel(models.Model):
     title = models.CharField(max_length=200, verbose_name="عنوان")
-    slug = models.SlugField(max_length=200,verbose_name="اسلاگ")
+    slug = models.SlugField(max_length=200, verbose_name="اسلاگ")
     createdAt = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
     updatedAt = models.DateTimeField(auto_now=True, verbose_name="تاریخ بروزرسانی")
     isActive = models.BooleanField(default=True, verbose_name="فعال")
 
     class Meta:
         abstract = True
-
 
     def __str__(self):
         return self.title
@@ -29,10 +29,19 @@ class BaseModel(models.Model):
 # ========================
 class Category(BaseModel):
     image = models.ImageField(upload_to='category/', verbose_name="تصویر", null=True, blank=True)
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, verbose_name="دسته‌بندی والد",
-                              null=True, blank=True, related_name='children')
+    parent = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        verbose_name="دسته‌بندی والد",
+        null=True,
+        blank=True,
+        related_name='children',
+    )
     description = RichTextUploadingField(
-        verbose_name="توضیحات محصول", config_name="special", blank=True, null=True
+        verbose_name="توضیحات محصول",
+        config_name="special",
+        blank=True,
+        null=True,
     )
 
     class Meta:
@@ -47,8 +56,11 @@ class Category(BaseModel):
 # ویژگی (Feature)
 # ========================
 class Feature(BaseModel):
-    categories = models.ManyToManyField(Category, verbose_name="دسته‌بندی‌ها",
-                                       related_name='features')
+    categories = models.ManyToManyField(
+        Category,
+        verbose_name="دسته‌بندی‌ها",
+        related_name='features',
+    )
 
     class Meta:
         verbose_name = "ویژگی"
@@ -70,32 +82,58 @@ class Brand(BaseModel):
 # ========================
 # محصول (Product)
 # ========================
-
 class TypeProductTitle(models.Model):
-
-    title = models.CharField(max_length=100,verbose_name='عنوان',blank=True,null=True)
-
+    title = models.CharField(
+        max_length=100,
+        verbose_name='عنوان',
+        blank=True,
+        null=True,
+    )
 
     def __str__(self):
         return f'{self.title}'
 
 
-
 class Product(BaseModel):
-    brand = models.ForeignKey(Brand, on_delete=models.SET_NULL, verbose_name="برند",
-                             null=True, blank=True, related_name='products')
-    category = models.ManyToManyField(Category, verbose_name="دسته‌بندی‌ها",
-                                     related_name='products')
+    brand = models.ForeignKey(
+        Brand,
+        on_delete=models.SET_NULL,
+        verbose_name="برند",
+        null=True,
+        blank=True,
+        related_name='products',
+    )
+    category = models.ManyToManyField(
+        Category,
+        verbose_name="دسته‌بندی‌ها",
+        related_name='products',
+    )
     mainImage = models.ImageField(upload_to='products/main/', verbose_name="تصویر اصلی")
     description = RichTextUploadingField(
-        verbose_name="توضیحات محصول", config_name="special", blank=True, null=True
+        verbose_name="توضیحات محصول",
+        config_name="special",
+        blank=True,
+        null=True,
     )
 
-
-    vidiolink = models.CharField(max_length=200, verbose_name="ادرس اپارات ویدیو",blank=True,null=True)
-    typetitle = models.ForeignKey(TypeProductTitle,on_delete=models.CASCADE,verbose_name='نوع بسته بندی محصول',blank=True,null=True)
+    vidiolink = models.CharField(
+        max_length=200,
+        verbose_name="ادرس اپارات ویدیو",
+        blank=True,
+        null=True,
+    )
+    typetitle = models.ForeignKey(
+        TypeProductTitle,
+        on_delete=models.CASCADE,
+        verbose_name='نوع بسته بندی محصول',
+        blank=True,
+        null=True,
+    )
     stock = models.PositiveIntegerField(verbose_name="موجودی", default=0)
-    shortDescription = models.TextField(verbose_name="توضیح کوتاه", max_length=500)
+    shortDescription = models.TextField(
+        verbose_name="توضیح کوتاه",
+        max_length=500,
+    )
 
     class Meta:
         verbose_name = "محصول"
@@ -104,7 +142,6 @@ class Product(BaseModel):
 
     def get_absolute_url(self):
         return reverse("product:product_detail", kwargs={"slug": self.slug})
-
 
     @property
     def average_rating(self):
@@ -131,7 +168,7 @@ class Product(BaseModel):
 
         return {
             'recommend': round((recommend / total) * 100, 1),
-            'not_recommend': round((not_recommend / total) * 100, 1)
+            'not_recommend': round((not_recommend / total) * 100, 1),
         }
 
     @property
@@ -156,23 +193,30 @@ class Product(BaseModel):
             'total_comments': self.total_comments,
             'recommendation': self.recommendation_stats,
             'rating_distribution': self.rating_distribution,
-            'total_ratings': self.total_ratings
+            'total_ratings': self.total_ratings,
         }
-
 
 
 # ========================
 # گالری محصول (ProductGallery)
 # ========================
 class ProductGallery(models.Model):
-
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="محصول",
-                               related_name='galleries')
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        verbose_name="محصول",
+        related_name='galleries',
+    )
     createdAt = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
     updatedAt = models.DateTimeField(auto_now=True, verbose_name="تاریخ بروزرسانی")
     isActive = models.BooleanField(default=True, verbose_name="فعال")
     image = models.ImageField(upload_to='products/gallery/', verbose_name="تصویر")
-    altText = models.CharField(max_length=200, verbose_name="متن جایگزین", null=True, blank=True)
+    altText = models.CharField(
+        max_length=200,
+        verbose_name="متن جایگزین",
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         verbose_name = "گالری محصول"
@@ -180,17 +224,18 @@ class ProductGallery(models.Model):
         ordering = ['createdAt']
 
 
-
-
-
 # ========================
 # مقادیر ویژگی (FeatureValue)
 # ========================
-
-
 class FeatureValue(models.Model):
-    feature = models.ForeignKey(Feature, on_delete=models.CASCADE, verbose_name="ویژگی",
-                               null=True, blank=True, related_name="featureValues")
+    feature = models.ForeignKey(
+        Feature,
+        on_delete=models.CASCADE,
+        verbose_name="ویژگی",
+        null=True,
+        blank=True,
+        related_name="featureValues",
+    )
     value = models.CharField(max_length=100, verbose_name="مقدار")
 
     class Meta:
@@ -205,12 +250,25 @@ class FeatureValue(models.Model):
 # ویژگی محصول (ProductFeature)
 # ========================
 class ProductFeature(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="محصول",
-                               related_name="featuresValue")
-    feature = models.ForeignKey(Feature, on_delete=models.CASCADE, verbose_name="ویژگی")
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        verbose_name="محصول",
+        related_name="featuresValue",
+    )
+    feature = models.ForeignKey(
+        Feature,
+        on_delete=models.CASCADE,
+        verbose_name="ویژگی",
+    )
     value = models.CharField(max_length=40, verbose_name="مقدار")
-    filterValue = models.ForeignKey(FeatureValue, null=True, blank=True,
-                                   on_delete=models.CASCADE, verbose_name="مقدار برای فیلترینگ")
+    filterValue = models.ForeignKey(
+        FeatureValue,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        verbose_name="مقدار برای فیلترینگ",
+    )
 
     class Meta:
         verbose_name = "ویژگی محصول"
@@ -224,8 +282,8 @@ class ProductFeature(models.Model):
 # انواع روش فروش
 # ========================
 class SaleType:
-    SINGLE = 1  # تک فروشی
-    CARTON = 2  # کارتن فروشی
+    SINGLE = 1   # تک فروشی
+    CARTON = 2   # کارتن فروشی
     LIMITED = 3  # تک فروشی با محدودیت خرید
 
     CHOICES = (
@@ -239,18 +297,47 @@ class SaleType:
 # نوع فروش محصول (ProductSaleType)
 # ========================
 class ProductSaleType(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="محصول",
-                               related_name="saleTypes")
-    typeSale = models.IntegerField(choices=SaleType.CHOICES, verbose_name="نوع فروش",
-                                  default=SaleType.SINGLE)
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        verbose_name="محصول",
+        related_name="saleTypes",
+    )
+    typeSale = models.IntegerField(
+        choices=SaleType.CHOICES,
+        verbose_name="نوع فروش",
+        default=SaleType.SINGLE,
+    )
     price = models.PositiveIntegerField(verbose_name="قیمت")
-    memberCarton = models.PositiveIntegerField(verbose_name="تعداد در کارتن", null=True, blank=True)
-    limitedSale = models.PositiveIntegerField(verbose_name="محدودیت خرید", null=True, blank=True)
-    finalPrice = models.PositiveIntegerField(verbose_name="قیمت نهایی",
-                                    null=True, blank=True)
-    title = models.CharField(max_length=200, verbose_name="عنوان",blank=True,null=True)
-    createdAt = models.DateTimeField(default=timezone.now, verbose_name="تاریخ ایجاد")
-    updatedAt = models.DateTimeField(default=timezone.now, verbose_name="تاریخ بروزرسانی")
+    memberCarton = models.PositiveIntegerField(
+        verbose_name="تعداد در کارتن",
+        null=True,
+        blank=True,
+    )
+    limitedSale = models.PositiveIntegerField(
+        verbose_name="محدودیت خرید",
+        null=True,
+        blank=True,
+    )
+    finalPrice = models.PositiveIntegerField(
+        verbose_name="قیمت نهایی",
+        null=True,
+        blank=True,
+    )
+    title = models.CharField(
+        max_length=200,
+        verbose_name="عنوان",
+        blank=True,
+        null=True,
+    )
+    createdAt = models.DateTimeField(
+        default=timezone.now,
+        verbose_name="تاریخ ایجاد",
+    )
+    updatedAt = models.DateTimeField(
+        default=timezone.now,
+        verbose_name="تاریخ بروزرسانی",
+    )
     isActive = models.BooleanField(default=True, verbose_name="فعال")
 
     class Meta:
@@ -263,9 +350,10 @@ class ProductSaleType(models.Model):
         1. finalPrice همیشه برابر price است (قیمت پایه فروش)
         2. برای فروش کارتن، price قیمت هر کارتن است
         3. برای فروش تک، price قیمت هر عدد است
+        4. updatedAt به صورت خودکار ست می‌شود
         """
         self.finalPrice = self.price
-
+        self.updatedAt = timezone.now()
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -273,14 +361,29 @@ class ProductSaleType(models.Model):
         return f"{self.product} - {type_name}"
 
 
-
-
+# ========================
+# امتیاز (Rating)
+# ========================
 class Rating(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name="کاربر")
-    product = models.ForeignKey('Product', on_delete=models.CASCADE, verbose_name="محصول")
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        verbose_name="کاربر",
+    )
+    product = models.ForeignKey(
+        'Product',
+        on_delete=models.CASCADE,
+        verbose_name="محصول",
+    )
     rating = models.PositiveSmallIntegerField(
         verbose_name="امتیاز",
-        choices=[(1, '۱ ستاره'), (2, '۲ ستاره'), (3, '۳ ستاره'), (4, '۴ ستاره'), (5, '۵ ستاره')]
+        choices=[
+            (1, '۱ ستاره'),
+            (2, '۲ ستاره'),
+            (3, '۳ ستاره'),
+            (4, '۴ ستاره'),
+            (5, '۵ ستاره'),
+        ],
     )
     createdAt = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
 
@@ -302,15 +405,23 @@ class Comment(models.Model):
         ('not_recommend', 'پیشنهاد نمی‌کنم'),
     ]
 
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name="کاربر")
-    product = models.ForeignKey('Product', on_delete=models.CASCADE, verbose_name="محصول")
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        verbose_name="کاربر",
+    )
+    product = models.ForeignKey(
+        'Product',
+        on_delete=models.CASCADE,
+        verbose_name="محصول",
+    )
     text = models.TextField(verbose_name="متن کامنت")
     isActive = models.BooleanField(default=True, verbose_name="فعال")
     createdAt = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
     typeComment = models.CharField(
         max_length=20,
         choices=COMMENT_TYPES,
-        verbose_name="نوع کامنت"
+        verbose_name="نوع کامنت",
     )
 
     class Meta:

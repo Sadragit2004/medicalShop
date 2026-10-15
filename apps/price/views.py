@@ -1,5 +1,5 @@
 import json
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.core.cache import cache
 from django.db import models, transaction
@@ -39,6 +39,55 @@ from .cache import (
     DASHBOARD_CACHE_TIMEOUT,
     CATEGORIES_CACHE_TIMEOUT,
 )
+
+
+# =========================================================
+# حداکثر درصد قابل ذخیره — باید با max_digits مدل هم‌راستا باشد
+# مدل: max_digits=12, decimal_places=2 → 9999999999.99
+# =========================================================
+MAX_PERCENT_CHANGE = Decimal("9999999999.99")
+
+
+def calculate_safe_percent_change(price_old, price_new):
+    """
+    محاسبه امن درصد تغییر قیمت بدون خطای overflow.
+
+    در شرایط تورمی، ممکن است قیمت از یک عدد خیلی کوچک (مثل 1)
+    به یک عدد بزرگ (مثل 100000) تغییر کند که درصد آن از محدودیت
+    فیلد دیتابیس فراتر می‌رود. این تابع مقدار را کلمپ می‌کند.
+
+    Returns:
+        tuple: (percent_change: Decimal, change_type: str)
+    """
+    try:
+        price_old = int(price_old or 0)
+        price_new = int(price_new or 0)
+    except (TypeError, ValueError):
+        return Decimal("0.00"), "same"
+
+    diff = price_new - price_old
+
+    if diff == 0:
+        return Decimal("0.00"), "same"
+
+    if price_old <= 0:
+        # تقسیم بر صفر/منفی → درصد قابل اتکا نیست
+        return Decimal("0.00"), ("increase" if diff > 0 else "decrease")
+
+    try:
+        percent = (
+            Decimal(diff) / Decimal(price_old) * Decimal("100")
+        ).quantize(Decimal("0.01"))
+    except (InvalidOperation, ZeroDivisionError):
+        return Decimal("0.00"), ("increase" if diff > 0 else "decrease")
+
+    # کلمپ کردن
+    if percent > MAX_PERCENT_CHANGE:
+        percent = MAX_PERCENT_CHANGE
+    elif percent < -MAX_PERCENT_CHANGE:
+        percent = -MAX_PERCENT_CHANGE
+
+    return percent, ("increase" if diff > 0 else "decrease")
 
 
 def is_superuser(user):
@@ -735,23 +784,9 @@ def update_product_price(request):
                 },
             )
 
-        percent_change = (
-            round(
-                (
-                    (new_price_int - old_price)
-                    / old_price
-                )
-                * 100,
-                2,
-            )
-            if old_price > 0
-            else 0
-        )
-
-        change_type = (
-            "increase"
-            if new_price_int > old_price
-            else "decrease"
+        # ===== محاسبه امن درصد تغییر =====
+        percent_change, change_type = calculate_safe_percent_change(
+            old_price, new_price_int
         )
 
         sale_type.price = new_price_int
@@ -779,9 +814,7 @@ def update_product_price(request):
             sale_type_id=sale_type.id,
             price_old=old_price,
             price_new=new_price_int,
-            percent_change=Decimal(
-                str(percent_change)
-            ),
+            percent_change=percent_change,
             change_type=change_type,
             changed_by=user,
             changed_by_name=user_name,
@@ -2242,6 +2275,11 @@ def bulk_update_prices(request):
         if item.get("sale_type_id") is not None
     }
 
+    results = []
+    errors = []
+    sale_types_to_update = []
+    history_to_create = []
+
     with transaction.atomic():
 
         products = {
@@ -2293,12 +2331,6 @@ def bulk_update_prices(request):
                 default_sale_types[
                     sale.product_id
                 ] = sale
-
-        results = []
-        errors = []
-
-        sale_types_to_update = []
-        history_to_create = []
 
         for update in updates:
 
@@ -2394,26 +2426,9 @@ def bulk_update_prices(request):
                 )
                 continue
 
-            percent_change = (
-                round(
-                    (
-                        (
-                            new_price_int
-                            - old_price
-                        )
-                        / old_price
-                    )
-                    * 100,
-                    2,
-                )
-                if old_price > 0
-                else 0
-            )
-
-            change_type = (
-                "increase"
-                if new_price_int > old_price
-                else "decrease"
+            # ===== محاسبه امن درصد تغییر =====
+            percent_change, change_type = calculate_safe_percent_change(
+                old_price, new_price_int
             )
 
             sale_type.price = new_price_int
@@ -2430,9 +2445,7 @@ def bulk_update_prices(request):
                     sale_type_id=sale_type.id,
                     price_old=old_price,
                     price_new=new_price_int,
-                    percent_change=Decimal(
-                        str(percent_change)
-                    ),
+                    percent_change=percent_change,
                     change_type=change_type,
                     changed_by=user,
                     changed_by_name=user_name,
