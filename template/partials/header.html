@@ -170,6 +170,7 @@
         </div>
 
         <!-- NAVBAR -->
+        <div class="main-nav-wrap">
         <nav class="main-nav" aria-label="منوی اصلی">
             <ul class="main-nav__list">
                 <li class="menu-item">
@@ -207,6 +208,7 @@
                 <span>موقعیت</span>
             </button>
         </nav>
+        </div>
     </div>
 
     <!-- ==================== Mobile ==================== -->
@@ -356,6 +358,24 @@
                     </ul>
                 </div>
             </div>
+        </div>
+
+        <!-- Mobile Sticky Bar (بعد از اسکرول نرم میاد پایین) -->
+        <div class="mobile-sticky" id="mobile-sticky" aria-hidden="true">
+            <button type="button" class="mobile-sticky__btn" data-trigger=".open-menu-mobile" aria-label="منو" tabindex="-1">
+                <svg class="size-5"><use href="#bars" /></svg>
+            </button>
+
+            <button type="button" class="mobile-sticky__search" data-trigger=".open-mobile_search-modal" aria-label="جستجو" tabindex="-1">
+                <svg class="size-5"><use href="#search" /></svg>
+                <span>جستجو در سایا مِد...</span>
+            </button>
+
+            {% if request.user.is_authenticated %}
+            <a href="{% url 'dashboard:notifications' %}" class="mobile-sticky__btn" aria-label="پیام‌ها" tabindex="-1">
+                <svg class="size-5"><use href="#bell" /></svg>
+            </a>
+            {% endif %}
         </div>
 
         <!-- Bottom Navbar -->
@@ -712,6 +732,106 @@
         });
     }
 
+    // ==================== Sticky Nav ====================
+    function initStickyNav() {
+        const wrap = document.querySelector('.main-nav-wrap');
+        const nav = wrap ? wrap.querySelector('.main-nav') : null;
+        if (!wrap || !nav) return;
+
+        let stuck = false;
+        let ticking = false;
+
+        // تراز کردن محتوای منو با کانتینر سایت وقتی تمام‌عرض میشه
+        function alignPadding() {
+            const r = wrap.getBoundingClientRect();
+            nav.style.paddingLeft = (r.left + 12) + 'px';
+            nav.style.paddingRight = (window.innerWidth - r.right + 12) + 'px';
+        }
+
+        function update() {
+            ticking = false;
+            // وقتی منو کامل از بالای صفحه رد شد، میچسبه و نرم میاد پایین
+            const shouldStick = wrap.getBoundingClientRect().top < -wrap.offsetHeight;
+
+            if (shouldStick && !stuck) {
+                alignPadding();
+                nav.classList.add('is-stuck');
+                stuck = true;
+            } else if (!shouldStick && stuck) {
+                nav.classList.remove('is-stuck');
+                nav.style.paddingLeft = '';
+                nav.style.paddingRight = '';
+                stuck = false;
+            }
+        }
+
+        window.addEventListener('scroll', function () {
+            if (!ticking) {
+                ticking = true;
+                window.requestAnimationFrame(update);
+            }
+        }, { passive: true });
+
+        window.addEventListener('resize', function () {
+            if (stuck) alignPadding();
+        });
+
+        update();
+    }
+
+    // ==================== Mobile Sticky Bar ====================
+    function initMobileSticky() {
+        const bar = document.getElementById('mobile-sticky');
+        if (!bar) return;
+
+        const searchBtn = document.querySelector('.open-mobile_search-modal');
+        let visible = false;
+        let ticking = false;
+
+        function setVisible(state) {
+            visible = state;
+            bar.classList.toggle('is-visible', state);
+            bar.setAttribute('aria-hidden', state ? 'false' : 'true');
+            bar.querySelectorAll('button, a').forEach(function (el) {
+                el.tabIndex = state ? 0 : -1;
+            });
+        }
+
+        function update() {
+            ticking = false;
+            if (window.innerWidth >= 1024) {
+                if (visible) setVisible(false);
+                return;
+            }
+            // وقتی باکس جستجوی اصلی از صفحه رد شد، نوار چسبان میاد پایین
+            let passed;
+            if (searchBtn && searchBtn.offsetHeight > 0) {
+                passed = searchBtn.getBoundingClientRect().bottom < 0;
+            } else {
+                passed = window.scrollY > 200;
+            }
+            if (passed !== visible) setVisible(passed);
+        }
+
+        // دکمه‌های نوار چسبان، همون دکمه‌های اصلی موبایل رو تریگر می‌کنن
+        bar.querySelectorAll('[data-trigger]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const target = document.querySelector(btn.getAttribute('data-trigger'));
+                if (target) target.click();
+            });
+        });
+
+        window.addEventListener('scroll', function () {
+            if (!ticking) {
+                ticking = true;
+                window.requestAnimationFrame(update);
+            }
+        }, { passive: true });
+        window.addEventListener('resize', update);
+
+        update();
+    }
+
     // ==================== Init ====================
     document.addEventListener('DOMContentLoaded', function () {
         loadNotificationBadge();
@@ -726,6 +846,8 @@
         initDesktopModal();
         initMobileModal();
         initScrollToFooter();
+        initStickyNav();
+        initMobileSticky();
     });
 })();
 </script>
@@ -1015,6 +1137,141 @@
 .dark .main-nav .solid-menu a:hover {
     background: rgba(124, 180, 255, 0.08);
     color: #7cb4ff;
+}
+
+/* ---------- Sticky state (نرم و آروم) ---------- */
+.main-nav-wrap {
+    height: 56px; /* جای منو رو نگه می‌داره تا صفحه نپره */
+}
+
+.main-nav {
+    transition: background-color .35s ease, box-shadow .35s ease, border-color .35s ease;
+}
+
+.main-nav.is-stuck {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 900;
+    background: rgba(255, 255, 255, 0.82);
+    -webkit-backdrop-filter: blur(16px) saturate(170%);
+    backdrop-filter: blur(16px) saturate(170%);
+    border-bottom-color: rgba(229, 231, 235, 0.7);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    animation: mainNavSlideDown .6s cubic-bezier(.22, 1, .36, 1) both;
+}
+.dark .main-nav.is-stuck {
+    background: rgba(17, 24, 39, 0.82);
+    border-bottom-color: rgba(55, 65, 81, 0.7);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+@keyframes mainNavSlideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to   { transform: translateY(0);     opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .main-nav.is-stuck { animation: none; }
+}
+
+/* ---------- Mobile sticky bar ---------- */
+.mobile-sticky {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 45;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 10px;
+    background: rgba(255, 255, 255, 0.86);
+    -webkit-backdrop-filter: blur(16px) saturate(170%);
+    backdrop-filter: blur(16px) saturate(170%);
+    border-bottom: 1px solid rgba(229, 231, 235, 0.8);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    transform: translateY(-110%);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+        transform .55s cubic-bezier(.22, 1, .36, 1),
+        opacity .4s ease,
+        visibility 0s linear .55s;
+}
+.dark .mobile-sticky {
+    background: rgba(17, 24, 39, 0.86);
+    border-bottom-color: rgba(55, 65, 81, 0.8);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.mobile-sticky.is-visible {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition:
+        transform .55s cubic-bezier(.22, 1, .36, 1),
+        opacity .4s ease,
+        visibility 0s;
+}
+
+.mobile-sticky__btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 9999px;
+    border: 1px solid #e5e7eb;
+    background: transparent;
+    color: #4b5563;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color .25s ease, color .25s ease;
+}
+.dark .mobile-sticky__btn {
+    border-color: #374151;
+    color: #d1d5db;
+}
+.mobile-sticky__btn:active {
+    background: rgba(37, 99, 235, 0.08);
+    color: #2563eb;
+}
+
+.mobile-sticky__search {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 9999px;
+    background: #f3f4f6;
+    color: #6b7280;
+    font-size: 14px;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color .25s ease;
+}
+.mobile-sticky__search svg { flex-shrink: 0; color: #2563eb; }
+.mobile-sticky__search span { overflow: hidden; text-overflow: ellipsis; }
+.dark .mobile-sticky__search { background: #1f2937; color: #9ca3af; }
+.dark .mobile-sticky__search svg { color: #7cb4ff; }
+.mobile-sticky__search:active { background: #e5e7eb; }
+.dark .mobile-sticky__search:active { background: #374151; }
+
+@media (min-width: 1024px) {
+    .mobile-sticky { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .mobile-sticky,
+    .mobile-sticky.is-visible { transition: none; }
 }
 
 /* Bottom navbar */
