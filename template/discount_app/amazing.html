@@ -76,18 +76,29 @@
                             {{ amazing_product.product.title }}
                         </a>
                         <!-- Rate and Price -->
-                        <div class="product-card_price-wrapper">
-                            <!-- Price -->
-                            <div class="small-card_price justify-between">
-                                <span class="pt-1">{{ amazing_product.discount }}%</span>
-                                {% load humanize %}
-                                <h4 class="flex items-center gap-x-1 text-lg">
-                                    <del class="text-sm text-gray-400">{{ amazing_product.original_price|intcomma }}</del>
+
+                    <div class="product-card_price-wrapper">
+                        <div class="small-card_price justify-between">
+                            <span class="pt-1">
+                                {{ amazing_product.discount }}%
+                            </span>
+
+                            <span class="flex items-center gap-x-1 text-lg font-normal">
+                                <del class="text-sm text-gray-400">
+                                    {{ amazing_product.original_price|intcomma }}
+                                </del>
+
+                                <span>
                                     {{ amazing_product.discounted_price|intcomma }}
-                                    <p class="text-xs font-DanaMedium">تومان</p>
-                                </h4>
-                            </div>
+                                </span>
+
+                                <span class="text-xs font-DanaMedium">
+                                    تومان
+                                </span>
+                            </span>
                         </div>
+                    </div>
+
                     </div>
                 </div>
                 {% empty %}
