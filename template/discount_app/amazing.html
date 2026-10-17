@@ -1,12 +1,13 @@
 
 <!-- AMAZING SLIDER -->
  {% load humanize %}
+
+<!-- AMAZING SLIDER -->
 <section class="mx-4 lg:container mt-20">
     <div
         style="background-color:#22adbd;"
         class="w-full h-80 rounded-xl bg-blue-500 dark:bg-blue-700 p-4 relative"
     >
-        <!-- AmazingSlider products Slider -->
         <div class="swiper AmazingSlider w-full rounded-xl">
             <div class="swiper-wrapper">
 
@@ -64,6 +65,8 @@
                     </a>
                 </div>
 
+                {% load humanize %}
+
                 {% for amazing_product in amazing_products %}
 
                 <div class="swiper-slide small-card group">
@@ -112,10 +115,10 @@
                                     {{ amazing_product.discount }}%
                                 </span>
 
-                                <!-- Initial HTML uses span; JavaScript converts it to h4 -->
-                                <span
+                                <!-- HTML starts with h4 -->
+                                <h4
                                     class="amazing-product-price flex items-center gap-x-1 text-lg"
-                                    data-price-tag="h4"
+                                    data-price-tag="span"
                                 >
                                     <del class="text-sm text-gray-400">
                                         {{ amazing_product.original_price|intcomma }}
@@ -128,7 +131,7 @@
                                     <span class="text-xs font-DanaMedium">
                                         تومان
                                     </span>
-                                </span>
+                                </h4>
 
                             </div>
                         </div>
@@ -185,34 +188,33 @@
     </div>
 </section>
 
-<!-- Convert price span to h4 while preserving all classes and children -->
 <script>
 (function () {
     "use strict";
 
     function convertAmazingPriceTags() {
-        var prices = document.querySelectorAll(
-            ".AmazingSlider .amazing-product-price[data-price-tag='h4']"
+        var priceElements = document.querySelectorAll(
+            ".AmazingSlider .amazing-product-price[data-price-tag='span']"
         );
 
-        prices.forEach(function (element) {
-            if (element.tagName.toLowerCase() === "h4") {
+        priceElements.forEach(function (element) {
+            if (element.tagName.toLowerCase() === "span") {
                 return;
             }
 
-            var heading = document.createElement("h4");
+            var span = document.createElement("span");
 
             Array.from(element.attributes).forEach(function (attribute) {
                 if (attribute.name !== "data-price-tag") {
-                    heading.setAttribute(attribute.name, attribute.value);
+                    span.setAttribute(attribute.name, attribute.value);
                 }
             });
 
             while (element.firstChild) {
-                heading.appendChild(element.firstChild);
+                span.appendChild(element.firstChild);
             }
 
-            element.replaceWith(heading);
+            element.replaceWith(span);
         });
     }
 
