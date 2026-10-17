@@ -1,30 +1,32 @@
 
 <!-- AMAZING SLIDER -->
- {% load humanize %}
 
-<!-- AMAZING SLIDER -->
+{% load humanize %}
+
 <section class="mx-4 lg:container mt-20">
-    <div
-        style="background-color:#22adbd;"
-        class="w-full h-80 rounded-xl bg-blue-500 dark:bg-blue-700 p-4 relative"
-    >
+    <div style="background-color:#22adbd;" class="w-full h-80 rounded-xl bg-blue-500 dark:bg-blue-700 p-4 relative">
+
+        <!-- AmazingSlider products Slider -->
         <div class="swiper AmazingSlider w-full rounded-xl">
             <div class="swiper-wrapper">
 
                 <!-- Amazing Timer Card -->
                 <div class="swiper-slide amazing-card">
+
                     <img
                         class="w-28 h-28"
                         src="{{media_url}}/products/main/Amazings.svg"
-                        alt="شگفت‌انگیز"
+                        alt="شگفت انگیز"
                     >
 
+                    <!-- TIMER -->
                     <div
                         class="timer-container mt-3"
                         data-end-time="{{ amazing_products.0.remaining_time.timestamp|default:0 }}"
                     >
                         <div class="flex flex-wrap items-center justify-center gap-x-1 gap-y-1">
 
+                            <!-- Days -->
                             <div class="bg-white/20 backdrop-blur-sm rounded-xl px-2 py-1 text-center min-w-[50px] shadow-sm">
                                 <span class="days-number text-white font-bold text-base sm:text-lg">00</span>
                                 <p class="text-white/70 text-[9px] sm:text-[10px] leading-tight">روز</p>
@@ -32,6 +34,7 @@
 
                             <span class="text-white font-bold text-sm sm:text-base">:</span>
 
+                            <!-- Hours -->
                             <div class="bg-white/20 backdrop-blur-sm rounded-xl px-2 py-1 text-center min-w-[50px] shadow-sm">
                                 <span class="hours-number text-white font-bold text-base sm:text-lg">00</span>
                                 <p class="text-white/70 text-[9px] sm:text-[10px] leading-tight">ساعت</p>
@@ -39,6 +42,7 @@
 
                             <span class="text-white font-bold text-sm sm:text-base">:</span>
 
+                            <!-- Minutes -->
                             <div class="bg-white/20 backdrop-blur-sm rounded-xl px-2 py-1 text-center min-w-[50px] shadow-sm">
                                 <span class="minutes-number text-white font-bold text-base sm:text-lg">00</span>
                                 <p class="text-white/70 text-[9px] sm:text-[10px] leading-tight">دقیقه</p>
@@ -46,6 +50,7 @@
 
                             <span class="text-white font-bold text-sm sm:text-base">:</span>
 
+                            <!-- Seconds -->
                             <div class="bg-white/20 backdrop-blur-sm rounded-xl px-2 py-1 text-center min-w-[50px] shadow-sm">
                                 <span class="seconds-number text-white font-bold text-base sm:text-lg">00</span>
                                 <p class="text-white/70 text-[9px] sm:text-[10px] leading-tight">ثانیه</p>
@@ -54,15 +59,14 @@
                         </div>
                     </div>
 
-                    <a
-                        href="{% url 'discount:allamazing' %}"
-                        class="flex items-center gap-x-.5 text-gray-100 cursor-pointer mt-2"
-                    >
-                        <span style="color:#22adbd;">مشاهده همه</span>
+                    <!-- View All -->
+                    <a href="{% url 'discount:allamazing' %}" class="flex items-center gap-x-.5 text-gray-100 cursor-pointer mt-2">
+                        <p style="color:#22adbd;">مشاهده همه</p>
                         <svg style="color:#22adbd;" class="size-4 rotate-90">
                             <use href="#chevron"></use>
                         </svg>
                     </a>
+
                 </div>
 
                 {% load humanize %}
@@ -73,19 +77,21 @@
 
                     <!-- Product Header -->
                     <div class="w-full flex items-center justify-between">
+
                         <span class="flex items-center gap-x-0.5 text-blue-400">
                             <svg class="size-4 mb-1">
                                 <use href="#rocket"></use>
                             </svg>
-                            <span class="text-xs">ارسال امروز</span>
+                            <p class="text-xs">ارسال امروز</p>
                         </span>
 
                         <span class="text-gray-400 flex items-center justify-end text-sm gap-x-0.5">
-                            <span>{{ amazing_product.product.average_rating|default:0 }}</span>
+                            <p>{{ amazing_product.product.average_rating|default:0 }}</p>
                             <svg class="size-4 mb-1">
                                 <use href="#star"></use>
                             </svg>
                         </span>
+
                     </div>
 
                     <!-- Product Image -->
@@ -94,12 +100,12 @@
                             class="small-card_img"
                             src="{{ amazing_product.product.mainImage.url }}"
                             alt="{{ amazing_product.product.title }}"
-                            loading="lazy"
                         >
                     </a>
 
                     <!-- Product Footer -->
                     <div class="space-y-2">
+
                         <a
                             href="{{ amazing_product.product.get_absolute_url }}"
                             class="small-card_link"
@@ -109,32 +115,22 @@
 
                         <!-- Rate and Price -->
                         <div class="product-card_price-wrapper">
+
+                            <!-- Price: span in HTML, converted to h4 by JavaScript -->
                             <div class="small-card_price justify-between">
 
-                                <span class="pt-1">
-                                    {{ amazing_product.discount }}%
+                                <span>{{ amazing_product.discount }}%</span>
+
+                                <span class="flex items-center gap-x-1 text-lg amazing-price-heading">
+                                    <del class="text-sm text-gray-400">{{ amazing_product.original_price|intcomma }}</del>
+                                    {{ amazing_product.discounted_price|intcomma }}
+                                    <p class="text-xs font-DanaMedium">تومان</p>
                                 </span>
 
-                                <!-- HTML starts with h4 -->
-                                <h4
-                                    class="amazing-product-price flex items-center gap-x-1 text-lg"
-                                    data-price-tag="span"
-                                >
-                                    <del class="text-sm text-gray-400">
-                                        {{ amazing_product.original_price|intcomma }}
-                                    </del>
-
-                                    <span>
-                                        {{ amazing_product.discounted_price|intcomma }}
-                                    </span>
-
-                                    <span class="text-xs font-DanaMedium">
-                                        تومان
-                                    </span>
-                                </h4>
-
                             </div>
+
                         </div>
+
                     </div>
 
                 </div>
@@ -144,7 +140,7 @@
                 <div class="swiper-slide small-card group">
                     <div class="w-full h-full flex items-center justify-center">
                         <p class="text-white text-center">
-                            هیچ محصول شگفت‌انگیزی یافت نشد
+                            هیچ محصول شگفت انگیزی یافت نشد
                         </p>
                     </div>
                 </div>
@@ -152,10 +148,7 @@
                 {% endfor %}
 
                 <!-- View All Card -->
-                <a
-                    href="{% url 'discount:allamazing' %}"
-                    class="swiper-slide amazing-card_last"
-                >
+                <a href="{% url 'discount:allamazing' %}" class="swiper-slide amazing-card_last">
                     <svg class="size-10">
                         <use style="color:#22adbd;" href="#arrow-left-circle"></use>
                     </svg>
@@ -165,10 +158,11 @@
             </div>
         </div>
 
+        <!-- Navigation Buttons -->
         <button
             type="button"
-            aria-label="محصول قبلی"
             class="slider-navigate_btn absolute right-1 top-36 border dark:border-gray-700 border-gray-200 AmazingSlider-prev-slide z-10"
+            aria-label="محصول قبلی"
         >
             <svg class="size-6 -rotate-90">
                 <use href="#chevron"></use>
@@ -177,8 +171,8 @@
 
         <button
             type="button"
-            aria-label="محصول بعدی"
             class="slider-navigate_btn absolute left-1 top-36 border dark:border-gray-700 border-gray-200 AmazingSlider-next-slide z-10"
+            aria-label="محصول بعدی"
         >
             <svg class="size-6 rotate-90">
                 <use href="#chevron"></use>
@@ -190,70 +184,69 @@
 
 <script>
 (function () {
-    "use strict";
+    'use strict';
 
-    function convertAmazingPriceTags() {
-        var priceElements = document.querySelectorAll(
-            ".AmazingSlider .amazing-product-price[data-price-tag='span']"
-        );
+    function convertPriceSpansToH4() {
+        document.querySelectorAll(
+            '.AmazingSlider span.amazing-price-heading'
+        ).forEach(function (span) {
+            if (!span.isConnected) return;
 
-        priceElements.forEach(function (element) {
-            if (element.tagName.toLowerCase() === "span") {
-                return;
-            }
+            var h4 = document.createElement('h4');
 
-            var span = document.createElement("span");
-
-            Array.from(element.attributes).forEach(function (attribute) {
-                if (attribute.name !== "data-price-tag") {
-                    span.setAttribute(attribute.name, attribute.value);
-                }
+            Array.from(span.attributes).forEach(function (attribute) {
+                h4.setAttribute(attribute.name, attribute.value);
             });
 
-            while (element.firstChild) {
-                span.appendChild(element.firstChild);
+            while (span.firstChild) {
+                h4.appendChild(span.firstChild);
             }
 
-            element.replaceWith(span);
+            span.replaceWith(h4);
         });
     }
 
     function updateAmazingCardTimer() {
         var timerContainer = document.querySelector(
-            ".AmazingSlider .amazing-card .timer-container"
+            '.AmazingSlider .amazing-card .timer-container'
         );
 
-        if (!timerContainer) {
-            return;
-        }
+        if (!timerContainer) return;
 
-        var endTime = Number(
-            timerContainer.getAttribute("data-end-time")
+        if (timerContainer.dataset.timerInitialized === 'true') return;
+
+        timerContainer.dataset.timerInitialized = 'true';
+
+        var endTime = parseInt(
+            timerContainer.getAttribute('data-end-time'),
+            10
         );
 
-        if (!Number.isFinite(endTime) || endTime <= 0) {
-            return;
-        }
+        if (!endTime || isNaN(endTime)) return;
 
-        var timerDisplay = timerContainer.querySelector(".flex-wrap");
-
-        if (!timerDisplay) {
-            return;
-        }
-
-        var interval = null;
+        var timerInterval = null;
 
         function updateTimer() {
             var now = Math.floor(Date.now() / 1000);
             var remaining = endTime - now;
 
             if (remaining <= 0) {
-                timerDisplay.innerHTML =
-                    '<div class="text-white text-sm sm:text-base font-bold bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">پایان تخفیف</div>';
+                if (timerInterval !== null) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
 
-                if (interval !== null) {
-                    clearInterval(interval);
-                    interval = null;
+                var timerContent = timerContainer.querySelector('.flex-wrap');
+
+                if (timerContent) {
+                    var message = document.createElement('div');
+
+                    message.className =
+                        'text-white text-sm sm:text-base font-bold bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2';
+
+                    message.textContent = 'پایان تخفیف';
+
+                    timerContent.replaceChildren(message);
                 }
 
                 return;
@@ -264,43 +257,50 @@
             var minutes = Math.floor((remaining % 3600) / 60);
             var seconds = remaining % 60;
 
-            var daysSpan = timerContainer.querySelector(".days-number");
-            var hoursSpan = timerContainer.querySelector(".hours-number");
-            var minutesSpan = timerContainer.querySelector(".minutes-number");
-            var secondsSpan = timerContainer.querySelector(".seconds-number");
+            var daysSpan = timerContainer.querySelector('.days-number');
+            var hoursSpan = timerContainer.querySelector('.hours-number');
+            var minutesSpan = timerContainer.querySelector('.minutes-number');
+            var secondsSpan = timerContainer.querySelector('.seconds-number');
 
             if (daysSpan) {
-                daysSpan.textContent = String(days).padStart(2, "0");
+                daysSpan.textContent = String(days).padStart(2, '0');
             }
 
             if (hoursSpan) {
-                hoursSpan.textContent = String(hours).padStart(2, "0");
+                hoursSpan.textContent = String(hours).padStart(2, '0');
             }
 
             if (minutesSpan) {
-                minutesSpan.textContent = String(minutes).padStart(2, "0");
+                minutesSpan.textContent = String(minutes).padStart(2, '0');
             }
 
             if (secondsSpan) {
-                secondsSpan.textContent = String(seconds).padStart(2, "0");
+                secondsSpan.textContent = String(seconds).padStart(2, '0');
             }
         }
 
         updateTimer();
 
         if (endTime > Math.floor(Date.now() / 1000)) {
-            interval = setInterval(updateTimer, 1000);
+            timerInterval = setInterval(updateTimer, 1000);
         }
+
+        window.addEventListener('pagehide', function () {
+            if (timerInterval !== null) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }, { once: true });
     }
 
     function initializeAmazingSlider() {
-        convertAmazingPriceTags();
+        convertPriceSpansToH4();
         updateAmazingCardTimer();
     }
 
-    if (document.readyState === "loading") {
+    if (document.readyState === 'loading') {
         document.addEventListener(
-            "DOMContentLoaded",
+            'DOMContentLoaded',
             initializeAmazingSlider,
             { once: true }
         );
