@@ -81,11 +81,11 @@
                             <div class="small-card_price justify-between">
                                 <span class="pt-1">{{ amazing_product.discount }}%</span>
                                 {% load humanize %}
-                                <h4 class="flex items-center gap-x-1 text-lg">
+                                <span class="flex items-center gap-x-1 text-lg">
                                     <del class="text-sm text-gray-400">{{ amazing_product.original_price|intcomma }}</del>
                                     {{ amazing_product.discounted_price|intcomma }}
                                     <p class="text-xs font-DanaMedium">تومان</p>
-                                </h4>
+                                </span>
                             </div>
                         </div>
                     </div>
