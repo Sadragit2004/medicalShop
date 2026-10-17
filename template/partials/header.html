@@ -170,24 +170,29 @@
         </div>
 
         <!-- NAVBAR -->
-        <div class="relative flex-between h-16 bg-gray-900 dark:bg-gray-800 rounded-full text-gray-200 px-10">
-            <ul class="flex items-center gap-x-8">
+        <nav class="main-nav" aria-label="منوی اصلی">
+            <ul class="main-nav__list">
                 <li class="menu-item">
-                    <a href="{% url 'main:index' %}" class="menu-item_link">صفحه اصلی</a>
+                    <a href="{% url 'main:index' %}" class="main-nav__link">
+                        <svg class="main-nav__icon"><use href="#home" /></svg>
+                        <span>صفحه اصلی</span>
+                    </a>
                 </li>
 
                 {% render_partial 'product:get_category_tree' %}
 
                 <li class="menu-item">
-                    <a href="{% url 'blog:blog_list' %}" class="menu-item_link">وبلاگ</a>
+                    <a href="{% url 'blog:blog_list' %}" class="main-nav__link">
+                        <svg class="main-nav__icon"><use href="#document-text" /></svg>
+                        <span>وبلاگ</span>
+                    </a>
                 </li>
 
                 <li class="menu-item group">
-                    <a class="menu-item_link cursor-pointer">
-                        دسترسی سریع
-                        <svg class="size-4 group-hover:rotate-180 duration-300">
-                            <use href="#chevron" />
-                        </svg>
+                    <a class="main-nav__link cursor-pointer">
+                        <svg class="main-nav__icon"><use href="#bolt" /></svg>
+                        <span>دسترسی سریع</span>
+                        <svg class="main-nav__chevron group-hover:rotate-180"><use href="#chevron" /></svg>
                     </a>
                     <ul class="solid-menu">
                         <li><a href="{% url 'main:about' %}">درباره ما</a></li>
@@ -197,13 +202,11 @@
                 </li>
             </ul>
 
-            <button type="button" id="scroll-to-footer-btn" class="flex items-center gap-x-1 text-white hover:text-gray-200 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-white/10">
-                <svg class="size-6 text-white">
-                    <use href="#map" />
-                </svg>
-                <span class="text-sm text-white">موقعیت</span>
+            <button type="button" id="scroll-to-footer-btn" class="main-nav__location">
+                <svg class="main-nav__icon"><use href="#map" /></svg>
+                <span>موقعیت</span>
             </button>
-        </div>
+        </nav>
     </div>
 
     <!-- ==================== Mobile ==================== -->
@@ -438,6 +441,12 @@
 <svg style="display: none;">
     <symbol id="bell" viewBox="0 0 24 24">
         <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+    </symbol>
+    <symbol id="document-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19.5 14.25v-2.63a3.38 3.38 0 0 0-3.38-3.37h-1.5a1.13 1.13 0 0 1-1.12-1.13v-1.5a3.38 3.38 0 0 0-3.38-3.37H8.25m5.25 11.25H8.25m7.5 3H8.25m4.5-12H8.25M10.5 2.25H5.63c-.62 0-1.13.5-1.13 1.13v17.25c0 .62.5 1.12 1.13 1.12h12.75c.62 0 1.12-.5 1.12-1.13V11.25a9 9 0 0 0-9-9Z"/>
+    </symbol>
+    <symbol id="bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"/>
     </symbol>
 </svg>
 
@@ -858,6 +867,155 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 .search-suggestions-container { animation: fadeIn 0.3s ease; }
+
+/* ==================== Main Nav (Calm & Minimal) ==================== */
+.main-nav {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    padding: 0 12px;
+    background: transparent;
+    border-bottom: 1px solid #e5e7eb;
+    color: #4b5563;
+}
+.dark .main-nav {
+    border-bottom-color: #374151;
+    color: #d1d5db;
+}
+
+.main-nav__list {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.main-nav__link,
+.main-nav__location {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color .25s ease, background-color .25s ease;
+}
+
+.main-nav__icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    opacity: .75;
+    transition: opacity .25s ease, transform .25s ease;
+}
+
+.main-nav__chevron {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    opacity: .6;
+    transition: transform .3s ease;
+}
+
+/* Hover */
+.main-nav__link:hover,
+.main-nav__location:hover {
+    color: #2563eb;
+    background: rgba(37, 99, 235, 0.06);
+}
+.dark .main-nav__link:hover,
+.dark .main-nav__location:hover {
+    color: #7cb4ff;
+    background: rgba(124, 180, 255, 0.08);
+}
+.main-nav__link:hover .main-nav__icon,
+.main-nav__location:hover .main-nav__icon {
+    opacity: 1;
+    transform: translateY(-1px);
+}
+
+/* Underline ظریف زیر آیتم هاور شده */
+.main-nav__link::after {
+    content: "";
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    transform: translateX(-50%);
+    transition: width .3s ease;
+    opacity: .5;
+}
+.main-nav__link:hover::after { width: 18px; }
+
+/* آیتم های دسته بندی که از render_partial میان (اگه کلاس menu-item_link دارن) */
+.main-nav .menu-item_link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    color: inherit;
+    transition: color .25s ease, background-color .25s ease;
+}
+.main-nav .menu-item_link:hover {
+    color: #2563eb;
+    background: rgba(37, 99, 235, 0.06);
+}
+.dark .main-nav .menu-item_link:hover {
+    color: #7cb4ff;
+    background: rgba(124, 180, 255, 0.08);
+}
+.main-nav .menu-item_link svg {
+    width: 20px;
+    height: 20px;
+    opacity: .75;
+}
+
+/* Dropdown دسترسی سریع */
+.main-nav .solid-menu {
+    background: #fff;
+    border: 1px solid #eef0f3;
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+    padding: 6px;
+    min-width: 180px;
+}
+.dark .main-nav .solid-menu {
+    background: #1f2937;
+    border-color: #374151;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+.main-nav .solid-menu a {
+    display: block;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #4b5563;
+    transition: background-color .2s ease, color .2s ease;
+}
+.dark .main-nav .solid-menu a { color: #d1d5db; }
+.main-nav .solid-menu a:hover {
+    background: rgba(37, 99, 235, 0.06);
+    color: #2563eb;
+}
+.dark .main-nav .solid-menu a:hover {
+    background: rgba(124, 180, 255, 0.08);
+    color: #7cb4ff;
+}
 
 /* Bottom navbar */
 .bottom-navbar,
