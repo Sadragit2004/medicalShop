@@ -5,6 +5,7 @@
         <!-- AmazingSlider products Slider -->
         <div class="swiper AmazingSlider w-full rounded-xl">
             <div class="swiper-wrapper">
+
                 <!-- Amazing Timer Card -->
                 <div class="swiper-slide amazing-card">
                     <img class="w-28 h-28" src="{{media_url}}/products/main/Amazings.svg" alt="svg کلمه شگفت انگیز">
@@ -12,11 +13,13 @@
                     <!-- TIMER -->
                     <div class="timer-container mt-3" data-end-time="{{ amazing_products.0.remaining_time.timestamp|default:0 }}">
                         <div class="flex flex-wrap items-center justify-center gap-x-1 gap-y-1">
+
                             <!-- روز -->
                             <div class="bg-white/20 backdrop-blur-sm rounded-xl px-2 py-1 text-center min-w-[50px] shadow-sm">
                                 <span class="days-number text-white font-bold text-base sm:text-lg">00</span>
                                 <p class="text-white/70 text-[9px] sm:text-[10px] leading-tight">روز</p>
                             </div>
+
                             <span class="text-white font-bold text-sm sm:text-base">:</span>
 
                             <!-- ساعت -->
@@ -24,6 +27,7 @@
                                 <span class="hours-number text-white font-bold text-base sm:text-lg">00</span>
                                 <p class="text-white/70 text-[9px] sm:text-[10px] leading-tight">ساعت</p>
                             </div>
+
                             <span class="text-white font-bold text-sm sm:text-base">:</span>
 
                             <!-- دقیقه -->
@@ -31,6 +35,7 @@
                                 <span class="minutes-number text-white font-bold text-base sm:text-lg">00</span>
                                 <p class="text-white/70 text-[9px] sm:text-[10px] leading-tight">دقیقه</p>
                             </div>
+
                             <span class="text-white font-bold text-sm sm:text-base">:</span>
 
                             <!-- ثانیه -->
@@ -38,6 +43,7 @@
                                 <span class="seconds-number text-white font-bold text-base sm:text-lg">00</span>
                                 <p class="text-white/70 text-[9px] sm:text-[10px] leading-tight">ثانیه</p>
                             </div>
+
                         </div>
                     </div>
 
@@ -51,6 +57,7 @@
 
                 {% for amazing_product in amazing_products %}
                 <div class="swiper-slide small-card group">
+
                     <!-- product header -->
                     <div class="w-full flex items-center justify-between">
                         <span class="flex items-center gap-x-0.5 text-blue-400">
@@ -81,11 +88,13 @@
 
                         <!-- Rate and Price -->
                         <div class="product-card_price-wrapper">
-                            <!-- Price -->
                             <div class="small-card_price justify-between">
                                 <span class="pt-1">{{ amazing_product.discount }}%</span>
+
                                 {% load humanize %}
-                                <span class="flex items-center gap-x-1 text-lg">
+
+                                <!-- Price: h4 replaced with span -->
+                                <span class="small-card_price-value flex items-center gap-x-1 text-lg font-bold">
                                     <del class="text-sm text-gray-400">{{ amazing_product.original_price|intcomma }}</del>
                                     {{ amazing_product.discounted_price|intcomma }}
                                     <p class="text-xs font-DanaMedium">تومان</p>
@@ -109,29 +118,43 @@
                     </svg>
                     <span style="color:#22adbd;">مشاهده همه</span>
                 </a>
+
             </div>
         </div>
 
         <button class="slider-navigate_btn absolute right-1 top-36 border dark:border-gray-700 border-gray-200 AmazingSlider-prev-slide z-10">
             <svg class="size-6 -rotate-90">
-                <use href="#chevron" />
+                <use href="#chevron"></use>
             </svg>
         </button>
 
         <button class="slider-navigate_btn absolute left-1 top-36 border dark:border-gray-700 border-gray-200 AmazingSlider-next-slide z-10">
             <svg class="size-6 rotate-90">
-                <use href="#chevron" />
+                <use href="#chevron"></use>
             </svg>
         </button>
+
     </div>
 </section>
+
+<style>
+.small-card_price-value {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: inherit;
+}
+</style>
 
 <script>
 function updateAmazingCardTimer() {
     const timerContainer = document.querySelector('.amazing-card .timer-container');
     if (!timerContainer) return;
 
-    const endTime = parseInt(timerContainer.getAttribute('data-end-time'));
+    const endTime = parseInt(timerContainer.getAttribute('data-end-time'), 10);
     if (!endTime || isNaN(endTime)) return;
 
     function updateTimer() {
@@ -140,9 +163,12 @@ function updateAmazingCardTimer() {
 
         if (remaining <= 0) {
             const timerDiv = timerContainer.querySelector('.flex-wrap');
+
             if (timerDiv) {
                 timerDiv.innerHTML = '<div class="text-white text-sm sm:text-base font-bold bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">پایان تخفیف</div>';
             }
+
+            clearInterval(interval);
             return;
         }
 
