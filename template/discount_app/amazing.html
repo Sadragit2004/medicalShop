@@ -182,3 +182,48 @@ function updateAmazingCardTimer() {
 
 document.addEventListener('DOMContentLoaded', updateAmazingCardTimer);
 </script>
+
+
+<style>
+    .product-card_price-wrapper .small-card_price {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+}
+
+.product-card_price-wrapper .small-card_price > span:last-child {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 4px;
+    min-width: 0;
+    white-space: nowrap;
+    line-height: 1.8;
+    direction: rtl;
+}
+
+.product-card_price-wrapper .small-card_price del {
+    flex-shrink: 0;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.product-card_price-wrapper .small-card_price > span:first-child {
+    flex-shrink: 0;
+    line-height: 1.8;
+}
+
+.product-card_price-wrapper .small-card_price > span:last-child > span {
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.product-card_price-wrapper .small-card_price p {
+    margin: 0;
+    line-height: inherit;
+}
+</style>
