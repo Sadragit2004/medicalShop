@@ -12,11 +12,11 @@ class StaticSitemap(Sitemap):
 
     def items(self):
         return [
-            'main:index',    # صفحه اصلی
-            'main:about',    # درباره ما
-            'main:contact',  # تماس با ما
-            'main:faq',      # سوالات متداول
-            'main:law',      # قوانین
+            'main:index',
+            'main:about',
+            'main:contact',
+            'main:faq',
+            'main:law',
         ]
 
     def location(self, item):
@@ -33,7 +33,7 @@ class CategorySitemap(Sitemap):
         return Category.objects.filter(isActive=True)
 
     def lastmod(self, obj):
-        return obj.updatedAt
+        return obj.updatedAt if obj.updatedAt else None
 
     def location(self, obj):
         return reverse('product:show_by_filter', args=[obj.slug])
@@ -49,7 +49,7 @@ class ProductSitemap(Sitemap):
         return Product.objects.filter(isActive=True)
 
     def lastmod(self, obj):
-        return obj.updatedAt
+        return obj.updatedAt if obj.updatedAt else None
 
     def location(self, obj):
         return obj.get_absolute_url()
@@ -65,7 +65,7 @@ class BlogPostSitemap(Sitemap):
         return BlogPost.objects.filter(isActive=True, publishedAt__isnull=False)
 
     def lastmod(self, obj):
-        return obj.updatedAt
+        return obj.updatedAt if obj.updatedAt else None
 
     def location(self, obj):
         return reverse('blog:blog_detail', args=[obj.slug])
