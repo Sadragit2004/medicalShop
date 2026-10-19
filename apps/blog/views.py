@@ -64,8 +64,8 @@ def _blog_seo_context(request, blog):
     author = blog.author
 
     author_name = (
-        getattr(author, "full_name", "")
-        or author.name()
+
+        author.name
         or getattr(author, "name", "")
         or "تیم تحریریه"
     )
