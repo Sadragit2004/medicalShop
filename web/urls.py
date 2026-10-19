@@ -33,9 +33,12 @@ urlpatterns = [
     path('price/', include('apps.price.urls', namespace='price')),
 
     # Sitemap & Robots
-    path('sitemap.xml', index, {'sitemaps': sitemaps}, name='sitemap-index'),
-    path('sitemap-<section>.xml', sitemap, {'sitemaps': sitemaps},
-         name='django.contrib.sitemaps.views.sitemap'),
+    path('sitemap.xml', index,
+         {'sitemaps': sitemaps, 'sitemap_url_name': 'sitemap-section'},
+         name='sitemap-index'),
+    path('sitemap-<section>.xml', sitemap,
+         {'sitemaps': sitemaps},
+         name='sitemap-section'),
     path('robots.txt', TemplateView.as_view(
         template_name='robots.txt',
         content_type='text/plain'
