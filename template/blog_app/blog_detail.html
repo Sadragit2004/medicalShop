@@ -167,7 +167,7 @@
                     <article class="mb-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-700">
                         <header class="flex flex-wrap items-center gap-3 mb-2">
                             <strong class="text-gray-900 dark:text-white">
-                                {{ comment.author.get_full_name|default:comment.author.username }}
+                                {{ comment.author.name|default:comment.author.name }}
                             </strong>
                             <time datetime="{{ comment.createdAt|date:'c' }}" class="text-xs text-gray-500">
                                 {{ comment.createdAt|date:"Y/m/d H:i" }}
