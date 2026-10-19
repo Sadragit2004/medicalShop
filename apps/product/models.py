@@ -72,7 +72,12 @@ class Feature(BaseModel):
 # ========================
 class Brand(BaseModel):
     logo = models.ImageField(upload_to='brand/', verbose_name="لوگو", null=True, blank=True)
-    description = models.TextField(verbose_name="توضیحات", null=True, blank=True)
+    description = RichTextUploadingField(
+        verbose_name="توضیحات محصول",
+        config_name="special",
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         verbose_name = "برند"
