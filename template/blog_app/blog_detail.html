@@ -1,38 +1,302 @@
-{% extends "main_template.html" %}
 
+{% extends "main_template.html" %}
 {% load humanize %}
 
+{% block meta1 %}
+    <title>{{ seo_title }}</title>
+    <meta name="description" content="{{ seo_description }}">
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+    <meta name="author" content="{{ seo_author }}">
+    <meta name="language" content="fa-IR">
+
+
+    <meta property="og:type" content="article">
+    <meta property="og:locale" content="fa_IR">
+    <meta property="og:site_name" content="{{ request.get_host }}">
+    <meta property="og:title" content="{{ seo_title }}">
+    <meta property="og:description" content="{{ seo_description }}">
+    <meta property="og:url" content="{{ canonical_url }}">
+
+    {% if seo_image %}
+        <meta property="og:image" content="{{ seo_image }}">
+        <meta property="og:image:alt" content="{{ blog.title }}">
+    {% endif %}
+
+    <meta property="article:published_time" content="{{ seo_published_at|date:'c' }}">
+    <meta property="article:modified_time" content="{{ seo_modified_at|date:'c' }}">
+
+    {% if blog.category %}
+        <meta property="article:section" content="{{ blog.category.title }}">
+    {% endif %}
+
+    <meta name="twitter:card" content="{% if seo_image %}summary_large_image{% else %}summary{% endif %}">
+    <meta name="twitter:title" content="{{ seo_title }}">
+    <meta name="twitter:description" content="{{ seo_description }}">
+
+    {% if seo_image %}
+        <meta name="twitter:image" content="{{ seo_image }}">
+        <meta name="twitter:image:alt" content="{{ blog.title }}">
+    {% endif %}
+
+    <script type="application/ld+json">{{ json_ld|safe }}</script>
+{% endblock meta1 %}
+
 {% block content %}
+<main class="container mx-auto px-4" dir="rtl">
+
+    <nav class="mt-8 mb-6" aria-label="مسیر صفحه">
+        <ol class="flex flex-wrap items-center gap-2 text-sm text-gray-500">
+            <li><a href="/" class="hover:text-blue-600">صفحه اصلی</a></li>
+            <li aria-hidden="true">/</li>
+            <li><a href="{% url 'blog:blog_list' %}" class="hover:text-blue-600">مقالات</a></li>
+            {% if blog.category %}
+                <li aria-hidden="true">/</li>
+                <li>{{ blog.category.title }}</li>
+            {% endif %}
+            <li aria-hidden="true">/</li>
+            <li aria-current="page">{{ blog.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="flex flex-col lg:flex-row items-start gap-6">
+
+        <article class="w-full lg:w-3/4 min-w-0 rounded-xl bg-white dark:bg-gray-800 shadow p-4 lg:p-8">
+
+            <header class="mb-6">
+                {% if blog.category %}
+                    <a
+                        href="{% url 'blog:blog_list' %}?category={{ blog.category.slug|urlencode }}"
+                        class="inline-block mb-4 text-sm text-blue-600 dark:text-blue-400"
+                    >{{ blog.category.title }}</a>
+                {% endif %}
+
+                <h1 class="text-2xl lg:text-3xl font-bold leading-relaxed text-gray-900 dark:text-white">
+                    {{ blog.title }}
+                </h1>
+
+                <div class="flex flex-wrap items-center gap-x-5 gap-y-3 mt-5 text-sm text-gray-500 dark:text-gray-400">
+                    <span>نویسنده: {{ seo_author }}</span>
+                    <time datetime="{{ seo_published_at|date:'c' }}">
+                        انتشار: {{ seo_published_at|date:"Y/m/d" }}
+                    </time>
+                    <time datetime="{{ seo_modified_at|date:'c' }}">
+                        آخرین به‌روزرسانی: {{ seo_modified_at|date:"Y/m/d" }}
+                    </time>
+                    <span>{{ blog.view_count|intcomma }} بازدید</span>
+                </div>
+            </header>
+
+            {% if blog.mainImage %}
+                <figure class="mb-8">
+                    <img
+                        src="{{ blog.mainImage.url }}"
+                        alt="{{ blog.title }}"
+                        width="1200"
+                        height="675"
+                        fetchpriority="high"
+                        decoding="async"
+                        class="w-full h-auto rounded-xl object-cover"
+                    >
+                </figure>
+            {% endif %}
+
+            {% if blog.description %}
+                <section class="article-content mt-6 text-gray-700 dark:text-gray-300" aria-label="مقدمه مقاله">
+                    {{ blog.description|safe }}
+                </section>
+            {% endif %}
+
+            {% if blog.content %}
+                <section class="article-content mt-6 text-gray-700 dark:text-gray-300" aria-label="متن مقاله">
+                    {{ blog.content|safe }}
+                </section>
+            {% endif %}
+
+            {% if blog.category %}
+                <footer class="mt-8 pt-5 border-t border-gray-200 dark:border-gray-700">
+                    <span class="text-sm text-gray-500">دسته‌بندی: </span>
+                    <a
+                        href="{% url 'blog:blog_list' %}?category={{ blog.category.slug|urlencode }}"
+                        class="text-blue-600 hover:underline"
+                    >{{ blog.category.title }}</a>
+                </footer>
+            {% endif %}
+
+            {% if related_products %}
+                <section class="mt-10" aria-labelledby="related-products-title">
+                    <h2 id="related-products-title" class="text-xl font-bold mb-5 text-gray-900 dark:text-white">
+                        محصولات مرتبط
+                    </h2>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {% for product in related_products %}
+                            <a
+                                href="{{ product.get_absolute_url }}"
+                                class="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-700 hover:shadow transition"
+                            >
+                                {% if product.mainImage %}
+                                    <img
+                                        src="{{ product.mainImage.url }}"
+                                        alt="{{ product.title }}"
+                                        loading="lazy"
+                                        decoding="async"
+                                        width="96"
+                                        height="96"
+                                        class="w-20 h-20 object-cover rounded-lg"
+                                    >
+                                {% endif %}
+
+                                <div class="min-w-0">
+                                    <h3 class="font-medium text-gray-900 dark:text-white">{{ product.title }}</h3>
+                                    <p class="mt-2 text-blue-600 dark:text-blue-400">
+                                        {{ product.price|intcomma }} تومان
+                                    </p>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+
+            <section class="mt-10" aria-labelledby="comments-title">
+                <h2 id="comments-title" class="text-xl font-bold mb-5 text-gray-900 dark:text-white">
+                    دیدگاه کاربران ({{ comments|length }})
+                </h2>
+
+                {% for comment in comments %}
+                    <article class="mb-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-700">
+                        <header class="flex flex-wrap items-center gap-3 mb-2">
+                            <strong class="text-gray-900 dark:text-white">
+                                {{ comment.author.get_full_name|default:comment.author.username }}
+                            </strong>
+                            <time datetime="{{ comment.createdAt|date:'c' }}" class="text-xs text-gray-500">
+                                {{ comment.createdAt|date:"Y/m/d H:i" }}
+                            </time>
+                        </header>
+                        <p class="text-gray-700 dark:text-gray-300 whitespace-pre-line break-words">{{ comment.content }}</p>
+                    </article>
+                {% empty %}
+                    <p class="text-gray-500 dark:text-gray-400">هنوز دیدگاهی ثبت نشده است.</p>
+                {% endfor %}
+            </section>
+
+            <section class="mt-8" aria-labelledby="comment-form-title">
+                <h2 id="comment-form-title" class="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+                    ثبت دیدگاه
+                </h2>
+
+                {% if user.is_authenticated %}
+                    <form method="post" action="{% url 'blog:add_blog_comment' blog.slug %}">
+                        {% csrf_token %}
+                        <label for="comment-content" class="block mb-2 text-sm text-gray-700 dark:text-gray-300">
+                            متن دیدگاه
+                        </label>
+                        <textarea
+                            id="comment-content"
+                            name="content"
+                            rows="4"
+                            minlength="10"
+                            maxlength="5000"
+                            required
+                            class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
+                            placeholder="دیدگاه خود را بنویسید..."
+                        ></textarea>
+                        <button type="submit" class="mt-3 px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition">
+                            ارسال دیدگاه
+                        </button>
+                    </form>
+                {% else %}
+                    <p class="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 text-gray-700 dark:text-gray-300">
+                        برای ثبت دیدگاه ابتدا
+                        <a href="{% url 'user:send_mobile' %}" class="text-blue-600 underline">وارد حساب کاربری</a>
+                        شوید.
+                    </p>
+                {% endif %}
+            </section>
+
+        </article>
+
+        <aside class="w-full lg:w-1/4 space-y-6">
+
+            <section class="p-5 rounded-xl bg-white dark:bg-gray-800 shadow">
+                <h2 class="font-bold text-lg mb-4 text-gray-900 dark:text-white">مقالات مرتبط</h2>
+
+                <div class="space-y-4">
+                    {% for related_blog in related_blogs %}
+                        <article class="flex items-start gap-3">
+                            {% if related_blog.mainImage %}
+                                <a href="{% url 'blog:blog_detail' related_blog.slug %}">
+                                    <img
+                                        src="{{ related_blog.mainImage.url }}"
+                                        alt="{{ related_blog.title }}"
+                                        loading="lazy"
+                                        decoding="async"
+                                        width="96"
+                                        height="72"
+                                        class="w-24 h-18 object-cover rounded-lg"
+                                    >
+                                </a>
+                            {% endif %}
+
+                            <div class="min-w-0">
+                                <h3 class="text-sm font-medium leading-6">
+                                    <a
+                                        href="{% url 'blog:blog_detail' related_blog.slug %}"
+                                        class="text-gray-800 dark:text-gray-200 hover:text-blue-600"
+                                    >{{ related_blog.title }}</a>
+                                </h3>
+                                <time datetime="{{ related_blog.publishedAt|date:'c' }}" class="text-xs text-gray-500">
+                                    {{ related_blog.publishedAt|date:"Y/m/d" }}
+                                </time>
+                            </div>
+                        </article>
+                    {% empty %}
+                        <p class="text-sm text-gray-500">مقاله مرتبطی موجود نیست.</p>
+                    {% endfor %}
+                </div>
+
+                <a href="{% url 'blog:blog_list' %}" class="block mt-5 text-center py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+                    مشاهده همه مقالات
+                </a>
+            </section>
+
+            <section class="p-5 rounded-xl bg-white dark:bg-gray-800 shadow">
+                <h2 class="font-bold text-lg mb-4 text-gray-900 dark:text-white">دسته‌بندی مقالات</h2>
+                <ul class="space-y-3">
+                    {% for category in categories %}
+                        <li>
+                            <a
+                                href="{% url 'blog:blog_list' %}?category={{ category.slug|urlencode }}"
+                                class="flex items-center justify-between gap-3 text-gray-700 dark:text-gray-300 hover:text-blue-600"
+                            >
+                                <span>{{ category.title }}</span>
+                                <span class="text-xs text-gray-500">{{ category.published_post_count }}</span>
+                            </a>
+                        </li>
+                    {% empty %}
+                        <li class="text-sm text-gray-500">دسته‌بندی‌ای موجود نیست.</li>
+                    {% endfor %}
+                </ul>
+            </section>
+
+        </aside>
+
+    </div>
+</main>
 
 <style>
-    /* ===== استایل محتوای مقاله (خروجی CKEditor) =====
-       Tailwind Preflight مارجین، لیست، سایز هدینگ و ... را ریست می‌کند؛
-       اینجا دوباره برای محتوا برمی‌گردانیم. */
     .article-content {
         direction: rtl;
-        font-size: 1.125rem;            /* 18px موبایل */
+        font-size: 1.125rem;
         line-height: 2.1;
         text-align: justify;
-        text-justify: inter-word;
         overflow-wrap: break-word;
-        word-break: normal;
-        hyphens: auto;
-    }
-    @media (min-width: 1024px) {
-        .article-content { font-size: 1.25rem; } /* 20px دسکتاپ */
     }
 
-    /* پاراگراف‌ها: فاصله بین پاراگراف‌ها */
     .article-content p {
-        margin: 0 0 1.25rem 0;
-        text-align: justify;
-    }
-    /* پاراگراف خالی (اینتر اضافه در CKEditor) هم فاصله داشته باشد */
-    .article-content p:empty {
-        min-height: 1.5rem;
+        margin: 0 0 1.25rem;
     }
 
-    /* هدینگ‌ها */
     .article-content h1,
     .article-content h2,
     .article-content h3,
@@ -40,353 +304,88 @@
     .article-content h5,
     .article-content h6 {
         font-weight: 700;
-        line-height: 1.6;
-        margin: 2rem 0 1rem 0;
+        line-height: 1.7;
+        margin: 2rem 0 1rem;
         text-align: right;
         color: #111827;
     }
+
     .article-content h1 { font-size: 2rem; }
     .article-content h2 { font-size: 1.75rem; }
     .article-content h3 { font-size: 1.5rem; }
     .article-content h4 { font-size: 1.3rem; }
     .article-content h5 { font-size: 1.15rem; }
     .article-content h6 { font-size: 1rem; }
+
     .dark .article-content h1,
     .dark .article-content h2,
     .dark .article-content h3,
     .dark .article-content h4,
     .dark .article-content h5,
-    .dark .article-content h6 { color: #f3f4f6; }
+    .dark .article-content h6 {
+        color: #f3f4f6;
+    }
 
-    /* لیست‌ها */
     .article-content ul,
     .article-content ol {
-        margin: 0 0 1.25rem 0;
+        margin: 0 0 1.25rem;
         padding-inline-start: 1.75rem;
     }
+
     .article-content ul { list-style: disc outside; }
     .article-content ol { list-style: decimal outside; }
-    .article-content li {
-        margin-bottom: 0.5rem;
-        text-align: justify;
-    }
-    .article-content li > ul,
-    .article-content li > ol { margin-top: 0.5rem; margin-bottom: 0; }
+    .article-content li { margin-bottom: .5rem; }
 
-    /* متن‌های تاکیدی */
-    .article-content strong,
-    .article-content b { font-weight: 700; }
-    .article-content em,
-    .article-content i { font-style: italic; }
     .article-content a {
-        color: #3b82f6;
+        color: #2563eb;
         text-decoration: underline;
     }
-    .article-content a:hover { color: #2563eb; }
 
-    /* نقل قول */
-    .article-content blockquote {
-        margin: 1.5rem 0;
-        padding: 0.75rem 1.25rem;
-        border-inline-start: 4px solid #3b82f6;
-        background: rgba(59, 130, 246, 0.08);
-        border-radius: 0.5rem;
-    }
-    .article-content blockquote p:last-child { margin-bottom: 0; }
-
-    /* تصاویر و ویدیو */
-    .article-content img {
+    .article-content img,
+    .article-content video,
+    .article-content iframe {
         max-width: 100%;
         height: auto;
-        border-radius: 0.5rem;
-        margin: 1rem auto;
+        border-radius: .5rem;
+    }
+
+    .article-content img {
         display: block;
-    }
-    .article-content figure { margin: 1.5rem 0; text-align: center; }
-    .article-content figcaption {
-        font-size: 0.9rem;
-        color: #9ca3af;
-        margin-top: 0.5rem;
-    }
-    .article-content iframe,
-    .article-content video {
-        max-width: 100%;
-        border-radius: 0.5rem;
         margin: 1rem auto;
     }
 
-    /* جدول */
     .article-content table {
         width: 100%;
         border-collapse: collapse;
         margin: 1.5rem 0;
-        font-size: 0.95em;
         display: block;
         overflow-x: auto;
     }
+
     .article-content th,
     .article-content td {
         border: 1px solid #d1d5db;
-        padding: 0.6rem 0.9rem;
+        padding: .6rem .9rem;
         text-align: right;
     }
-    .article-content th { background: rgba(156, 163, 175, 0.15); font-weight: 700; }
-    .dark .article-content th,
-    .dark .article-content td { border-color: #4b5563; }
 
-    /* کد و خط جداکننده */
-    .article-content pre,
-    .article-content code {
-        direction: ltr;
-        text-align: left;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 0.9em;
+    .article-content th {
+        font-weight: 700;
+        background: rgba(156, 163, 175, .15);
     }
-    .article-content pre {
-        background: #1f2937;
-        color: #f9fafb;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        overflow-x: auto;
+
+    .article-content blockquote {
         margin: 1.5rem 0;
-    }
-    .article-content hr {
-        border: 0;
-        border-top: 1px solid #d1d5db;
-        margin: 2rem 0;
+        padding: .75rem 1.25rem;
+        border-inline-start: 4px solid #3b82f6;
+        background: rgba(59, 130, 246, .08);
+        border-radius: .5rem;
     }
 
-    /* اگر در CKEditor تراز دستی انتخاب شده، همان اعمال شود */
-    .article-content [style*="text-align:center"],
-    .article-content [style*="text-align: center"] { text-align: center !important; }
-    .article-content [style*="text-align:left"],
-    .article-content [style*="text-align: left"] { text-align: left !important; }
-    .article-content [style*="text-align:right"],
-    .article-content [style*="text-align: right"] { text-align: right !important; }
+    @media (min-width: 1024px) {
+        .article-content {
+            font-size: 1.25rem;
+        }
+    }
 </style>
-
-<main class="container">
-    <!-- Breadcrumb -->
-    <nav class="flex mt-8" aria-label="Breadcrumb">
-        <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
-            <li class="inline-flex items-center">
-                <a href="index.html"
-                    class="inline-flex items-center text-sm gap-x-1  text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-                    <svg class="size-4 mb-0.5">
-                        <use href="#home" />
-                    </svg>
-                    صفحه اصلی
-                </a>
-            </li>
-            <li class="inline-flex items-center">
-                <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="m1 9 4-4-4-4" />
-            </svg>
-                    <a href="{% url 'blog:blog_list' %}"
-                        class="inline-flex items-center text-sm gap-x-1  text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-                        مقالات
-                    </a>
-            </li>
-            <li aria-current="page">
-                <div class="flex items-center">
-                    <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="m1 9 4-4-4-4" />
-                    </svg>
-                    <span class="ms-1 text-sm  text-gray-500 md:ms-2 dark:text-gray-400">{{ blog.title|truncatechars:30 }}</span>
-                </div>
-            </li>
-        </ol>
-    </nav>
-    <!-- Article Details -->
-    <section class="flex flex-col lg:flex-row items-start gap-4 mt-8 ">
-        <!-- ARTICLE -->
-        <div
-        class="w-full lg:w-3/4 flex flex-col gap-y-8 px-4 lg:px-8 py-4 rounded-lg bg-white dark:bg-gray-800 shadow">
-        <!-- ARTICLE HEADER -->
-        <div class="w-full flex flex-col gap-y-6 ">
-            <div class="flex flex-col lg:flex-row gap-y-3 lg:items-center lg:justify-between">
-                <h2 class="font-DanaDemiBold text-lg lg:text-2xl">{{ blog.title }}</h2>
-                <span class="flex items-center gap-x-1 text-blue-500 cursor-pointer">
-                    <svg class="w-4 h-4">
-                        <use href="#share"></use>
-                    </svg>
-                    <p class="font-DanaMedium">اشتراک گذاری</p>
-                </span>
-            </div>
-            <div class="flex flex-wrap  items-center gap-y-3 gap-x-8 text-sm">
-                {% if blog.category %}
-                <span class="flex items-center gap-x-1 text-gray-400 ">
-                    <svg class="w-4 h-4">
-                        <use href="#list-bullet"></use>
-                    </svg>
-                    <p>دسته‌بندی : {{ blog.category.title }}</p>
-                </span>
-                {% endif %}
-                <span class="flex items-center gap-x-1 text-gray-400 ">
-                    <svg class="w-4 h-4">
-                        <use href="#user"></use>
-                    </svg>
-                    <p>توسط : {{ blog.author.full_name|default:blog.author.name }}</p>
-                </span>
-                <span class="flex items-center gap-x-1 text-gray-400 ">
-                    <svg class="w-4 h-4">
-                        <use href="#calendar"></use>
-                    </svg>
-                    <p> تاریخ انتشار : {{ blog.publishedAt|date:"Y/m/d" }}</p>
-                </span>
-                <span class="flex items-center gap-x-1 text-gray-400 ">
-                    <svg class="w-4 h-4">
-                        <use href="#eye"></use>
-                    </svg>
-                    <p> بازدید : {{ blog.view_count }}</p>
-                </span>
-            </div>
-        </div>
-        <!-- ARTICLE MAIN -->
-        <div>
-            {% if blog.mainImage %}
-            <img loading="lazy" class="rounded-lg w-full" src="{{ blog.mainImage.url }}" alt="{{ blog.title }}">
-            {% endif %}
-            {% if blog.description %}
-            {# به جای <p> از <div> استفاده شده چون خروجی CKEditor خودش شامل <p> است و تو در توی p مجاز نیست #}
-            <div class="article-content mt-6 text-gray-600 dark:text-gray-300">
-                {{ blog.description|safe }}
-            </div>
-            {% endif %}
-            {% if blog.content %}
-            <div class="article-content mt-6 text-gray-600 dark:text-gray-300">
-                {{ blog.content|safe }}
-            </div>
-            {% endif %}
-        </div>
-        </div>
-        <!-- SIDE BAR -->
-        <div
-            class="top-2 lg:sticky w-full lg:w-1/4 child:rounded-lg child:bg-white child:dark:bg-gray-800 child:shadow child:p-4 space-y-5 child:flex child:flex-col child:gap-y-4">
-            <div>
-                <h4 class="font-DanaMedium">جدیدترین مقالات : </h4>
-                <ul class="w-full child:flex child:items-center child:gap-x-2 child:cursor-pointer space-y-4 ">
-                    {% for related_blog in related_blogs %}
-                    <li>
-                        {% if related_blog.mainImage %}
-                        <img loading="lazy" class="w-24 h-16 object-cover rounded-lg" src="{{ related_blog.mainImage.url }}" alt="{{ related_blog.title }}">
-                        {% else %}
-                        <img loading="lazy" class="w-24 h-16 object-cover rounded-lg bg-gray-200" src="{{ media_url }}/images/default-article.jpg" alt="{{ related_blog.title }}">
-                        {% endif %}
-                        <a class="flex flex-col gap-y-2 " href="{% url 'blog:blog_detail' related_blog.slug %}">
-                            <p class="line-clamp-1">{{ related_blog.title }}</p>
-                            <span class="flex items-center gap-x-1 text-sm text-gray-400">
-                                <svg class="w-4 h-4 mb-1">
-                                    <use href="#calendar"></use>
-                                </svg>
-                                {{ related_blog.publishedAt|date:"Y/m/d" }}
-                            </span>
-                        </a>
-                    </li>
-                    {% empty %}
-                    <li class="text-sm text-gray-500">مقاله مرتبطی یافت نشد.</li>
-                    {% endfor %}
-                </ul>
-                <a href="{% url 'blog:blog_list' %}" class="py-1.5 gap-x-1 bg-blue-500 hover:bg-blue-600 flex items-center justify-center text-white rounded-lg transition-all">مشاهده بیشتر
-                    <svg class="w-4 h-4">
-                        <use href="#chevron-left"></use>
-                    </svg>
-                </a>
-            </div>
-            <div>
-                <h4 class="font-DanaMedium"> دسته بندی : </h4>
-                <ul class="child:flex child:items-center child:justify-between child:cursor-pointer space-y-3 ">
-                    {% for category in categories %}
-                    <li class="group">
-                        <span
-                            class="flex items-center justify-center gap-x-1 group-hover:pr-2 duration-300 transition-all group-hover:text-blue-500">
-                            <p>{{ category.title }}</p>
-                            <svg class="w-4 h-4">
-                                <use href="#chevron-left"></use>
-                            </svg>
-                        </span>
-                        <span
-                            class="w-5 h-5 flex items-center justify-center rounded-lg text-white bg-blue-500 text-xs">{{ category.posts.count }}</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-
-            <!-- COMMENTS SECTION -->
-            {% if comments %}
-            <div>
-                <h4 class="font-DanaMedium">نظرات کاربران ({{ comments|length }})</h4>
-                <div class="space-y-4 mt-4">
-                    {% for comment in comments %}
-                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                        <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-medium text-sm">
-                                {{ comment.author.mobileNumber|first|upper }}
-                            </div>
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <span class="font-medium text-sm">{{ comment.author.get_full_name|default:comment.author.name }}</span>
-                                    <span class="text-xs text-gray-500">{{ comment.createdAt|date:"Y/m/d H:i" }}</span>
-                                </div>
-                                <p class="text-gray-700 dark:text-gray-300 text-sm">{{ comment.content }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- COMMENT FORM -->
-            {% if user.is_authenticated %}
-            <div>
-                <h4 class="font-DanaMedium">نظر خود را بنویسید</h4>
-                <form class="mt-4" method="post" action="{% url 'blog:add_blog_comment' blog.slug %}">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <textarea name="content" rows="3"
-                            class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                            placeholder="نظر خود را اینجا بنویسید..."></textarea>
-                    </div>
-                    <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg text-sm transition-colors">
-                        ارسال نظر
-                    </button>
-                </form>
-            </div>
-            {% else %}
-            <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
-                <p class="text-yellow-800 dark:text-yellow-200 text-sm">برای ارسال نظر باید <a href="{% url 'user:send_mobile' %}" class="underline">وارد شوید</a>.</p>
-            </div>
-            {% endif %}
-
-            <!-- RELATED PRODUCTS -->
-            {% if related_products %}
-            <div>
-                <h4 class="font-DanaMedium">محصولات مرتبط</h4>
-                <div class="space-y-3 mt-4">
-                    {% for product in related_products %}
-                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                        <a href="{{ product.get_absolute_url }}" class="flex items-center gap-3">
-                            {% if product.mainImage %}
-                            <img loading="lazy" src="{{ product.mainImage.url }}" alt="{{ product.title }}" class="w-16 h-16 object-cover rounded-lg">
-                            {% endif %}
-                            <div class="flex-1">
-                                <h5 class="font-medium text-sm text-gray-900 dark:text-white mb-1">{{ product.title }}</h5>
-                                <p class="text-blue-600 dark:text-blue-400 text-sm font-medium">{{ product.price|intcomma }} تومان</p>
-                            </div>
-                        </a>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-        </div>
-
-    </section>
-</main>
-
 {% endblock %}
