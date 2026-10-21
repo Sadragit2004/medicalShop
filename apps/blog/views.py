@@ -1,6 +1,7 @@
 
 import json
 import re
+from urllib.parse import urlparse
 
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -40,6 +41,68 @@ def _absolute_url(request, path):
     return request.build_absolute_uri(path)
 
 
+def _get_aparat_video_data(video_link):
+    if not video_link:
+        return {
+            "video_url": None,
+            "video_embed_url": None,
+            "has_video": False,
+        }
+
+    video_url = video_link.strip()
+
+    if not video_url:
+        return {
+            "video_url": None,
+            "video_embed_url": None,
+            "has_video": False,
+        }
+
+    parsed_url = urlparse(video_url)
+
+    if (
+        parsed_url.scheme not in ("http", "https")
+        or parsed_url.hostname is None
+        or parsed_url.hostname.lower() not in {
+            "aparat.com",
+            "www.aparat.com",
+        }
+    ):
+        return {
+            "video_url": video_url,
+            "video_embed_url": None,
+            "has_video": True,
+        }
+
+    path_parts = [
+        part
+        for part in parsed_url.path.strip("/").split("/")
+        if part
+    ]
+
+    video_id = None
+
+    if len(path_parts) == 1 and path_parts[0] != "v":
+        video_id = path_parts[0]
+    elif (
+        len(path_parts) >= 2
+        and path_parts[0] == "v"
+    ):
+        video_id = path_parts[1]
+
+    video_embed_url = (
+        f"https://www.aparat.com/video/video/embed/videohash/{video_id}/vt/frame"
+        if video_id
+        else None
+    )
+
+    return {
+        "video_url": video_url,
+        "video_embed_url": video_embed_url,
+        "has_video": True,
+    }
+
+
 def _blog_seo_context(request, blog):
     canonical_url = _absolute_url(
         request,
@@ -64,9 +127,7 @@ def _blog_seo_context(request, blog):
     author = blog.author
 
     author_name = (
-
-        author.name
-        or getattr(author, "name", "")
+        getattr(author, "name", "")
         or "تیم تحریریه"
     )
 
@@ -308,12 +369,15 @@ def blog_detail(request, slug):
         .order_by("title")
     )
 
+    video_data = _get_aparat_video_data(blog.vidiolink)
+
     context = {
         "blog": blog,
         "comments": comments,
         "related_products": related_products,
         "related_blogs": related_blogs,
         "categories": categories,
+        **video_data,
         **_blog_seo_context(request, blog),
     }
 

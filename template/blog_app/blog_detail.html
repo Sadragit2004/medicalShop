@@ -1,4 +1,3 @@
-
 {% extends "main_template.html" %}
 {% load humanize %}
 
@@ -8,7 +7,6 @@
     <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
     <meta name="author" content="{{ seo_author }}">
     <meta name="language" content="fa-IR">
-
 
     <meta property="og:type" content="article">
     <meta property="og:locale" content="fa_IR">
@@ -86,7 +84,50 @@
                 </div>
             </header>
 
-            {% if blog.mainImage %}
+            {# ---------- رسانه شاخص: ویدیو اپارات در اولویت، در غیر این صورت تصویر شاخص ---------- #}
+            {% if blog.aparat_video_id or video_embed_url or blog.video_url %}
+                <figure class="blog-video-wrapper mb-8" aria-label="ویدیو معرفی مقاله">
+                    <div class="blog-video-frame">
+                        {% if video_embed_url %}
+                            <iframe
+                                src="{{ video_embed_url }}"
+                                title="ویدیو {{ blog.title }}"
+                                frameborder="0"
+                                allowfullscreen
+                                allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                                referrerpolicy="no-referrer-when-downgrade"
+                                loading="lazy">
+                            </iframe>
+                        {% elif blog.aparat_video_id %}
+                            <iframe
+                                src="https://www.aparat.com/video/video/embed/videohash/{{ blog.aparat_video_id }}/vt/frame"
+                                title="ویدیو {{ blog.title }}"
+                                frameborder="0"
+                                allowfullscreen
+                                allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                                referrerpolicy="no-referrer-when-downgrade"
+                                loading="lazy">
+                            </iframe>
+                        {% elif blog.video_url %}
+                            <iframe
+                                src="{{ blog.video_url }}"
+                                title="ویدیو {{ blog.title }}"
+                                frameborder="0"
+                                allowfullscreen
+                                allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                                referrerpolicy="no-referrer-when-downgrade"
+                                loading="lazy">
+                            </iframe>
+                        {% endif %}
+                    </div>
+                    <figcaption class="blog-video-caption">
+                        <svg class="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/>
+                        </svg>
+                        <span>ویدیو معرفی: {{ blog.title }}</span>
+                    </figcaption>
+                </figure>
+            {% elif blog.mainImage %}
                 <figure class="mb-8">
                     <img
                         src="{{ blog.mainImage.url }}"
@@ -285,6 +326,7 @@
 </main>
 
 <style>
+    /* ===== استایل محتوای مقاله ===== */
     .article-content {
         direction: rtl;
         font-size: 1.125rem;
@@ -385,6 +427,65 @@
     @media (min-width: 1024px) {
         .article-content {
             font-size: 1.25rem;
+        }
+    }
+
+    /* ===== استایل ویدیو شاخص (به جای تصویر شاخص) ===== */
+    .blog-video-wrapper {
+        position: relative;
+        margin: 0 0 2rem;
+        border-radius: 1rem;
+        overflow: hidden;
+        background: #0f172a;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .dark .blog-video-wrapper {
+        border-color: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+
+    .blog-video-frame {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        background: #000;
+    }
+
+    .blog-video-frame iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        border: 0;
+    }
+
+    .blog-video-caption {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .65rem 1rem;
+        font-size: .8rem;
+        color: #e5e7eb;
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .blog-video-caption span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 640px) {
+        .blog-video-wrapper {
+            border-radius: .75rem;
+        }
+        .blog-video-caption {
+            font-size: .72rem;
+            padding: .5rem .75rem;
         }
     }
 </style>

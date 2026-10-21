@@ -61,6 +61,13 @@ class BlogPost(models.Model):
     publishedAt = models.DateTimeField(null=True, blank=True, verbose_name="تاریخ انتشار")
     isActive = models.BooleanField(default=True, verbose_name="فعال")
 
+    vidiolink = models.CharField(
+        max_length=200,
+        verbose_name="ادرس اپارات ویدیو",
+        blank=True,
+        null=True,
+    )
+
     class Meta:
         verbose_name = "پست بلاگ"
         verbose_name_plural = "پست‌های بلاگ"
