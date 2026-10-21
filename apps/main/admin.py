@@ -326,3 +326,99 @@ class PageVisitAdmin(admin.ModelAdmin):
             return f"{obj.response_time:.0f} ms"
         return '-'
     response_time_display.short_description = 'زمان پاسخ'
+
+
+
+
+
+
+import os
+
+from django.contrib import admin
+from django.utils.html import format_html
+
+from .models import DatabaseBackup
+
+
+@admin.register(DatabaseBackup)
+class DatabaseBackupAdmin(admin.ModelAdmin):
+    list_display = (
+        "filename",
+        "status_badge",
+        "file_size_display",
+        "file_exists_display",
+        "created_at",
+        "completed_at",
+    )
+
+    list_filter = (
+        "status",
+        "created_at",
+    )
+
+    search_fields = (
+        "filename",
+        "file_path",
+        "error_message",
+    )
+
+    readonly_fields = (
+        "filename",
+        "file_path",
+        "file_size",
+        "status",
+        "error_message",
+        "created_at",
+        "completed_at",
+        "file_exists_display",
+        "file_size_display",
+    )
+
+    ordering = ("-created_at",)
+
+    list_per_page = 25
+
+
+    def status_badge(self, obj):
+        colors = {
+            DatabaseBackup.Status.SUCCESS: "#198754",
+            DatabaseBackup.Status.FAILED: "#dc3545",
+            DatabaseBackup.Status.RUNNING: "#fd7e14",
+        }
+
+        color = colors.get(obj.status, "#6c757d")
+
+        return format_html(
+            '<span style="background:{};color:white;'
+            'padding:4px 10px;border-radius:6px;">{}</span>',
+            color,
+            obj.get_status_display(),
+        )
+
+    status_badge.short_description = "وضعیت"
+
+    def file_size_display(self, obj):
+        return f"{obj.file_size_mb} MB"
+
+    file_size_display.short_description = "حجم فایل"
+
+    def file_exists_display(self, obj):
+        if obj.file_exists:
+            return format_html(
+                '<span style="color:#198754;font-weight:bold;">موجود</span>'
+            )
+
+        return format_html(
+            '<span style="color:#dc3545;font-weight:bold;">یافت نشد</span>'
+        )
+
+    file_exists_display.short_description = "وضعیت فایل"
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False

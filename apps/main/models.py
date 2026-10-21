@@ -368,3 +368,82 @@ class PageVisit(models.Model):
 
     def __str__(self):
         return f"{self.visit} - {self.path}"
+
+
+
+# ================
+
+
+
+import os
+
+from django.db import models
+from django.utils import timezone
+
+
+class DatabaseBackup(models.Model):
+    class Status(models.TextChoices):
+        SUCCESS = "success", "موفق"
+        FAILED = "failed", "ناموفق"
+        RUNNING = "running", "در حال اجرا"
+
+    filename = models.CharField(
+        max_length=255,
+        verbose_name="نام فایل بکاپ",
+    )
+
+    file_path = models.CharField(
+        max_length=1024,
+        verbose_name="مسیر فایل بکاپ",
+    )
+
+    file_size = models.PositiveBigIntegerField(
+        default=0,
+        verbose_name="حجم فایل (بایت)",
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.RUNNING,
+        db_index=True,
+        verbose_name="وضعیت بکاپ",
+    )
+
+    error_message = models.TextField(
+        blank=True,
+        default="",
+        verbose_name="جزئیات خطا",
+    )
+
+    created_at = models.DateTimeField(
+        default=timezone.now,
+        db_index=True,
+        verbose_name="تاریخ ایجاد",
+    )
+
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="تاریخ اتمام",
+    )
+
+    class Meta:
+        verbose_name = "بکاپ دیتابیس"
+        verbose_name_plural = "بکاپ‌های دیتابیس"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.filename
+
+    @property
+    def file_exists(self):
+        return os.path.isfile(self.file_path)
+
+    @property
+    def file_size_mb(self):
+        return round(self.file_size / (1024 * 1024), 2)
+
+    @property
+    def is_successful(self):
+        return self.status == self.Status.SUCCESS

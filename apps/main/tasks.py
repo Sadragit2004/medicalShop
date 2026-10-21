@@ -1,4 +1,4 @@
-# your_app/tasks.py
+
 from celery import shared_task
 import subprocess
 import os
@@ -6,17 +6,25 @@ from datetime import datetime
 from django.conf import settings
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+from django.utils import timezone
+from django.db import transaction
 import logging
 
+from .models import DatabaseBackup
+
 logger = logging.getLogger(__name__)
+
 
 @shared_task
 def backup_database():
     """
     تسک سلری برای گرفتن بکاپ از دیتابیس medical
     """
+    backup_record = None
+    backup_path = None
+    compressed_path = None
+
     try:
-        # تنظیمات دیتابیس
         db_settings = settings.DATABASES['default']
         db_name = db_settings['NAME']
         db_user = db_settings['USER']
@@ -24,17 +32,22 @@ def backup_database():
         db_host = db_settings['HOST']
         db_port = db_settings['PORT']
 
-        # ایجاد نام فایل با تاریخ و زمان
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         backup_filename = f"backup_{db_name}_{timestamp}.sql"
 
-        # مسیر ذخیره فایل (می‌توانید تغییر دهید)
         backup_dir = os.path.join(settings.BASE_DIR, 'backups')
         os.makedirs(backup_dir, exist_ok=True)
 
         backup_path = os.path.join(backup_dir, backup_filename)
+        compressed_path = f"{backup_path}.gz"
 
-        # دستور mysql dump
+        backup_record = DatabaseBackup.objects.create(
+            filename=os.path.basename(compressed_path),
+            file_path=compressed_path,
+            file_size=0,
+            status=DatabaseBackup.Status.RUNNING,
+        )
+
         dump_cmd = [
             'mysqldump',
             f'--host={db_host}',
@@ -49,7 +62,6 @@ def backup_database():
             db_name
         ]
 
-        # اجرای دستور
         with open(backup_path, 'w') as f:
             result = subprocess.run(
                 dump_cmd,
@@ -61,31 +73,49 @@ def backup_database():
         if result.returncode != 0:
             raise Exception(f"خطا در گرفتن بکاپ: {result.stderr}")
 
-        # فشرده‌سازی فایل
         compressed_path = compress_backup(backup_path)
-
-        # حذف فایل غیرفشرده
         os.remove(backup_path)
 
-        # ثبت در لاگ
+        file_size = os.path.getsize(compressed_path)
+
+        with transaction.atomic():
+            backup_record.filename = os.path.basename(compressed_path)
+            backup_record.file_path = compressed_path
+            backup_record.file_size = file_size
+            backup_record.status = DatabaseBackup.Status.SUCCESS
+            backup_record.completed_at = timezone.now()
+            backup_record.error_message = ''
+            backup_record.save()
+
         logger.info(f"بکاپ با موفقیت ایجاد شد: {compressed_path}")
 
-        # (اختیاری) آپلود در فضای ابری یا ارسال ایمیل
-        # upload_to_cloud(compressed_path)
-        # send_backup_email(compressed_path)
-
-        # حذف بکاپ‌های قدیمی (اختیاری)
         cleanup_old_backups(backup_dir, keep_last=5)
 
         return {
             'status': 'success',
-            'filename': backup_filename,
+            'filename': os.path.basename(compressed_path),
             'path': compressed_path,
-            'size': os.path.getsize(compressed_path)
+            'size': file_size
         }
 
     except Exception as e:
         logger.error(f"خطا در گرفتن بکاپ: {str(e)}")
+
+        if backup_record is not None:
+            try:
+                backup_record.status = DatabaseBackup.Status.FAILED
+                backup_record.error_message = str(e)
+                backup_record.completed_at = timezone.now()
+                backup_record.save()
+            except Exception:
+                logger.exception("خطا در ثبت وضعیت ناموفق بکاپ")
+
+        if backup_path and os.path.exists(backup_path):
+            try:
+                os.remove(backup_path)
+            except OSError:
+                logger.warning(f"حذف فایل موقت ناموفق بود: {backup_path}")
+
         return {
             'status': 'error',
             'message': str(e)
@@ -116,13 +146,17 @@ def cleanup_old_backups(backup_dir, keep_last=5):
 
     backup_files = glob.glob(os.path.join(backup_dir, "*.sql.gz"))
 
-    # مرتب‌سازی بر اساس زمان ایجاد
-    backup_files.sort(key=os.path.getctime)
+    backup_files.sort(key=os.path.getctime, reverse=True)
 
-    # حذف فایل‌های اضافی
-    for old_file in backup_files[:-keep_last]:
+    for old_file in backup_files[keep_last:]:
         try:
             os.remove(old_file)
+
+            DatabaseBackup.objects.filter(
+                file_path=old_file
+            ).delete()
+
             logger.info(f"بکاپ قدیمی حذف شد: {old_file}")
+
         except Exception as e:
             logger.warning(f"خطا در حذف فایل {old_file}: {e}")
