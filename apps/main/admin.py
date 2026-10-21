@@ -330,12 +330,15 @@ class PageVisitAdmin(admin.ModelAdmin):
 
 
 
-
-
 import os
+from pathlib import Path
 
+from django.conf import settings
 from django.contrib import admin
+from django.http import FileResponse, Http404
+from django.urls import path, reverse
 from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 
 from .models import DatabaseBackup
 
@@ -347,6 +350,7 @@ class DatabaseBackupAdmin(admin.ModelAdmin):
         "status_badge",
         "file_size_display",
         "file_exists_display",
+        "download_link",
         "created_at",
         "completed_at",
     )
@@ -375,15 +379,53 @@ class DatabaseBackupAdmin(admin.ModelAdmin):
     )
 
     ordering = ("-created_at",)
-
     list_per_page = 25
 
+    def get_urls(self):
+        custom_urls = [
+            path(
+                "<int:backup_id>/download/",
+                self.admin_site.admin_view(self.download_backup),
+                name="main_databasebackup_download",
+            ),
+        ]
+        return custom_urls + super().get_urls()
 
+    def download_backup(self, request, backup_id):
+        backup = self.get_object(request, backup_id)
+
+        if backup is None:
+            raise Http404("Backup not found.")
+
+        if backup.status != DatabaseBackup.Status.SUCCESS.value:
+            raise Http404("This backup is not available for download.")
+
+        backup_root = (Path(settings.BASE_DIR) / "backups").resolve()
+        file_path = Path(backup.file_path).resolve()
+
+        try:
+            file_path.relative_to(backup_root)
+        except ValueError:
+            raise Http404("Invalid backup path.")
+
+        if not file_path.is_file():
+            raise Http404("Backup file not found.")
+
+        response = FileResponse(
+            open(file_path, "rb"),
+            as_attachment=True,
+            filename=os.path.basename(backup.filename),
+            content_type="application/gzip",
+        )
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
+
+    @admin.display(description="وضعیت")
     def status_badge(self, obj):
         colors = {
-            DatabaseBackup.Status.SUCCESS: "#198754",
-            DatabaseBackup.Status.FAILED: "#dc3545",
-            DatabaseBackup.Status.RUNNING: "#fd7e14",
+            DatabaseBackup.Status.SUCCESS.value: "#198754",
+            DatabaseBackup.Status.FAILED.value: "#dc3545",
+            DatabaseBackup.Status.RUNNING.value: "#fd7e14",
         }
 
         color = colors.get(obj.status, "#6c757d")
@@ -395,13 +437,11 @@ class DatabaseBackupAdmin(admin.ModelAdmin):
             obj.get_status_display(),
         )
 
-    status_badge.short_description = "وضعیت"
-
+    @admin.display(description="حجم فایل")
     def file_size_display(self, obj):
         return f"{obj.file_size_mb} MB"
 
-    file_size_display.short_description = "حجم فایل"
-
+    @admin.display(description="وضعیت فایل")
     def file_exists_display(self, obj):
         if obj.file_exists:
             return format_html(
@@ -412,7 +452,27 @@ class DatabaseBackupAdmin(admin.ModelAdmin):
             '<span style="color:#dc3545;font-weight:bold;">یافت نشد</span>'
         )
 
-    file_exists_display.short_description = "وضعیت فایل"
+    @admin.display(description="دانلود بکاپ")
+    def download_link(self, obj):
+        if (
+            obj.status != DatabaseBackup.Status.SUCCESS.value
+            or not obj.file_exists
+        ):
+            return format_html(
+                '<span style="color:#dc3545;">غیرقابل دانلود</span>'
+            )
+
+        url = reverse(
+            "admin:main_databasebackup_download",
+            args=[obj.pk],
+        )
+
+        return format_html(
+            '<a href="{}" style="display:inline-block;'
+            'padding:5px 12px;background:#198754;color:white;'
+            'border-radius:5px;text-decoration:none;">دانلود فایل</a>',
+            url,
+        )
 
     def has_add_permission(self, request):
         return False
