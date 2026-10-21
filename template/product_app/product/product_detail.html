@@ -1,5 +1,5 @@
 <!-- تمپلیت محصول داینامیک -->
- 
+
 {% extends 'product_template.html' %}
 {% load static %}
 {% load humanize %}
@@ -43,95 +43,75 @@
 {
     "@context": "https://schema.org",
     "@type": "Product",
-    "name": "{{ product.title }}",
-    "description": "{{ product.description|striptags|truncatechars:300|default:product.title }}",
-    "url": "{{ request.build_absolute_uri }}",
-    {% if product.mainImage %}
-    "image": "{{ site_url }}{{ product.mainImage.url }}",
-    {% endif %}
-    {% if galleries %}
+    "@id": "{{ request.build_absolute_uri|escapejs }}#product",
+    "name": "{{ product.title|escapejs }}",
+    "description": "{{ product.description|striptags|truncatechars:300|default:product.title|escapejs }}",
+    "url": "{{ request.build_absolute_uri|escapejs }}",
+
+    {% if product.mainImage or galleries %}
     "image": [
+        {% if product.mainImage %}
+        "{{ site_url|escapejs }}{{ product.mainImage.url|escapejs }}"{% if galleries %},{% endif %}
+        {% endif %}
         {% for gallery in galleries %}
-        "{{ site_url }}{{ gallery.image.url }}"{% if not forloop.last %},{% endif %}
+        "{{ site_url|escapejs }}{{ gallery.image.url|escapejs }}"{% if not forloop.last %},{% endif %}
         {% endfor %}
     ],
     {% endif %}
+
     {% if product.sku %}
-    "sku": "{{ product.sku }}",
+    "sku": "{{ product.sku|escapejs }}",
     {% endif %}
+
     {% if product.mpn %}
-    "mpn": "{{ product.mpn }}",
+    "mpn": "{{ product.mpn|escapejs }}",
     {% endif %}
+
     {% if product.brand %}
     "brand": {
         "@type": "Brand",
-        "name": "{{ product.brand.title }}"
+        "name": "{{ product.brand.title|escapejs }}"
     },
     {% endif %}
-    "category": "{{ product.category.first.title|default:'دسته‌بندی نشده' }}",
-    "offers": {
-        "@type": "Offer",
-        "url": "{{ request.build_absolute_uri }}",
-        "priceCurrency": "IRR",
-        "price": "{% if default_sale_type %}{{ default_sale_type.final_price|default:default_sale_type.price }}{% else %}{{ product.get_base_price|default:'0' }}{% endif %}",
-        "priceValidUntil": "{{ product.updated_at|date:'Y-m-d'|default:'2024-12-31' }}",
-        "availability": "https://schema.org/{% if product.stock > 0 %}InStock{% else %}OutOfStock{% endif %}",
-        "itemCondition": "https://schema.org/NewCondition",
-        "seller": {
-            "@type": "Organization",
-            "name": "{{ site_name }}"
-        }
-        {% if discount_percent > 0 %}
-        ,"hasMerchantReturnPolicy": {
-            "@type": "MerchantReturnPolicy",
-            "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow"
-        }
-        {% endif %}
-    },
-    {% if average_rating > 0 %}
+
+    "category": "{{ product.category.first.title|default:'دسته‌بندی نشده'|escapejs }}",
+
+    {% if average_rating > 0 and total_comments > 0 %}
     "aggregateRating": {
         "@type": "AggregateRating",
-        "ratingValue": "{{ average_rating|floatformat:1 }}",
-        "reviewCount": "{{ total_comments }}",
-        "bestRating": "5",
-        "worstRating": "1"
+        "ratingValue": {{ average_rating|floatformat:1 }},
+        "reviewCount": {{ total_comments }},
+        "bestRating": 5,
+        "worstRating": 1
     },
     {% endif %}
-    {% if comments %}
-    "review": [
-        {% for comment in comments|slice:":3" %}
-        {
-            "@type": "Review",
-            "author": {
-                "@type": "Person",
-                "name": "{{ comment.user.family|default:'کاربر' }}"
-            },
-            "datePublished": "{{ comment.createdAt|date:'Y-m-d' }}",
-            "reviewBody": "{{ comment.text|truncatechars:200 }}",
-            "name": "دیدگاه {{ comment.user.family|default:'کاربر' }}",
-            "reviewRating": {
-                "@type": "Rating",
-                "ratingValue": "{% if comment.typeComment == 'recommend' %}5{% else %}1{% endif %}",
-                "bestRating": "5"
-            }
-        }{% if not forloop.last %},{% endif %}
-        {% endfor %}
-    ],
-    {% endif %}
+
     {% if product_features %}
     "additionalProperty": [
         {% for feature in product_features|slice:":10" %}
         {
             "@type": "PropertyValue",
-            "name": "{{ feature.feature.title }}",
-            "value": "{{ feature.value }}"
+            "name": "{{ feature.feature.title|escapejs }}",
+            "value": "{{ feature.value|default:''|escapejs }}"
         }{% if not forloop.last %},{% endif %}
         {% endfor %}
-    ]
+    ],
     {% endif %}
+
+    "offers": {
+        "@type": "Offer",
+        "url": "{{ request.build_absolute_uri|escapejs }}",
+        "priceCurrency": "IRR",
+        "price": "{% if default_sale_type %}{{ default_sale_type.final_price|default:default_sale_type.price|escapejs }}{% else %}{{ product.get_base_price|default:''|escapejs }}{% endif %}",
+        "availability": "https://schema.org/{% if product.stock > 0 %}InStock{% else %}OutOfStock{% endif %}",
+        "itemCondition": "https://schema.org/NewCondition",
+        "seller": {
+            "@type": "Organization",
+            "name": "{{ site_name|escapejs }}"
+        }
+    }
 }
 </script>
-
 {% endblock meta1 %}
 
 {% block content %}
