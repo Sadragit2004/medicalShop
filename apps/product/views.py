@@ -758,12 +758,7 @@ from django.shortcuts import get_object_or_404, render
 
 from .models import Product, Category
 
-
 def show_by_filter(request, slug):
-    """
-    نمایش محصولات دسته‌بندی با امکان فیلتر موجودی و صفحه‌بندی.
-    """
-
     group = get_object_or_404(
         Category,
         slug=slug,
@@ -777,27 +772,37 @@ def show_by_filter(request, slug):
             isActive=True,
         )
         .select_related("brand", "typetitle")
-        .distinct()
     )
 
-    # فیلتر فقط محصولات موجود
+    # --------------------------------------------------
+    # فیلتر موجودی؛ بدون دست‌کاری قیمت محصول
+    # --------------------------------------------------
     available = request.GET.get("available", "").strip().lower()
+    available_values = ("true", "1", "on", "yes")
 
-    if available in ("true", "1", "on", "yes"):
+    if available in available_values:
         products = products.filter(stock__gt=0)
 
-    # فیلتر حداقل و حداکثر قیمت
+    # --------------------------------------------------
+    # فیلتر قیمت بر اساس انواع فروش فعال
+    # --------------------------------------------------
     price_min = request.GET.get("price_min", "").strip()
     price_max = request.GET.get("price_max", "").strip()
+
+    sale_types = ProductSaleType.objects.filter(
+        product_id=OuterRef("pk"),
+        isActive=True,
+    )
 
     if price_min:
         try:
             min_value = int(price_min)
             if min_value >= 0:
-                products = products.filter(
-                    saleTypes__finalPrice__gte=min_value,
-                    saleTypes__isActive=True,
+                sale_types = sale_types.filter(
+                    finalPrice__gte=min_value,
                 )
+            else:
+                price_min = ""
         except (TypeError, ValueError):
             price_min = ""
 
@@ -805,28 +810,47 @@ def show_by_filter(request, slug):
         try:
             max_value = int(price_max)
             if max_value >= 0:
-                products = products.filter(
-                    saleTypes__finalPrice__lte=max_value,
-                    saleTypes__isActive=True,
+                sale_types = sale_types.filter(
+                    finalPrice__lte=max_value,
                 )
+            else:
+                price_max = ""
         except (TypeError, ValueError):
             price_max = ""
 
+    # تنها وقتی فیلتر قیمت وارد شده، محصول باید نوع فروش
+    # فعالی با قیمت مطابق فیلتر داشته باشد.
+    if price_min or price_max:
+        products = products.filter(Exists(sale_types))
+
+    # --------------------------------------------------
     # مرتب‌سازی
+    # --------------------------------------------------
     sort = request.GET.get("sort", "").strip()
 
     if sort == "newest":
-        products = products.order_by("-createdAt")
+        products = products.order_by("-createdAt", "-pk")
+
     elif sort == "price_asc":
-        products = products.order_by("saleTypes__finalPrice")
+        products = products.order_by(
+            "saleTypes__finalPrice",
+            "-createdAt",
+        )
+
     elif sort == "price_desc":
-        products = products.order_by("-saleTypes__finalPrice")
+        products = products.order_by(
+            "-saleTypes__finalPrice",
+            "-createdAt",
+        )
+
     else:
-        products = products.order_by("-createdAt")
+        products = products.order_by("-createdAt", "-pk")
 
     products = products.distinct()
 
+    # --------------------------------------------------
     # صفحه‌بندی
+    # --------------------------------------------------
     paginator = Paginator(products, 24)
     page_number = request.GET.get("page", 1)
     page_obj = paginator.get_page(page_number)
@@ -840,11 +864,11 @@ def show_by_filter(request, slug):
         "slug": slug,
         "price_min": price_min,
         "price_max": price_max,
-        "has_active_filters": bool(
-            available in ("true", "1", "on", "yes")
-            or price_min
-            or price_max
-            or sort
+        "has_active_filters": (
+            available in available_values
+            or bool(price_min)
+            or bool(price_max)
+            or bool(sort)
         ),
     }
 
