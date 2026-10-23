@@ -850,7 +850,7 @@ def show_by_filter(request, slug):
 
     return render(
         request,
-        "product/show_by_filter.html",
+        "product_app/shop/show_by_filter.html",
         context,
     )
 
