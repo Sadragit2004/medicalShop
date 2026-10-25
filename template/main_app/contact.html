@@ -2,1341 +2,589 @@
 
 {% block content %}
 
+
+
+<saya-contact-page>
+<template shadowrootmode="open">
 <style>
-    /* =========================================
-       SAYA MED — CONTACT PAGE
-       Scoped styles — safe for the parent template
-    ========================================= */
-
-    .saya-contact-page {
-        --saya-accent: #22adbd;
-        --saya-accent-soft: #eaf8fa;
-        --saya-text: #202b35;
-        --saya-muted: #78838d;
-        --saya-border: #e9edf0;
-        --saya-surface: #ffffff;
-        --saya-background: #f7f9fa;
-        --saya-green: #159b72;
-
+    :host {
+        all: initial;
+        display: block;
+        width: 100%;
         direction: rtl;
-        width: 100%;
-        padding: 36px 20px 48px;
-        color: var(--saya-text);
-        background: var(--saya-background);
+        font-family: var(--saya-font, "Vazirmatn", "IRANSansX", "IRANSans", "Vazir", "Segoe UI", Tahoma, system-ui, sans-serif);
+        color: #1d2a33;
         line-height: 1.8;
-        font-family: inherit;
-        isolation: isolate;
+        -webkit-text-size-adjust: 100%;
     }
 
-    .saya-contact-page,
-    .saya-contact-page * {
-        box-sizing: border-box;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    .saya-contact-page a {
-        -webkit-tap-highlight-color: transparent;
-    }
+    a { color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+    svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 
-    .saya-contact-shell {
-        width: 100%;
-        max-width: 1080px;
-        margin: 0 auto;
-    }
+    /* ---------- Stage: soft aurora behind the glass ---------- */
 
-    /* Header */
+    .stage {
+        --accent: #1fa6b6;
+        --accent-deep: #17808d;
+        --ink: #1d2a33;
+        --muted: #6b7983;
+        --wa: #1a9b6c;
 
-    .saya-contact-header {
         position: relative;
         overflow: hidden;
+        isolation: isolate;
+        padding: 40px 20px 36px;
+        background: linear-gradient(165deg, #ecf8fa 0%, #f5f9fb 45%, #e8f3f6 100%);
+    }
+
+    .blob {
+        position: absolute;
+        z-index: -1;
+        border-radius: 50%;
+        filter: blur(70px);
+        pointer-events: none;
+    }
+    .blob-a { top: -120px; right: -90px; width: 420px; height: 420px; background: rgba(31, 166, 182, 0.38); }
+    .blob-b { top: 38%;   left: -140px; width: 380px; height: 380px; background: rgba(120, 190, 235, 0.32); }
+    .blob-c { bottom: -140px; right: 18%; width: 360px; height: 360px; background: rgba(80, 210, 175, 0.26); }
+
+    .shell {
+        width: 100%;
+        max-width: 880px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* ---------- Glass ---------- */
+
+    .glass {
+        background: rgba(255, 255, 255, 0.52);
+        border: 1px solid rgba(255, 255, 255, 0.75);
+        border-radius: 26px;
+        box-shadow:
+            0 12px 34px rgba(30, 70, 90, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        -webkit-backdrop-filter: blur(24px) saturate(165%);
+        backdrop-filter: blur(24px) saturate(165%);
+    }
+
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        .glass { background: rgba(255, 255, 255, 0.9); }
+    }
+
+    /* ---------- Hero ---------- */
+
+    .hero {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 24px;
-        padding: 34px 36px;
-        margin-bottom: 24px;
-        background: var(--saya-surface);
-        border: 1px solid var(--saya-border);
-        border-radius: 24px;
-        animation: sayaContactEnter 0.55s ease both;
+        gap: 18px;
+        padding: 26px 28px;
     }
 
-    .saya-contact-header::before {
-        content: "";
-        position: absolute;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        width: 4px;
-        background: var(--saya-accent);
-        opacity: 0.85;
+    .logo {
+        flex: 0 0 60px;
+        width: 60px;
+        height: 60px;
+        padding: 15px;
+        color: var(--accent);
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        border-radius: 20px;
+        box-shadow: 0 6px 18px rgba(31, 166, 182, 0.16);
     }
+    .logo svg { stroke-width: 2; }
 
-    .saya-contact-header-content {
-        position: relative;
-        z-index: 1;
-    }
+    .hero-text { min-width: 0; flex: 1; }
 
-    .saya-contact-eyebrow {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 10px;
-        color: var(--saya-muted);
-        font-size: 13px;
-        font-weight: 500;
-    }
-
-    .saya-contact-status {
-        width: 8px;
-        height: 8px;
-        flex: 0 0 8px;
-        border-radius: 50%;
-        background: var(--saya-green);
-        box-shadow: 0 0 0 4px rgba(21, 155, 114, 0.10);
-    }
-
-    .saya-contact-title {
-        margin: 0 0 8px;
-        color: var(--saya-text);
-        font-size: clamp(25px, 3vw, 34px);
+    h1 {
+        font-size: clamp(22px, 3vw, 28px);
         line-height: 1.5;
         font-weight: 800;
-        letter-spacing: -0.8px;
+        letter-spacing: -0.4px;
     }
 
-    .saya-contact-title span {
-        color: var(--saya-accent);
-    }
-
-    .saya-contact-description {
-        max-width: 550px;
-        margin: 0;
-        color: var(--saya-muted);
-        font-size: 14px;
-        line-height: 2;
-    }
-
-    .saya-contact-brandmark {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex: 0 0 82px;
-        width: 82px;
-        height: 82px;
-        color: var(--saya-accent);
-        background:
-            radial-gradient(
-                circle at 65% 30%,
-                rgba(34, 173, 189, 0.10),
-                transparent 65%
-            ),
-            #f5fbfc;
-        border: 1px solid #e4f3f5;
-        border-radius: 25px;
-    }
-
-    .saya-contact-brandmark svg {
-        width: 39px;
-        height: 39px;
-    }
-
-    /* Section headings */
-
-    .saya-contact-section {
-        margin-top: 30px;
-        animation: sayaContactEnter 0.6s ease both;
-    }
-
-    .saya-contact-section:nth-of-type(2) {
-        animation-delay: 0.08s;
-    }
-
-    .saya-contact-section:nth-of-type(3) {
-        animation-delay: 0.14s;
-    }
-
-    .saya-contact-section-heading {
-        display: flex;
-        align-items: center;
-        gap: 11px;
-        margin-bottom: 15px;
-    }
-
-    .saya-contact-heading-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex: 0 0 39px;
-        width: 39px;
-        height: 39px;
-        color: #566772;
-        background: #ffffff;
-        border: 1px solid var(--saya-border);
-        border-radius: 12px;
-    }
-
-    .saya-contact-heading-icon svg {
-        width: 20px;
-        height: 20px;
-    }
-
-    .saya-contact-section-heading h2 {
-        margin: 0;
-        color: var(--saya-text);
-        font-size: 18px;
-        font-weight: 800;
-        line-height: 1.6;
-    }
-
-    .saya-contact-section-heading p {
-        margin: 2px 0 0;
-        color: var(--saya-muted);
-        font-size: 12px;
-    }
-
-    /* Main information grid */
-
-    .saya-contact-primary-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-        gap: 18px;
-        align-items: stretch;
-    }
-
-    .saya-contact-card {
-        min-width: 0;
-        padding: 26px;
-        background: var(--saya-surface);
-        border: 1px solid var(--saya-border);
-        border-radius: 20px;
-        box-shadow: 0 4px 18px rgba(25, 43, 55, 0.025);
-        transition:
-            border-color 0.25s ease,
-            box-shadow 0.25s ease,
-            transform 0.25s ease;
-    }
-
-    .saya-contact-card:hover {
-        border-color: #d9e7ea;
-        box-shadow: 0 10px 28px rgba(25, 43, 55, 0.045);
-    }
-
-    .saya-contact-card-title {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin: 0 0 20px;
-        color: var(--saya-text);
-        font-size: 17px;
-        font-weight: 800;
-    }
-
-    .saya-contact-card-title svg {
-        width: 21px;
-        height: 21px;
-        color: var(--saya-accent);
-        flex-shrink: 0;
-    }
-
-    /* Address */
-
-    .saya-contact-address-card {
-        display: flex;
-        flex-direction: column;
-        background:
-            linear-gradient(
-                145deg,
-                rgba(234, 248, 250, 0.48),
-                transparent 65%
-            ),
-            #ffffff;
-    }
-
-    .saya-contact-address-label {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        width: fit-content;
-        padding: 5px 10px;
-        margin-bottom: 14px;
-        color: #39828b;
-        background: #eef9fa;
-        border: 1px solid #e2f3f5;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-
-    .saya-contact-address-text {
-        margin: 0;
-        color: #35424d;
-        font-size: 16px;
-        line-height: 2.2;
-        font-weight: 600;
-    }
-
-    .saya-contact-address-text strong {
-        color: var(--saya-text);
-        font-weight: 800;
-    }
-
-    .saya-contact-address-divider {
-        height: 1px;
-        margin: 20px 0 15px;
-        background: var(--saya-border);
-    }
-
-    .saya-contact-map-link {
-        display: inline-flex;
-        align-items: center;
-        align-self: flex-start;
-        gap: 8px;
-        margin-top: auto;
-        padding: 8px 0 0;
-        color: #287e89;
-        font-size: 13px;
-        font-weight: 700;
-        text-decoration: none;
-        transition: color 0.2s ease;
-    }
-
-    .saya-contact-map-link:hover {
-        color: #155d67;
-    }
-
-    .saya-contact-map-link svg {
-        width: 18px;
-        height: 18px;
-        transition: transform 0.2s ease;
-    }
-
-    .saya-contact-map-link:hover svg {
-        transform: translateX(-3px);
-    }
-
-    /* Working hours */
-
-    .saya-contact-hours-card {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .saya-contact-hours-list {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .saya-contact-hours-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 14px 15px;
-        background: #f8fafb;
-        border: 1px solid #f0f2f4;
-        border-radius: 12px;
-    }
-
-    .saya-contact-hours-day {
-        color: #47545e;
-        font-size: 13px;
-        font-weight: 700;
-    }
-
-    .saya-contact-hours-time {
-        direction: ltr;
-        flex-shrink: 0;
-        color: var(--saya-text);
-        font-size: 13px;
-        font-weight: 800;
-        font-variant-numeric: tabular-nums;
-        white-space: nowrap;
-    }
-
-    .saya-contact-hours-note {
-        display: flex;
-        align-items: center;
-        gap: 9px;
-        padding: 14px 15px;
-        margin-top: 12px;
-        color: #8b5959;
-        background: #fff7f6;
-        border: 1px solid #f7e7e5;
-        border-radius: 12px;
-        font-size: 12px;
+    .hero-text p {
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 13.5px;
         line-height: 1.9;
     }
 
-    .saya-contact-hours-note svg {
-        width: 19px;
-        height: 19px;
+    .status {
         flex-shrink: 0;
-        color: #c17c74;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 13px;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.65);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
     }
+    .status i {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: #b8c2c9;
+    }
+    .status[data-state="open"] { color: #137a56; }
+    .status[data-state="open"] i { background: var(--wa); box-shadow: 0 0 0 4px rgba(26, 155, 108, 0.14); }
+    .status[data-state="closed"] i { background: #d29a93; }
 
-    /* Contact people */
+    /* ---------- People ---------- */
 
-    .saya-contact-people-grid {
+    .people {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 18px;
+        gap: 16px;
     }
 
-    .saya-contact-person {
-        min-width: 0;
-        padding: 24px;
-        background: #ffffff;
-        border: 1px solid var(--saya-border);
-        border-radius: 20px;
-        box-shadow: 0 4px 18px rgba(25, 43, 55, 0.025);
-        transition:
-            border-color 0.25s ease,
-            transform 0.25s ease;
-    }
+    .person { padding: 22px; min-width: 0; }
 
-    .saya-contact-person:hover {
-        border-color: #d6e9ec;
-        transform: translateY(-2px);
-    }
-
-    .saya-contact-person-header {
+    .person-head {
         display: flex;
         align-items: center;
         gap: 13px;
-        padding-bottom: 20px;
         margin-bottom: 18px;
-        border-bottom: 1px solid var(--saya-border);
     }
 
-    .saya-contact-avatar {
+    .avatar {
+        flex: 0 0 46px;
+        width: 46px;
+        height: 46px;
+        padding: 11px;
+        color: var(--accent-deep);
+        background: linear-gradient(145deg, rgba(31, 166, 182, 0.2), rgba(31, 166, 182, 0.07));
+        border: 1px solid rgba(255, 255, 255, 0.85);
+        border-radius: 50%;
+    }
+
+    .person-head h2 { font-size: 16.5px; font-weight: 800; line-height: 1.5; }
+    .person-head p  { color: var(--muted); font-size: 12px; }
+
+    .rows { display: flex; flex-direction: column; gap: 8px; }
+
+    .row {
         display: flex;
         align-items: center;
-        justify-content: center;
-        flex: 0 0 49px;
-        width: 49px;
-        height: 49px;
-        color: #287e89;
-        background: #eef9fa;
-        border: 1px solid #e1f1f3;
+        gap: 12px;
+        min-width: 0;
+        padding: 10px 12px;
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.8);
         border-radius: 16px;
+        transition: background 0.2s ease, transform 0.2s ease;
     }
+    .row:hover { background: rgba(255, 255, 255, 0.85); }
+    .row:active { transform: scale(0.985); }
 
-    .saya-contact-avatar svg {
-        width: 24px;
-        height: 24px;
+    .row-icon {
+        flex: 0 0 36px;
+        width: 36px;
+        height: 36px;
+        padding: 9px;
+        color: var(--accent-deep);
+        background: rgba(255, 255, 255, 0.85);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(30, 70, 90, 0.07);
     }
+    .row.wa .row-icon { color: var(--wa); }
 
-    .saya-contact-person-name {
-        margin: 0 0 3px;
-        color: var(--saya-text);
-        font-size: 17px;
-        font-weight: 800;
-    }
-
-    .saya-contact-person-role {
-        margin: 0;
-        color: var(--saya-muted);
-        font-size: 12px;
-    }
-
-    .saya-contact-number-group {
+    .row-meta {
         display: flex;
         flex-direction: column;
-        gap: 7px;
-        margin-top: 16px;
-    }
-
-    .saya-contact-number-label {
-        color: var(--saya-muted);
-        font-size: 12px;
-        font-weight: 500;
-    }
-
-    .saya-contact-number {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
+        align-items: flex-start;
         min-width: 0;
-        padding: 12px 14px;
-        color: var(--saya-text);
-        background: #f8fafb;
-        border: 1px solid #edf0f2;
-        border-radius: 11px;
-        text-decoration: none;
-        direction: ltr;
-        transition:
-            background 0.2s ease,
-            border-color 0.2s ease;
+        flex: 1;
     }
-
-    .saya-contact-number:hover {
-        background: #f0f9fa;
-        border-color: #d5ecef;
-    }
-
-    .saya-contact-number-value {
+    .row-label { color: var(--muted); font-size: 11.5px; line-height: 1.6; }
+    .row-value {
         direction: ltr;
         unicode-bidi: isolate;
         font-size: 15px;
         font-weight: 800;
-        white-space: nowrap;
-        font-variant-numeric: tabular-nums;
         letter-spacing: 0.2px;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+    .row.wa .row-value {
+        direction: rtl;
+        color: #137a56;
+        font-size: 13.5px;
+        font-weight: 700;
+        letter-spacing: 0;
     }
 
-    .saya-contact-number-icon {
+    .chev { flex: 0 0 16px; width: 16px; height: 16px; color: #a7b3ba; }
+
+    /* ---------- Visit ---------- */
+
+    .visit {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .visit-col { padding: 24px 26px; min-width: 0; }
+    .visit-col + .visit-col { border-right: 1px solid rgba(255, 255, 255, 0.85); }
+
+    .col-title {
         display: flex;
         align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        width: 31px;
-        height: 31px;
-        color: #287e89;
-        background: #ffffff;
-        border: 1px solid #e4edef;
-        border-radius: 9px;
+        gap: 9px;
+        margin-bottom: 14px;
+        font-size: 15px;
+        font-weight: 800;
     }
+    .col-title svg { width: 20px; height: 20px; color: var(--accent); flex-shrink: 0; }
 
-    .saya-contact-number-icon svg {
-        width: 16px;
-        height: 16px;
+    .city { color: var(--muted); font-size: 12.5px; font-weight: 600; }
+
+    address {
+        font-style: normal;
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 2.1;
+        color: #33424c;
     }
+    address strong { color: var(--ink); font-weight: 800; }
 
-    .saya-contact-whatsapp-link {
+    .map-btn {
         display: inline-flex;
         align-items: center;
-        gap: 7px;
-        margin-top: 14px;
-        color: #16875f;
-        font-size: 12px;
+        gap: 9px;
+        margin-top: 16px;
+        padding: 9px 15px 9px 13px;
+        color: var(--accent-deep);
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        border-radius: 999px;
+        font-size: 13px;
         font-weight: 700;
-        text-decoration: none;
-        transition: color 0.2s ease;
+        transition: background 0.2s ease;
     }
+    .map-btn:hover { background: #fff; }
+    .map-btn svg { width: 17px; height: 17px; }
 
-    .saya-contact-whatsapp-link:hover {
-        color: #0f6848;
-    }
-
-    .saya-contact-whatsapp-link svg {
-        width: 18px;
-        height: 18px;
-    }
-
-    /* Final call to action */
-
-    .saya-contact-bottom {
-        position: relative;
-        overflow: hidden;
+    .hours { display: flex; flex-direction: column; gap: 8px; }
+    .hour {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 22px;
-        padding: 26px 28px;
-        margin-top: 30px;
-        background: #ffffff;
-        border: 1px solid var(--saya-border);
-        border-radius: 20px;
-        animation: sayaContactEnter 0.65s ease both;
-    }
-
-    .saya-contact-bottom::after {
-        content: "";
-        position: absolute;
-        left: -45px;
-        bottom: -70px;
-        width: 160px;
-        height: 160px;
-        border: 1px solid rgba(34, 173, 189, 0.12);
-        border-radius: 50%;
-        pointer-events: none;
-    }
-
-    .saya-contact-bottom-content {
-        position: relative;
-        z-index: 1;
-    }
-
-    .saya-contact-bottom h2 {
-        margin: 0 0 5px;
-        color: var(--saya-text);
-        font-size: 19px;
-        font-weight: 800;
-    }
-
-    .saya-contact-bottom p {
-        margin: 0;
-        color: var(--saya-muted);
+        gap: 10px;
+        padding: 11px 14px;
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        border-radius: 14px;
         font-size: 13px;
+    }
+    .hour span:first-child { color: #47545e; font-weight: 700; }
+    .hour span:last-child {
+        direction: ltr;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+    .hour.today { background: rgba(255, 255, 255, 0.95); box-shadow: 0 0 0 1.5px rgba(31, 166, 182, 0.45); }
+
+    .off {
+        margin-top: 12px;
+        color: #8b6a66;
+        font-size: 12px;
         line-height: 1.9;
     }
 
-    .saya-contact-shop-button {
-        position: relative;
-        z-index: 1;
+    /* ---------- CTA ---------- */
+
+    .cta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 22px 26px;
+    }
+    .cta h2 { font-size: 17px; font-weight: 800; line-height: 1.6; }
+    .cta p  { color: var(--muted); font-size: 13px; }
+
+    .shop {
+        flex-shrink: 0;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 11px;
-        flex-shrink: 0;
-        min-height: 49px;
+        gap: 10px;
+        min-height: 48px;
         padding: 12px 22px;
-        color: #ffffff;
-        background: var(--saya-text);
-        border: 1px solid var(--saya-text);
-        border-radius: 12px;
-        font-family: inherit;
+        color: #fff;
+        background: linear-gradient(145deg, #2a3b46, #1d2a33);
+        border-radius: 16px;
         font-size: 14px;
         font-weight: 700;
+        box-shadow: 0 10px 22px rgba(29, 42, 51, 0.22);
+        transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .shop:hover { background: linear-gradient(145deg, var(--accent-deep), #126671); transform: translateY(-2px); }
+    .shop svg { width: 18px; height: 18px; }
+
+    footer {
+        padding-top: 6px;
         text-align: center;
-        text-decoration: none;
-        transition:
-            background 0.25s ease,
-            border-color 0.25s ease,
-            transform 0.25s ease;
+        color: #8a959d;
+        font-size: 11.5px;
     }
 
-    .saya-contact-shop-button:hover {
-        color: #ffffff;
-        background: #287e89;
-        border-color: #287e89;
-        transform: translateY(-2px);
+    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+    /* ---------- Entrance: one gentle reveal ---------- */
+
+    .shell { animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+    /* ---------- Responsive ---------- */
+
+    @media (max-width: 760px) {
+        .stage { padding: 20px 14px 28px; }
+        .people { grid-template-columns: 1fr; gap: 14px; }
+        .visit { grid-template-columns: 1fr; }
+        .visit-col + .visit-col { border-right: 0; border-top: 1px solid rgba(255, 255, 255, 0.85); }
     }
-
-    .saya-contact-shop-button svg {
-        width: 18px;
-        height: 18px;
-        flex-shrink: 0;
-    }
-
-    /* Small footer */
-
-    .saya-contact-footer {
-        padding-top: 25px;
-        color: #929ca4;
-        text-align: center;
-        font-size: 11px;
-    }
-
-    .saya-contact-footer span {
-        color: var(--saya-accent);
-    }
-
-    /* Animation */
-
-    @keyframes sayaContactEnter {
-        from {
-            opacity: 0;
-            transform: translateY(12px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    /* Tablet */
-
-    @media (max-width: 800px) {
-        .saya-contact-page {
-            padding: 24px 16px 35px;
-        }
-
-        .saya-contact-header {
-            padding: 27px 25px;
-        }
-
-        .saya-contact-primary-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .saya-contact-address-card {
-            min-height: auto;
-        }
-
-        .saya-contact-hours-card {
-            min-height: auto;
-        }
-    }
-
-    /* Mobile */
 
     @media (max-width: 560px) {
-        .saya-contact-page {
-            padding: 14px 12px 28px;
-        }
-
-        .saya-contact-header {
-            gap: 14px;
-            padding: 24px 19px;
-            margin-bottom: 22px;
-            border-radius: 18px;
-        }
-
-        .saya-contact-brandmark {
-            flex-basis: 57px;
-            width: 57px;
-            height: 57px;
-            border-radius: 18px;
-        }
-
-        .saya-contact-brandmark svg {
-            width: 30px;
-            height: 30px;
-        }
-
-        .saya-contact-eyebrow {
-            margin-bottom: 7px;
-            font-size: 11px;
-        }
-
-        .saya-contact-title {
-            margin-bottom: 6px;
-            font-size: 24px;
-            letter-spacing: -0.5px;
-        }
-
-        .saya-contact-description {
-            font-size: 12px;
-            line-height: 1.9;
-        }
-
-        .saya-contact-section {
-            margin-top: 24px;
-        }
-
-        .saya-contact-section-heading {
-            gap: 9px;
-            margin-bottom: 12px;
-        }
-
-        .saya-contact-heading-icon {
-            flex-basis: 35px;
-            width: 35px;
-            height: 35px;
-            border-radius: 10px;
-        }
-
-        .saya-contact-section-heading h2 {
-            font-size: 16px;
-        }
-
-        .saya-contact-section-heading p {
-            font-size: 11px;
-        }
-
-        .saya-contact-primary-grid,
-        .saya-contact-people-grid {
-            grid-template-columns: 1fr;
-            gap: 12px;
-        }
-
-        .saya-contact-card {
-            padding: 21px 18px;
-            border-radius: 16px;
-        }
-
-        .saya-contact-card-title {
-            margin-bottom: 16px;
-            font-size: 16px;
-        }
-
-        .saya-contact-address-text {
-            font-size: 14px;
-            line-height: 2.15;
-        }
-
-        .saya-contact-address-divider {
-            margin: 15px 0 12px;
-        }
-
-        .saya-contact-hours-row {
-            padding: 12px;
-        }
-
-        .saya-contact-hours-day,
-        .saya-contact-hours-time {
-            font-size: 12px;
-        }
-
-        .saya-contact-hours-note {
-            padding: 12px;
-            font-size: 11px;
-        }
-
-        .saya-contact-person {
-            padding: 20px 17px;
-            border-radius: 16px;
-        }
-
-        .saya-contact-person-header {
-            padding-bottom: 16px;
-            margin-bottom: 14px;
-        }
-
-        .saya-contact-number-group {
-            margin-top: 13px;
-        }
-
-        .saya-contact-number {
-            padding: 11px 12px;
-        }
-
-        .saya-contact-number-value {
-            font-size: 14px;
-        }
-
-        .saya-contact-bottom {
-            align-items: stretch;
-            flex-direction: column;
-            gap: 18px;
-            padding: 22px 19px;
-            margin-top: 24px;
-            border-radius: 17px;
-        }
-
-        .saya-contact-bottom h2 {
-            font-size: 17px;
-        }
-
-        .saya-contact-bottom p {
-            font-size: 12px;
-        }
-
-        .saya-contact-shop-button {
-            width: 100%;
-            min-height: 48px;
-        }
-
-        .saya-contact-footer {
-            padding-top: 20px;
-        }
+        .glass { border-radius: 22px; }
+        .hero { flex-wrap: wrap; gap: 14px; padding: 20px; }
+        .logo { flex-basis: 52px; width: 52px; height: 52px; padding: 13px; border-radius: 17px; }
+        .hero-text { flex-basis: calc(100% - 70px); }
+        .hero-text p { font-size: 12.5px; }
+        .person { padding: 18px; }
+        .visit-col { padding: 20px; }
+        .cta { flex-direction: column; align-items: stretch; padding: 20px; gap: 16px; }
+        .shop { width: 100%; }
     }
-
-    /* Very small mobile screens */
 
     @media (max-width: 360px) {
-        .saya-contact-header {
-            padding: 20px 14px;
-        }
-
-        .saya-contact-brandmark {
-            flex-basis: 48px;
-            width: 48px;
-            height: 48px;
-        }
-
-        .saya-contact-title {
-            font-size: 21px;
-        }
-
-        .saya-contact-card,
-        .saya-contact-person {
-            padding-right: 14px;
-            padding-left: 14px;
-        }
-
-        .saya-contact-hours-row {
-            gap: 7px;
-            padding: 11px 9px;
-        }
-
-        .saya-contact-hours-day,
-        .saya-contact-hours-time {
-            font-size: 11px;
-        }
-
-        .saya-contact-number-value {
-            font-size: 13px;
-        }
+        .row-value { font-size: 13.5px; }
+        .row { gap: 9px; padding: 9px; }
     }
 
-    /* Respect reduced-motion preferences */
-
     @media (prefers-reduced-motion: reduce) {
-        .saya-contact-page *,
-        .saya-contact-page *::before,
-        .saya-contact-page *::after {
-            animation: none !important;
-            transition: none !important;
-            scroll-behavior: auto !important;
-        }
+        *, *::before, *::after { animation: none !important; transition: none !important; }
     }
 </style>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+        <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></symbol>
+        <symbol id="i-building" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v16"/><path d="M2 21h20"/><path d="M9 7h1M9 11h1M14 7h1M14 11h1"/><path d="M10 21v-5h4v5"/></symbol>
+        <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8Z"/></symbol>
+        <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></symbol>
+        <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol>
+        <symbol id="i-out" viewBox="0 0 24 24"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></symbol>
+        <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+        <symbol id="i-bag" viewBox="0 0 24 24"><path d="M6 7h12l1 13H5L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></symbol>
+        <symbol id="i-logo" viewBox="0 0 48 48"><path d="M24 5.5 39.5 14.4v17.8L24 41.5 8.5 32.2V14.4L24 5.5Z" stroke-width="1.5"/><path d="M24 14v20M14 24h20" stroke-width="3"/></symbol>
+    </defs>
+</svg>
 
-<div class="saya-contact-page">
-    <div class="saya-contact-shell">
+<main class="stage">
+    <span class="blob blob-a"></span>
+    <span class="blob blob-b"></span>
+    <span class="blob blob-c"></span>
 
-        <!-- Header -->
+    <div class="shell">
 
-        <header class="saya-contact-header">
+        <!-- Hero -->
+        <header class="glass hero">
+            <div class="logo" aria-hidden="true"><svg><use href="#i-logo"/></svg></div>
 
-            <div class="saya-contact-header-content">
-
-                <div class="saya-contact-eyebrow">
-                    <span class="saya-contact-status"></span>
-                    همراه شما هستیم
-                </div>
-
-                <h1 class="saya-contact-title">
-                    ارتباط با <span>سایا مِد</span>
-                </h1>
-
-                <p class="saya-contact-description">
-                    برای گفت‌وگو با کارشناسان، هماهنگی مراجعه حضوری
-                    یا دریافت راهنمایی، از راه‌های ارتباطی زیر استفاده کنید.
-                </p>
-
+            <div class="hero-text">
+                <h1>ارتباط با سایا مِد</h1>
+                <p>برای گفت‌وگو با کارشناسان، هماهنگی مراجعه حضوری یا دریافت راهنمایی، از راه‌های زیر استفاده کنید.</p>
             </div>
 
-            <div class="saya-contact-brandmark" aria-hidden="true">
-                <svg viewBox="0 0 48 48" fill="none">
-                    <path
-                        d="M24 5.5L39.5 14.4V32.2L24 41.5L8.5 32.2V14.4L24 5.5Z"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linejoin="round"
-                    />
-                    <path
-                        d="M24 14V34M14 24H34"
-                        stroke="currentColor"
-                        stroke-width="3"
-                        stroke-linecap="round"
-                    />
-                </svg>
-            </div>
-
+            <div class="status" id="status" data-state="unknown"><i></i><span id="status-text">همراه شما هستیم</span></div>
         </header>
 
+        <!-- People -->
+        <section class="people" aria-label="ارتباط مستقیم">
 
-        <!-- Address and working hours -->
-
-        <section class="saya-contact-section">
-
-            <div class="saya-contact-section-heading">
-
-                <div class="saya-contact-heading-icon">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.7"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/>
-                        <circle cx="12" cy="9" r="2.5"/>
-                    </svg>
-                </div>
-
-                <div>
-                    <h2>اطلاعات مراجعه و حضور</h2>
-                    <p>آدرس دقیق و زمان پذیرش حضوری</p>
-                </div>
-
-            </div>
-
-
-            <div class="saya-contact-primary-grid">
-
-                <!-- Address -->
-
-                <article class="saya-contact-card saya-contact-address-card">
-
-                    <h3 class="saya-contact-card-title">
-                        <svg viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="1.8"
-                             stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/>
-                            <circle cx="12" cy="10" r="2.5"/>
-                        </svg>
-                        آدرس دفتر مرکزی
-                    </h3>
-
-                    <div class="saya-contact-address-label">
-                        <svg viewBox="0 0 24 24" width="15" height="15"
-                             fill="none" stroke="currentColor"
-                             stroke-width="1.8" stroke-linecap="round"
-                             stroke-linejoin="round">
-                            <path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/>
-                            <circle cx="12" cy="9" r="2"/>
-                        </svg>
-                        تبریز
+            <article class="glass person">
+                <div class="person-head">
+                    <div class="avatar"><svg><use href="#i-user"/></svg></div>
+                    <div>
+                        <h2>وحید دباغی</h2>
+                        <p>ارتباط مستقیم</p>
                     </div>
+                </div>
 
-                    <p class="saya-contact-address-text">
-                        <strong>میدان شهید بهشتی</strong>
-                        <br>
-                        چهارراه منصور، مجتمع تجاری اطلس
-                        <br>
-                        طبقه منفی یک، واحد ۳۰
-                    </p>
-
-                    <div class="saya-contact-address-divider"></div>
-
-                    <a
-                        href="https://maps.google.com/?q=تبریز، میدان شهید بهشتی، مجتمع تجاری اطلس"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="saya-contact-map-link"
-                        aria-label="مشاهده آدرس دفتر روی نقشه"
-                    >
-                        مشاهده مسیر روی نقشه
-
-                        <svg viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="1.8"
-                             stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M7 17 17 7"/>
-                            <path d="M8 7h9v9"/>
-                        </svg>
+                <div class="rows">
+                    <a class="row" href="tel:09149308005" aria-label="تماس با وحید دباغی">
+                        <span class="row-icon"><svg><use href="#i-phone"/></svg></span>
+                        <span class="row-meta">
+                            <span class="row-label">شماره همراه</span>
+                            <span class="row-value">09149308005</span>
+                        </span>
+                        <span class="chev"><svg><use href="#i-back"/></svg></span>
                     </a>
 
-                </article>
+                    <a class="row" href="tel:04133252067" aria-label="تماس با دفتر از طریق شماره اول">
+                        <span class="row-icon"><svg><use href="#i-building"/></svg></span>
+                        <span class="row-meta">
+                            <span class="row-label">تلفن دفتر</span>
+                            <span class="row-value">041-33252067</span>
+                        </span>
+                        <span class="chev"><svg><use href="#i-back"/></svg></span>
+                    </a>
 
+                    <a class="row wa" href="https://wa.me/989149308005" target="_blank" rel="noopener noreferrer">
+                        <span class="row-icon"><svg><use href="#i-chat"/></svg></span>
+                        <span class="row-meta">
+                            <span class="row-label">پیام‌رسان</span>
+                            <span class="row-value">گفت‌وگو در واتساپ</span>
+                        </span>
+                        <span class="chev"><svg><use href="#i-back"/></svg></span>
+                    </a>
+                </div>
+            </article>
 
-                <!-- Working hours -->
-
-                <article class="saya-contact-card saya-contact-hours-card">
-
-                    <h3 class="saya-contact-card-title">
-                        <svg viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="1.8"
-                             stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="9"/>
-                            <path d="M12 7v5l3.5 2"/>
-                        </svg>
-                        ساعات کاری
-                    </h3>
-
-                    <div class="saya-contact-hours-list">
-
-                        <div class="saya-contact-hours-row">
-                            <span class="saya-contact-hours-day">
-                                شنبه تا چهارشنبه
-                            </span>
-
-                            <span class="saya-contact-hours-time">
-                                09:30 – 19:00
-                            </span>
-                        </div>
-
-                        <div class="saya-contact-hours-row">
-                            <span class="saya-contact-hours-day">
-                                پنج‌شنبه
-                            </span>
-
-                            <span class="saya-contact-hours-time">
-                                09:30 – 16:00
-                            </span>
-                        </div>
-
+            <article class="glass person">
+                <div class="person-head">
+                    <div class="avatar"><svg><use href="#i-user"/></svg></div>
+                    <div>
+                        <h2>ژاله فرید</h2>
+                        <p>ارتباط مستقیم</p>
                     </div>
+                </div>
 
-                    <div class="saya-contact-hours-note">
+                <div class="rows">
+                    <a class="row" href="tel:09140917401" aria-label="تماس با ژاله فرید">
+                        <span class="row-icon"><svg><use href="#i-phone"/></svg></span>
+                        <span class="row-meta">
+                            <span class="row-label">شماره همراه</span>
+                            <span class="row-value">09140917401</span>
+                        </span>
+                        <span class="chev"><svg><use href="#i-back"/></svg></span>
+                    </a>
 
-                        <svg viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="1.8"
-                             stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="9"/>
-                            <path d="M12 8v5"/>
-                            <path d="M12 16h.01"/>
-                        </svg>
+                    <a class="row" href="tel:04133359946" aria-label="تماس با دفتر از طریق شماره دوم">
+                        <span class="row-icon"><svg><use href="#i-building"/></svg></span>
+                        <span class="row-meta">
+                            <span class="row-label">تلفن دفتر</span>
+                            <span class="row-value">041-33359946</span>
+                        </span>
+                        <span class="chev"><svg><use href="#i-back"/></svg></span>
+                    </a>
+                </div>
+            </article>
 
-                        جمعه‌ها و تعطیلات رسمی، دفتر تعطیل است.
+        </section>
 
-                    </div>
+        <!-- Visit -->
+        <section class="glass visit" aria-label="اطلاعات مراجعه">
 
-                </article>
+            <div class="visit-col">
+                <h2 class="col-title"><svg><use href="#i-pin"/></svg>آدرس دفتر مرکزی <span class="city">تبریز</span></h2>
 
+                <address>
+                    <strong>میدان شهید بهشتی</strong><br>
+                    چهارراه منصور، مجتمع تجاری اطلس<br>
+                    طبقه منفی یک، واحد ۳۰
+                </address>
+
+                <a class="map-btn" href="https://maps.google.com/?q=تبریز، میدان شهید بهشتی، مجتمع تجاری اطلس"
+                   target="_blank" rel="noopener noreferrer" aria-label="مشاهده آدرس دفتر روی نقشه">
+                    مشاهده مسیر روی نقشه
+                    <svg><use href="#i-out"/></svg>
+                </a>
+            </div>
+
+            <div class="visit-col">
+                <h2 class="col-title"><svg><use href="#i-clock"/></svg>ساعات کاری</h2>
+
+                <div class="hours">
+                    <div class="hour" id="h-main"><span>شنبه تا چهارشنبه</span><span>09:30 – 19:00</span></div>
+                    <div class="hour" id="h-thu"><span>پنج‌شنبه</span><span>09:30 – 16:00</span></div>
+                </div>
+
+                <p class="off">جمعه‌ها و تعطیلات رسمی، دفتر تعطیل است.</p>
             </div>
 
         </section>
 
-
-        <!-- Direct contacts -->
-
-        <section class="saya-contact-section" id="saya-contact-people">
-
-            <div class="saya-contact-section-heading">
-
-                <div class="saya-contact-heading-icon">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.7"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <path d="M20 21v-2a4 4 0 0 0-3-3.87"/>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </svg>
-                </div>
-
-                <div>
-                    <h2>ارتباط مستقیم</h2>
-                    <p>برای تماس، کافی است روی شماره موردنظر بزنید.</p>
-                </div>
-
-            </div>
-
-
-            <div class="saya-contact-people-grid">
-
-                <!-- Contact 1 -->
-
-                <article class="saya-contact-person">
-
-                    <div class="saya-contact-person-header">
-
-                        <div class="saya-contact-avatar">
-                            <svg viewBox="0 0 24 24" fill="none"
-                                 stroke="currentColor" stroke-width="1.7"
-                                 stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="8" r="4"/>
-                                <path d="M4 21v-2a8 8 0 0 1 16 0v2"/>
-                            </svg>
-                        </div>
-
-                        <div>
-                            <h3 class="saya-contact-person-name">
-                                وحید دباغی
-                            </h3>
-                            <p class="saya-contact-person-role">
-                                ارتباط مستقیم
-                            </p>
-                        </div>
-
-                    </div>
-
-
-                    <div class="saya-contact-number-group">
-
-                        <span class="saya-contact-number-label">
-                            شماره همراه
-                        </span>
-
-                        <a
-                            href="tel:09149308005"
-                            class="saya-contact-number"
-                            aria-label="تماس با وحید دباغی"
-                        >
-                            <span class="saya-contact-number-value">
-                                09149308005
-                            </span>
-
-                            <span class="saya-contact-number-icon">
-                                <svg viewBox="0 0 24 24" fill="none"
-                                     stroke="currentColor" stroke-width="1.8"
-                                     stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2
-                                             19.8 19.8 0 0 1-8.63-3.07
-                                             19.5 19.5 0 0 1-6-6
-                                             A19.8 19.8 0 0 1 2.12 4.2
-                                             2 2 0 0 1 4.11 2h3
-                                             a2 2 0 0 1 2 1.72
-                                             c.12.96.36 1.9.7 2.8
-                                             a2 2 0 0 1-.45 2.11
-                                             L8.1 9.9a16 16 0 0 0 6 6
-                                             l1.27-1.26a2 2 0 0 1 2.11-.45
-                                             c.9.34 1.84.58 2.8.7
-                                             a2 2 0 0 1 1.72 2.03Z"/>
-                                </svg>
-                            </span>
-                        </a>
-
-                    </div>
-
-
-                    <div class="saya-contact-number-group">
-
-                        <span class="saya-contact-number-label">
-                            تلفن دفتر
-                        </span>
-
-                        <a
-                            href="tel:04133252067"
-                            class="saya-contact-number"
-                            aria-label="تماس با دفتر از طریق شماره اول"
-                        >
-                            <span class="saya-contact-number-value">
-                                041-33252067
-                            </span>
-
-                            <span class="saya-contact-number-icon">
-                                <svg viewBox="0 0 24 24" fill="none"
-                                     stroke="currentColor" stroke-width="1.8"
-                                     stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M4 21V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v16"/>
-                                    <path d="M2 21h20"/>
-                                    <path d="M9 7h1M9 11h1M14 7h1M14 11h1"/>
-                                    <path d="M10 21v-5h4v5"/>
-                                </svg>
-                            </span>
-                        </a>
-
-                    </div>
-
-
-                    <a
-                        href="https://wa.me/989149308005"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="saya-contact-whatsapp-link"
-                    >
-                        <svg viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="1.7"
-                             stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8
-                                     8.5 8.5 0 0 1-7.6 4.7
-                                     8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7
-                                     a8.4 8.4 0 0 1-.9-3.8
-                                     8.5 8.5 0 0 1 4.7-7.6
-                                     8.4 8.4 0 0 1 3.8-.9h.5
-                                     a8.5 8.5 0 0 1 8 8v.5Z"/>
-                        </svg>
-                        گفت‌وگو در واتساپ
-                    </a>
-
-                </article>
-
-
-                <!-- Contact 2 -->
-
-                <article class="saya-contact-person">
-
-                    <div class="saya-contact-person-header">
-
-                        <div class="saya-contact-avatar">
-                            <svg viewBox="0 0 24 24" fill="none"
-                                 stroke="currentColor" stroke-width="1.7"
-                                 stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="8" r="4"/>
-                                <path d="M4 21v-2a8 8 0 0 1 16 0v2"/>
-                            </svg>
-                        </div>
-
-                        <div>
-                            <h3 class="saya-contact-person-name">
-                                ژاله فرید
-                            </h3>
-                            <p class="saya-contact-person-role">
-                                ارتباط مستقیم
-                            </p>
-                        </div>
-
-                    </div>
-
-
-                    <div class="saya-contact-number-group">
-
-                        <span class="saya-contact-number-label">
-                            شماره همراه
-                        </span>
-
-                        <a
-                            href="tel:09140917401"
-                            class="saya-contact-number"
-                            aria-label="تماس با ژاله فرید"
-                        >
-                            <span class="saya-contact-number-value">
-                                09140917401
-                            </span>
-
-                            <span class="saya-contact-number-icon">
-                                <svg viewBox="0 0 24 24" fill="none"
-                                     stroke="currentColor" stroke-width="1.8"
-                                     stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2
-                                             19.8 19.8 0 0 1-8.63-3.07
-                                             19.5 19.5 0 0 1-6-6
-                                             A19.8 19.8 0 0 1 2.12 4.2
-                                             2 2 0 0 1 4.11 2h3
-                                             a2 2 0 0 1 2 1.72
-                                             c.12.96.36 1.9.7 2.8
-                                             a2 2 0 0 1-.45 2.11
-                                             L8.1 9.9a16 16 0 0 0 6 6
-                                             l1.27-1.26a2 2 0 0 1 2.11-.45
-                                             c.9.34 1.84.58 2.8.7
-                                             a2 2 0 0 1 1.72 2.03Z"/>
-                                </svg>
-                            </span>
-                        </a>
-
-                    </div>
-
-
-                    <div class="saya-contact-number-group">
-
-                        <span class="saya-contact-number-label">
-                            تلفن دفتر
-                        </span>
-
-                        <a
-                            href="tel:04133359946"
-                            class="saya-contact-number"
-                            aria-label="تماس با دفتر از طریق شماره دوم"
-                        >
-                            <span class="saya-contact-number-value">
-                                041-33359946
-                            </span>
-
-                            <span class="saya-contact-number-icon">
-                                <svg viewBox="0 0 24 24" fill="none"
-                                     stroke="currentColor" stroke-width="1.8"
-                                     stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M4 21V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v16"/>
-                                    <path d="M2 21h20"/>
-                                    <path d="M9 7h1M9 11h1M14 7h1M14 11h1"/>
-                                    <path d="M10 21v-5h4v5"/>
-                                </svg>
-                            </span>
-                        </a>
-
-                    </div>
-
-                </article>
-
-            </div>
-
-        </section>
-
-
-        <!-- Single primary CTA -->
-
-        <section class="saya-contact-bottom">
-
-            <div class="saya-contact-bottom-content">
-
+        <!-- CTA -->
+        <section class="glass cta">
+            <div>
                 <h2>در کنار شما هستیم</h2>
-
-                <p>
-                    برای مشاهده محصولات و ادامه مسیر، به فروشگاه سایا مِد سر بزنید.
-                </p>
-
+                <p>برای مشاهده محصولات و ادامه مسیر، به فروشگاه سایا مِد سر بزنید.</p>
             </div>
 
-            <a
-                href="/"
-                class="saya-contact-shop-button"
-            >
+            <a class="shop" href="/">
+                <svg><use href="#i-bag"/></svg>
                 خرید تجهیزات پزشکی
-
-                <svg viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="1.8"
-                     stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M19 12H5"/>
-                    <path d="m12 19-7-7 7-7"/>
-                </svg>
             </a>
-
         </section>
 
-
-        <footer class="saya-contact-footer">
-            <span>سایا مِد</span>
-            <span> · </span>
-            همراه شما، با آرامش و اطمینان
-        </footer>
+        <footer>سایا مِد، همراه شما با آرامش و اطمینان</footer>
 
     </div>
-</div>
+</main>
+</template>
+</saya-contact-page>
+
+<script>
+(function () {
+    var host = document.querySelector('saya-contact-page');
+    if (!host) return;
+
+    /* Fallback for browsers without declarative shadow DOM */
+    if (!host.shadowRoot) {
+        var tpl = host.querySelector('template[shadowrootmode]');
+        if (tpl) {
+            host.attachShadow({ mode: 'open' }).appendChild(tpl.content);
+            tpl.remove();
+        }
+    }
+
+    var root = host.shadowRoot;
+    if (!root) return;
+
+    /* Live open / closed status, Tabriz time (Asia/Tehran) */
+    try {
+        var parts = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'Asia/Tehran', weekday: 'short',
+            hour: '2-digit', minute: '2-digit', hour12: false
+        }).formatToParts(new Date());
+
+        var get = function (t) {
+            for (var i = 0; i < parts.length; i++) if (parts[i].type === t) return parts[i].value;
+        };
+        var day = get('weekday');
+        var mins = (parseInt(get('hour'), 10) % 24) * 60 + parseInt(get('minute'), 10);
+
+        var start = 9 * 60 + 30;
+        var end = null;
+        var todayId = null;
+
+        if (day === 'Sat' || day === 'Sun' || day === 'Mon' || day === 'Tue' || day === 'Wed') { end = 19 * 60; todayId = 'h-main'; }
+        else if (day === 'Thu') { end = 16 * 60; todayId = 'h-thu'; }
+
+        var isOpen = end !== null && mins >= start && mins < end;
+        var status = root.getElementById('status');
+        var text = root.getElementById('status-text');
+
+        status.setAttribute('data-state', isOpen ? 'open' : 'closed');
+        text.textContent = isOpen ? 'اکنون در ساعت کاری هستیم' : 'اکنون خارج از ساعت کاری هستیم';
+
+        if (todayId) root.getElementById(todayId).classList.add('today');
+    } catch (e) { /* keep default text */ }
+})();
+</script>
 
 {% endblock content %}
