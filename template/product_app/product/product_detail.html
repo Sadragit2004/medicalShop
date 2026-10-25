@@ -1066,17 +1066,24 @@ input[type="number"]::-webkit-outer-spin-button {
         </div>
 
         <!-- TAB 1: معرفی -->
+        <!-- TAB 1: معرفی -->
         <div class="tab-content tab1 block">
-            <span class="font-DanaDemiBold border-b-2 border-blue-500 w-fit p-1 text-lg">معرفی</span>
-            <p class="mt-4 leading-8">
+            <span class="font-DanaDemiBold border-b-2 border-blue-500 w-fit p-1 text-lg">
+                معرفی
+            </span>
+
+            <div class="product-description-content mt-4 leading-8">
                 {{ product.description|safe }}
+
                 {% if product.description|length > 500 %}
                 <a href="#" class="flex gap-x-1 items-center text-blue-400">
                     مشاهده بیشتر
-                    <svg class="size-4"><use href="#chevron-left" /></svg>
+                    <svg class="size-4">
+                        <use href="#chevron-left" />
+                    </svg>
                 </a>
                 {% endif %}
-            </p>
+            </div>
         </div>
 
         <!-- TAB 2: مشخصات -->
@@ -1884,6 +1891,120 @@ function updateDynamicCartonDisplay(currentValue, inputElement) {
 
 <style>
     .tab-content.tab1, .tab-content.tab1 p { text-align: justify; text-justify: inter-word; line-height: 2; }
+</style>
+
+<style>
+    /* فقط محتوای معرفی محصول که از CKEditor می‌آید */
+    .product-description-content {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        overflow-wrap: anywhere;
+        word-break: normal;
+        line-height: 2;
+        text-align: justify;
+        text-justify: inter-word;
+    }
+
+    /* تصاویر داخل معرفی محصول */
+    .product-description-content img {
+        display: block !important;
+        width: auto !important;
+        height: auto !important;
+        max-width: 100% !important;
+        object-fit: contain !important;
+        object-position: center !important;
+        margin: 24px auto !important;
+        float: none !important;
+        box-sizing: border-box;
+    }
+
+    /* تنظیم قاب تصاویر CKEditor */
+    .product-description-content figure {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        margin: 24px auto;
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+    .product-description-content figure img {
+        margin: 0 auto !important;
+    }
+
+    /* نظم پاراگراف‌ها */
+    .product-description-content p {
+        max-width: 100%;
+        line-height: 2;
+        overflow-wrap: anywhere;
+    }
+
+    /* تیترهای داخل معرفی */
+    .product-description-content h1,
+    .product-description-content h2,
+    .product-description-content h3,
+    .product-description-content h4,
+    .product-description-content h5,
+    .product-description-content h6 {
+        max-width: 100%;
+        line-height: 1.9;
+        overflow-wrap: anywhere;
+    }
+
+    /* جلوگیری از بیرون‌زدگی جدول و محتوای چندرسانه‌ای */
+    .product-description-content table {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        box-sizing: border-box;
+    }
+
+    .product-description-content iframe,
+    .product-description-content video {
+        display: block;
+        max-width: 100%;
+        margin: 24px auto;
+        box-sizing: border-box;
+    }
+
+    /* موبایل */
+    @media (max-width: 768px) {
+        .product-description-content {
+            font-size: 14px;
+            line-height: 2;
+        }
+
+        .product-description-content img {
+            max-width: 100% !important;
+            height: auto !important;
+            margin: 16px auto !important;
+        }
+
+        .product-description-content figure {
+            margin: 16px auto;
+        }
+
+        .product-description-content p {
+            line-height: 2;
+        }
+    }
+
+    /* دسکتاپ */
+    @media (min-width: 769px) {
+        .product-description-content img {
+            max-width: 80% !important;
+            height: auto !important;
+            margin: 24px auto !important;
+        }
+
+        .product-description-content figure img {
+            margin: 0 auto !important;
+        }
+    }
 </style>
 
 {% endblock %}
