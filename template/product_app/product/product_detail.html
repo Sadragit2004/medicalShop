@@ -143,7 +143,6 @@
     --pd-shadow: 0 12px 40px rgba(30, 64, 90, 0.08);
     --pd-radius: 22px;
     position: relative;
-    isolation: isolate;
 }
 
 .dark .pd-page {
@@ -156,31 +155,76 @@
     --pd-teal-soft: rgba(34, 173, 189, 0.14);
 }
 
-/* لکه‌های رنگی نرم پشت صفحه */
-.pd-page::before,
-.pd-page::after {
-    content: "";
+/* لکه‌های رنگی نرم (کاملاً داخل کادر؛ بدون اسکرول افقی و بدون stacking context) */
+.pd-bg {
     position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 900px;
+    max-height: 100%;
     z-index: -1;
-    border-radius: 50%;
-    filter: blur(90px);
     pointer-events: none;
 }
 
-.pd-page::before {
-    width: 420px;
-    height: 420px;
-    top: 40px;
-    right: -120px;
-    background: rgba(34, 173, 189, 0.22);
+.pd-bg span {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
 }
 
-.pd-page::after {
-    width: 380px;
-    height: 380px;
-    top: 520px;
-    left: -140px;
-    background: rgba(129, 140, 248, 0.16);
+.pd-bg span:nth-child(1) {
+    width: min(320px, 70%);
+    height: 320px;
+    top: 20px;
+    right: 0;
+    background: rgba(34, 173, 189, 0.20);
+}
+
+.pd-bg span:nth-child(2) {
+    width: min(300px, 65%);
+    height: 300px;
+    top: 480px;
+    left: 0;
+    background: rgba(129, 140, 248, 0.14);
+}
+
+/* =====================================================
+   چیدمان ستون‌ها (بدون کلاس‌های جدید Tailwind)
+   ===================================================== */
+.pd-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+    width: 100%;
+}
+
+.pd-media-col,
+.pd-info-col {
+    width: 100%;
+    min-width: 0;
+}
+
+@media (min-width: 768px) {
+    .pd-row {
+        flex-direction: row;
+        gap: 32px;
+    }
+
+    .pd-media-col {
+        width: 46%;
+        flex: 0 0 46%;
+    }
+
+    .pd-info-col {
+        width: auto;
+        flex: 1 1 0%;
+    }
+}
+
+@media (min-width: 1280px) {
+    .pd-row { gap: 24px; }
 }
 
 /* =====================================================
@@ -194,6 +238,7 @@
     border: 1px solid var(--pd-glass-border);
     border-radius: var(--pd-radius) !important;
     box-shadow: var(--pd-shadow) !important;
+    min-width: 0;
 }
 
 .pd-details > div {
@@ -205,6 +250,7 @@
    ===================================================== */
 .pd-gallery {
     width: 100%;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -328,6 +374,9 @@
 .pd-thumbs {
     display: flex;
     gap: 10px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     overflow-x: auto;
     padding: 4px 2px 8px;
     scrollbar-width: thin;
@@ -598,27 +647,30 @@
 }
 
 /* =====================================================
-   نوار ثابت پایین برای موبایل (شیشه‌ای)
+   نوار ثابت پایین برای موبایل
+   (تمام‌عرض و چسبیده به پایین، دقیقاً مثل نسخه اصلی؛
+    تا ناوبری موبایل پایه را کاملاً بپوشاند)
    ===================================================== */
 .mobile-fixed-bottom-bar {
     position: fixed;
-    bottom: 10px;
-    left: 10px;
-    right: 10px;
-    background: rgba(255, 255, 255, 0.72);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    backdrop-filter: blur(20px) saturate(160%);
-    border: 1px solid rgba(255, 255, 255, 0.85);
-    border-radius: 20px;
-    padding: 10px 14px;
-    box-shadow: 0 10px 34px rgba(30, 64, 90, 0.18);
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.97);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(34, 173, 189, 0.18);
+    border-radius: 20px 20px 0 0;
+    padding: 12px 16px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -8px 24px rgba(30, 64, 90, 0.12);
     z-index: 1000;
     display: none;
 }
 
 .dark .mobile-fixed-bottom-bar {
-    background: rgba(30, 41, 59, 0.75);
-    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(30, 41, 59, 0.97);
+    border-top-color: rgba(255, 255, 255, 0.08);
 }
 
 @media (max-width: 768px) {
@@ -929,7 +981,48 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 </style>
 
+<!-- نوار ثابت پایین برای موبایل (بیرون از main تا z-index آن مثل قبل عمل کند) -->
+<div class="mobile-fixed-bottom-bar">
+    <!-- دکمه خانه -->
+    <a style='background:#22adbd;' href="{% url 'main:index' %}" class="home-btn">
+        <svg class="w-5 h-5">
+            <use href="#home" />
+        </svg>
+    </a>
+
+    <!-- نمایش قیمت -->
+    <div class="mobile-price-display">
+        {% if discount_percent > 0 and default_sale_type.final_price > 0 %}
+            <div class="mobile-original-price">{{ default_sale_type.price|intcomma }} تومان</div>
+            <div class="mobile-final-price">{{ default_sale_type.final_price|intcomma }} تومان</div>
+            <div class="mobile-discount-badge">{{ discount_percent }}% تخفیف</div>
+        {% else %}
+            <div class="mobile-final-price">{{ default_sale_type.price|intcomma }} تومان</div>
+        {% endif %}
+    </div>
+
+    <!-- دکمه‌های عملیات -->
+    {% if is_call and emergency_phone %}
+        <a href="tel:{{ emergency_phone.phone_number }}" class="mobile-call-btn">
+            <svg class="w-5 h-5">
+                <use href="#phone"></use>
+            </svg>
+            تماس
+        </a>
+    {% else %}
+        <a href='#arv22' class="mobile-add-to-cart-btn">
+            <svg class="w-5 h-5">
+                <use href="#shopping-bag"></use>
+            </svg>
+            خرید
+        </a>
+    {% endif %}
+</div>
+
 <main class="container pd-page">
+    <!-- پس‌زمینه تزئینی -->
+    <div class="pd-bg" aria-hidden="true"><span></span><span></span></div>
+
     <!-- Breadcrumb -->
     <nav class="flex mt-8" aria-label="Breadcrumb">
         <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
@@ -966,53 +1059,15 @@ input[type="number"]::-webkit-outer-spin-button {
         </ol>
     </nav>
 
-    <!-- نوار ثابت پایین برای موبایل -->
-    <div class="mobile-fixed-bottom-bar">
-        <!-- دکمه خانه -->
-        <a style='background:#22adbd;' href="{% url 'main:index' %}" class="home-btn">
-            <svg class="w-5 h-5">
-                <use href="#home" />
-            </svg>
-        </a>
-
-        <!-- نمایش قیمت -->
-        <div class="mobile-price-display">
-            {% if discount_percent > 0 and default_sale_type.final_price > 0 %}
-                <div class="mobile-original-price">{{ default_sale_type.price|intcomma }} تومان</div>
-                <div class="mobile-final-price">{{ default_sale_type.final_price|intcomma }} تومان</div>
-                <div class="mobile-discount-badge">{{ discount_percent }}% تخفیف</div>
-            {% else %}
-                <div class="mobile-final-price">{{ default_sale_type.price|intcomma }} تومان</div>
-            {% endif %}
-        </div>
-
-        <!-- دکمه‌های عملیات -->
-        {% if is_call and emergency_phone %}
-            <a href="tel:{{ emergency_phone.phone_number }}" class="mobile-call-btn">
-                <svg class="w-5 h-5">
-                    <use href="#phone"></use>
-                </svg>
-                تماس
-            </a>
-        {% else %}
-            <a href='#arv22' class="mobile-add-to-cart-btn">
-                <svg class="w-5 h-5">
-                    <use href="#shopping-bag"></use>
-                </svg>
-                خرید
-            </a>
-        {% endif %}
-    </div>
-
     <!-- PRODUCT DETAILS SECTION -->
     <section class="pd-details mt-5 flex flex-col lg:flex-row items-start gap-4 child:rounded-lg child:bg-white child:dark:bg-gray-800 child:shadow child:p-4">
         <!-- IMAGE & INFO BOX Container -->
         <div class="w-full lg:w-3/4">
-            <div class="flex flex-col md:flex-row justify-start gap-x-8 xl:gap-x-6 gap-y-6 items-start">
+            <div class="pd-row">
 
                 <!-- ========== گالری ترکیبی: اول ویدیو، بعد عکس‌ها ========== -->
                 {% if has_video or galleries or product.mainImage %}
-                <div class="w-full md:w-[46%] md:flex-shrink-0">
+                <div class="pd-media-col">
                     <div class="pd-gallery" id="pd-gallery">
 
                         <div class="pd-stage">
@@ -1089,7 +1144,7 @@ input[type="number"]::-webkit-outer-spin-button {
                 {% endif %}
 
                 <!-- INFOS -->
-                <div class="w-full md:flex-1 min-w-0 flex flex-col gap-y-7">
+                <div class="pd-info-col flex flex-col gap-y-7">
                     <div class="flex items-center justify-between">
                         <a href="" class="font-DanaMedium text-sky-400">
                             {{ product.brand.title|default:"بدون برند" }} / {{ product.category.first.title|default:"بدون دسته" }}
@@ -1109,6 +1164,22 @@ input[type="number"]::-webkit-outer-spin-button {
                             </div>
                         </div>
                     </div>
+
+                    <!-- (قدیمی - مخفی و بی‌استفاده) اسلایدر موبایل قبلی؛ فقط برای اینکه اسکریپت‌های پایه خطا ندهند -->
+                    {% if galleries %}
+                    <div class="hidden" aria-hidden="true">
+                        <div class="swiper MobileProductSlider w-full">
+                            <div class="swiper-wrapper w-full child:w-full child:overflow-hidden child:rounded-lg">
+                                {% for gallery in galleries %}
+                                <div class="swiper-slide">
+                                    <img loading="lazy" src="{{ gallery.image.url }}" alt="{{ gallery.altText|default:product.title }}">
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="swiper-pagination MobileProductSlider-pagination"></div>
+                        </div>
+                    </div>
+                    {% endif %}
 
                     <div class="flex flex-col gap-y-3">
                         <h1 class="text-lg font-DanaDemiBold dark:text-gray-300">
@@ -1653,7 +1724,7 @@ input[type="number"]::-webkit-outer-spin-button {
     {% endif %}
 
     <!-- TAB SECTION -->
-    <section class="pd-glass-card pd-tabs relative mt-10 flex flex-col items-start gap-4 rounded-lg bg-white dark:bg-gray-800 shadow p-5">
+    <section class="pd-glass-card pd-tabs relative mt-10 flex flex-col items-start gap-4 rounded-lg bg-white dark:bg-gray-800 shadow p-4">
         <div class="w-full py-3 flex items-center gap-x-6 child:font-DanaMedium tab-buttons z-10 border-b border-gray-600/20 dark:border-b-gray-200/20">
             <button class="tab-btn text-blue-500" data-target="tab1">معرفی محصول</button>
             <button class="tab-btn text-gray-500 dark:text-gray-300" data-target="tab2">مشخصات</button>
@@ -1786,7 +1857,32 @@ input[type="number"]::-webkit-outer-spin-button {
     </section>
 </main>
 
-<!-- لایت‌باکس تصاویر -->
+<!-- (قدیمی - مخفی و بی‌استفاده) مودال اسلایدر قبلی؛ فقط برای اینکه اسکریپت‌های پایه (همبرگری و ...) خطا ندهند -->
+<div class="slider-modal hidden">
+    <div class="flex w-full h-fit items-center justify-between">
+        <span class="font-DanaMedium text-lg">تصاویر {{ product.title }}</span>
+        <svg class="size-6 cursor-pointer close-sliderModal"><use href="#x-mark"></use></svg>
+    </div>
+
+    <div class="swiper ProductDetailsSlider mt-14 px-10 w-96 relative">
+        <div class="swiper-wrapper w-[50%] child:w-full child:rounded-lg child:overflow-hidden">
+            {% for gallery in galleries %}
+            <div class="swiper-slide">
+                <img loading="lazy" src="{{ gallery.image.url }}" alt="{{ gallery.altText|default:product.title }}">
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <button class="slider-navigate_btn absolute right-40 top-[17rem] border dark:border-gray-700 border-gray-200 button-prev-ProductDetailsSlider z-20">
+        <svg class="size-6 -rotate-90"><use href="#chevron" /></svg>
+    </button>
+    <button class="slider-navigate_btn absolute left-40 top-[17rem] border dark:border-gray-700 border-gray-200 button-next-ProductDetailsSlider z-10">
+        <svg class="size-6 rotate-90"><use href="#chevron" /></svg>
+    </button>
+</div>
+<span class="open-sliderModal hidden" aria-hidden="true"></span>
+
+<!-- لایت‌باکس تصاویر (جدید) -->
 <div class="pd-lightbox" id="pd-lightbox" aria-hidden="true">
     <button type="button" class="pd-lightbox-btn pd-lightbox-close" aria-label="بستن">
         <svg fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6 6 18"/></svg>
@@ -1809,6 +1905,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const mobileBar = document.querySelector('.mobile-fixed-bottom-bar');
 
     function checkMobileBarVisibility() {
+        if (!mobileBar) return;
         if (window.innerWidth <= 768) {
             mobileBar.style.display = 'flex';
             updateMobilePriceDisplay();
@@ -1844,119 +1941,123 @@ document.addEventListener('DOMContentLoaded', function() {
     // ========================
     // گالری ترکیبی (ویدیو + عکس) و لایت‌باکس
     // ========================
-    const pdGallery = document.getElementById('pd-gallery');
-    if (pdGallery) {
-        const slides = Array.from(pdGallery.querySelectorAll('.pd-slide'));
-        const thumbs = Array.from(pdGallery.querySelectorAll('.pd-thumb'));
-        const prevBtn = pdGallery.querySelector('.pd-arrow-prev');
-        const nextBtn = pdGallery.querySelector('.pd-arrow-next');
-        const counter = pdGallery.querySelector('.pd-counter');
-        const stage = pdGallery.querySelector('.pd-stage');
-        let current = Math.max(0, slides.findIndex(s => s.classList.contains('is-active')));
+    try {
+        const pdGallery = document.getElementById('pd-gallery');
+        if (pdGallery) {
+            const slides = Array.from(pdGallery.querySelectorAll('.pd-slide'));
+            const thumbs = Array.from(pdGallery.querySelectorAll('.pd-thumb'));
+            const prevBtn = pdGallery.querySelector('.pd-arrow-prev');
+            const nextBtn = pdGallery.querySelector('.pd-arrow-next');
+            const counter = pdGallery.querySelector('.pd-counter');
+            const stage = pdGallery.querySelector('.pd-stage');
+            let current = Math.max(0, slides.findIndex(s => s.classList.contains('is-active')));
 
-        function showSlide(index, fromUser) {
-            if (!slides.length) return;
-            if (index < 0) index = slides.length - 1;
-            if (index >= slides.length) index = 0;
+            function showSlide(index, fromUser) {
+                if (!slides.length) return;
+                if (index < 0) index = slides.length - 1;
+                if (index >= slides.length) index = 0;
 
-            slides.forEach((slide, k) => {
-                const isOn = k === index;
-                slide.classList.toggle('is-active', isOn);
+                slides.forEach((slide, k) => {
+                    const isOn = k === index;
+                    slide.classList.toggle('is-active', isOn);
 
-                const frame = slide.querySelector('iframe');
-                if (frame) {
-                    if (isOn) {
-                        if (!frame.getAttribute('src')) {
-                            frame.setAttribute('src', frame.dataset.src);
+                    const frame = slide.querySelector('iframe');
+                    if (frame) {
+                        if (isOn) {
+                            if (!frame.getAttribute('src')) {
+                                frame.setAttribute('src', frame.dataset.src);
+                            }
+                        } else {
+                            // توقف ویدیو هنگام رفتن به عکس‌ها
+                            frame.removeAttribute('src');
                         }
-                    } else {
-                        // توقف ویدیو هنگام رفتن به عکس‌ها
-                        frame.removeAttribute('src');
                     }
+                });
+
+                thumbs.forEach((thumb, k) => thumb.classList.toggle('is-active', k === index));
+
+                if (fromUser && thumbs[index]) {
+                    const box = thumbs[index].parentElement;
+                    const target = thumbs[index].offsetLeft - (box.clientWidth / 2) + (thumbs[index].clientWidth / 2);
+                    box.scrollTo({ left: target, behavior: 'smooth' });
                 }
+
+                current = index;
+                if (counter) counter.textContent = (index + 1).toLocaleString('fa-IR') + ' / ' + slides.length.toLocaleString('fa-IR');
+            }
+
+            // مقداردهی اولیه (بارگذاری ویدیو اگر اسلاید اول ویدیوست)
+            showSlide(current, false);
+
+            if (slides.length < 2) {
+                if (prevBtn) prevBtn.style.display = 'none';
+                if (nextBtn) nextBtn.style.display = 'none';
+                if (counter) counter.style.display = 'none';
+            }
+
+            thumbs.forEach((thumb, k) => thumb.addEventListener('click', () => showSlide(k, true)));
+            if (prevBtn) prevBtn.addEventListener('click', () => showSlide(current - 1, true));
+            if (nextBtn) nextBtn.addEventListener('click', () => showSlide(current + 1, true));
+
+            // سوایپ در موبایل (راست‌به‌چپ)
+            let touchStartX = 0;
+            stage.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].clientX;
+            }, { passive: true });
+            stage.addEventListener('touchend', (e) => {
+                const diff = e.changedTouches[0].clientX - touchStartX;
+                if (Math.abs(diff) > 50) {
+                    if (diff < 0) showSlide(current - 1, true);
+                    else showSlide(current + 1, true);
+                }
+            }, { passive: true });
+
+            // لایت‌باکس (فقط برای عکس‌ها)
+            const lightbox = document.getElementById('pd-lightbox');
+            const lightboxImg = lightbox.querySelector('img');
+            const imageSlides = slides.filter(s => s.querySelector('img'));
+            const imageSources = imageSlides.map(s => s.querySelector('img').getAttribute('src'));
+            let lightIndex = 0;
+
+            function openLightbox(i) {
+                lightIndex = (i + imageSources.length) % imageSources.length;
+                lightboxImg.src = imageSources[lightIndex];
+                lightbox.classList.add('is-open');
+                lightbox.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeLightbox() {
+                lightbox.classList.remove('is-open');
+                lightbox.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            }
+
+            imageSlides.forEach((slide, i) => {
+                slide.querySelector('img').addEventListener('click', () => openLightbox(i));
             });
 
-            thumbs.forEach((thumb, k) => thumb.classList.toggle('is-active', k === index));
-
-            if (fromUser && thumbs[index]) {
-                const box = thumbs[index].parentElement;
-                const target = thumbs[index].offsetLeft - (box.clientWidth / 2) + (thumbs[index].clientWidth / 2);
-                box.scrollTo({ left: target, behavior: 'smooth' });
-            }
-
-            current = index;
-            if (counter) counter.textContent = (index + 1).toLocaleString('fa-IR') + ' / ' + slides.length.toLocaleString('fa-IR');
+            lightbox.querySelector('.pd-lightbox-close').addEventListener('click', closeLightbox);
+            lightbox.querySelector('.pd-lightbox-prev').addEventListener('click', (e) => {
+                e.stopPropagation();
+                openLightbox(lightIndex - 1);
+            });
+            lightbox.querySelector('.pd-lightbox-next').addEventListener('click', (e) => {
+                e.stopPropagation();
+                openLightbox(lightIndex + 1);
+            });
+            lightbox.addEventListener('click', (e) => {
+                if (e.target === lightbox) closeLightbox();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (!lightbox.classList.contains('is-open')) return;
+                if (e.key === 'Escape') closeLightbox();
+                if (e.key === 'ArrowLeft') openLightbox(lightIndex + 1);
+                if (e.key === 'ArrowRight') openLightbox(lightIndex - 1);
+            });
         }
-
-        // مقداردهی اولیه (بارگذاری ویدیو اگر اسلاید اول ویدیوست)
-        showSlide(current, false);
-
-        if (slides.length < 2) {
-            if (prevBtn) prevBtn.style.display = 'none';
-            if (nextBtn) nextBtn.style.display = 'none';
-            if (counter) counter.style.display = 'none';
-        }
-
-        thumbs.forEach((thumb, k) => thumb.addEventListener('click', () => showSlide(k, true)));
-        if (prevBtn) prevBtn.addEventListener('click', () => showSlide(current - 1, true));
-        if (nextBtn) nextBtn.addEventListener('click', () => showSlide(current + 1, true));
-
-        // سوایپ در موبایل (راست‌به‌چپ)
-        let touchStartX = 0;
-        stage.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].clientX;
-        }, { passive: true });
-        stage.addEventListener('touchend', (e) => {
-            const diff = e.changedTouches[0].clientX - touchStartX;
-            if (Math.abs(diff) > 50) {
-                if (diff < 0) showSlide(current - 1, true);
-                else showSlide(current + 1, true);
-            }
-        }, { passive: true });
-
-        // لایت‌باکس (فقط برای عکس‌ها)
-        const lightbox = document.getElementById('pd-lightbox');
-        const lightboxImg = lightbox.querySelector('img');
-        const imageSlides = slides.filter(s => s.querySelector('img'));
-        const imageSources = imageSlides.map(s => s.querySelector('img').getAttribute('src'));
-        let lightIndex = 0;
-
-        function openLightbox(i) {
-            lightIndex = (i + imageSources.length) % imageSources.length;
-            lightboxImg.src = imageSources[lightIndex];
-            lightbox.classList.add('is-open');
-            lightbox.setAttribute('aria-hidden', 'false');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeLightbox() {
-            lightbox.classList.remove('is-open');
-            lightbox.setAttribute('aria-hidden', 'true');
-            document.body.style.overflow = '';
-        }
-
-        imageSlides.forEach((slide, i) => {
-            slide.querySelector('img').addEventListener('click', () => openLightbox(i));
-        });
-
-        lightbox.querySelector('.pd-lightbox-close').addEventListener('click', closeLightbox);
-        lightbox.querySelector('.pd-lightbox-prev').addEventListener('click', (e) => {
-            e.stopPropagation();
-            openLightbox(lightIndex - 1);
-        });
-        lightbox.querySelector('.pd-lightbox-next').addEventListener('click', (e) => {
-            e.stopPropagation();
-            openLightbox(lightIndex + 1);
-        });
-        lightbox.addEventListener('click', (e) => {
-            if (e.target === lightbox) closeLightbox();
-        });
-        document.addEventListener('keydown', (e) => {
-            if (!lightbox.classList.contains('is-open')) return;
-            if (e.key === 'Escape') closeLightbox();
-            if (e.key === 'ArrowLeft') openLightbox(lightIndex + 1);
-            if (e.key === 'ArrowRight') openLightbox(lightIndex - 1);
-        });
+    } catch (galleryError) {
+        console.error('Gallery error:', galleryError);
     }
 
     // ========================
