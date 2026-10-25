@@ -117,7 +117,9 @@
 {% block content %}
 
 <style>
-/* تضمین نمایش آیکون قلب */
+/* =====================================================
+   تضمین نمایش آیکون قلب
+   ===================================================== */
 .toggle-favorite-btn,
 #heart-icon-{{ product.id }} {
     display: block !important;
@@ -125,21 +127,500 @@
     opacity: 1 !important;
 }
 
-/* نوار ثابت پایین برای موبایل */
+/* =====================================================
+   متغیرهای طراحی (گلس‌مورفیسم آرام)
+   ===================================================== */
+.pd-page {
+    --pd-teal: #22adbd;
+    --pd-teal-dark: #178795;
+    --pd-teal-soft: rgba(34, 173, 189, 0.10);
+    --pd-teal-line: rgba(34, 173, 189, 0.28);
+    --pd-ink: #1e293b;
+    --pd-muted: #64748b;
+    --pd-glass: rgba(255, 255, 255, 0.58);
+    --pd-glass-strong: rgba(255, 255, 255, 0.78);
+    --pd-glass-border: rgba(255, 255, 255, 0.85);
+    --pd-shadow: 0 12px 40px rgba(30, 64, 90, 0.08);
+    --pd-radius: 22px;
+    position: relative;
+    isolation: isolate;
+}
+
+.dark .pd-page {
+    --pd-ink: #e2e8f0;
+    --pd-muted: #94a3b8;
+    --pd-glass: rgba(30, 41, 59, 0.55);
+    --pd-glass-strong: rgba(30, 41, 59, 0.78);
+    --pd-glass-border: rgba(255, 255, 255, 0.08);
+    --pd-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+    --pd-teal-soft: rgba(34, 173, 189, 0.14);
+}
+
+/* لکه‌های رنگی نرم پشت صفحه */
+.pd-page::before,
+.pd-page::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    border-radius: 50%;
+    filter: blur(90px);
+    pointer-events: none;
+}
+
+.pd-page::before {
+    width: 420px;
+    height: 420px;
+    top: 40px;
+    right: -120px;
+    background: rgba(34, 173, 189, 0.22);
+}
+
+.pd-page::after {
+    width: 380px;
+    height: 380px;
+    top: 520px;
+    left: -140px;
+    background: rgba(129, 140, 248, 0.16);
+}
+
+/* =====================================================
+   کارت‌های شیشه‌ای
+   ===================================================== */
+.pd-details > div,
+.pd-glass-card {
+    background: var(--pd-glass) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    backdrop-filter: blur(18px) saturate(150%);
+    border: 1px solid var(--pd-glass-border);
+    border-radius: var(--pd-radius) !important;
+    box-shadow: var(--pd-shadow) !important;
+}
+
+.pd-details > div {
+    padding: 20px !important;
+}
+
+/* =====================================================
+   گالری ترکیبی (ویدیو + عکس‌ها)
+   ===================================================== */
+.pd-gallery {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.pd-stage {
+    position: relative;
+    width: 100%;
+    min-height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    border-radius: 20px;
+    background: var(--pd-glass-strong);
+    border: 1px solid var(--pd-glass-border);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 24px rgba(30, 64, 90, 0.06);
+    overflow: hidden;
+    touch-action: pan-y;
+}
+
+.pd-slide {
+    display: none;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    animation: pdFade 0.35s ease;
+}
+
+.pd-slide.is-active {
+    display: flex;
+}
+
+@keyframes pdFade {
+    from { opacity: 0; transform: scale(0.985); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* عکس با اندازه واقعی خودش (بدون کراپ و کشیدگی) */
+.pd-slide img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 560px;
+    object-fit: contain;
+    border-radius: 14px;
+    cursor: zoom-in;
+}
+
+/* قاب ویدیو */
+.pd-video-frame {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #0b1220;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+.pd-video-frame iframe {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border: 0;
+}
+
+/* فلش‌ها */
+.pd-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--pd-glass-strong);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--pd-glass-border);
+    color: var(--pd-ink);
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(30, 64, 90, 0.12);
+    transition: all 0.25s ease;
+}
+
+.pd-arrow:hover {
+    background: var(--pd-teal);
+    color: #fff;
+    transform: translateY(-50%) scale(1.06);
+}
+
+.pd-arrow-prev { right: 10px; }
+.pd-arrow-next { left: 10px; }
+
+.pd-arrow svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* شمارنده */
+.pd-counter {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    z-index: 5;
+    padding: 3px 10px;
+    font-size: 11px;
+    border-radius: 999px;
+    color: var(--pd-ink);
+    background: var(--pd-glass-strong);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--pd-glass-border);
+}
+
+/* تامبنیل‌ها */
+.pd-thumbs {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 4px 2px 8px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--pd-teal-line) transparent;
+}
+
+.pd-thumbs::-webkit-scrollbar { height: 5px; }
+.pd-thumbs::-webkit-scrollbar-thumb { background: var(--pd-teal-line); border-radius: 10px; }
+
+.pd-thumb {
+    position: relative;
+    flex: 0 0 auto;
+    width: 68px;
+    height: 68px;
+    padding: 3px;
+    border-radius: 14px;
+    border: 2px solid transparent;
+    background: var(--pd-glass-strong);
+    cursor: pointer;
+    overflow: hidden;
+    opacity: 0.75;
+    transition: all 0.25s ease;
+}
+
+.pd-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+    display: block;
+}
+
+.pd-thumb:hover { opacity: 1; transform: translateY(-2px); }
+
+.pd-thumb.is-active {
+    opacity: 1;
+    border-color: var(--pd-teal);
+    box-shadow: 0 6px 16px rgba(34, 173, 189, 0.28);
+}
+
+.pd-thumb-video::after {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.45);
+}
+
+.pd-thumb-video .pd-play {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+
+.pd-thumb-video .pd-play span {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--pd-teal);
+    box-shadow: 0 4px 12px rgba(34, 173, 189, 0.5);
+}
+
+.pd-thumb-video .pd-play svg {
+    width: 14px;
+    height: 14px;
+    margin-right: -2px;
+}
+
+.pd-thumb-video .pd-video-fallback {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0f172a, #334155);
+}
+
+/* لایت‌باکس */
+.pd-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(10, 18, 32, 0.72);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+}
+
+.pd-lightbox.is-open { display: flex; }
+
+.pd-lightbox img {
+    max-width: 92vw;
+    max-height: 88vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.pd-lightbox-btn {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    transition: background 0.25s ease;
+}
+
+.pd-lightbox-btn:hover { background: rgba(34, 173, 189, 0.7); }
+.pd-lightbox-close { top: 20px; right: 20px; }
+.pd-lightbox-prev  { right: 20px; top: 50%; transform: translateY(-50%); }
+.pd-lightbox-next  { left: 20px;  top: 50%; transform: translateY(-50%); }
+.pd-lightbox-btn svg { width: 20px; height: 20px; }
+
+/* =====================================================
+   بخش‌های اطلاعات
+   ===================================================== */
+.pd-page h1 {
+    color: var(--pd-ink);
+    line-height: 1.9;
+}
+
+.pd-trust span {
+    background: var(--pd-glass-strong);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border-color: var(--pd-glass-border) !important;
+    border-radius: 14px !important;
+    color: var(--pd-muted) !important;
+}
+
+.pd-trust svg { color: var(--pd-teal); }
+
+/* =====================================================
+   باکس خرید (فقط ظاهر، بدون تغییر منطق)
+   ===================================================== */
+.pd-buy .bg-blue-50,
+.pd-buy .bg-blue-100,
+.pd-buy .bg-amber-50,
+.pd-buy .bg-amber-100,
+.pd-buy .bg-gradient-to-r {
+    background: var(--pd-teal-soft) !important;
+    border-color: var(--pd-teal-line) !important;
+    border-radius: 16px !important;
+}
+
+.pd-buy .border-blue-200,
+.pd-buy .border-amber-200,
+.pd-buy .border-blue-300 {
+    border-color: var(--pd-teal-line) !important;
+}
+
+.pd-buy .text-blue-600,
+.pd-buy .text-blue-700,
+.pd-buy .text-amber-600,
+.pd-buy .text-amber-700 {
+    color: var(--pd-teal-dark) !important;
+}
+
+.pd-buy .bg-blue-300,
+.pd-buy .bg-amber-300,
+.pd-buy .bg-blue-200 {
+    background: var(--pd-teal-line) !important;
+}
+
+.pd-buy .bg-white {
+    background: var(--pd-glass-strong) !important;
+    border-radius: 14px !important;
+}
+
+.pd-buy .sale-type-btn {
+    border-radius: 14px !important;
+    background: var(--pd-glass-strong);
+    transition: all 0.25s ease;
+}
+
+.pd-buy .sale-type-btn.bg-blue-500 {
+    background: var(--pd-teal) !important;
+    border-color: var(--pd-teal) !important;
+    box-shadow: 0 8px 18px rgba(34, 173, 189, 0.3);
+}
+
+.pd-buy .sale-type-btn .text-yellow-600 { color: #fde68a !important; }
+
+.pd-buy .text-green-600.cursor-pointer,
+.pd-buy .text-red-500.cursor-pointer {
+    padding: 4px;
+    border-radius: 10px;
+    transition: background 0.2s ease;
+}
+
+.pd-buy .text-green-600.cursor-pointer:hover { background: rgba(34, 197, 94, 0.12); }
+.pd-buy .text-red-500.cursor-pointer:hover { background: rgba(239, 68, 68, 0.12); }
+
+/* =====================================================
+   دکمه‌ها
+   ===================================================== */
+.add-to-cart-btn {
+    background: linear-gradient(135deg, #2bbccd 0%, #1a95a4 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    box-shadow: 0 10px 24px rgba(34, 173, 189, 0.32);
+}
+
+.add-to-cart-btn:hover {
+    background: linear-gradient(135deg, #22adbd 0%, #137783 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(34, 173, 189, 0.4);
+}
+
+.add-to-cart-btn:disabled {
+    background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.7;
+}
+
+.call-btn {
+    background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    text-decoration: none;
+    box-shadow: 0 10px 24px rgba(16, 185, 129, 0.28);
+}
+
+.call-btn:hover {
+    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(16, 185, 129, 0.36);
+}
+
+/* =====================================================
+   نوار ثابت پایین برای موبایل (شیشه‌ای)
+   ===================================================== */
 .mobile-fixed-bottom-bar {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: white;
-    border-top: 1px solid #e5e7eb;
-    padding: 12px 16px;
-    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.72);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    border-radius: 20px;
+    padding: 10px 14px;
+    box-shadow: 0 10px 34px rgba(30, 64, 90, 0.18);
     z-index: 1000;
     display: none;
 }
 
-/* برای نسخه موبایل */
+.dark .mobile-fixed-bottom-bar {
+    background: rgba(30, 41, 59, 0.75);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
 @media (max-width: 768px) {
     .mobile-fixed-bottom-bar {
         display: flex;
@@ -148,13 +629,18 @@
         gap: 12px;
     }
 
-    /* تنظیم padding برای جلوگیری از همپوشانی محتوا */
+    /* جلوگیری از همپوشانی محتوا */
     main.container {
-        padding-bottom: 90px;
+        padding-bottom: 100px;
     }
+
+    .pd-stage { min-height: 220px; padding: 10px; }
+    .pd-slide img { max-height: 420px; }
+    .pd-thumb { width: 58px; height: 58px; }
+    .pd-details > div { padding: 14px !important; }
+    .pd-arrow { width: 34px; height: 34px; }
 }
 
-/* برای نسخه دسکتاپ */
 @media (min-width: 769px) {
     .toggle-favorite-btn,
     #heart-icon-{{ product.id }} {
@@ -175,18 +661,16 @@ input[type="number"]::-webkit-outer-spin-button {
     transition: all 0.3s ease;
 }
 
-/* استایل tooltip بهبود یافته */
-.tooltip {
-    position: relative;
-}
+/* tooltip */
+.tooltip { position: relative; }
 
 .tooltiptext {
     visibility: hidden;
     width: 120px;
-    background-color: #333;
+    background-color: #1e293b;
     color: #fff;
     text-align: center;
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 5px;
     position: absolute;
     z-index: 1;
@@ -203,12 +687,12 @@ input[type="number"]::-webkit-outer-spin-button {
     opacity: 1;
 }
 
-/* استایل برای دکمه خانه */
+/* دکمه خانه */
 .home-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #2bbccd 0%, #1a95a4 100%);
     color: white;
-    border-radius: 10px;
-    padding: 10px 15px;
+    border-radius: 14px;
+    padding: 12px 14px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -219,10 +703,10 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .home-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 8px 16px rgba(34, 173, 189, 0.32);
 }
 
-/* استایل قیمت در نوار موبایل */
+/* قیمت در نوار موبایل */
 .mobile-price-display {
     flex: 1;
     display: flex;
@@ -232,29 +716,29 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .mobile-original-price {
     font-size: 12px;
-    color: #9ca3af;
+    color: #94a3b8;
     text-decoration: line-through;
 }
 
 .mobile-final-price {
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 700;
-    color: #ef4444;
+    color: #e11d48;
 }
 
 .mobile-discount-badge {
-    background: #ef4444;
+    background: #f43f5e;
     color: white;
     font-size: 10px;
-    padding: 2px 6px;
+    padding: 2px 8px;
     border-radius: 10px;
     margin-top: 2px;
 }
 
 .mobile-add-to-cart-btn {
-    background: linear-gradient(135deg, #22adbd);
+    background: linear-gradient(135deg, #2bbccd 0%, #1a95a4 100%);
     color: white;
-    border-radius: 10px;
+    border-radius: 14px;
     padding: 12px 20px;
     display: flex;
     align-items: center;
@@ -263,19 +747,17 @@ input[type="number"]::-webkit-outer-spin-button {
     font-weight: 600;
     flex: 1;
     transition: all 0.3s ease;
+    box-shadow: 0 8px 18px rgba(34, 173, 189, 0.3);
 }
 
 .mobile-add-to-cart-btn:hover {
-    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
 }
 
-/* استایل برای حالت تماس */
 .mobile-call-btn {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    background: linear-gradient(135deg, #34d399 0%, #059669 100%);
     color: white;
-    border-radius: 10px;
+    border-radius: 14px;
     padding: 12px 20px;
     display: flex;
     align-items: center;
@@ -287,93 +769,167 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .mobile-call-btn:hover {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
 }
 
-/* استایل‌های عمومی برای دکمه‌ها */
-.add-to-cart-btn {
-    background: linear-gradient(135deg, #22adbd 0%, #22adbd 100%);
-    color: white;
-    border-radius: 10px;
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
+/* =====================================================
+   تب‌ها
+   ===================================================== */
+.pd-tabs .tab-btn {
+    position: relative;
+    padding: 6px 4px;
+    transition: color 0.25s ease;
+}
+
+.pd-tabs .tab-btn.text-blue-500 {
+    color: var(--pd-teal) !important;
+}
+
+.pd-tabs .tab-btn.text-blue-500::after {
+    content: "";
+    position: absolute;
+    bottom: -13px;
+    right: 0;
+    left: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--pd-teal);
+}
+
+.pd-glass-card .border-blue-500 {
+    border-color: var(--pd-teal) !important;
+}
+
+.pd-glass-card .bg-blue-500 {
+    background: var(--pd-teal) !important;
+}
+
+.pd-glass-card .bg-blue-500:hover,
+.pd-glass-card .hover\:bg-blue-600:hover {
+    background: var(--pd-teal-dark) !important;
+}
+
+/* =====================================================
+   CSS معرفی محصول (خروجی CKEditor)
+   ===================================================== */
+.tab-content.tab1, .tab-content.tab1 p { text-align: justify; text-justify: inter-word; line-height: 2; }
+
+.product-description-content {
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    line-height: 2;
+    text-align: justify;
+    text-justify: inter-word;
 }
 
-.add-to-cart-btn:hover {
-    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
+/* تصاویر داخل معرفی محصول */
+.product-description-content img {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: 100% !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    margin: 24px auto !important;
+    float: none !important;
+    box-sizing: border-box;
+    border-radius: 16px;
 }
 
-.add-to-cart-btn:disabled {
-    background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-    opacity: 0.7;
-}
-
-.call-btn {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-    border-radius: 10px;
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-    width: 100%;
-    text-decoration: none;
-}
-
-.call-btn:hover {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
-}
-
-/* استایل کانتینر ویدیو */
-.product-video-wrapper {
-    width: 100%;
-    max-width: 900px;
-    aspect-ratio: 16 / 9;
-    min-height: 400px;
-    background: #000;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-}
-
-.product-video-wrapper iframe {
-    width: 100%;
-    height: 100%;
+/* قاب تصاویر CKEditor */
+.product-description-content figure {
     display: block;
-    border: 0;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 24px auto;
+    text-align: center;
+    box-sizing: border-box;
 }
 
+.product-description-content figure img {
+    margin: 0 auto !important;
+}
+
+/* پاراگراف‌ها */
+.product-description-content p {
+    max-width: 100%;
+    line-height: 2;
+    overflow-wrap: anywhere;
+}
+
+/* تیترهای داخل معرفی */
+.product-description-content h1,
+.product-description-content h2,
+.product-description-content h3,
+.product-description-content h4,
+.product-description-content h5,
+.product-description-content h6 {
+    max-width: 100%;
+    line-height: 1.9;
+    overflow-wrap: anywhere;
+}
+
+/* جدول و محتوای چندرسانه‌ای */
+.product-description-content table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    box-sizing: border-box;
+}
+
+.product-description-content iframe,
+.product-description-content video {
+    display: block;
+    max-width: 100%;
+    margin: 24px auto;
+    box-sizing: border-box;
+    border-radius: 16px;
+}
+
+/* موبایل */
 @media (max-width: 768px) {
-    .product-video-wrapper {
-        min-height: 220px;
-        aspect-ratio: 16 / 9;
+    .product-description-content {
+        font-size: 14px;
+        line-height: 2;
+    }
+
+    .product-description-content img {
+        max-width: 100% !important;
+        height: auto !important;
+        margin: 16px auto !important;
+    }
+
+    .product-description-content figure {
+        margin: 16px auto;
+    }
+
+    .product-description-content p {
+        line-height: 2;
+    }
+}
+
+/* دسکتاپ */
+@media (min-width: 769px) {
+    .product-description-content img {
+        max-width: 80% !important;
+        height: auto !important;
+        margin: 24px auto !important;
+    }
+
+    .product-description-content figure img {
+        margin: 0 auto !important;
     }
 }
 </style>
 
-<main class="container">
+<main class="container pd-page">
     <!-- Breadcrumb -->
     <nav class="flex mt-8" aria-label="Breadcrumb">
         <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
@@ -449,36 +1005,91 @@ input[type="number"]::-webkit-outer-spin-button {
     </div>
 
     <!-- PRODUCT DETAILS SECTION -->
-    <section class="mt-5 flex flex-col lg:flex-row items-start gap-4 child:rounded-lg child:bg-white child:dark:bg-gray-800 child:shadow child:p-4">
+    <section class="pd-details mt-5 flex flex-col lg:flex-row items-start gap-4 child:rounded-lg child:bg-white child:dark:bg-gray-800 child:shadow child:p-4">
         <!-- IMAGE & INFO BOX Container -->
         <div class="w-full lg:w-3/4">
-            <div class="flex flex-col md:flex-row justify-start gap-x-8 xl:gap-x-2 items-start">
-                <!-- IMAGE SLIDER -->
-                <div class="w-2/4 hidden md:flex flex-col justify-center items-center gap-y-4">
-                    {% if galleries %}
-                    <span class="open-sliderModal cursor-pointer">
-                        <img loading="lazy" src="{{ galleries.0.image.url }}" class="object-cover" alt="{{ galleries.0.altText|default:product.title }}">
-                    </span>
-                    <div class="grid grid-cols-12 child:col-span-3 child:app-border gap-x-4 child:size-16 child:rounded-lg child:cursor-pointer">
-                        {% for gallery in galleries|slice:":4" %}
-                        <div class="p-1 open-sliderModal">
-                            <img loading="lazy" src="{{ gallery.image.url }}" class="object-cover rounded-lg" alt="{{ gallery.altText|default:product.title }}">
+            <div class="flex flex-col md:flex-row justify-start gap-x-8 xl:gap-x-6 gap-y-6 items-start">
+
+                <!-- ========== گالری ترکیبی: اول ویدیو، بعد عکس‌ها ========== -->
+                {% if has_video or galleries or product.mainImage %}
+                <div class="w-full md:w-[46%] md:flex-shrink-0">
+                    <div class="pd-gallery" id="pd-gallery">
+
+                        <div class="pd-stage">
+                            {% if has_video %}
+                            <!-- اسلاید ویدیو (همیشه اول) -->
+                            <div class="pd-slide pd-slide-video is-active">
+                                <div class="pd-video-frame">
+                                    <iframe
+                                        data-src="{{ video_embed_url }}"
+                                        title="ویدیو معرفی {{ product.title }}"
+                                        frameborder="0"
+                                        allowfullscreen
+                                        allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                                        referrerpolicy="no-referrer-when-downgrade">
+                                    </iframe>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if galleries %}
+                                {% for gallery in galleries %}
+                                <div class="pd-slide {% if forloop.first and not has_video %}is-active{% endif %}">
+                                    <img loading="lazy" src="{{ gallery.image.url }}" alt="{{ gallery.altText|default:product.title }}">
+                                </div>
+                                {% endfor %}
+                            {% elif product.mainImage %}
+                                <div class="pd-slide {% if not has_video %}is-active{% endif %}">
+                                    <img loading="lazy" src="{{ product.mainImage.url }}" alt="{{ product.title }}">
+                                </div>
+                            {% endif %}
+
+                            <!-- فلش‌ها -->
+                            <button type="button" class="pd-arrow pd-arrow-prev" aria-label="قبلی">
+                                <svg fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7"/></svg>
+                            </button>
+                            <button type="button" class="pd-arrow pd-arrow-next" aria-label="بعدی">
+                                <svg fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m15 5-7 7 7 7"/></svg>
+                            </button>
+
+                            <span class="pd-counter"></span>
                         </div>
-                        {% endfor %}
-                        {% if galleries|length > 4 %}
-                        <div class="overflow-hidden relative open-sliderModal">
-                            <svg class="absolute size-8 text-gray-100 top-4 left-4 z-10">
-                                <use href="#ellipsis"></use>
-                            </svg>
-                            <img loading="lazy" src="{{ galleries.4.image.url }}" class="object-cover rounded-lg blur-sm" alt="{{ galleries.4.altText|default:product.title }}">
+
+                        <!-- تامبنیل‌ها -->
+                        <div class="pd-thumbs">
+                            {% if has_video %}
+                            <button type="button" class="pd-thumb pd-thumb-video is-active" aria-label="ویدیو معرفی">
+                                {% if product.mainImage %}
+                                <img loading="lazy" src="{{ product.mainImage.url }}" alt="ویدیو {{ product.title }}">
+                                {% else %}
+                                <div class="pd-video-fallback"></div>
+                                {% endif %}
+                                <span class="pd-play">
+                                    <span>
+                                        <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                    </span>
+                                </span>
+                            </button>
+                            {% endif %}
+
+                            {% if galleries %}
+                                {% for gallery in galleries %}
+                                <button type="button" class="pd-thumb {% if forloop.first and not has_video %}is-active{% endif %}" aria-label="تصویر {{ forloop.counter }}">
+                                    <img loading="lazy" src="{{ gallery.image.url }}" alt="{{ gallery.altText|default:product.title }}">
+                                </button>
+                                {% endfor %}
+                            {% elif product.mainImage %}
+                                <button type="button" class="pd-thumb {% if not has_video %}is-active{% endif %}" aria-label="تصویر محصول">
+                                    <img loading="lazy" src="{{ product.mainImage.url }}" alt="{{ product.title }}">
+                                </button>
+                            {% endif %}
                         </div>
-                        {% endif %}
                     </div>
-                    {% endif %}
                 </div>
+                {% endif %}
 
                 <!-- INFOS -->
-                <div class="w-full md:w-3/4 flex flex-col gap-y-7">
+                <div class="w-full md:flex-1 min-w-0 flex flex-col gap-y-7">
                     <div class="flex items-center justify-between">
                         <a href="" class="font-DanaMedium text-sky-400">
                             {{ product.brand.title|default:"بدون برند" }} / {{ product.category.first.title|default:"بدون دسته" }}
@@ -498,22 +1109,6 @@ input[type="number"]::-webkit-outer-spin-button {
                             </div>
                         </div>
                     </div>
-
-                    <!-- MOBILE SLIDER -->
-                    {% if galleries %}
-                    <div class="flex md:hidden">
-                        <div class="swiper MobileProductSlider w-full">
-                            <div class="swiper-wrapper w-full child:w-full child:overflow-hidden child:rounded-lg">
-                                {% for gallery in galleries %}
-                                <div class="swiper-slide">
-                                    <img loading="lazy" src="{{ gallery.image.url }}" alt="{{ gallery.altText|default:product.title }}">
-                                </div>
-                                {% endfor %}
-                            </div>
-                            <div class="swiper-pagination MobileProductSlider-pagination"></div>
-                        </div>
-                    </div>
-                    {% endif %}
 
                     <div class="flex flex-col gap-y-3">
                         <h1 class="text-lg font-DanaDemiBold dark:text-gray-300">
@@ -654,7 +1249,7 @@ input[type="number"]::-webkit-outer-spin-button {
                 </div>
             </div>
 
-            <div class="mt-10 lg:mr-2 grid grid-cols-12 child:col-span-6 xl:child:col-span-3 gap-x-1 gap-y-2 lg:gap-4 child:border child:text-gray-400 child:dark:border-white/20 child:border-gray-200 child:rounded-lg child:h-12 child:p-2 child:flex child:items-center child:gap-x-1 lg:child:gap-x-2 child:text-sm lg:text-base">
+            <div class="pd-trust mt-10 lg:mr-2 grid grid-cols-12 child:col-span-6 xl:child:col-span-3 gap-x-1 gap-y-2 lg:gap-4 child:border child:text-gray-400 child:dark:border-white/20 child:border-gray-200 child:rounded-lg child:h-12 child:p-2 child:flex child:items-center child:gap-x-1 lg:child:gap-x-2 child:text-sm lg:text-base">
                 <span>
                     <svg class="w-4 h-4 lg:w-6 lg:h-6">
                         <use href="#check-badge"></use>
@@ -677,7 +1272,7 @@ input[type="number"]::-webkit-outer-spin-button {
         </div>
 
         <!-- PRICE & ADD TO CART BOX -->
-       <div id='arv22' class="w-full lg:w-1/4 lg:sticky top-5 flex flex-col gap-y-6">
+       <div id='arv22' class="pd-buy w-full lg:w-1/4 lg:sticky top-5 flex flex-col gap-y-6">
     {% if default_sale_type %}
     <!-- PRICE - فقط وقتی is_call نیست نمایش بده -->
     <div class="space-y-2">
@@ -1058,7 +1653,7 @@ input[type="number"]::-webkit-outer-spin-button {
     {% endif %}
 
     <!-- TAB SECTION -->
-    <section class="relative mt-10 flex flex-col items-start gap-4 rounded-lg bg-white dark:bg-gray-800 shadow p-4">
+    <section class="pd-glass-card pd-tabs relative mt-10 flex flex-col items-start gap-4 rounded-lg bg-white dark:bg-gray-800 shadow p-5">
         <div class="w-full py-3 flex items-center gap-x-6 child:font-DanaMedium tab-buttons z-10 border-b border-gray-600/20 dark:border-b-gray-200/20">
             <button class="tab-btn text-blue-500" data-target="tab1">معرفی محصول</button>
             <button class="tab-btn text-gray-500 dark:text-gray-300" data-target="tab2">مشخصات</button>
@@ -1066,8 +1661,7 @@ input[type="number"]::-webkit-outer-spin-button {
         </div>
 
         <!-- TAB 1: معرفی -->
-        <!-- TAB 1: معرفی -->
-        <div class="tab-content tab1 block">
+        <div class="tab-content tab1 block w-full">
             <span class="font-DanaDemiBold border-b-2 border-blue-500 w-fit p-1 text-lg">
                 معرفی
             </span>
@@ -1190,55 +1784,20 @@ input[type="number"]::-webkit-outer-spin-button {
             </div>
         </div>
     </section>
-
-    <!-- ========== بخش ویدیو محصول ========== -->
-    {% if has_video %}
-    <section class="relative mt-10 flex flex-col items-start gap-4 rounded-lg bg-white dark:bg-gray-800 shadow p-4">
-        <div class="w-full py-3 flex items-center gap-x-2 border-b border-gray-600/20 dark:border-b-gray-200/20">
-            <svg class="size-6 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/>
-            </svg>
-            <span class="font-DanaDemiBold text-lg dark:text-gray-200">ویدیو معرفی محصول</span>
-        </div>
-
-        <div class="w-full flex justify-center mt-4">
-            <div class="product-video-wrapper">
-                <iframe
-                    src="{{ video_embed_url }}"
-                    frameborder="0"
-                    allowfullscreen
-                    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-                    referrerpolicy="no-referrer-when-downgrade"
-                    loading="lazy">
-                </iframe>
-            </div>
-        </div>
-    </section>
-    {% endif %}
 </main>
 
-<!-- SLIDER MODAL -->
-<div class="slider-modal hidden">
-    <div class="flex w-full h-fit items-center justify-between">
-        <span class="font-DanaMedium text-lg">تصاویر {{ product.title }}</span>
-        <svg class="size-6 cursor-pointer close-sliderModal"><use href="#x-mark"></use></svg>
-    </div>
-
-    <div class="swiper ProductDetailsSlider mt-14 px-10 w-96 relative">
-        <div class="swiper-wrapper w-[50%] child:w-full child:rounded-lg child:overflow-hidden">
-            {% for gallery in galleries %}
-            <div class="swiper-slide">
-                <img loading="lazy" src="{{ gallery.image.url }}" alt="{{ gallery.altText|default:product.title }}">
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    <button class="slider-navigate_btn absolute right-40 top-[17rem] border dark:border-gray-700 border-gray-200 button-prev-ProductDetailsSlider z-20">
-        <svg class="size-6 -rotate-90"><use href="#chevron" /></svg>
+<!-- لایت‌باکس تصاویر -->
+<div class="pd-lightbox" id="pd-lightbox" aria-hidden="true">
+    <button type="button" class="pd-lightbox-btn pd-lightbox-close" aria-label="بستن">
+        <svg fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6 6 18"/></svg>
     </button>
-    <button class="slider-navigate_btn absolute left-40 top-[17rem] border dark:border-gray-700 border-gray-200 button-next-ProductDetailsSlider z-10">
-        <svg class="size-6 rotate-90"><use href="#chevron" /></svg>
+    <button type="button" class="pd-lightbox-btn pd-lightbox-prev" aria-label="قبلی">
+        <svg fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7"/></svg>
     </button>
+    <button type="button" class="pd-lightbox-btn pd-lightbox-next" aria-label="بعدی">
+        <svg fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m15 5-7 7 7 7"/></svg>
+    </button>
+    <img src="" alt="">
 </div>
 
 <!-- JavaScript for interactions -->
@@ -1283,27 +1842,122 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('resize', checkMobileBarVisibility);
 
     // ========================
-    // Modal management
+    // گالری ترکیبی (ویدیو + عکس) و لایت‌باکس
     // ========================
-    const openModalBtns = document.querySelectorAll('.open-sliderModal');
-    const closeModalBtn = document.querySelector('.close-sliderModal');
-    const modal = document.querySelector('.slider-modal');
+    const pdGallery = document.getElementById('pd-gallery');
+    if (pdGallery) {
+        const slides = Array.from(pdGallery.querySelectorAll('.pd-slide'));
+        const thumbs = Array.from(pdGallery.querySelectorAll('.pd-thumb'));
+        const prevBtn = pdGallery.querySelector('.pd-arrow-prev');
+        const nextBtn = pdGallery.querySelector('.pd-arrow-next');
+        const counter = pdGallery.querySelector('.pd-counter');
+        const stage = pdGallery.querySelector('.pd-stage');
+        let current = Math.max(0, slides.findIndex(s => s.classList.contains('is-active')));
 
-    openModalBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            modal.classList.remove('hidden');
-        });
-    });
+        function showSlide(index, fromUser) {
+            if (!slides.length) return;
+            if (index < 0) index = slides.length - 1;
+            if (index >= slides.length) index = 0;
 
-    closeModalBtn.addEventListener('click', () => {
-        modal.classList.add('hidden');
-    });
+            slides.forEach((slide, k) => {
+                const isOn = k === index;
+                slide.classList.toggle('is-active', isOn);
 
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            modal.classList.add('hidden');
+                const frame = slide.querySelector('iframe');
+                if (frame) {
+                    if (isOn) {
+                        if (!frame.getAttribute('src')) {
+                            frame.setAttribute('src', frame.dataset.src);
+                        }
+                    } else {
+                        // توقف ویدیو هنگام رفتن به عکس‌ها
+                        frame.removeAttribute('src');
+                    }
+                }
+            });
+
+            thumbs.forEach((thumb, k) => thumb.classList.toggle('is-active', k === index));
+
+            if (fromUser && thumbs[index]) {
+                const box = thumbs[index].parentElement;
+                const target = thumbs[index].offsetLeft - (box.clientWidth / 2) + (thumbs[index].clientWidth / 2);
+                box.scrollTo({ left: target, behavior: 'smooth' });
+            }
+
+            current = index;
+            if (counter) counter.textContent = (index + 1).toLocaleString('fa-IR') + ' / ' + slides.length.toLocaleString('fa-IR');
         }
-    });
+
+        // مقداردهی اولیه (بارگذاری ویدیو اگر اسلاید اول ویدیوست)
+        showSlide(current, false);
+
+        if (slides.length < 2) {
+            if (prevBtn) prevBtn.style.display = 'none';
+            if (nextBtn) nextBtn.style.display = 'none';
+            if (counter) counter.style.display = 'none';
+        }
+
+        thumbs.forEach((thumb, k) => thumb.addEventListener('click', () => showSlide(k, true)));
+        if (prevBtn) prevBtn.addEventListener('click', () => showSlide(current - 1, true));
+        if (nextBtn) nextBtn.addEventListener('click', () => showSlide(current + 1, true));
+
+        // سوایپ در موبایل (راست‌به‌چپ)
+        let touchStartX = 0;
+        stage.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].clientX;
+        }, { passive: true });
+        stage.addEventListener('touchend', (e) => {
+            const diff = e.changedTouches[0].clientX - touchStartX;
+            if (Math.abs(diff) > 50) {
+                if (diff < 0) showSlide(current - 1, true);
+                else showSlide(current + 1, true);
+            }
+        }, { passive: true });
+
+        // لایت‌باکس (فقط برای عکس‌ها)
+        const lightbox = document.getElementById('pd-lightbox');
+        const lightboxImg = lightbox.querySelector('img');
+        const imageSlides = slides.filter(s => s.querySelector('img'));
+        const imageSources = imageSlides.map(s => s.querySelector('img').getAttribute('src'));
+        let lightIndex = 0;
+
+        function openLightbox(i) {
+            lightIndex = (i + imageSources.length) % imageSources.length;
+            lightboxImg.src = imageSources[lightIndex];
+            lightbox.classList.add('is-open');
+            lightbox.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            lightbox.classList.remove('is-open');
+            lightbox.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+
+        imageSlides.forEach((slide, i) => {
+            slide.querySelector('img').addEventListener('click', () => openLightbox(i));
+        });
+
+        lightbox.querySelector('.pd-lightbox-close').addEventListener('click', closeLightbox);
+        lightbox.querySelector('.pd-lightbox-prev').addEventListener('click', (e) => {
+            e.stopPropagation();
+            openLightbox(lightIndex - 1);
+        });
+        lightbox.querySelector('.pd-lightbox-next').addEventListener('click', (e) => {
+            e.stopPropagation();
+            openLightbox(lightIndex + 1);
+        });
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) closeLightbox();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (!lightbox.classList.contains('is-open')) return;
+            if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowLeft') openLightbox(lightIndex + 1);
+            if (e.key === 'ArrowRight') openLightbox(lightIndex - 1);
+        });
+    }
 
     // ========================
     // Tab management
@@ -1888,123 +2542,5 @@ function updateDynamicCartonDisplay(currentValue, inputElement) {
         });
     });
 </script>
-
-<style>
-    .tab-content.tab1, .tab-content.tab1 p { text-align: justify; text-justify: inter-word; line-height: 2; }
-</style>
-
-<style>
-    /* فقط محتوای معرفی محصول که از CKEditor می‌آید */
-    .product-description-content {
-        width: 100%;
-        max-width: 100%;
-        min-width: 0;
-        box-sizing: border-box;
-        overflow-wrap: anywhere;
-        word-break: normal;
-        line-height: 2;
-        text-align: justify;
-        text-justify: inter-word;
-    }
-
-    /* تصاویر داخل معرفی محصول */
-    .product-description-content img {
-        display: block !important;
-        width: auto !important;
-        height: auto !important;
-        max-width: 100% !important;
-        object-fit: contain !important;
-        object-position: center !important;
-        margin: 24px auto !important;
-        float: none !important;
-        box-sizing: border-box;
-    }
-
-    /* تنظیم قاب تصاویر CKEditor */
-    .product-description-content figure {
-        display: block;
-        width: 100%;
-        max-width: 100%;
-        height: auto;
-        margin: 24px auto;
-        text-align: center;
-        box-sizing: border-box;
-    }
-
-    .product-description-content figure img {
-        margin: 0 auto !important;
-    }
-
-    /* نظم پاراگراف‌ها */
-    .product-description-content p {
-        max-width: 100%;
-        line-height: 2;
-        overflow-wrap: anywhere;
-    }
-
-    /* تیترهای داخل معرفی */
-    .product-description-content h1,
-    .product-description-content h2,
-    .product-description-content h3,
-    .product-description-content h4,
-    .product-description-content h5,
-    .product-description-content h6 {
-        max-width: 100%;
-        line-height: 1.9;
-        overflow-wrap: anywhere;
-    }
-
-    /* جلوگیری از بیرون‌زدگی جدول و محتوای چندرسانه‌ای */
-    .product-description-content table {
-        display: block;
-        width: 100%;
-        max-width: 100%;
-        overflow-x: auto;
-        box-sizing: border-box;
-    }
-
-    .product-description-content iframe,
-    .product-description-content video {
-        display: block;
-        max-width: 100%;
-        margin: 24px auto;
-        box-sizing: border-box;
-    }
-
-    /* موبایل */
-    @media (max-width: 768px) {
-        .product-description-content {
-            font-size: 14px;
-            line-height: 2;
-        }
-
-        .product-description-content img {
-            max-width: 100% !important;
-            height: auto !important;
-            margin: 16px auto !important;
-        }
-
-        .product-description-content figure {
-            margin: 16px auto;
-        }
-
-        .product-description-content p {
-            line-height: 2;
-        }
-    }
-
-    /* دسکتاپ */
-    @media (min-width: 769px) {
-        .product-description-content img {
-            max-width: 80% !important;
-            height: auto !important;
-            margin: 24px auto !important;
-        }
-
-        .product-description-content figure img {
-            margin: 0 auto !important;
-        }
-    }
-</style>
 
 {% endblock %}
