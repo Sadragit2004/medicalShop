@@ -58,7 +58,7 @@
         <p class="mb-2 text-gray-800 dark:text-gray-100 font-DanaMedium text-lg">کد تأیید را وارد کنید</p>
 
         <!-- فرم اصلی برای تأیید کد -->
-        <form class="space-y-5" method="POST">
+        <form class="space-y-5" method="POST" id="otpForm">
           {% csrf_token %}
 
           <div>
@@ -183,6 +183,30 @@
 
       // مدیریت فیلدهای کد OTP
       const inputs = document.querySelectorAll('input[type="text"][maxlength="1"]');
+      const otpForm = document.getElementById('otpForm');
+
+      // تابع بررسی کامل بودن کد و ارسال خودکار
+      function checkAndAutoSubmit() {
+        let fullCode = '';
+        inputs.forEach(input => {
+          fullCode += input.value;
+        });
+
+        if (fullCode.length === 5) {
+          // ایجاد فیلد مخفی برای کد کامل
+          let hiddenInput = otpForm.querySelector('input[name="otp_code"]');
+          if (!hiddenInput) {
+            hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'otp_code';
+            otpForm.appendChild(hiddenInput);
+          }
+          hiddenInput.value = fullCode;
+
+          // ارسال خودکار فرم
+          otpForm.submit();
+        }
+      }
 
       inputs.forEach((input, index) => {
         // فقط اعداد قبول کن
@@ -194,6 +218,9 @@
             inputs[index + 1].focus();
             inputs[index + 1].select();
           }
+
+          // بررسی ارسال خودکار
+          checkAndAutoSubmit();
         });
 
         // پشتیبانی از backspace
@@ -228,6 +255,9 @@
             });
             inputs[4].focus();
             inputs[4].select();
+
+            // بررسی ارسال خودکار بعد از paste
+            checkAndAutoSubmit();
           }
         });
 
@@ -315,10 +345,9 @@
         }
       }
 
-      // فرم اصلی - اعتبارسنجی قبل از ارسال
-      const mainForm = document.querySelector('form[method="POST"]');
-      if (mainForm && !mainForm.querySelector('input[name="resend"]')) {
-        mainForm.addEventListener('submit', function(e) {
+      // فرم اصلی - اعتبارسنجی قبل از ارسال (برای دکمه تأیید)
+      if (otpForm) {
+        otpForm.addEventListener('submit', function(e) {
           // فقط اگر دکمه تأیید کد زده شده
           if (e.submitter && e.submitter.name === 'verify') {
             // جمع‌آوری همه کدها
@@ -342,11 +371,14 @@
             }
 
             // ایجاد یک فیلد مخفی برای کد کامل
-            const hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.name = 'otp_code';
+            let hiddenInput = otpForm.querySelector('input[name="otp_code"]');
+            if (!hiddenInput) {
+              hiddenInput = document.createElement('input');
+              hiddenInput.type = 'hidden';
+              hiddenInput.name = 'otp_code';
+              otpForm.appendChild(hiddenInput);
+            }
             hiddenInput.value = fullCode;
-            this.appendChild(hiddenInput);
           }
         });
       }
