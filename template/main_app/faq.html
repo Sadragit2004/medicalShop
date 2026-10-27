@@ -1,13 +1,429 @@
 {% extends "main_template.html" %}
 
 {% block content %}
-<main class="container mx-auto px-4 py-10">
-    <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow p-8 space-y-6">
-        <h1 class="text-2xl font-DanaDemiBold text-gray-900 dark:text-gray-100 mb-4">سوالات متداول</h1>
-        <p class="text-gray-700 dark:text-gray-300 leading-7">
-            این صفحه محتوای ثابت «سوالات متداول» است. سوالات رایج و پاسخ‌های کوتاه را در این بخش قرار دهید.
-        </p>
+<main class="smf-root" dir="rtl">
+<style>
+/* ===== Saya Med FAQ — fully scoped, all rules live under .smf-root ===== */
+.smf-root, .smf-root *, .smf-root *::before, .smf-root *::after { box-sizing: border-box; }
+.smf-root {
+  --smf-brand: #22adbd;
+  --smf-brand-2: #4fd1de;
+  --smf-brand-deep: #167e8b;
+  --smf-text: #0f2f35;
+  --smf-muted: #4d6a70;
+  --smf-glass: rgba(255,255,255,.55);
+  --smf-glass-strong: rgba(255,255,255,.78);
+  --smf-border: rgba(255,255,255,.75);
+  --smf-line: rgba(34,173,189,.18);
+  --smf-shadow: 0 10px 40px -12px rgba(22,126,139,.28);
+  --smf-ease: cubic-bezier(.22,1,.36,1);
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 56px 16px 72px;
+  color: var(--smf-text);
+  font-family: inherit;
+  line-height: 1.9;
+  background:
+    radial-gradient(1200px 500px at 85% -10%, rgba(34,173,189,.16), transparent 60%),
+    linear-gradient(180deg, #eefafb 0%, #f7fcfd 100%);
+}
+.dark .smf-root {
+  --smf-text: #e6f6f8;
+  --smf-muted: #9bbcc2;
+  --smf-glass: rgba(20,44,50,.5);
+  --smf-glass-strong: rgba(22,52,59,.75);
+  --smf-border: rgba(255,255,255,.09);
+  --smf-line: rgba(79,209,222,.16);
+  --smf-shadow: 0 14px 44px -14px rgba(0,0,0,.6);
+  background:
+    radial-gradient(1200px 500px at 85% -10%, rgba(34,173,189,.18), transparent 60%),
+    linear-gradient(180deg, #08171a 0%, #0b1f23 100%);
+}
+
+/* floating color orbs behind the glass */
+.smf-root .smf-orb {
+  position: absolute; z-index: -1; border-radius: 50%;
+  filter: blur(70px); opacity: .55; pointer-events: none;
+  animation: smf-float 14s ease-in-out infinite;
+}
+.smf-root .smf-orb.o1 { width: 340px; height: 340px; background: #22adbd; top: -80px; right: -90px; }
+.smf-root .smf-orb.o2 { width: 300px; height: 300px; background: #7de3ee; bottom: 8%; left: -100px; animation-delay: -5s; opacity: .45; }
+.smf-root .smf-orb.o3 { width: 220px; height: 220px; background: #5b8cff; top: 42%; right: 12%; animation-delay: -9s; opacity: .22; }
+.dark .smf-root .smf-orb { opacity: .3; }
+@keyframes smf-float {
+  0%,100% { transform: translate3d(0,0,0) scale(1); }
+  50%     { transform: translate3d(24px,-30px,0) scale(1.08); }
+}
+
+.smf-root .smf-wrap { max-width: 860px; margin: 0 auto; }
+
+/* ---------- header ---------- */
+.smf-root .smf-head { text-align: center; margin-bottom: 28px; }
+.smf-root .smf-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 16px; border-radius: 999px; font-size: 13px;
+  color: var(--smf-brand-deep);
+  background: var(--smf-glass); border: 1px solid var(--smf-border);
+  -webkit-backdrop-filter: blur(14px) saturate(160%); backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: var(--smf-shadow);
+}
+.dark .smf-root .smf-badge { color: var(--smf-brand-2); }
+.smf-root .smf-badge i { width: 7px; height: 7px; border-radius: 50%; background: var(--smf-brand); box-shadow: 0 0 0 0 rgba(34,173,189,.6); animation: smf-pulse 2s infinite; }
+@keyframes smf-pulse { 70% { box-shadow: 0 0 0 9px rgba(34,173,189,0); } 100% { box-shadow: 0 0 0 0 rgba(34,173,189,0); } }
+.smf-root h1.smf-title {
+  margin: 16px 0 8px; font-size: clamp(26px, 5vw, 38px); font-weight: 800; line-height: 1.4;
+  background: linear-gradient(120deg, var(--smf-brand-deep), var(--smf-brand) 45%, var(--smf-brand-2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.smf-root .smf-sub { margin: 0 auto; max-width: 520px; color: var(--smf-muted); font-size: 15px; }
+
+/* ---------- search ---------- */
+.smf-root .smf-search {
+  position: relative; margin: 26px auto 22px; max-width: 560px;
+}
+.smf-root .smf-search svg {
+  position: absolute; top: 50%; right: 18px; transform: translateY(-50%);
+  width: 20px; height: 20px; stroke: var(--smf-brand); pointer-events: none;
+}
+.smf-root .smf-search input {
+  width: 100%; height: 54px; padding: 0 50px 0 18px;
+  font: inherit; font-size: 15px; color: var(--smf-text);
+  background: var(--smf-glass-strong); border: 1px solid var(--smf-border);
+  border-radius: 18px; outline: none; box-shadow: var(--smf-shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(170%); backdrop-filter: blur(18px) saturate(170%);
+  transition: box-shadow .35s var(--smf-ease), border-color .35s var(--smf-ease), transform .35s var(--smf-ease);
+}
+.smf-root .smf-search input::placeholder { color: var(--smf-muted); opacity: .8; }
+.smf-root .smf-search input:focus {
+  border-color: var(--smf-brand);
+  box-shadow: 0 0 0 4px rgba(34,173,189,.18), var(--smf-shadow);
+  transform: translateY(-1px);
+}
+
+/* ---------- list ---------- */
+.smf-root .smf-list { display: grid; gap: 14px; }
+
+.smf-root .smf-item {
+  position: relative; overflow: hidden;
+  background: var(--smf-glass);
+  border: 1px solid var(--smf-border);
+  border-radius: 22px;
+  -webkit-backdrop-filter: blur(20px) saturate(170%); backdrop-filter: blur(20px) saturate(170%);
+  box-shadow: var(--smf-shadow), inset 0 1px 0 rgba(255,255,255,.5);
+  transition: transform .5s var(--smf-ease), box-shadow .5s var(--smf-ease), background .5s var(--smf-ease), border-color .5s var(--smf-ease), opacity .4s var(--smf-ease);
+  animation: smf-in .7s var(--smf-ease) both;
+}
+.dark .smf-root .smf-item { box-shadow: var(--smf-shadow), inset 0 1px 0 rgba(255,255,255,.06); }
+.smf-root .smf-item:nth-child(1){animation-delay:.04s}
+.smf-root .smf-item:nth-child(2){animation-delay:.09s}
+.smf-root .smf-item:nth-child(3){animation-delay:.14s}
+.smf-root .smf-item:nth-child(4){animation-delay:.19s}
+.smf-root .smf-item:nth-child(5){animation-delay:.24s}
+.smf-root .smf-item:nth-child(6){animation-delay:.29s}
+.smf-root .smf-item:nth-child(7){animation-delay:.34s}
+@keyframes smf-in { from { opacity: 0; transform: translateY(18px) scale(.985); } to { opacity: 1; transform: none; } }
+
+/* glowing accent bar */
+.smf-root .smf-item::before {
+  content: ""; position: absolute; top: 14px; bottom: 14px; right: 0; width: 4px; border-radius: 4px 0 0 4px;
+  background: linear-gradient(180deg, var(--smf-brand-2), var(--smf-brand));
+  transform: scaleY(0); transform-origin: center; opacity: 0;
+  transition: transform .55s var(--smf-ease), opacity .4s var(--smf-ease);
+}
+.smf-root .smf-item:hover { transform: translateY(-2px); border-color: rgba(34,173,189,.35); }
+.smf-root .smf-item.is-open {
+  background: var(--smf-glass-strong);
+  border-color: rgba(34,173,189,.45);
+  box-shadow: 0 18px 50px -14px rgba(34,173,189,.38), inset 0 1px 0 rgba(255,255,255,.55);
+}
+.smf-root .smf-item.is-open::before { transform: scaleY(1); opacity: 1; }
+.smf-root .smf-item[hidden] { display: none; }
+
+.smf-root .smf-q {
+  all: unset; box-sizing: border-box; cursor: pointer; width: 100%;
+  display: flex; align-items: center; gap: 14px; padding: 18px 20px;
+  font-size: 16px; font-weight: 700; color: var(--smf-text); line-height: 1.8;
+  -webkit-tap-highlight-color: transparent;
+}
+.smf-root .smf-q:focus-visible { outline: 2px solid var(--smf-brand); outline-offset: -4px; border-radius: 22px; }
+
+.smf-root .smf-num {
+  flex: none; width: 40px; height: 40px; border-radius: 14px;
+  display: grid; place-items: center; font-size: 14px; font-weight: 800;
+  color: var(--smf-brand-deep);
+  background: linear-gradient(135deg, rgba(34,173,189,.18), rgba(79,209,222,.1));
+  border: 1px solid var(--smf-line);
+  transition: background .45s var(--smf-ease), color .45s var(--smf-ease), transform .5s var(--smf-ease), box-shadow .45s var(--smf-ease);
+}
+.dark .smf-root .smf-num { color: var(--smf-brand-2); }
+.smf-root .smf-item.is-open .smf-num {
+  color: #fff; transform: rotate(-6deg) scale(1.06);
+  background: linear-gradient(135deg, var(--smf-brand), var(--smf-brand-2));
+  box-shadow: 0 8px 18px -6px rgba(34,173,189,.7);
+}
+.smf-root .smf-qt { flex: 1; }
+
+.smf-root .smf-chev {
+  flex: none; width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(34,173,189,.1);
+  transition: transform .6s var(--smf-ease), background .4s var(--smf-ease);
+}
+.smf-root .smf-chev svg { width: 16px; height: 16px; stroke: var(--smf-brand); transition: stroke .4s; }
+.smf-root .smf-item.is-open .smf-chev { transform: rotate(180deg); background: var(--smf-brand); }
+.smf-root .smf-item.is-open .smf-chev svg { stroke: #fff; }
+
+/* the buttery-smooth part: animate grid row 0fr -> 1fr */
+.smf-root .smf-a {
+  display: grid; grid-template-rows: 0fr;
+  transition: grid-template-rows .6s var(--smf-ease);
+}
+.smf-root .smf-item.is-open .smf-a { grid-template-rows: 1fr; }
+.smf-root .smf-a-inner { overflow: hidden; min-height: 0; }
+.smf-root .smf-a-body {
+  margin: 0; padding: 0 74px 22px 24px; color: var(--smf-muted); font-size: 15px; line-height: 2.05;
+  opacity: 0; transform: translateY(-8px);
+  transition: opacity .45s var(--smf-ease), transform .6s var(--smf-ease);
+}
+.smf-root .smf-item.is-open .smf-a-body { opacity: 1; transform: none; transition-delay: .12s; }
+.smf-root .smf-a-body mark { background: rgba(34,173,189,.25); color: inherit; border-radius: 4px; padding: 0 2px; }
+.smf-root .smf-qt mark { background: rgba(34,173,189,.25); color: inherit; border-radius: 4px; padding: 0 2px; }
+
+/* ---------- empty state ---------- */
+.smf-root .smf-empty {
+  display: none; text-align: center; padding: 34px 20px; color: var(--smf-muted);
+  background: var(--smf-glass); border: 1px dashed var(--smf-line); border-radius: 22px;
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+}
+.smf-root .smf-empty.show { display: block; animation: smf-in .5s var(--smf-ease) both; }
+
+/* ---------- CTA ---------- */
+.smf-root .smf-cta {
+  margin-top: 28px; padding: 24px; border-radius: 26px;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;
+  color: #fff;
+  background: linear-gradient(135deg, rgba(34,173,189,.92), rgba(22,126,139,.92));
+  border: 1px solid rgba(255,255,255,.35);
+  box-shadow: 0 20px 50px -16px rgba(34,173,189,.65), inset 0 1px 0 rgba(255,255,255,.4);
+  -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+  position: relative; overflow: hidden;
+}
+.smf-root .smf-cta::after {
+  content: ""; position: absolute; width: 220px; height: 220px; border-radius: 50%;
+  background: rgba(255,255,255,.14); top: -90px; left: -50px; filter: blur(6px);
+}
+.smf-root .smf-cta h3 { margin: 0 0 2px; font-size: 18px; font-weight: 800; color: #fff; }
+.smf-root .smf-cta p { margin: 0; font-size: 14px; opacity: .92; color: #fff; }
+.smf-root .smf-btn {
+  position: relative; z-index: 1; text-decoration: none; cursor: pointer;
+  padding: 12px 26px; border-radius: 16px; font-weight: 700; font-size: 14px;
+  color: var(--smf-brand-deep); background: #fff;
+  box-shadow: 0 10px 24px -10px rgba(0,0,0,.35);
+  transition: transform .4s var(--smf-ease), box-shadow .4s var(--smf-ease);
+}
+.smf-root .smf-btn:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 16px 30px -10px rgba(0,0,0,.4); }
+.smf-root .smf-btn:active { transform: scale(.97); }
+
+/* ---------- mobile ---------- */
+@media (max-width: 560px) {
+  .smf-root { padding: 36px 12px 56px; }
+  .smf-root .smf-q { padding: 15px 14px; font-size: 14.5px; gap: 10px; }
+  .smf-root .smf-num { width: 34px; height: 34px; border-radius: 12px; font-size: 13px; }
+  .smf-root .smf-chev { width: 30px; height: 30px; }
+  .smf-root .smf-a-body { padding: 0 14px 18px 16px; font-size: 14px; }
+  .smf-root .smf-cta { flex-direction: column; text-align: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .smf-root *, .smf-root *::before, .smf-root *::after { animation: none !important; transition-duration: .01ms !important; }
+}
+</style>
+
+<div class="smf-orb o1"></div>
+<div class="smf-orb o2"></div>
+<div class="smf-orb o3"></div>
+
+<div class="smf-wrap">
+
+  <header class="smf-head">
+    <span class="smf-badge"><i></i> مرکز راهنمای سایامد</span>
+    <h1 class="smf-title">سوالات متداول</h1>
+    <p class="smf-sub">پاسخ کوتاه و شفاف به رایج‌ترین پرسش‌های همکاران درباره سفارش، ارسال و قیمت‌گذاری</p>
+  </header>
+
+  <div class="smf-search">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="smfSearch" type="search" autocomplete="off" placeholder="جستجو در سوالات…" aria-label="جستجو در سوالات متداول">
+  </div>
+
+  <section class="smf-list" id="smfList">
+
+    <article class="smf-item">
+      <button class="smf-q" type="button" aria-expanded="false" aria-controls="smf-a1" id="smf-q1">
+        <span class="smf-num">۱</span>
+        <span class="smf-qt">سایامد چه نوع محصولاتی را عرضه می‌کند؟</span>
+        <span class="smf-chev"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+      </button>
+      <div class="smf-a" id="smf-a1" role="region" aria-labelledby="smf-q1">
+        <div class="smf-a-inner"><p class="smf-a-body">سایامد مرجع تامین تجهیزات مصرفی پزشکی و زیبایی است. سبد محصولات ما شامل انواع دستکش‌های معاینه و جراحی، سرنگ و سوزن‌ها، میکروکانولاهای تخصصی تزریق، انواع گاز و تنظیف استریل، البسه جراحی و بیمار (گان، شان، کلاه و ماسک)، انواع منسوجات پزشکی، مواد ضدعفونی‌کننده و سایر ملزومات مصرفی عمومی بیمارستان‌ها، درمانگاه‌ها و کلینیک‌های زیبایی است.</p></div>
+      </div>
+    </article>
+
+    <article class="smf-item">
+      <button class="smf-q" type="button" aria-expanded="false" aria-controls="smf-a2" id="smf-q2">
+        <span class="smf-num">۲</span>
+        <span class="smf-qt">آیا فروش محصولات به‌صورت عمده است یا خرده‌فروشی؟</span>
+        <span class="smf-chev"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+      </button>
+      <div class="smf-a" id="smf-a2" role="region" aria-labelledby="smf-q2">
+        <div class="smf-a-inner"><p class="smf-a-body">تمرکز اصلی سایامد بر تامین عمده و نیمه‌عمده برای همکاران حوزه تجهیزات پزشکی، درمانگاه‌ها، کلینیک‌های زیبایی، پزشکان متخصص و مراکز درمانی است. با این حال، برای برخی محصولات خاص شرایط ثبت سفارش در حجم‌های کمتر نیز فراهم است.</p></div>
+      </div>
+    </article>
+
+    <article class="smf-item">
+      <button class="smf-q" type="button" aria-expanded="false" aria-controls="smf-a3" id="smf-q3">
+        <span class="smf-num">۳</span>
+        <span class="smf-qt">چگونه می‌توانیم سفارش خود را ثبت کنیم؟</span>
+        <span class="smf-chev"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+      </button>
+      <div class="smf-a" id="smf-a3" role="region" aria-labelledby="smf-q3">
+        <div class="smf-a-inner"><p class="smf-a-body">شما می‌توانید از طریق وب‌سایت سایامد، ارتباط مستقیم با واحد فروش از طریق واتس‌اپ/تلگرام، یا تماس تلفنی با دفتر مرکزی سفارش خود را ثبت کنید. کارشناسان ما پیش‌فاکتور و مراحل ارسال را در کوتاه‌ترین زمان هماهنگ خواهند کرد.</p></div>
+      </div>
+    </article>
+
+    <article class="smf-item">
+      <button class="smf-q" type="button" aria-expanded="false" aria-controls="smf-a4" id="smf-q4">
+        <span class="smf-num">۴</span>
+        <span class="smf-qt">ارسال سفارش‌ها به چه صورتی انجام می‌شود و چقدر زمان می‌برد؟</span>
+        <span class="smf-chev"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+      </button>
+      <div class="smf-a" id="smf-a4" role="region" aria-labelledby="smf-q4">
+        <div class="smf-a-inner"><p class="smf-a-body">سفارش‌های تبریز عموماً در کوتاه‌ترین زمان ممکن (از طریق پیک) و سفارش‌های شهرستان از طریق باربری، تیپاکس یا پست پیشتاز در بسته‌بندی‌های ایمن ارسال می‌شوند. زمان تحویل بسته به شهر مقصد معمولاً بین ۲ تا ۴ روز کاری است.</p></div>
+      </div>
+    </article>
+
+    <article class="smf-item">
+      <button class="smf-q" type="button" aria-expanded="false" aria-controls="smf-a5" id="smf-q5">
+        <span class="smf-num">۵</span>
+        <span class="smf-qt">با توجه به نوسانات بازار، قیمت‌ها چطور به‌روز می‌شوند؟</span>
+        <span class="smf-chev"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+      </button>
+      <div class="smf-a" id="smf-a5" role="region" aria-labelledby="smf-q5">
+        <div class="smf-a-inner"><p class="smf-a-body">قیمت تمامی محصولات با توجه به نرخ روز بازار و اصالت کالا تعیین می‌شود. برای استعلام قیمت دقیق عمده‌فروشی و دریافت پیش‌فاکتور رسمی، همکاران واحد فروش همواره پاسخگوی شما هستند.</p></div>
+      </div>
+    </article>
+
+    <article class="smf-item">
+      <button class="smf-q" type="button" aria-expanded="false" aria-controls="smf-a6" id="smf-q6">
+        <span class="smf-num">۶</span>
+        <span class="smf-qt">آیا امکان همکاری بلندمدت و عقد قرارداد با کلینیک‌ها و مراکز درمانی وجود دارد؟</span>
+        <span class="smf-chev"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+      </button>
+      <div class="smf-a" id="smf-a6" role="region" aria-labelledby="smf-q6">
+        <div class="smf-a-inner"><p class="smf-a-body">بله؛ سایامد آمادگی دارد با کلینیک‌های زیبایی، درمانگاه‌ها و شرکت‌های پخش استانی قراردادهای تامین مستمر و بلندمدت با شرایط ویژه منعقد کند.</p></div>
+      </div>
+    </article>
+
+    <article class="smf-item">
+      <button class="smf-q" type="button" aria-expanded="false" aria-controls="smf-a7" id="smf-q7">
+        <span class="smf-num">۷</span>
+        <span class="smf-qt">آیا امکان مرجوع کردن کالا وجود دارد؟</span>
+        <span class="smf-chev"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+      </button>
+      <div class="smf-a" id="smf-a7" role="region" aria-labelledby="smf-q7">
+        <div class="smf-a-inner"><p class="smf-a-body">با توجه به اینکه محصولات سایامد از ملزومات پزشکی و در بسیاری از موارد استریل هستند، امکان مرجوعی کالا پس از تحویل وجود ندارد. لطفاً هنگام ثبت سفارش، نوع و تعداد محصولات را با دقت بررسی کنید. در صورت دریافت کالای اشتباه یا مشاهده آسیب در بسته‌بندی هنگام تحویل، موضوع را در اسرع وقت با واحد پشتیبانی سایامد در میان بگذارید تا بررسی شود.</p></div>
+      </div>
+    </article>
+
+  </section>
+
+  <div class="smf-empty" id="smfEmpty">
+    موردی پیدا نشد. عبارت دیگری را امتحان کنید یا مستقیم با ما در تماس باشید.
+  </div>
+
+  <aside class="smf-cta">
+    <div style="position:relative;z-index:1">
+      <h3>پاسخ سوالتان را پیدا نکردید؟</h3>
+      <p>کارشناسان واحد فروش سایامد آماده پاسخگویی هستند.</p>
     </div>
+    <a class="smf-btn" href="/contact/">تماس با ما</a>
+  </aside>
+
+</div>
+
+<script>
+(function () {
+  var root = document.querySelector('.smf-root');
+  if (!root) return;
+  var items = Array.prototype.slice.call(root.querySelectorAll('.smf-item'));
+  var input = root.querySelector('#smfSearch');
+  var empty = root.querySelector('#smfEmpty');
+
+  function setOpen(item, open) {
+    item.classList.toggle('is-open', open);
+    item.querySelector('.smf-q').setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  items.forEach(function (item) {
+    var btn = item.querySelector('.smf-q');
+    btn.addEventListener('click', function () {
+      var willOpen = !item.classList.contains('is-open');
+      items.forEach(function (o) { if (o !== item) setOpen(o, false); }); /* one at a time */
+      setOpen(item, willOpen);
+    });
+    btn.addEventListener('keydown', function (e) {
+      var visible = items.filter(function (i) { return !i.hidden; });
+      var idx = visible.indexOf(item), next;
+      if (e.key === 'ArrowDown') next = visible[idx + 1];
+      else if (e.key === 'ArrowUp') next = visible[idx - 1];
+      else if (e.key === 'Home') next = visible[0];
+      else if (e.key === 'End') next = visible[visible.length - 1];
+      if (next) { e.preventDefault(); next.querySelector('.smf-q').focus(); }
+    });
+  });
+
+  /* search with highlight */
+  function norm(s) {
+    return (s || '')
+      .replace(/ي/g, 'ی').replace(/ك/g, 'ک')
+      .replace(/[\u064B-\u065F\u200c]/g, '')
+      .toLowerCase();
+  }
+  function esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  items.forEach(function (item) {
+    item._qt = item.querySelector('.smf-qt');
+    item._ab = item.querySelector('.smf-a-body');
+    item._qHtml = item._qt.innerHTML;
+    item._aHtml = item._ab.innerHTML;
+  });
+
+  input.addEventListener('input', function () {
+    var q = norm(input.value.trim());
+    var shown = 0;
+    items.forEach(function (item) {
+      var hay = norm(item._qt.textContent + ' ' + item._ab.textContent);
+      var match = !q || hay.indexOf(q) !== -1;
+      item.hidden = !match;
+      item._qt.innerHTML = item._qHtml;
+      item._ab.innerHTML = item._aHtml;
+      if (match) {
+        shown++;
+        if (q) {
+          var raw = input.value.trim();
+          var re = new RegExp('(' + esc(raw) + ')', 'gi');
+          item._qt.innerHTML = item._qHtml.replace(re, '<mark>$1</mark>');
+          item._ab.innerHTML = item._aHtml.replace(re, '<mark>$1</mark>');
+        }
+      } else {
+        setOpen(item, false);
+      }
+    });
+    empty.classList.toggle('show', shown === 0);
+  });
+})();
+</script>
 </main>
 {% endblock content %}
-
