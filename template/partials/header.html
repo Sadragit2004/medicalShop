@@ -12,8 +12,8 @@
 
                 <!-- INPUT -->
                 <form method="GET" action="{% url 'search:search_results' %}" class="search-form">
-                    <div class="search-btn-open flex gap-x-2 app-border bg-gray-50 dark:bg-gray-700 p-1 rounded-full cursor-pointer ring-blue-400 w-84 transition-all">
-                        <button type="submit" class="size-6 p-1.5 flex-center text-gray-100 bg-blue-600 rounded-full w-9 h-9" aria-label="جستجو">
+                    <div class="search-btn-open flex gap-x-2 app-border bg-gray-50 dark:bg-gray-700 p-1 rounded-full cursor-pointer w-84 transition-all">
+                        <button type="submit" class="size-6 p-1.5 flex-center text-gray-100 hdr-theme-bg rounded-full w-9 h-9" aria-label="جستجو">
                             <svg class="size-6">
                                 <use href="#search" />
                             </svg>
@@ -34,7 +34,7 @@
                     <!-- Result -->
                     <div class="search-suggestions-container hidden">
                         <span class="flex items-center text-sm gap-x-1 text-gray-600 dark:text-gray-200">
-                            <p>نتیجه جستجو : <span class="font-DanaMedium text-blue-400 search-query-display"></span></p>
+                            <p>نتیجه جستجو : <span class="font-DanaMedium hdr-theme-text search-query-display"></span></p>
                         </span>
                         <ul class="pt-4 text-gray-500 dark:text-gray-300 flex flex-col gap-y-4 child:flex-between child:cursor-pointer search-suggestions-list">
                             <!-- نتایج با AJAX پر می‌شوند -->
@@ -51,11 +51,11 @@
             <a href="/" class="flex flex-col text-center ml-20">
                 {% if request.path == '/' or request.path == '/home/' %}
                     <h1 class="font-MorabbaMedium text-4xl flex items-center">
-                        <span style="font-size: 22px;" class="text-blue-500"> سایا مِد؛ مرجع خرید تجهیزات پزشکی و سلامت</span>
+                        <span style="font-size: 22px;" class="hdr-theme-text"> سایا مِد؛ مرجع خرید تجهیزات پزشکی و سلامت</span>
                     </h1>
                 {% else %}
                     <span class="font-MorabbaMedium text-4xl flex items-center">
-                        <span class="text-blue-500"> سایا مِد</span>
+                        <span class="hdr-theme-text"> سایا مِد</span>
                     </span>
                 {% endif %}
             </a>
@@ -89,16 +89,16 @@
                         <p>{{ request.user.mobileNumber }}</p>
                     </a>
                     <div class="absolute dark:border-none border border-gray-100 w-52 p-2 bg-white text-gray-900 dark:text-gray-100 flex flex-col gap-y-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-hover:top-12 transition-all delay-100 dark:bg-gray-700 top-20 rounded-lg text-base shadow child:transition-all duration-300 child:py-1.5 child:px-2 z-30 child:rounded-lg child:w-full">
-                        <a href="{% url 'dashboard:orders' %}" class="flex items-center gap-x-2 hover:bg-blue-500 hover:text-gray-100">
+                        <a href="{% url 'dashboard:orders' %}" class="flex items-center gap-x-2 hdr-menu-link">
                             <svg class="h-5 w-5"><use href="#user"></use></svg>
                             سفارشات من
                         </a>
-                        <a href="{% url 'dashboard:notifications' %}" class="flex items-center gap-x-2 hover:bg-blue-500 hover:text-gray-100">
+                        <a href="{% url 'dashboard:notifications' %}" class="flex items-center gap-x-2 hdr-menu-link">
                             <svg class="h-5 w-5"><use href="#envelope"></use></svg>
                             لیست پیام‌ها
                             <span style='width: 20px;' id="header-notification-count" class="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full hidden">0</span>
                         </a>
-                        <a href="{% url 'user:logout' %}" class="flex items-center gap-x-2 hover:bg-red-500 dark:hover:bg-red-500 hover:text-gray-100">
+                        <a href="{% url 'user:logout' %}" class="flex items-center gap-x-2 hdr-menu-link">
                             <svg class="h-5 w-5"><use href="#arrow-left-end"></use></svg>
                             خروج از حساب
                         </a>
@@ -114,7 +114,7 @@
                 {% endif %}
 
                 <!-- Shopping cart -->
-                <button class="flex-center p-2 bg-blue-600 text-gray-100 rounded-full open-cart relative" aria-label="سبد خرید">
+                <button class="flex-center p-2 hdr-theme-bg hdr-btn text-gray-100 rounded-full open-cart relative" aria-label="سبد خرید">
                     <svg class="size-6">
                         <use href="#shopping-bag" />
                     </svg>
@@ -145,12 +145,12 @@
                     <div class="w-[90%] fixed bottom-2 flex items-center justify-between border-t-2 border-gray-200 dark:border-gray-600 pt-4">
                         <div>
                             <p class="text-gray-500 dark:text-gray-300 text-sm">مبلغ قابل پرداخت :</p>
-                            <p class="text-lg text-blue-500 dark:text-blue-400 font-DanaDemiBold cart-total-price">0
+                            <p class="text-lg hdr-theme-text font-DanaDemiBold cart-total-price">0
                                 <span class="font-Dana text-sm">تومان</span>
                             </p>
                         </div>
                         <a href="{% url 'order:cart_page' %}"
-                            class="py-2 px-4 bg-blue-600 flex-center hover:bg-blue-700 transition-all rounded-lg text-gray-200">
+                            class="py-2 px-4 hdr-theme-bg hdr-btn flex-center transition-all rounded-lg text-gray-200">
                             ثبت سفارش
                         </a>
                     </div>
@@ -216,7 +216,7 @@
             <div class="mobile-menu z-50 flex flex-col">
                 <div class="flex w-full items-center justify-between border-b-normal pb-4">
                     <a href="/" class="text-xl font-MorabbaMedium">
-                        <span class="text-blue-500"> سایا مِد</span>
+                        <span class="hdr-theme-text"> سایا مِد</span>
                     </a>
                     <button class="close-menu-mobile" aria-label="بستن منو">
                         <svg class="size-5 text-gray-500 dark:text-gray-200">
@@ -284,7 +284,7 @@
 
             <a href="/" class="flex flex-col text-center">
                 <span class="font-MorabbaMedium text-3xl flex items-center">
-                    <span class="text-blue-500"> سایا مِد</span>
+                    <span class="hdr-theme-text"> سایا مِد</span>
                 </span>
             </a>
 
@@ -331,7 +331,7 @@
             <div class="w-full space-y-4">
                 <div class="search-suggestions-container hidden">
                     <span class="flex items-center text-sm gap-x-1 text-gray-600 dark:text-gray-200">
-                        <p>نتیجه جستجو : <span class="font-DanaMedium text-blue-400 search-query-display"></span></p>
+                        <p>نتیجه جستجو : <span class="font-DanaMedium hdr-theme-text search-query-display"></span></p>
                     </span>
                     <ul class="pt-4 text-gray-500 dark:text-gray-300 flex flex-col gap-y-4 child:flex-between child:cursor-pointer search-suggestions-list">
                         <!-- نتایج با AJAX پر می‌شوند -->
@@ -343,7 +343,7 @@
                         <svg class="size-4"><use href="#fire" /></svg>
                         <p>جستجو های پرطرفدار :</p>
                     </span>
-                 
+
                 </div>
             </div>
         </div>
@@ -431,7 +431,7 @@
                 <div class="swiper-pagination"></div>
             </div>
 
-            <div class="absolute z-10 bottom-5 opacity-0 invisible group-hover:opacity-100 transition-all duration-300 group-hover:visible right-6 hidden lg:flex items-center gap-x-2 child:flex-center child:w-9 child:h-9 child:cursor-pointer child:bg-white child:dark:bg-gray-800 child:text-gray-700 child:dark:text-gray-200 child:rounded-full child:shadow child-hover:text-blue-600 child-hover:dark:text-blue-500">
+            <div class="slider-nav absolute z-10 bottom-5 opacity-0 invisible group-hover:opacity-100 transition-all duration-300 group-hover:visible right-6 hidden lg:flex items-center gap-x-2 child:flex-center child:w-9 child:h-9 child:cursor-pointer child:bg-white child:dark:bg-gray-800 child:text-gray-700 child:dark:text-gray-200 child:rounded-full child:shadow">
                 <button class="button-prev" aria-label="قبلی">
                     <svg class="size-5 -rotate-90"><use href="#chevron" /></svg>
                 </button>
@@ -842,6 +842,36 @@
 
 <!-- ==================== Styles ==================== -->
 <style>
+/* ==================== تم واحد هدر: #22adbd ==================== */
+.header {
+    --theme: #22adbd;
+    --theme-soft: rgba(34, 173, 189, 0.10);
+    --theme-softer: rgba(34, 173, 189, 0.07);
+}
+
+.hdr-theme-bg   { background-color: var(--theme); }
+.hdr-theme-text { color: var(--theme); }
+
+.hdr-btn { transition: opacity .2s ease; }
+.hdr-btn:hover { opacity: .9; }
+
+/* آیتم‌های منوی حساب کاربری */
+.hdr-menu-link { transition: background-color .2s ease, color .2s ease; }
+.hdr-menu-link:hover {
+    background-color: var(--theme);
+    color: #fff;
+}
+
+/* فلش‌های اسلایدر */
+.slider-nav > button { transition: color .2s ease; }
+.slider-nav > button:hover { color: var(--theme); }
+
+/* دکمه‌های عمومی هدر (app-hover) هم فقط با رنگ تم */
+.header .app-hover:hover {
+    background-color: var(--theme-soft);
+    color: var(--theme);
+}
+
 /* Notification badge */
 #notification-badge,
 #mobile-header-notification-badge {
@@ -892,8 +922,8 @@
     border-bottom: 1px solid #f1f1f1;
 }
 .notification-item:last-child { border-bottom: none; }
-.notification-item:hover { background-color: #f8fafc !important; }
-.dark .notification-item:hover { background-color: #374151 !important; }
+.notification-item:hover { background-color: var(--theme-softer) !important; }
+.dark .notification-item:hover { background-color: var(--theme-soft) !important; }
 
 @media (max-width: 768px) {
     #notification-badge,
@@ -951,8 +981,8 @@
     border-radius: 8px;
     transition: all 0.2s;
 }
-.suggestion-item:hover { background: #f3f4f6; }
-.dark .suggestion-item:hover { background: #374151; }
+.suggestion-item:hover { background: var(--theme-softer); color: var(--theme); }
+.dark .suggestion-item:hover { background: var(--theme-soft); }
 
 /* Popular list items */
 .search-modal-list-item {
@@ -963,14 +993,18 @@
     transition: all 0.2s;
 }
 .search-modal-list-item:hover {
-    background: #e5e7eb;
+    background: var(--theme-soft);
+    color: var(--theme);
     transform: translateY(-2px);
 }
 .dark .search-modal-list-item {
     background: #374151;
     color: #d1d5db;
 }
-.dark .search-modal-list-item:hover { background: #4b5563; }
+.dark .search-modal-list-item:hover {
+    background: var(--theme-soft);
+    color: var(--theme);
+}
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
@@ -1040,13 +1074,8 @@
 /* Hover */
 .main-nav__link:hover,
 .main-nav__location:hover {
-    color: #2563eb;
-    background: rgba(37, 99, 235, 0.06);
-}
-.dark .main-nav__link:hover,
-.dark .main-nav__location:hover {
-    color: #7cb4ff;
-    background: rgba(124, 180, 255, 0.08);
+    color: var(--theme);
+    background: var(--theme-softer);
 }
 .main-nav__link:hover .main-nav__icon,
 .main-nav__location:hover .main-nav__icon {
@@ -1082,12 +1111,8 @@
     transition: color .25s ease, background-color .25s ease;
 }
 .main-nav .menu-item_link:hover {
-    color: #2563eb;
-    background: rgba(37, 99, 235, 0.06);
-}
-.dark .main-nav .menu-item_link:hover {
-    color: #7cb4ff;
-    background: rgba(124, 180, 255, 0.08);
+    color: var(--theme);
+    background: var(--theme-softer);
 }
 .main-nav .menu-item_link svg {
     width: 20px;
@@ -1109,22 +1134,59 @@
     border-color: #374151;
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
 }
+
+/* آیتم‌های دسترسی سریع: رنگ و پس‌زمینه ثابت می‌مانند،
+   فقط با هاور یک خط به رنگ تم زیر متن می‌افتد */
 .main-nav .solid-menu a {
     display: block;
     padding: 8px 12px;
     border-radius: 10px;
     font-size: 14px;
     color: #4b5563;
-    transition: background-color .2s ease, color .2s ease;
+    background: transparent;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 7px;
+    transition: text-decoration-color .25s ease;
 }
 .dark .main-nav .solid-menu a { color: #d1d5db; }
-.main-nav .solid-menu a:hover {
-    background: rgba(37, 99, 235, 0.06);
-    color: #2563eb;
+
+/* هیچ حالتی (هاور، فوکوس، کلیک) برای li و a پس‌زمینه نداشته باشد؛
+   حتی اگر CSS سراسری سایت برایشان پس‌زمینه تعریف کرده باشد */
+.main-nav .solid-menu li,
+.main-nav .solid-menu li:hover,
+.main-nav .solid-menu li:focus-within,
+.main-nav .menu-item:hover .solid-menu li,
+.main-nav .solid-menu li > a,
+.main-nav .solid-menu li > a:hover,
+.main-nav .solid-menu li > a:focus,
+.main-nav .solid-menu li > a:focus-visible,
+.main-nav .solid-menu li > a:active {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
 }
-.dark .main-nav .solid-menu a:hover {
-    background: rgba(124, 180, 255, 0.08);
-    color: #7cb4ff;
+
+.main-nav .solid-menu li::before,
+.main-nav .solid-menu li::after,
+.main-nav .solid-menu li > a::before,
+.main-nav .solid-menu li > a::after {
+    display: none !important;
+}
+
+/* رنگ متن ثابت؛ فقط خط زیر متن با هاور ظاهر می‌شود */
+.main-nav .solid-menu li:hover > a,
+.main-nav .solid-menu li > a:hover,
+.main-nav .solid-menu li > a:focus-visible {
+    color: #4b5563 !important;
+    text-decoration-color: var(--theme);
+}
+.dark .main-nav .solid-menu li:hover > a,
+.dark .main-nav .solid-menu li > a:hover,
+.dark .main-nav .solid-menu li > a:focus-visible {
+    color: #d1d5db !important;
 }
 
 /* ---------- Sticky state (نرم و آروم) ---------- */
@@ -1224,8 +1286,8 @@
     color: #d1d5db;
 }
 .mobile-sticky__btn:active {
-    background: rgba(37, 99, 235, 0.08);
-    color: #2563eb;
+    background: var(--theme-soft);
+    color: var(--theme);
 }
 
 .mobile-sticky__search {
@@ -1247,12 +1309,10 @@
     -webkit-tap-highlight-color: transparent;
     transition: background-color .25s ease;
 }
-.mobile-sticky__search svg { flex-shrink: 0; color: #2563eb; }
+.mobile-sticky__search svg { flex-shrink: 0; color: var(--theme); }
 .mobile-sticky__search span { overflow: hidden; text-overflow: ellipsis; }
 .dark .mobile-sticky__search { background: #1f2937; color: #9ca3af; }
-.dark .mobile-sticky__search svg { color: #7cb4ff; }
-.mobile-sticky__search:active { background: #e5e7eb; }
-.dark .mobile-sticky__search:active { background: #374151; }
+.mobile-sticky__search:active { background: var(--theme-soft); }
 
 @media (min-width: 1024px) {
     .mobile-sticky { display: none; }
@@ -1407,13 +1467,13 @@
     flex: 0 1 138px !important;
     min-width: 106px !important;
     max-width: 154px !important;
-    color: #1557bd !important;
-    border-color: rgba(37, 99, 235, 0.18) !important;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(219, 234, 254, 0.82)) !important;
+    color: #22adbd !important;
+    border-color: rgba(34, 173, 189, 0.30) !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(34, 173, 189, 0.16)) !important;
     box-shadow:
-        0 5px 16px rgba(37, 99, 235, 0.10),
+        0 5px 16px rgba(34, 173, 189, 0.14),
         inset 0 1px 0 rgba(255, 255, 255, 0.95),
-        inset 0 -1px 0 rgba(37, 99, 235, 0.04) !important;
+        inset 0 -1px 0 rgba(34, 173, 189, 0.06) !important;
 }
 
 .bottom-navbar > li.is-active::before {
@@ -1443,13 +1503,13 @@
 }
 
 .dark .bottom-navbar > li.is-active {
-    color: #8bd8ff !important;
-    border-color: rgba(125, 211, 252, 0.22) !important;
-    background: linear-gradient(135deg, rgba(47, 84, 128, 0.62), rgba(30, 64, 105, 0.68)) !important;
+    color: #22adbd !important;
+    border-color: rgba(34, 173, 189, 0.34) !important;
+    background: linear-gradient(135deg, rgba(34, 173, 189, 0.30), rgba(34, 173, 189, 0.16)) !important;
     box-shadow:
         0 6px 18px rgba(0, 0, 0, 0.18),
         inset 0 1px 0 rgba(255, 255, 255, 0.14),
-        inset 0 -1px 0 rgba(125, 211, 252, 0.07) !important;
+        inset 0 -1px 0 rgba(34, 173, 189, 0.10) !important;
 }
 
 .dark .bottom-navbar > li.is-active::before {
@@ -1485,20 +1545,20 @@
 }
 
 .bottom-navbar > li > .bottom-nav-link:focus-visible {
-    outline: 2px solid rgba(37, 99, 235, 0.68) !important;
+    outline: 2px solid rgba(34, 173, 189, 0.70) !important;
     outline-offset: 3px !important;
 }
 
 @media (hover: hover) and (pointer: fine) {
     .bottom-navbar > li:not(.is-active):hover {
-        color: #1557bd !important;
-        border-color: rgba(37, 99, 235, 0.10) !important;
-        background: rgba(59, 130, 246, 0.08) !important;
+        color: #22adbd !important;
+        border-color: rgba(34, 173, 189, 0.16) !important;
+        background: rgba(34, 173, 189, 0.08) !important;
     }
     .dark .bottom-navbar > li:not(.is-active):hover {
-        color: #8bd8ff !important;
-        border-color: rgba(125, 211, 252, 0.13) !important;
-        background: rgba(56, 189, 248, 0.09) !important;
+        color: #22adbd !important;
+        border-color: rgba(34, 173, 189, 0.20) !important;
+        background: rgba(34, 173, 189, 0.12) !important;
     }
     .bottom-navbar > li:hover > .bottom-nav-link > svg {
         transform: translateY(-1px);

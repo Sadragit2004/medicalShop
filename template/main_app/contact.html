@@ -47,7 +47,7 @@
         pointer-events: none;
     }
     .blob-a { top: -120px; right: -90px; width: 420px; height: 420px; background: rgba(31, 166, 182, 0.38); }
-    .blob-b { top: 38%;   left: -140px; width: 380px; height: 380px; background: rgba(120, 190, 235, 0.32); }
+    .blob-b { top: 38%; left: -140px; width: 380px; height: 380px; background: rgba(120, 190, 235, 0.32); }
     .blob-c { bottom: -140px; right: 18%; width: 360px; height: 360px; background: rgba(80, 210, 175, 0.26); }
 
     .shell {
@@ -166,7 +166,7 @@
     }
 
     .person-head h2 { font-size: 16.5px; font-weight: 800; line-height: 1.5; }
-    .person-head p  { color: var(--muted); font-size: 12px; }
+    .person-head p { color: var(--muted); font-size: 12px; }
 
     .rows { display: flex; flex-direction: column; gap: 8px; }
 
@@ -195,6 +195,7 @@
         box-shadow: 0 2px 8px rgba(30, 70, 90, 0.07);
     }
     .row.wa .row-icon { color: var(--wa); }
+    .row.bale .row-icon { color: #229ed9; }
 
     .row-meta {
         display: flex;
@@ -213,13 +214,15 @@
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
     }
-    .row.wa .row-value {
+    .row.wa .row-value,
+    .row.bale .row-value {
         direction: rtl;
-        color: #137a56;
         font-size: 13.5px;
         font-weight: 700;
         letter-spacing: 0;
     }
+    .row.wa .row-value { color: #137a56; }
+    .row.bale .row-value { color: #1684b8; }
 
     .chev { flex: 0 0 16px; width: 16px; height: 16px; color: #a7b3ba; }
 
@@ -312,7 +315,7 @@
         padding: 22px 26px;
     }
     .cta h2 { font-size: 17px; font-weight: 800; line-height: 1.6; }
-    .cta p  { color: var(--muted); font-size: 13px; }
+    .cta p { color: var(--muted); font-size: 13px; }
 
     .shop {
         flex-shrink: 0;
@@ -443,11 +446,20 @@
                         <span class="chev"><svg><use href="#i-back"/></svg></span>
                     </a>
 
-                    <a class="row wa" href="https://wa.me/989149308005" target="_blank" rel="noopener noreferrer">
+                    <a class="row wa" href="https://wa.me/989149308005" target="_blank" rel="noopener noreferrer" aria-label="گفت‌وگو با وحید دباغی در واتساپ">
                         <span class="row-icon"><svg><use href="#i-chat"/></svg></span>
                         <span class="row-meta">
-                            <span class="row-label">پیام‌رسان</span>
+                            <span class="row-label">پیام‌رسان واتساپ</span>
                             <span class="row-value">گفت‌وگو در واتساپ</span>
+                        </span>
+                        <span class="chev"><svg><use href="#i-back"/></svg></span>
+                    </a>
+
+                    <a class="row bale" href="https://ble.ir/09149308005" target="_blank" rel="noopener noreferrer" aria-label="گفت‌وگو با وحید دباغی در پیام‌رسان بله">
+                        <span class="row-icon"><svg><use href="#i-chat"/></svg></span>
+                        <span class="row-meta">
+                            <span class="row-label">پیام‌رسان بله</span>
+                            <span class="row-value">گفت‌وگو در بله</span>
                         </span>
                         <span class="chev"><svg><use href="#i-back"/></svg></span>
                     </a>
@@ -478,6 +490,24 @@
                         <span class="row-meta">
                             <span class="row-label">تلفن دفتر</span>
                             <span class="row-value">041-33359946</span>
+                        </span>
+                        <span class="chev"><svg><use href="#i-back"/></svg></span>
+                    </a>
+
+                    <a class="row wa" href="https://wa.me/989140917401" target="_blank" rel="noopener noreferrer" aria-label="گفت‌وگو با ژاله فرید در واتساپ">
+                        <span class="row-icon"><svg><use href="#i-chat"/></svg></span>
+                        <span class="row-meta">
+                            <span class="row-label">پیام‌رسان واتساپ</span>
+                            <span class="row-value">گفت‌وگو در واتساپ</span>
+                        </span>
+                        <span class="chev"><svg><use href="#i-back"/></svg></span>
+                    </a>
+
+                    <a class="row bale" href="https://ble.ir/09140917401" target="_blank" rel="noopener noreferrer" aria-label="گفت‌وگو با ژاله فرید در پیام‌رسان بله">
+                        <span class="row-icon"><svg><use href="#i-chat"/></svg></span>
+                        <span class="row-meta">
+                            <span class="row-label">پیام‌رسان بله</span>
+                            <span class="row-value">گفت‌وگو در بله</span>
                         </span>
                         <span class="chev"><svg><use href="#i-back"/></svg></span>
                     </a>
@@ -531,7 +561,7 @@
             </a>
         </section>
 
-        <footer>سایا مِد، همراه شما با آرامش و اطمینان</footer>
+        <footer>سایا مِد، همراه سلامتی شما</footer>
 
     </div>
 </main>
