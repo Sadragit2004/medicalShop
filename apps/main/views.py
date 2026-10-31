@@ -117,3 +117,11 @@ def api_shop_about(request):
             "about_shop": setting.description2 or "",
         },
     }, status=200)
+
+
+
+
+from django.http import HttpResponseGone
+
+def gone_page(request, *args, **kwargs):
+    return HttpResponseGone()

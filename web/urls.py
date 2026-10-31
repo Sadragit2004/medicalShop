@@ -8,6 +8,7 @@ from apps.main.sitemaps import (
     StaticSitemap, CategorySitemap, ProductSitemap,
     BlogPostSitemap, BlogListSitemap,
 )
+from apps.main.views import gone_page
 
 sitemaps = {
     'static': StaticSitemap,
@@ -31,6 +32,11 @@ urlpatterns = [
     path('dashboard/', include('apps.dashboard.urls', namespace='paneluser')),
     path('panelAdmin/', include('apps.panelAdmin.urls', namespace='panelAdmin')),
     path('price/', include('apps.price.urls', namespace='price')),
+    path(
+        'product/<slug:slug>/dashboard/list_favorit/',
+        gone_page,
+        name='invalid_product_favorite_url'
+    ),
 
     # Sitemap & Robots
     path('sitemap.xml', index,
