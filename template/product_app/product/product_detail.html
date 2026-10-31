@@ -9,9 +9,6 @@
 
 {% block meta1 %}
 
-{# =====================================================
-   اطلاعات پایه و آدرس استاندارد صفحه
-   ===================================================== #}
 
 <link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
 
@@ -19,10 +16,6 @@
       content="{{ product.description|striptags|truncatechars:160|default:product.title }}">
 
 <meta name="robots" content="index, follow, max-image-preview:large">
-
-{# =====================================================
-   Open Graph
-   ===================================================== #}
 
 <meta property="og:type" content="product">
 <meta property="og:locale" content="fa_IR">
@@ -39,9 +32,6 @@
 <meta property="og:image:alt" content="{{ product.title }}">
 {% endif %}
 
-{# =====================================================
-   Twitter Card
-   ===================================================== #}
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{{ product.title }} | {{ site_name }}">
@@ -53,9 +43,6 @@
 <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ galleries.0.image.url }}">
 {% endif %}
 
-{# =====================================================
-   Product Meta
-   ===================================================== #}
 
 <meta property="product:brand" content="{{ product.brand.title|default:'' }}">
 <meta property="product:availability" content="{% if product.stock > 0 %}instock{% else %}out of stock{% endif %}">
@@ -70,9 +57,6 @@
 
 <meta property="product:price:currency" content="IRR">
 
-{# =====================================================
-   Product Structured Data - JSON-LD
-   ===================================================== #}
 
 <script type="application/ld+json">
 {
@@ -164,9 +148,6 @@
 }
 </script>
 
-{# =====================================================
-   BreadcrumbList Structured Data
-   ===================================================== #}
 
 <script type="application/ld+json">
 {
