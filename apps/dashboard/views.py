@@ -282,50 +282,327 @@ def loadDashboard(request):
     )
 
 
+from decimal import Decimal, InvalidOperation
+
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import (
+    Count,
+    DecimalField,
+    ExpressionWrapper,
+    F,
+    Sum,
+    Value,
+)
+from django.db.models.functions import Coalesce
+from django.shortcuts import render
+from django.utils.dateparse import parse_date
+
+from apps.order.models import Order, State
+
+
 @login_required
 def orders_page(request):
-    qs = (
-        Order.objects.filter(customer=request.user)
+    user = request.user
+
+    # --------------------------------------------------
+    # Base QuerySet
+    # --------------------------------------------------
+
+    base_qs = (
+        Order.objects
+        .filter(customer=user)
+        .select_related(
+            "address",
+            "address__state",
+            "address__city",
+        )
+        .prefetch_related(
+            "details",
+            "details__product",
+            "details__brand",
+            "peyment_order",
+        )
         .order_by("-registerDate")
-        .prefetch_related("details", "address__state", "address__city")
     )
 
-    # Filters
-    status = request.GET.get("status")
-    if status:
-        qs = qs.filter(status=status)
+    # --------------------------------------------------
+    # Annotate Order Items Total
+    # --------------------------------------------------
 
-    date_from = request.GET.get("date_from")
-    date_to = request.GET.get("date_to")
+    item_total_expression = ExpressionWrapper(
+        F("details__price") * F("details__qty"),
+        output_field=DecimalField(
+            max_digits=30,
+            decimal_places=3,
+        ),
+    )
+
+    base_qs = base_qs.annotate(
+        items_total_price=Coalesce(
+            Sum(item_total_expression),
+            Value(Decimal("0")),
+            output_field=DecimalField(
+                max_digits=30,
+                decimal_places=3,
+            ),
+        ),
+        items_count=Count("details", distinct=True),
+    )
+
+    # --------------------------------------------------
+    # Filters
+    # --------------------------------------------------
+
+    status_filter = request.GET.get("status", "").strip()
+    date_from_value = request.GET.get("date_from", "").strip()
+    date_to_value = request.GET.get("date_to", "").strip()
+    price_min_value = request.GET.get("price_min", "").strip()
+    price_max_value = request.GET.get("price_max", "").strip()
+
+    qs = base_qs
+
+    # Status Filter
+    valid_statuses = {
+        value
+        for value, label in Order._meta.get_field("status").choices
+    }
+
+    if status_filter and status_filter in valid_statuses:
+        qs = qs.filter(status=status_filter)
+    else:
+        status_filter = ""
+
+    # Date Filters
+    date_from = parse_date(date_from_value) if date_from_value else None
+    date_to = parse_date(date_to_value) if date_to_value else None
+
     if date_from:
         qs = qs.filter(registerDate__date__gte=date_from)
+    else:
+        date_from_value = ""
+
     if date_to:
         qs = qs.filter(registerDate__date__lte=date_to)
+    else:
+        date_to_value = ""
 
-    price_min = request.GET.get("price_min")
-    price_max = request.GET.get("price_max")
-    if price_min:
-        qs = qs.filter(total_price__gte=price_min)  # تغییر به total_price
-    if price_max:
-        qs = qs.filter(total_price__lte=price_max)  # تغییر به total_price
+    # Price Filters
+    price_min = None
+    price_max = None
 
+    if price_min_value:
+        try:
+            price_min = Decimal(price_min_value)
+
+            if not price_min.is_finite() or price_min < 0:
+                price_min = None
+                price_min_value = ""
+
+        except (InvalidOperation, ValueError):
+            price_min_value = ""
+
+    if price_max_value:
+        try:
+            price_max = Decimal(price_max_value)
+
+            if not price_max.is_finite() or price_max < 0:
+                price_max = None
+                price_max_value = ""
+
+        except (InvalidOperation, ValueError):
+            price_max_value = ""
+
+    if price_min is not None:
+        qs = qs.filter(items_total_price__gte=price_min)
+
+    if price_max is not None:
+        qs = qs.filter(items_total_price__lte=price_max)
+
+    # --------------------------------------------------
     # Pagination
-    page = request.GET.get('page', 1)
+    # --------------------------------------------------
+
     paginator = Paginator(qs, 10)
-    orders_page = paginator.get_page(page)
+
+    page_number = request.GET.get("page", 1)
+    orders_page = paginator.get_page(page_number)
+
+    # --------------------------------------------------
+    # Overall Statistics
+    # --------------------------------------------------
+
+    total_orders = base_qs.count()
+
+    status_statistics = (
+        Order.objects
+        .filter(customer=user)
+        .values("status")
+        .annotate(count=Count("id"))
+    )
+
+    status_counts = {
+        item["status"]: item["count"]
+        for item in status_statistics
+    }
+
+    order_statuses = [
+        {
+            "value": value,
+            "label": label,
+            "count": status_counts.get(value, 0),
+        }
+        for value, label in Order._meta.get_field("status").choices
+    ]
+
+    total_items = (
+        Order.objects
+        .filter(customer=user)
+        .aggregate(
+            total=Coalesce(
+                Sum("details__qty"),
+                Value(Decimal("0")),
+                output_field=DecimalField(
+                    max_digits=30,
+                    decimal_places=3,
+                ),
+            )
+        )["total"]
+    )
+
+    total_items_amount = (
+        Order.objects
+        .filter(customer=user)
+        .aggregate(
+            total=Coalesce(
+                Sum(item_total_expression),
+                Value(Decimal("0")),
+                output_field=DecimalField(
+                    max_digits=30,
+                    decimal_places=3,
+                ),
+            )
+        )["total"]
+    )
+
+    # --------------------------------------------------
+    # Payment Statistics
+    # --------------------------------------------------
+
+    payment_qs = user.peyment_customer.all()
+
+    payment_statistics = payment_qs.aggregate(
+        total_payments=Count("id"),
+        successful_payments=Count(
+            "id",
+            filter=F("isFinaly"),
+        ),
+        total_paid_amount=Coalesce(
+            Sum(
+                "amount",
+                filter=F("isFinaly"),
+            ),
+            Value(Decimal("0")),
+            output_field=DecimalField(
+                max_digits=30,
+                decimal_places=3,
+            ),
+        ),
+    )
+
+    # --------------------------------------------------
+    # Filtered Results Statistics
+    # --------------------------------------------------
+
+    filtered_statistics = {
+        "count": paginator.count,
+        "items_total": qs.aggregate(
+            total=Coalesce(
+                Sum("items_total_price"),
+                Value(Decimal("0")),
+                output_field=DecimalField(
+                    max_digits=30,
+                    decimal_places=3,
+                ),
+            )
+        )["total"],
+    }
+
+    # --------------------------------------------------
+    # Context
+    # --------------------------------------------------
 
     context = {
+        # Orders
         "orders": orders_page,
-        "states": State.objects.all().order_by("name"),
-        "status_filter": status or "",
-        "date_from": date_from or "",
-        "date_to": date_to or "",
-        "price_min": price_min or "",
-        "price_max": price_max or "",
+        "orders_page": orders_page,
+
+        # Status
+        "order_statuses": order_statuses,
+        "status_filter": status_filter,
+
+        # Date Filters
+        "date_from": date_from_value,
+        "date_to": date_to_value,
+
+        # Price Filters
+        "price_min": price_min_value,
+        "price_max": price_max_value,
+
+        # Overall Statistics
+        "statistics": {
+            "total_orders": total_orders,
+            "total_items": total_items,
+            "total_items_amount": total_items_amount,
+            "total_paid_amount": payment_statistics["total_paid_amount"],
+            "total_payments": payment_statistics["total_payments"],
+            "successful_payments": payment_statistics["successful_payments"],
+            "delivered_orders": status_counts.get("delivered", 0),
+            "processing_orders": status_counts.get("processing", 0),
+            "shipped_orders": status_counts.get("shipped", 0),
+            "paid_orders": status_counts.get("paid", 0),
+            "pending_orders": status_counts.get("pending", 0),
+            "canceled_orders": status_counts.get("canceled", 0),
+        },
+
+        # Filtered Statistics
+        "filtered_statistics": filtered_statistics,
+
+        # Pagination
         "has_next": orders_page.has_next(),
-        "next_page_number": orders_page.next_page_number() if orders_page.has_next() else None,
+        "has_previous": orders_page.has_previous(),
+        "next_page_number": (
+            orders_page.next_page_number()
+            if orders_page.has_next()
+            else None
+        ),
+        "previous_page_number": (
+            orders_page.previous_page_number()
+            if orders_page.has_previous()
+            else None
+        ),
+        "page_number": orders_page.number,
+        "num_pages": paginator.num_pages,
+        "total_results": paginator.count,
+
+        # Other Data
+        "states": State.objects.all().order_by("name"),
+
+        # Filter State
+        "has_active_filters": any([
+            status_filter,
+            date_from_value,
+            date_to_value,
+            price_min_value,
+            price_max_value,
+        ]),
     }
-    return render(request, "dashboard_app/orders.html", context)
+
+    return render(
+        request,
+        "dashboard_app/orders.html",
+        context,
+    )
 
 
 # =======================
