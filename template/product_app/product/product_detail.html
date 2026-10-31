@@ -6,55 +6,96 @@
 
 {% block title %}{{ meta.title }}{% endblock %}
 
+{% block title %}{{ product.title }} | {{ site_name }}{% endblock %}
+
 {% block meta1 %}
 
+{# =====================================================
+   اطلاعات پایه و آدرس استاندارد صفحه
+   ===================================================== #}
 
-<title>{{ product.title }} - {{ product.brand.title|default:"فروشگاه" }} | {{ site_name }}</title>
-<meta name="description" content="{{ product.description|striptags|truncatechars:160|default:product.title }}">
-<meta name="keywords" content="{{ product.title }}, {{ product.brand.title|default:'' }}, {{ product.category.first.title|default:'' }}">
+<link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
 
-<!-- Open Graph -->
+<meta name="description"
+      content="{{ product.description|striptags|truncatechars:160|default:product.title }}">
+
+<meta name="robots" content="index, follow, max-image-preview:large">
+
+{# =====================================================
+   Open Graph
+   ===================================================== #}
+
 <meta property="og:type" content="product">
-<meta property="og:title" content="{{ product.title }} - {{ site_name }}">
-<meta property="og:description" content="{{ product.description|striptags|truncatechars:160|default:product.title }}">
-<meta property="og:url" content="{{ request.build_absolute_uri }}">
-<meta property="og:image" content="{{ site_url }}{{ product.mainImage.url }}">
+<meta property="og:locale" content="fa_IR">
 <meta property="og:site_name" content="{{ site_name }}">
+<meta property="og:title" content="{{ product.title }} | {{ site_name }}">
+<meta property="og:description" content="{{ product.description|striptags|truncatechars:160|default:product.title }}">
+<meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
 
-<!-- Twitter Card -->
+{% if product.mainImage %}
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.mainImage.url }}">
+<meta property="og:image:alt" content="{{ product.title }}">
+{% elif galleries %}
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ galleries.0.image.url }}">
+<meta property="og:image:alt" content="{{ product.title }}">
+{% endif %}
+
+{# =====================================================
+   Twitter Card
+   ===================================================== #}
+
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="{{ product.title }} - {{ site_name }}">
+<meta name="twitter:title" content="{{ product.title }} | {{ site_name }}">
 <meta name="twitter:description" content="{{ product.description|striptags|truncatechars:160|default:product.title }}">
-<meta name="twitter:image" content="{{ site_url }}{{ product.mainImage.url }}">
 
-<!-- Product Meta -->
+{% if product.mainImage %}
+<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.mainImage.url }}">
+{% elif galleries %}
+<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ galleries.0.image.url }}">
+{% endif %}
+
+{# =====================================================
+   Product Meta
+   ===================================================== #}
+
 <meta property="product:brand" content="{{ product.brand.title|default:'' }}">
 <meta property="product:availability" content="{% if product.stock > 0 %}instock{% else %}out of stock{% endif %}">
 <meta property="product:condition" content="new">
 <meta property="product:retailer_item_id" content="{{ product.id }}">
+
 {% if default_sale_type %}
 <meta property="product:price:amount" content="{{ default_sale_type.final_price|default:default_sale_type.price }}">
 {% else %}
-<meta property="product:price:amount" content="{{ product.get_base_price }}">
+<meta property="product:price:amount" content="{{ product.get_base_price|default:0 }}">
 {% endif %}
+
 <meta property="product:price:currency" content="IRR">
+
+{# =====================================================
+   Product Structured Data - JSON-LD
+   ===================================================== #}
 
 <script type="application/ld+json">
 {
     "@context": "https://schema.org",
     "@type": "Product",
-    "@id": "{{ request.build_absolute_uri|escapejs }}#product",
+
+    "@id": "{{ request.scheme }}://{{ request.get_host }}{{ request.path }}#product",
+
     "name": "{{ product.title|escapejs }}",
+
     "description": "{{ product.description|striptags|truncatechars:300|default:product.title|escapejs }}",
-    "url": "{{ request.build_absolute_uri|escapejs }}",
+
+    "url": "{{ request.scheme }}://{{ request.get_host }}{{ request.path }}",
 
     {% if product.mainImage or galleries %}
     "image": [
         {% if product.mainImage %}
-        "{{ site_url|escapejs }}{{ product.mainImage.url|escapejs }}"{% if galleries %},{% endif %}
+        "{{ request.scheme }}://{{ request.get_host }}{{ product.mainImage.url|escapejs }}"{% if galleries %},{% endif %}
         {% endif %}
+
         {% for gallery in galleries %}
-        "{{ site_url|escapejs }}{{ gallery.image.url|escapejs }}"{% if not forloop.last %},{% endif %}
+        "{{ request.scheme }}://{{ request.get_host }}{{ gallery.image.url|escapejs }}"{% if not forloop.last %},{% endif %}
         {% endfor %}
     ],
     {% endif %}
@@ -100,18 +141,55 @@
 
     "offers": {
         "@type": "Offer",
-        "url": "{{ request.build_absolute_uri|escapejs }}",
+
+        "url": "{{ request.scheme }}://{{ request.get_host }}{{ request.path }}",
+
         "priceCurrency": "IRR",
+
         "price": "{% if default_sale_type %}{{ default_sale_type.final_price|default:default_sale_type.price|escapejs }}{% else %}{{ product.get_base_price|default:''|escapejs }}{% endif %}",
+
         "availability": "https://schema.org/{% if product.stock > 0 %}InStock{% else %}OutOfStock{% endif %}",
+
         "itemCondition": "https://schema.org/NewCondition",
+
         "seller": {
             "@type": "Organization",
-            "name": "{{ site_name|escapejs }}"
+            "name": "{{ site_name|escapejs }}",
+            "url": "{{ request.scheme }}://{{ request.get_host }}/",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "{{ request.scheme }}://{{ request.get_host }}{% static 'images/logo.png' %}"
+            }
         }
     }
 }
 </script>
+
+{# =====================================================
+   BreadcrumbList Structured Data
+   ===================================================== #}
+
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "صفحه اصلی",
+            "item": "{{ request.scheme }}://{{ request.get_host }}/{% if request.path|slice:'-1:' != '/' %}{% endif %}"
+        },
+        {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "{{ product.title|escapejs }}",
+            "item": "{{ request.scheme }}://{{ request.get_host }}{{ request.path }}"
+        }
+    ]
+}
+</script>
+
 {% endblock meta1 %}
 
 {% block content %}
