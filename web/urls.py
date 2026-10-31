@@ -43,9 +43,9 @@ urlpatterns = [
         name='invalid_blog_favorite_url'
     ),
     path(
-        'category/<slug:slug>/dashboard/list_favorit/',
+        'product/category/<slug:slug>/dashboard/list_favorit/',
         gone_page,
-        name='invalid_blog_favorite_url'
+        name='invalid_category_favorite_url'
     ),
 
     # Sitemap & Robots
