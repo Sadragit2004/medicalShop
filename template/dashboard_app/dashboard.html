@@ -1,184 +1,1635 @@
+
 {% extends "dashboard_template.html" %}
 {% load static %}
 {% load humanize %}
 
 {% block dashboard_content %}
 
-<div class="grid grid-cols-12 child:col-span-12 mt-5 lg:mt-0 md:child:col-span-4 gap-4 child:rounded-lg child:bg-white child:dark:bg-gray-800 child:w-full child:flex child:shadow child:p-4">
-   <div class="flex items-center gap-x-4">
-        <svg class="size-9 text-blue-500">
-             <use href="#wallet" />
-        </svg>
-        <div class="flex flex-col gap-y-1">
-            <h2 class="font-DanaDemiBold">کیف‌پول</h2>
-            <p class="text-gray-500">موجودی : <span>—</span></p>
-     </div>
-   </div>
-   <div class="flex items-center gap-x-4">
-        <svg class="size-9 text-blue-500">
-             <use href="#shopping-bag" />
-        </svg>
-        <div class="flex flex-col gap-y-1">
-            <h2 class="font-DanaDemiBold">سفارش‌ها</h2>
-            <p class="text-gray-500">{{ order_count }} سفارش</p>
-     </div>
-   </div>
-   <div class="flex items-center gap-x-4">
-        <svg class="size-9 text-blue-500">
-             <use href="#ticket" />
-        </svg>
-        <div class="flex flex-col gap-y-1">
-            <h2 class="font-DanaDemiBold">تیکت‌ها</h2>
-            <p class="text-gray-500">—</p>
-     </div>
-   </div>
-</div>
+<style>
+    .profile-dashboard {
+        --pd-primary: #2563eb;
+        --pd-text: #172033;
+        --pd-muted: #8791a2;
+        --pd-border: #e9edf2;
+        --pd-surface: #ffffff;
+        --pd-soft: #f7f9fc;
+        width: 100%;
+        min-width: 0;
+        color: var(--pd-text);
+        direction: rtl;
+    }
 
-<div class="flex flex-col shadow rounded-lg p-4 dark:bg-gray-800 bg-white mt-5">
-    <span class="flex items-center gap-x-2">
-        <img src="{% static 'images/svg/status-delivered.svg' %}" class="w-10" alt="">
-        <h2 class="font-DanaMedium text-lg">سفارش های اخیر :</h2>
-    </span>
-    <div class="relative mt-5 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-        <table class="w-full text-sm text-right text-gray-500 dark:text-gray-400">
-            <thead class="text-xs text-gray-700  bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
-                  <tr>
-                        <th scope="col" class="px-6 py-3.5">
-                                کد سفارش
-                        </th>
-                         <th scope="col" class="px-6 py-3.5">
-                                تاریخ
-                        </th>
-                        <th scope="col" class="px-6 py-3.5">
-                                مبلغ
-                        </th>
-                        <th scope="col" class="px-6 py-3.5">
-                                وضعیت
-                        </th>
-                        <th scope="col" class="px-6 py-3.5 text-center">
-                                جزئیات
-                        </th>
-                  </tr>
-            </thead>
-                <tbody>
-                    {% for order in recent_orders %}
-                    <tr class="bg-white border-b cursor-pointer dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
-                        <th scope="row"
-                            class="px-6 py-5 font-medium text-gray-900 whitespace-nowrap dark:text-white flex items-center gap-x-2">
-                               {{ order.orderCode }}
-                        </th>
-                        <td class="px-6 py-5">
-                            {{ order.registerDate|date:"Y/m/d" }}
-                        </td>
-                        <td class="px-6 py-5">
-                            {{ order.get_order_total_price|default:0|intcomma }} تومان
-                        </td>
-                        <td class="px-6 py-5">
-                            {% if order.status == "delivered" %}
-                                <span class="text-green-500 font-DanaDemiBold">تحویل داده شده</span>
-                            {% elif order.status == "shipped" %}
-                                <span class="text-blue-500 font-DanaDemiBold">ارسال شده</span>
-                            {% elif order.status == "paid" %}
-                                <span class="text-blue-500 font-DanaDemiBold">پرداخت شده </span>
-                            {% elif order.status == "processing" %}
-                                <span class="text-amber-500 font-DanaDemiBold">در حال پردازش</span>
-                            {% elif order.status == "pending" %}
-                                <span class="text-yellow-500 font-DanaDemiBold">در انتظار</span>
-                            {% else %}
-                                <span class="text-red-500 font-DanaDemiBold">لغو شده</span>
+    .dark .profile-dashboard {
+        --pd-text: #f1f5f9;
+        --pd-muted: #94a3b8;
+        --pd-border: #334155;
+        --pd-surface: #1e293b;
+        --pd-soft: #172235;
+    }
+
+    .profile-dashboard *,
+    .profile-dashboard *::before,
+    .profile-dashboard *::after {
+        box-sizing: border-box;
+    }
+
+    .pd-heading { margin-bottom: 18px; }
+
+    .pd-heading h1 {
+        font-size: 21px;
+        line-height: 1.5;
+        font-weight: 800;
+        color: var(--pd-text);
+    }
+
+    .pd-heading p {
+        margin-top: 5px;
+        color: var(--pd-muted);
+        font-size: 12px;
+        line-height: 1.8;
+    }
+
+    .pd-stats {
+        display: grid !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        width: 100%;
+        margin-bottom: 16px;
+    }
+
+    .pd-stat {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        min-height: 88px;
+        padding: 15px;
+        background: var(--pd-surface);
+        border: 1px solid var(--pd-border);
+        border-radius: 15px;
+        transition: border-color .2s, transform .2s;
+    }
+
+    .pd-stat:hover {
+        border-color: #bfdbfe;
+        transform: translateY(-2px);
+    }
+
+    .pd-stat-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        flex: 0 0 42px;
+        border-radius: 12px;
+    }
+
+    .pd-stat-icon svg {
+        width: 21px;
+        height: 21px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+    }
+
+    .pd-stat-content { min-width: 0; flex: 1; }
+
+    .pd-stat-label {
+        display: block;
+        color: var(--pd-muted);
+        font-size: 11px;
+        line-height: 1.8;
+        white-space: nowrap;
+    }
+
+    .pd-stat-value {
+        display: block;
+        margin-top: 3px;
+        color: var(--pd-text);
+        font-size: 19px;
+        line-height: 1.4;
+        font-weight: 800;
+        overflow-wrap: anywhere;
+    }
+
+    .pd-stat-unit {
+        margin-right: 3px;
+        color: var(--pd-muted);
+        font-size: 10px;
+        font-weight: 400;
+    }
+
+    .pd-section {
+        min-width: 0;
+        margin-bottom: 16px;
+        padding: 18px;
+        background: var(--pd-surface);
+        border: 1px solid var(--pd-border);
+        border-radius: 17px;
+    }
+
+    .pd-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        min-width: 0;
+        margin-bottom: 15px;
+    }
+
+    .pd-section-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-width: 0;
+        color: var(--pd-text);
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    .pd-section-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
+        border-radius: 11px;
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    .dark .pd-section-icon {
+        background: rgba(37, 99, 235, .15);
+        color: #60a5fa;
+    }
+
+    .pd-section-icon svg {
+        width: 18px;
+        height: 18px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+    }
+
+    .pd-section-count {
+        color: var(--pd-muted);
+        font-size: 11px;
+        white-space: nowrap;
+    }
+
+    .pd-status-grid {
+        display: grid !important;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 9px;
+    }
+
+    .pd-status-card {
+        min-width: 0;
+        padding: 12px;
+        background: var(--pd-soft);
+        border: 1px solid var(--pd-border);
+        border-radius: 12px;
+    }
+
+    .pd-status-label {
+        display: block;
+        color: var(--pd-muted);
+        font-size: 11px;
+        line-height: 1.8;
+        overflow-wrap: anywhere;
+    }
+
+    .pd-status-number {
+        display: block;
+        margin-top: 4px;
+        color: var(--pd-text);
+        font-size: 19px;
+        font-weight: 800;
+        line-height: 1.4;
+    }
+
+    .pd-order-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .pd-order-card {
+        min-width: 0;
+        padding: 15px;
+        border: 1px solid var(--pd-border);
+        border-radius: 14px;
+        background: var(--pd-surface);
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+    .pd-order-card:hover {
+        border-color: #bfdbfe;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, .035);
+    }
+
+    .pd-order-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .pd-order-identity { min-width: 0; }
+
+    .pd-order-code {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 7px;
+        color: var(--pd-text);
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .pd-order-code-value {
+        color: var(--pd-muted);
+        font-size: 11px;
+        font-weight: 400;
+        overflow-wrap: anywhere;
+        direction: ltr;
+    }
+
+    .pd-order-date {
+        margin-top: 5px;
+        color: var(--pd-muted);
+        font-size: 11px;
+    }
+
+    .pd-order-bottom {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 13px;
+        padding-top: 12px;
+        border-top: 1px solid var(--pd-border);
+    }
+
+    .pd-order-info {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 22px;
+        min-width: 0;
+    }
+
+    .pd-order-info-item { min-width: 0; }
+
+    .pd-order-info-label {
+        display: block;
+        color: var(--pd-muted);
+        font-size: 10px;
+    }
+
+    .pd-order-info-value {
+        display: block;
+        margin-top: 4px;
+        color: var(--pd-text);
+        font-size: 12px;
+        font-weight: 800;
+        overflow-wrap: anywhere;
+    }
+
+    .pd-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+        padding: 6px 9px;
+        border-radius: 8px;
+        font-size: 10px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .pd-status::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        flex: 0 0 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    .status-delivered { color: #15803d; background: #f0fdf4; }
+    .status-shipped { color: #2563eb; background: #eff6ff; }
+    .status-paid { color: #0891b2; background: #ecfeff; }
+    .status-processing { color: #b45309; background: #fffbeb; }
+    .status-pending { color: #a16207; background: #fefce8; }
+    .status-canceled { color: #dc2626; background: #fef2f2; }
+
+    .dark .status-delivered { color: #4ade80; background: rgba(22, 163, 74, .13); }
+    .dark .status-shipped { color: #60a5fa; background: rgba(37, 99, 235, .15); }
+    .dark .status-paid { color: #22d3ee; background: rgba(8, 145, 178, .15); }
+    .dark .status-processing { color: #fbbf24; background: rgba(217, 119, 6, .13); }
+    .dark .status-pending { color: #facc15; background: rgba(202, 138, 4, .13); }
+    .dark .status-canceled { color: #f87171; background: rgba(220, 38, 38, .13); }
+
+    .pd-detail-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        flex-shrink: 0;
+        min-height: 35px;
+        padding: 0 12px;
+        border: 0;
+        border-radius: 9px;
+        background: #eff6ff;
+        color: #2563eb;
+        font-size: 11px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: background .2s;
+    }
+
+    .pd-detail-button:hover { background: #dbeafe; }
+
+    .dark .pd-detail-button {
+        background: rgba(37, 99, 235, .15);
+        color: #60a5fa;
+    }
+
+    .pd-detail-button svg {
+        width: 15px;
+        height: 15px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+    }
+
+    .pd-address-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .pd-address-card {
+        min-width: 0;
+        padding: 14px;
+        border: 1px solid var(--pd-border);
+        border-radius: 13px;
+        background: var(--pd-surface);
+    }
+
+    .pd-address-heading {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+    }
+
+    .pd-address-heading strong {
+        display: block;
+        color: var(--pd-text);
+        font-size: 12px;
+    }
+
+    .pd-address-heading small {
+        display: block;
+        margin-top: 3px;
+        color: var(--pd-muted);
+        font-size: 10px;
+    }
+
+    .pd-address-text {
+        margin-top: 12px;
+        color: var(--pd-muted);
+        font-size: 11px;
+        line-height: 2;
+        overflow-wrap: anywhere;
+    }
+
+    .pd-address-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 9px;
+        padding-top: 9px;
+        border-top: 1px solid var(--pd-border);
+        color: var(--pd-muted);
+        font-size: 10px;
+    }
+
+    .pd-add-address {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 8px 11px;
+        border: 1px solid #dbeafe;
+        border-radius: 9px;
+        background: #eff6ff;
+        color: #2563eb;
+        font-size: 11px;
+        font-weight: 800;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .dark .pd-add-address {
+        border-color: #334155;
+        background: #26364d;
+        color: #93c5fd;
+    }
+
+    .pd-add-address svg {
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+    }
+
+    .pd-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 28px 15px;
+        border: 1px dashed var(--pd-border);
+        border-radius: 12px;
+        color: var(--pd-muted);
+        text-align: center;
+    }
+
+    .pd-empty svg {
+        width: 30px;
+        height: 30px;
+        margin-bottom: 9px;
+        opacity: .5;
+    }
+
+    .pd-empty strong {
+        color: var(--pd-text);
+        font-size: 12px;
+    }
+
+    .pd-empty p {
+        margin-top: 5px;
+        font-size: 11px;
+    }
+
+    .pd-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 15px;
+        padding-top: 13px;
+        border-top: 1px solid var(--pd-border);
+        color: var(--pd-muted);
+        font-size: 11px;
+    }
+
+    .pd-pagination a {
+        padding: 7px 12px;
+        border: 1px solid var(--pd-border);
+        border-radius: 8px;
+        color: var(--pd-text);
+        text-decoration: none;
+    }
+
+    .pd-pagination a:hover {
+        border-color: #93c5fd;
+        background: var(--pd-soft);
+    }
+
+    /* Modal system */
+
+    .pd-modal {
+        --modal-bg: #ffffff;
+        --modal-text: #172033;
+        --modal-muted: #64748b;
+        --modal-border: #e5eaf1;
+        --modal-input: #f8fafc;
+        --modal-soft: #f1f5f9;
+
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 99999 !important;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        height: 100dvh;
+        padding: 20px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        background: rgba(15, 23, 42, .68);
+        backdrop-filter: blur(7px);
+        -webkit-backdrop-filter: blur(7px);
+        direction: rtl;
+        font-family: inherit;
+        color: var(--modal-text);
+    }
+
+    .dark .pd-modal {
+        --modal-bg: #1e293b;
+        --modal-text: #f1f5f9;
+        --modal-muted: #a8b4c5;
+        --modal-border: #3b4a60;
+        --modal-input: #263449;
+        --modal-soft: #29384d;
+    }
+
+    .pd-modal.is-open {
+        display: flex !important;
+    }
+
+    .pd-modal,
+    .pd-modal * {
+        box-sizing: border-box;
+    }
+
+    .pd-modal-panel {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        width: min(100%, 620px);
+        max-height: min(88dvh, 850px);
+        margin: auto;
+        overflow: hidden;
+        border: 1px solid var(--modal-border);
+        border-radius: 20px;
+        background: var(--modal-bg) !important;
+        color: var(--modal-text) !important;
+        box-shadow: 0 25px 90px rgba(0, 0, 0, .28);
+        animation: pdModalIn .2s ease-out;
+        isolation: isolate;
+    }
+
+    .pd-modal-panel * {
+        font-family: inherit;
+    }
+
+    @keyframes pdModalIn {
+        from {
+            opacity: 0;
+            transform: translateY(12px) scale(.985);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .pd-modal-header {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        flex-shrink: 0;
+        padding: 19px 22px;
+        border-bottom: 1px solid var(--modal-border);
+        background: var(--modal-bg) !important;
+    }
+
+    .pd-modal-header h3 {
+        color: var(--modal-text);
+        font-size: 17px;
+        line-height: 1.7;
+        font-weight: 800;
+    }
+
+    .pd-modal-header p {
+        margin-top: 3px;
+        color: var(--modal-muted);
+        font-size: 12px;
+        line-height: 1.8;
+    }
+
+    .pd-modal-close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 39px;
+        height: 39px;
+        flex: 0 0 39px;
+        border: 1px solid var(--modal-border);
+        border-radius: 11px;
+        background: var(--modal-soft);
+        color: var(--modal-muted);
+        cursor: pointer;
+        transition: .2s;
+    }
+
+    .pd-modal-close:hover {
+        background: #fee2e2;
+        border-color: #fecaca;
+        color: #dc2626;
+    }
+
+    .dark .pd-modal-close:hover {
+        background: rgba(220, 38, 38, .15);
+        border-color: rgba(248, 113, 113, .3);
+        color: #fca5a5;
+    }
+
+    .pd-modal-close svg {
+        width: 19px;
+        height: 19px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+    }
+
+    .pd-modal-body {
+        min-height: 0;
+        padding: 21px 22px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        background: var(--modal-bg);
+        color: var(--modal-text);
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 transparent;
+    }
+
+    .pd-modal-body > div {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .pd-modal-body .pd-detail-code {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1px solid var(--modal-border);
+        border-radius: 11px;
+        background: var(--modal-input);
+        font-size: 13px;
+    }
+
+    .pd-modal-body .pd-detail-code span:first-child {
+        color: var(--modal-muted);
+    }
+
+    .pd-modal-body .pd-detail-code span:last-child {
+        color: var(--modal-text);
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
+
+    .pd-product-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 14px;
+        border: 1px solid var(--modal-border);
+        border-radius: 13px;
+        background: var(--modal-bg);
+    }
+
+    .pd-product-image {
+        width: 76px;
+        height: 76px;
+        flex: 0 0 76px;
+        border: 1px solid var(--modal-border);
+        border-radius: 11px;
+        object-fit: cover;
+        background: var(--modal-input);
+    }
+
+    .pd-product-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 76px;
+        height: 76px;
+        flex: 0 0 76px;
+        border-radius: 11px;
+        background: var(--modal-input);
+        color: var(--modal-muted);
+        font-size: 11px;
+    }
+
+    .pd-product-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .pd-product-title {
+        color: var(--modal-text);
+        font-size: 14px;
+        line-height: 1.9;
+        font-weight: 800;
+    }
+
+    .pd-product-option {
+        margin-top: 3px;
+        color: var(--modal-muted);
+        font-size: 12px;
+        line-height: 1.8;
+    }
+
+    .pd-product-qty {
+        margin-top: 5px;
+        color: var(--modal-muted);
+        font-size: 12px;
+    }
+
+    .pd-product-price {
+        margin-top: 7px;
+        color: var(--modal-text);
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .pd-detail-summary {
+        padding: 16px;
+        border: 1px solid var(--modal-border);
+        border-radius: 13px;
+        background: var(--modal-input);
+    }
+
+    .pd-detail-summary-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 13px;
+        line-height: 2;
+    }
+
+    .pd-detail-summary-row + .pd-detail-summary-row {
+        margin-top: 9px;
+        padding-top: 9px;
+        border-top: 1px solid var(--modal-border);
+    }
+
+    .pd-detail-summary-row span:first-child {
+        color: var(--modal-muted);
+    }
+
+    .pd-detail-summary-row strong {
+        color: var(--modal-text);
+        font-weight: 800;
+        text-align: left;
+    }
+
+    .pd-detail-address {
+        padding: 15px;
+        border: 1px solid var(--modal-border);
+        border-radius: 13px;
+        background: var(--modal-bg);
+    }
+
+    .pd-detail-address h4,
+    .pd-payment-heading {
+        margin-bottom: 9px;
+        color: var(--modal-text);
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    .pd-detail-address p {
+        color: var(--modal-muted);
+        font-size: 13px;
+        line-height: 2.1;
+    }
+
+    .pd-payment-list {
+        border: 1px solid var(--modal-border);
+        border-radius: 13px;
+        overflow: hidden;
+    }
+
+    .pd-payment-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 13px 15px;
+        background: var(--modal-bg);
+    }
+
+    .pd-payment-row + .pd-payment-row {
+        border-top: 1px solid var(--modal-border);
+    }
+
+    .pd-payment-amount {
+        color: var(--modal-text);
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .pd-payment-ref {
+        margin-top: 4px;
+        color: var(--modal-muted);
+        font-size: 11px;
+        direction: ltr;
+        text-align: right;
+        overflow-wrap: anywhere;
+    }
+
+    .pd-payment-state {
+        flex-shrink: 0;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .pd-payment-success {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .pd-payment-pending {
+        background: #fef3c7;
+        color: #a16207;
+    }
+
+    .dark .pd-payment-success {
+        background: rgba(22, 163, 74, .16);
+        color: #86efac;
+    }
+
+    .dark .pd-payment-pending {
+        background: rgba(217, 119, 6, .16);
+        color: #fcd34d;
+    }
+
+    .pd-modal-empty {
+        padding: 17px;
+        border: 1px dashed var(--modal-border);
+        border-radius: 11px;
+        color: var(--modal-muted);
+        font-size: 12px;
+        text-align: center;
+    }
+
+    .pd-form {
+        display: flex;
+        flex-direction: column;
+        gap: 17px;
+        padding: 21px 22px;
+        background: var(--modal-bg);
+    }
+
+    .pd-form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--modal-text);
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .pd-form-group label span {
+        color: #ef4444;
+    }
+
+    .pd-form input,
+    .pd-form select,
+    .pd-form textarea {
+        display: block;
+        width: 100%;
+        min-height: 48px;
+        padding: 11px 14px;
+        border: 1px solid var(--modal-border);
+        border-radius: 11px;
+        outline: none;
+        background: var(--modal-input);
+        color: var(--modal-text);
+        font-family: inherit;
+        font-size: 13px;
+        line-height: 1.8;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+    .pd-form input::placeholder,
+    .pd-form textarea::placeholder {
+        color: #9ca3af;
+        opacity: 1;
+    }
+
+    .pd-form input:focus,
+    .pd-form select:focus,
+    .pd-form textarea:focus {
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, .1);
+    }
+
+    .pd-form select:disabled {
+        opacity: .55;
+        cursor: not-allowed;
+    }
+
+    .pd-form textarea {
+        min-height: 105px;
+        resize: vertical;
+    }
+
+    .pd-form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 3px;
+        padding-top: 15px;
+        border-top: 1px solid var(--modal-border);
+    }
+
+    .pd-form-actions button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        flex: 1;
+        min-height: 47px;
+        padding: 10px 15px;
+        border: 0;
+        border-radius: 11px;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: .2s;
+    }
+
+    .pd-form-cancel {
+        background: var(--modal-soft);
+        color: var(--modal-text);
+    }
+
+    .pd-form-cancel:hover {
+        background: var(--modal-border);
+    }
+
+    .pd-form-submit {
+        background: #2563eb;
+        color: #ffffff;
+    }
+
+    .pd-form-submit:hover {
+        background: #1d4ed8;
+    }
+
+    .pd-form-submit:disabled {
+        opacity: .6;
+        cursor: wait;
+    }
+
+    .pd-message {
+        padding: 12px 14px;
+        border-radius: 10px;
+        font-size: 12px;
+        line-height: 1.9;
+    }
+
+    .pd-error {
+        border: 1px solid #fecaca;
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+
+    .pd-success {
+        border: 1px solid #bbf7d0;
+        background: #f0fdf4;
+        color: #15803d;
+    }
+
+    .dark .pd-error {
+        border-color: rgba(248, 113, 113, .2);
+        background: rgba(220, 38, 38, .12);
+        color: #fca5a5;
+    }
+
+    .dark .pd-success {
+        border-color: rgba(74, 222, 128, .2);
+        background: rgba(22, 163, 74, .12);
+        color: #86efac;
+    }
+
+    @media (max-width: 1024px) {
+        .pd-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .pd-status-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 640px) {
+        .profile-dashboard { margin-top: 0; }
+
+        .pd-heading { margin-bottom: 13px; }
+
+        .pd-heading h1 { font-size: 18px; }
+
+        .pd-heading p { font-size: 11px; }
+
+        .pd-stats {
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .pd-stat {
+            min-height: 74px;
+            gap: 9px;
+            padding: 10px;
+            border-radius: 12px;
+        }
+
+        .pd-stat-icon {
+            width: 34px;
+            height: 34px;
+            flex-basis: 34px;
+            border-radius: 10px;
+        }
+
+        .pd-stat-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .pd-stat-label {
+            font-size: 10px;
+            white-space: normal;
+        }
+
+        .pd-stat-value { font-size: 16px; }
+
+        .pd-stat-unit { font-size: 9px; }
+
+        .pd-section {
+            margin-bottom: 12px;
+            padding: 13px;
+            border-radius: 14px;
+        }
+
+        .pd-section-header { margin-bottom: 12px; }
+
+        .pd-section-title {
+            gap: 7px;
+            font-size: 12px;
+        }
+
+        .pd-section-icon {
+            width: 30px;
+            height: 30px;
+            flex-basis: 30px;
+            border-radius: 9px;
+        }
+
+        .pd-section-icon svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .pd-status-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 7px;
+        }
+
+        .pd-status-card {
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .pd-status-label { font-size: 10px; }
+
+        .pd-status-number {
+            margin-top: 2px;
+            font-size: 17px;
+        }
+
+        .pd-order-card {
+            padding: 12px;
+            border-radius: 12px;
+        }
+
+        .pd-order-top {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        .pd-order-code { font-size: 12px; }
+
+        .pd-order-date { font-size: 10px; }
+
+        .pd-order-bottom {
+            align-items: flex-end;
+            gap: 8px;
+            margin-top: 11px;
+            padding-top: 10px;
+        }
+
+        .pd-order-info { gap: 12px; }
+
+        .pd-order-info-label { font-size: 9px; }
+
+        .pd-order-info-value { font-size: 11px; }
+
+        .pd-detail-button {
+            min-height: 33px;
+            padding: 0 9px;
+            font-size: 10px;
+        }
+
+        .pd-address-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .pd-modal {
+            align-items: flex-end;
+            padding: 10px;
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+        }
+
+        .pd-modal-panel {
+            width: 100%;
+            max-width: 100%;
+            max-height: 90dvh;
+            border-radius: 19px 19px 14px 14px;
+        }
+
+        .pd-modal-header {
+            padding: 15px 16px;
+        }
+
+        .pd-modal-header h3 { font-size: 16px; }
+
+        .pd-modal-header p { font-size: 11px; }
+
+        .pd-modal-body {
+            padding: 15px;
+        }
+
+        .pd-form {
+            gap: 14px;
+            padding: 16px;
+        }
+
+        .pd-form-group label { font-size: 12px; }
+
+        .pd-form input,
+        .pd-form select,
+        .pd-form textarea {
+            font-size: 13px;
+        }
+
+        .pd-product-image,
+        .pd-product-placeholder {
+            width: 65px;
+            height: 65px;
+            flex-basis: 65px;
+        }
+
+        .pd-product-title { font-size: 13px; }
+
+        .pd-product-option,
+        .pd-product-qty { font-size: 11px; }
+
+        .pd-product-price { font-size: 12px; }
+    }
+
+    @media (max-width: 360px) {
+        .pd-stat {
+            gap: 7px;
+            padding: 9px;
+        }
+
+        .pd-stat-icon {
+            width: 30px;
+            height: 30px;
+            flex-basis: 30px;
+        }
+
+        .pd-stat-value { font-size: 14px; }
+
+        .pd-order-bottom {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .pd-detail-button { width: 100%; }
+
+        .pd-form-actions button { font-size: 12px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .pd-modal-panel,
+        .pd-stat,
+        .pd-order-card {
+            animation: none;
+            transition: none;
+        }
+    }
+</style>
+
+<div class="profile-dashboard">
+
+    <header class="pd-heading">
+        <h1>داشبورد من</h1>
+        <p>خلاصه‌ای از سفارش‌ها، پرداخت‌ها و اطلاعات حساب کاربری شما</p>
+    </header>
+
+    <div class="pd-stats">
+
+        <article class="pd-stat">
+            <div class="pd-stat-icon bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                <svg><use href="#shopping-bag"/></svg>
+            </div>
+            <div class="pd-stat-content">
+                <span class="pd-stat-label">کل سفارش‌ها</span>
+                <strong class="pd-stat-value">{{ statistics.total_orders|default:0|intcomma }}</strong>
+            </div>
+        </article>
+
+        <article class="pd-stat">
+            <div class="pd-stat-icon bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400">
+                <svg><use href="#check-circle"/></svg>
+            </div>
+            <div class="pd-stat-content">
+                <span class="pd-stat-label">تحویل‌شده</span>
+                <strong class="pd-stat-value">{{ statistics.delivered_orders|default:0|intcomma }}</strong>
+            </div>
+        </article>
+
+        <article class="pd-stat">
+            <div class="pd-stat-icon bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                <svg><use href="#package"/></svg>
+            </div>
+            <div class="pd-stat-content">
+                <span class="pd-stat-label">تعداد کالاها</span>
+                <strong class="pd-stat-value">{{ statistics.total_items|default:0|intcomma }}</strong>
+            </div>
+        </article>
+
+        <article class="pd-stat">
+            <div class="pd-stat-icon bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <svg><use href="#wallet"/></svg>
+            </div>
+            <div class="pd-stat-content">
+                <span class="pd-stat-label">پرداخت موفق</span>
+                <strong class="pd-stat-value">
+                    {{ statistics.total_paid_amount|default:0|intcomma }}
+                    <span class="pd-stat-unit">تومان</span>
+                </strong>
+            </div>
+        </article>
+
+    </div>
+
+    <section class="pd-section">
+
+        <div class="pd-section-header">
+            <h2 class="pd-section-title">
+                <span class="pd-section-icon">
+                    <svg><use href="#chart-bar"/></svg>
+                </span>
+                وضعیت سفارش‌های من
+            </h2>
+        </div>
+
+        <div class="pd-status-grid">
+            {% for item in order_statuses %}
+            <article class="pd-status-card">
+                <span class="pd-status-label">{{ item.label }}</span>
+                <strong class="pd-status-number">{{ item.count|default:0|intcomma }}</strong>
+            </article>
+            {% empty %}
+            <div class="pd-empty" style="grid-column: 1 / -1;">
+                <strong>اطلاعاتی برای نمایش وجود ندارد</strong>
+            </div>
+            {% endfor %}
+        </div>
+
+    </section>
+
+    <section class="pd-section">
+
+        <div class="pd-section-header">
+            <h2 class="pd-section-title">
+                <span class="pd-section-icon">
+                    <svg><use href="#shopping-bag"/></svg>
+                </span>
+                سفارش‌های من
+            </h2>
+
+            <span class="pd-section-count">
+                {{ statistics.total_orders|default:0|intcomma }} سفارش
+            </span>
+        </div>
+
+        <div class="pd-order-list">
+
+            {% for order in orders %}
+
+            <article class="pd-order-card">
+
+                <div class="pd-order-top">
+
+                    <div class="pd-order-identity">
+                        <div class="pd-order-code">
+                            <span>سفارش</span>
+                            <span class="pd-order-code-value">{{ order.orderCode }}</span>
+                        </div>
+
+                        <p class="pd-order-date">
+                            ثبت سفارش: {{ order.get_jalali_register_datetime|default:"-" }}
+                        </p>
+                    </div>
+
+                    <div>
+                        {% if order.status == "delivered" %}
+                            <span class="pd-status status-delivered">تحویل داده شده</span>
+                        {% elif order.status == "shipped" %}
+                            <span class="pd-status status-shipped">ارسال شده</span>
+                        {% elif order.status == "paid" %}
+                            <span class="pd-status status-paid">پرداخت شده</span>
+                        {% elif order.status == "processing" %}
+                            <span class="pd-status status-processing">در حال پردازش</span>
+                        {% elif order.status == "pending" %}
+                            <span class="pd-status status-pending">در حال بررسی</span>
+                        {% else %}
+                            <span class="pd-status status-canceled">لغو شده</span>
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                <div class="pd-order-bottom">
+
+                    <div class="pd-order-info">
+
+                        <div class="pd-order-info-item">
+                            <span class="pd-order-info-label">مبلغ سفارش</span>
+                            <strong class="pd-order-info-value">
+                                {{ order.get_order_total_price|default:0|intcomma }}
+                                <span class="text-[10px] font-normal">تومان</span>
+                            </strong>
+                        </div>
+
+                        <div class="pd-order-info-item">
+                            <span class="pd-order-info-label">تعداد اقلام</span>
+                            <strong class="pd-order-info-value">
+                                {{ order.details.count|intcomma }} قلم
+                            </strong>
+                        </div>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="view-order-details pd-detail-button"
+                        data-target="order-details-{{ order.id }}">
+                        <svg><use href="#eye"/></svg>
+                        مشاهده جزئیات
+                    </button>
+
+                </div>
+
+            </article>
+
+            <template id="order-details-{{ order.id }}">
+                <div>
+
+                    <div class="pd-detail-code">
+                        <span>کد سفارش</span>
+                        <span>{{ order.orderCode }}</span>
+                    </div>
+
+                    {% for item in order.details.all %}
+                    <div class="pd-product-item">
+
+                        {% if item.product.mainImage %}
+                        <img
+                            src="{{ item.product.mainImage.url }}"
+                            alt="{{ item.product.title }}"
+                            class="pd-product-image"
+                            loading="lazy">
+                        {% else %}
+                        <div class="pd-product-placeholder">بدون تصویر</div>
+                        {% endif %}
+
+                        <div class="pd-product-content">
+                            <p class="pd-product-title">{{ item.product.title }}</p>
+
+                            {% if item.selectedOptions %}
+                            <p class="pd-product-option">{{ item.selectedOptions }}</p>
                             {% endif %}
-                        </td>
-                        <td class="px-6 py-5 text-center">
-                            <button
-                              class="view-order-details px-3 py-1 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 border border-blue-200 dark:border-blue-500 rounded-md text-xs font-DanaMedium transition-all"
-                              data-target="order-details-{{ order.id }}">
-                              مشاهده
-                            </button>
-                        </td>
-                    </tr>
-                    <template id="order-details-{{ order.id }}">
-                        <div class="space-y-3">
-                            {% for item in order.details.all %}
-                            <div class="flex items-start gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                                <img src="{{ item.product.mainImage.url }}" class="w-16 h-16 object-cover rounded" alt="{{ item.product.title }}">
-                                <div class="flex-1 space-y-1">
-                                    <p class="font-DanaMedium text-gray-900 dark:text-gray-100">{{ item.product.title }}</p>
-                                    {% if item.selectedOptions %}
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ item.selectedOptions }}</p>
-                                    {% endif %}
-                                    <p class="text-sm text-gray-600 dark:text-gray-300">تعداد: {{ item.qty }}</p>
-                                    <p class="text-sm text-gray-800 dark:text-gray-100 font-DanaMedium">
-                                        مبلغ: {{ item.price|intcomma }} تومان
+
+                            <p class="pd-product-qty">تعداد: {{ item.qty }}</p>
+
+                            <p class="pd-product-price">
+                                {{ item.price|intcomma }} تومان
+                            </p>
+                        </div>
+
+                    </div>
+                    {% empty %}
+                    <div class="pd-modal-empty">
+                        محصولی برای این سفارش ثبت نشده است.
+                    </div>
+                    {% endfor %}
+
+                    <div class="pd-detail-summary">
+
+                        <div class="pd-detail-summary-row">
+                            <span>مبلغ نهایی سفارش</span>
+                            <strong>{{ order.get_order_total_price|default:0|intcomma }} تومان</strong>
+                        </div>
+
+                        <div class="pd-detail-summary-row">
+                            <span>تاریخ ثبت</span>
+                            <strong>{{ order.get_jalali_register_datetime|default:"-" }}</strong>
+                        </div>
+
+                    </div>
+
+                    {% if order.address %}
+                    <div class="pd-detail-address">
+                        <h4>آدرس سفارش</h4>
+                        <p>{{ order.address.fullAddress }}</p>
+                    </div>
+                    {% endif %}
+
+                    <div>
+                        <h4 class="pd-payment-heading">تراکنش‌های پرداخت</h4>
+
+                        <div class="pd-payment-list">
+                            {% for payment in order.peyment_order.all %}
+                            <div class="pd-payment-row">
+
+                                <div>
+                                    <p class="pd-payment-amount">
+                                        {{ payment.amount|intcomma }} تومان
+                                    </p>
+                                    <p class="pd-payment-ref">
+                                        {{ payment.refId|default:"بدون کد پیگیری" }}
                                     </p>
                                 </div>
+
+                                {% if payment.isFinaly %}
+                                <span class="pd-payment-state pd-payment-success">موفق</span>
+                                {% else %}
+                                <span class="pd-payment-state pd-payment-pending">ناموفق / در انتظار</span>
+                                {% endif %}
+
                             </div>
                             {% empty %}
-                            <p class="text-center text-gray-500 dark:text-gray-400">آیتمی ثبت نشده است</p>
+                            <div class="pd-modal-empty">
+                                تراکنشی برای این سفارش ثبت نشده است.
+                            </div>
                             {% endfor %}
                         </div>
-                    </template>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="px-6 py-5 text-center text-gray-500 dark:text-gray-300">سفارشی ثبت نشده است</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-        </table>
-    </div>
-   </div>
-   <div class="w-full flex flex-col shadow rounded-lg p-4 dark:bg-gray-800 bg-white mt-5 mb-8">
-     <div class="flex items-center justify-between">
-     <span class="flex items-center gap-x-2">
-        <img src="{% static 'images/svg/map.png' %}" class="w-8" alt="">
-        <h2 class="font-DanaMedium text-lg"> آدرس های من:</h2>
-    </span>
-     <button id="addNewAddressBtn" class="flex items-center gap-x-1 text-blue-500">
-            <svg class="size-5  ">
-                <use href="#plus"></use>
-            </svg>
-            <h2 class="font-DanaMedium">آدرس جدید</h2>
-        </button>
-    </div>
-    <ul class="mt-5 space-y-3">
-        {% for address in addresses %}
-        <li class="w-full border border-blue-300 dark:border-blue-400 p-4 rounded-lg">
-            <span class="flex items-center gap-x-1 text-blue-500 dark:text-blue-400">
-                <svg class="size-6">
-                <use href="#map"></use>
-                </svg>
-                <h2 class="font-DanaMedium">{{ address.state.name }}، {{ address.city.name }}</h2>
-            </span>
-            <div class="space-y-1.5 text-gray-600 dark:text-gray-300 mt-3 mr-2">
-                <p>{{ address.addressDetail }}</p>
-                {% if address.postalCode %}<p>کد پستی: {{ address.postalCode }}</p>{% endif %}
-                <p>گیرنده: {{ request.user.name|default:"-" }} | {{ request.user.mobileNumber|default:"-" }}</p>
-            </div>
-        </li>
-        {% empty %}
-        <li class="w-full border border-dashed border-blue-300 dark:border-blue-400 p-4 rounded-lg text-center text-gray-500 dark:text-gray-300">
-            هیچ آدرسی ثبت نشده است.
-        </li>
-        {% endfor %}
-    </ul>
-   </div>
+                    </div>
 
-<!-- Address Modal -->
-<div id="addressModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-DanaDemiBold text-gray-900 dark:text-gray-100">افزودن آدرس جدید</h3>
-            <button id="closeModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                <svg class="size-6">
-                    <use href="#x-mark"></use>
-                </svg>
+                </div>
+            </template>
+
+            {% empty %}
+
+            <div class="pd-empty">
+                <svg><use href="#shopping-bag"/></svg>
+                <strong>هنوز سفارشی ثبت نکرده‌اید</strong>
+                <p>سفارش‌های شما بعد از ثبت در این قسمت نمایش داده می‌شوند.</p>
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% if orders.has_other_pages %}
+        <div class="pd-pagination">
+
+            {% if orders.has_previous %}
+            <a href="?page={{ orders.previous_page_number }}">قبلی</a>
+            {% endif %}
+
+            <span>صفحه {{ orders.number }} از {{ orders.paginator.num_pages }}</span>
+
+            {% if orders.has_next %}
+            <a href="?page={{ orders.next_page_number }}">بعدی</a>
+            {% endif %}
+
+        </div>
+        {% endif %}
+
+    </section>
+
+    <section class="pd-section">
+
+        <div class="pd-section-header">
+
+            <h2 class="pd-section-title">
+                <span class="pd-section-icon">
+                    <svg><use href="#map"/></svg>
+                </span>
+                آدرس‌های من
+            </h2>
+
+            <button type="button" id="addNewAddressBtn" class="pd-add-address">
+                <svg><use href="#plus"/></svg>
+                افزودن آدرس
+            </button>
+
+        </div>
+
+        <div class="pd-address-grid">
+
+            {% for address in addresses %}
+
+            <article class="pd-address-card">
+
+                <div class="pd-address-heading">
+                    <span class="pd-section-icon">
+                        <svg><use href="#map-pin"/></svg>
+                    </span>
+
+                    <div class="min-w-0">
+                        <strong>{{ address.city.name }}</strong>
+                        <small>استان {{ address.state.name }}</small>
+                    </div>
+                </div>
+
+                <p class="pd-address-text">{{ address.addressDetail }}</p>
+
+                {% if address.postalCode %}
+                <div class="pd-address-meta">
+                    <span>کد پستی</span>
+                    <strong>{{ address.postalCode }}</strong>
+                </div>
+                {% endif %}
+
+                <div class="pd-address-meta">
+                    <span>گیرنده</span>
+                    <strong>{{ request.user.name|default:"-" }}</strong>
+                </div>
+
+            </article>
+
+            {% empty %}
+
+            <div class="pd-empty" style="grid-column: 1 / -1;">
+                <svg><use href="#map-pin"/></svg>
+                <strong>هنوز آدرسی ثبت نکرده‌اید</strong>
+                <p>برای ثبت سفارش سریع‌تر، آدرس خود را اضافه کنید.</p>
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </section>
+
+</div>
+
+<div id="orderDetailsModal" class="pd-modal" aria-hidden="true">
+    <div class="pd-modal-panel" role="dialog" aria-modal="true" aria-labelledby="detailsModalTitle">
+
+        <div class="pd-modal-header">
+            <div>
+                <h3 id="detailsModalTitle">جزئیات سفارش</h3>
+                <p>اطلاعات اقلام و پرداخت سفارش</p>
+            </div>
+
+            <button type="button" id="closeDetailsModal" class="pd-modal-close" aria-label="بستن">
+                <svg><use href="#x-mark"/></svg>
             </button>
         </div>
 
-        <form id="addressForm" class="p-6 space-y-4">
-            {% csrf_token %}
+        <div id="detailsBody" class="pd-modal-body"></div>
+
+    </div>
+</div>
+
+<div id="addressModal" class="pd-modal" aria-hidden="true">
+    <div class="pd-modal-panel" role="dialog" aria-modal="true" aria-labelledby="addressModalTitle" style="max-width: 480px;">
+
+        <div class="pd-modal-header">
             <div>
-                <label class="block text-sm font-DanaMedium text-gray-700 dark:text-gray-300 mb-2">استان *</label>
-                <select id="stateSelect" class="w-full py-2.5 px-3 text-base outline-none border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-400">
+                <h3 id="addressModalTitle">افزودن آدرس جدید</h3>
+                <p>اطلاعات محل دریافت سفارش را وارد کنید</p>
+            </div>
+
+            <button type="button" id="closeModal" class="pd-modal-close" aria-label="بستن">
+                <svg><use href="#x-mark"/></svg>
+            </button>
+        </div>
+
+        <form id="addressForm" class="pd-form">
+
+            {% csrf_token %}
+
+            <div class="pd-form-group">
+                <label for="stateSelect">استان <span>*</span></label>
+                <select id="stateSelect" required>
                     <option value="">انتخاب استان</option>
                     {% for state in states %}
                     <option value="{{ state.id }}">{{ state.name }}</option>
@@ -186,240 +1637,298 @@
                 </select>
             </div>
 
-            <div>
-                <label class="block text-sm font-DanaMedium text-gray-700 dark:text-gray-300 mb-2">شهر *</label>
-                <select id="citySelect" class="w-full py-2.5 px-3 text-base outline-none border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-400 disabled:opacity-50" disabled>
+            <div class="pd-form-group">
+                <label for="citySelect">شهر <span>*</span></label>
+                <select id="citySelect" required disabled>
                     <option value="">ابتدا استان را انتخاب کنید</option>
                 </select>
             </div>
 
-            <div>
-                <label class="block text-sm font-DanaMedium text-gray-700 dark:text-gray-300 mb-2">آدرس کامل *</label>
-                <textarea id="addressDetail" rows="3" placeholder="آدرس دقیق محل سکونت خود را وارد کنید"
-                    class="w-full py-2.5 px-3 text-base outline-none border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-400 resize-none"></textarea>
+            <div class="pd-form-group">
+                <label for="addressDetail">آدرس کامل <span>*</span></label>
+                <textarea
+                    id="addressDetail"
+                    rows="3"
+                    required
+                    placeholder="آدرس دقیق محل سکونت خود را وارد کنید"></textarea>
             </div>
 
-            <div>
-                <label class="block text-sm font-DanaMedium text-gray-700 dark:text-gray-300 mb-2">کد پستی</label>
-                <input type="text" id="postalCode" placeholder="مثال: 1234567890"
-                    class="w-full py-2.5 px-3 text-base outline-none border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-400">
+            <div class="pd-form-group">
+                <label for="postalCode">کد پستی</label>
+                <input type="text" id="postalCode" placeholder="کد پستی">
             </div>
 
-            <div id="modalError" class="hidden p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-md">
-                <div class="flex items-center gap-2 text-red-700 dark:text-red-300">
-                    <svg class="size-4 flex-shrink-0">
-                        <use href="#exclamation-circle"></use>
-                    </svg>
-                    <span id="errorText" class="text-sm"></span>
-                </div>
+            <div id="modalError" class="pd-message pd-error" hidden>
+                <span id="errorText"></span>
             </div>
 
-            <div id="modalSuccess" class="hidden p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-md">
-                <div class="flex items-center gap-2 text-green-700 dark:text-green-300">
-                    <svg class="size-4 flex-shrink-0">
-                        <use href="#check-circle"></use>
-                    </svg>
-                    <span id="successText" class="text-sm">آدرس با موفقیت اضافه شد</span>
-                </div>
+            <div id="modalSuccess" class="pd-message pd-success" hidden>
+                آدرس با موفقیت ثبت شد.
             </div>
 
-            <div class="flex gap-3 pt-4">
-                <button type="button" id="cancelBtn" class="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors font-DanaMedium">
+            <div class="pd-form-actions">
+
+                <button type="button" id="cancelBtn" class="pd-form-cancel">
                     انصراف
                 </button>
-                <button type="submit" id="submitBtn" class="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors font-DanaMedium disabled:opacity-50 disabled:cursor-not-allowed">
-                    <span class="inline-block ml-2" id="submitText">ذخیره آدرس</span>
-                    <svg id="submitSpinner" class="inline-block size-4 animate-spin hidden">
-                        <use href="#loading"></use>
-                    </svg>
+
+                <button type="submit" id="submitBtn" class="pd-form-submit">
+                    <span id="submitText">ذخیره آدرس</span>
+                    <span id="submitSpinner" hidden>در حال ذخیره...</span>
                 </button>
+
             </div>
+
         </form>
+
     </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Order details modal (reusable)
-    const detailsModal = document.createElement('div');
-    detailsModal.id = 'orderDetailsModal';
-    detailsModal.className = 'fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4';
-    detailsModal.innerHTML = `
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 class="text-lg font-DanaDemiBold text-gray-900 dark:text-gray-100">جزئیات سفارش</h3>
-          <button id="closeDetailsModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-            <svg class="size-6"><use href="#x-mark"></use></svg>
-          </button>
-        </div>
-        <div id="detailsBody" class="p-4 space-y-3"></div>
-      </div>
-    `;
-    document.body.appendChild(detailsModal);
+document.addEventListener('DOMContentLoaded', function () {
 
-    function openDetails(templateId) {
-        const tpl = document.getElementById(templateId);
-        const body = document.getElementById('detailsBody');
-        if (tpl && body) {
-            body.innerHTML = tpl.innerHTML;
-            detailsModal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+    const detailsModal = document.getElementById('orderDetailsModal');
+    const addressModal = document.getElementById('addressModal');
+    const detailsBody = document.getElementById('detailsBody');
+
+    let activeModal = null;
+    let cityRequestId = 0;
+
+    function openModal(modal) {
+        if (activeModal && activeModal !== modal) {
+            activeModal.classList.remove('is-open');
+            activeModal.setAttribute('aria-hidden', 'true');
+        }
+
+        activeModal = modal;
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(modal) {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+
+        if (activeModal === modal) {
+            activeModal = null;
+        }
+
+        if (!document.querySelector('.pd-modal.is-open')) {
+            document.body.style.overflow = '';
         }
     }
-    function closeDetails() {
-        detailsModal.classList.add('hidden');
-        document.body.style.overflow = 'auto';
-    }
-    document.getElementById('closeDetailsModal')?.addEventListener('click', closeDetails);
-    detailsModal.addEventListener('click', (e) => { if (e.target === detailsModal) closeDetails(); });
-    document.querySelectorAll('.view-order-details').forEach(btn => {
-        btn.addEventListener('click', () => openDetails(btn.dataset.target));
+
+    document.querySelectorAll('.view-order-details').forEach(button => {
+        button.addEventListener('click', function () {
+            const template = document.getElementById(this.dataset.target);
+
+            if (!template) return;
+
+            detailsBody.replaceChildren(template.content.cloneNode(true));
+            openModal(detailsModal);
+        });
     });
 
-    // Address modal
-    const addressModal = document.getElementById('addressModal');
+    document.getElementById('closeDetailsModal')
+        ?.addEventListener('click', () => closeModal(detailsModal));
+
+    detailsModal.addEventListener('click', function (event) {
+        if (event.target === detailsModal) {
+            closeModal(detailsModal);
+        }
+    });
+
     const addNewAddressBtn = document.getElementById('addNewAddressBtn');
-    const closeModal = document.getElementById('closeModal');
+    const closeAddressBtn = document.getElementById('closeModal');
     const cancelBtn = document.getElementById('cancelBtn');
+
     const addressForm = document.getElementById('addressForm');
     const stateSelect = document.getElementById('stateSelect');
     const citySelect = document.getElementById('citySelect');
+
     const submitBtn = document.getElementById('submitBtn');
     const submitText = document.getElementById('submitText');
     const submitSpinner = document.getElementById('submitSpinner');
+
     const modalError = document.getElementById('modalError');
     const modalSuccess = document.getElementById('modalSuccess');
     const errorText = document.getElementById('errorText');
 
     function resetForm() {
         addressForm.reset();
-        citySelect.innerHTML = '<option value="">ابتدا استان را انتخاب کنید</option>';
+
+        citySelect.innerHTML =
+            '<option value="">ابتدا استان را انتخاب کنید</option>';
+
         citySelect.disabled = true;
-        modalError.classList.add('hidden');
-        modalSuccess.classList.add('hidden');
+
+        modalError.hidden = true;
+        modalSuccess.hidden = true;
+
         submitBtn.disabled = false;
-        submitText.classList.remove('hidden');
-        submitSpinner.classList.add('hidden');
+        submitText.hidden = false;
+        submitSpinner.hidden = true;
     }
 
     function closeAddressModal() {
-        addressModal.classList.add('hidden');
-        document.body.style.overflow = 'auto';
+        closeModal(addressModal);
         resetForm();
     }
 
-    addNewAddressBtn && addNewAddressBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        addressModal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
+    addNewAddressBtn?.addEventListener('click', () => {
+        openModal(addressModal);
     });
 
-    closeModal && closeModal.addEventListener('click', closeAddressModal);
-    cancelBtn && cancelBtn.addEventListener('click', closeAddressModal);
+    closeAddressBtn?.addEventListener('click', closeAddressModal);
+    cancelBtn?.addEventListener('click', closeAddressModal);
 
-    addressModal && addressModal.addEventListener('click', function(e) {
-        if (e.target === addressModal) {
+    addressModal.addEventListener('click', function (event) {
+        if (event.target === addressModal) {
             closeAddressModal();
         }
     });
 
-    stateSelect && stateSelect.addEventListener('change', function() {
+    function showModalError(message) {
+        errorText.textContent = message;
+        modalError.hidden = false;
+        modalSuccess.hidden = true;
+    }
+
+    stateSelect.addEventListener('change', async function () {
         const stateId = this.value;
+        const requestId = ++cityRequestId;
+
+        citySelect.innerHTML = '';
 
         if (!stateId) {
-            citySelect.innerHTML = '<option value="">ابتدا استان را انتخاب کنید</option>';
+            citySelect.innerHTML =
+                '<option value="">ابتدا استان را انتخاب کنید</option>';
+
             citySelect.disabled = true;
             return;
         }
 
-        citySelect.innerHTML = '<option value="">در حال بارگذاری...</option>';
         citySelect.disabled = true;
+        citySelect.innerHTML =
+            '<option value="">در حال بارگذاری شهرها...</option>';
 
-        fetch(`/order/api/cities/${stateId}/`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    citySelect.innerHTML = '<option value="">انتخاب شهر</option>';
-                    data.cities.forEach(city => {
-                        citySelect.innerHTML += `<option value="${city.id}">${city.name}</option>`;
-                    });
-                    citySelect.disabled = false;
-                } else {
-                    citySelect.innerHTML = '<option value="">خطا در بارگذاری شهرها</option>';
-                    showModalError('خطا در بارگذاری شهرها');
-                }
-            })
-            .catch(error => {
-                console.error('Error loading cities:', error);
-                citySelect.innerHTML = '<option value="">خطا در بارگذاری شهرها</option>';
-                showModalError('خطا در ارتباط با سرور');
+        try {
+            const response = await fetch(`/order/api/cities/${stateId}/`);
+
+            if (!response.ok) {
+                throw new Error('خطا در دریافت شهرها');
+            }
+
+            const data = await response.json();
+
+            if (requestId !== cityRequestId) return;
+
+            if (!data.success || !Array.isArray(data.cities)) {
+                throw new Error('اطلاعات شهرها معتبر نیست');
+            }
+
+            citySelect.innerHTML =
+                '<option value="">انتخاب شهر</option>';
+
+            data.cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city.id;
+                option.textContent = city.name;
+                citySelect.appendChild(option);
             });
+
+            citySelect.disabled = false;
+
+        } catch (error) {
+            if (requestId !== cityRequestId) return;
+
+            citySelect.innerHTML =
+                '<option value="">خطا در بارگذاری شهرها</option>';
+
+            showModalError(error.message);
+        }
     });
 
-    function showModalError(message) {
-        errorText.textContent = message;
-        modalError.classList.remove('hidden');
-        modalSuccess.classList.add('hidden');
-    }
+    addressForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
 
-    function showModalSuccess() {
-        modalSuccess.classList.remove('hidden');
-        modalError.classList.add('hidden');
-    }
+        const addressDetail =
+            document.getElementById('addressDetail').value.trim();
 
-    addressForm && addressForm.addEventListener('submit', function(e) {
-        e.preventDefault();
+        const postalCode =
+            document.getElementById('postalCode').value.trim();
+
+        if (!stateSelect.value || !citySelect.value || !addressDetail) {
+            showModalError('لطفاً تمام فیلدهای ضروری را تکمیل کنید');
+            return;
+        }
 
         const formData = new FormData();
+
         formData.append('state', stateSelect.value);
         formData.append('city', citySelect.value);
-        formData.append('address_detail', document.getElementById('addressDetail').value.trim());
-        formData.append('postal_code', document.getElementById('postalCode').value.trim());
+        formData.append('address_detail', addressDetail);
+        formData.append('postal_code', postalCode);
 
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        formData.append('csrfmiddlewaretoken', csrfToken);
+        const csrfInput = addressForm.querySelector(
+            '[name=csrfmiddlewaretoken]'
+        );
 
-        if (!stateSelect.value || !citySelect.value || !document.getElementById('addressDetail').value.trim()) {
-            showModalError('لطفاً تمام فیلدهای ضروری را پر کنید');
+        if (!csrfInput) {
+            showModalError('توکن امنیتی فرم پیدا نشد. صفحه را مجدداً بارگذاری کنید.');
             return;
         }
 
         submitBtn.disabled = true;
-        submitText.classList.add('hidden');
-        submitSpinner.classList.remove('hidden');
-        modalError.classList.add('hidden');
+        submitText.hidden = true;
+        submitSpinner.hidden = false;
+        modalError.hidden = true;
 
-        fetch('/order/api/addresses/create/', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': csrfToken
+        try {
+            const response = await fetch('/order/api/addresses/create/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfInput.value
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'خطا در ذخیره آدرس');
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showModalSuccess();
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-            } else {
-                showModalError(data.error || 'خطا در ذخیره آدرس');
-                submitBtn.disabled = false;
-                submitText.classList.remove('hidden');
-                submitSpinner.classList.add('hidden');
-            }
-        })
-        .catch(error => {
-            console.error('Error creating address:', error);
-            showModalError('خطا در ارتباط با سرور');
+
+            modalSuccess.hidden = false;
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 900);
+
+        } catch (error) {
+            showModalError(error.message || 'خطا در ارتباط با سرور');
+
             submitBtn.disabled = false;
-            submitText.classList.remove('hidden');
-            submitSpinner.classList.add('hidden');
-        });
+            submitText.hidden = false;
+            submitSpinner.hidden = true;
+        }
     });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && activeModal) {
+            const modal = activeModal;
+
+            if (modal === addressModal) {
+                closeAddressModal();
+            } else {
+                closeModal(modal);
+            }
+        }
+    });
+
 });
 </script>
-
 
 {% endblock dashboard_content %}

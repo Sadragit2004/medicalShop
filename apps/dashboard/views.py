@@ -1,7 +1,15 @@
-# =======================
-from django.shortcuts import render
+
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.core.paginator import Paginator
+from django.db.models import (
+    Count,
+    Sum,
+    F,
+    Q,
+    BigIntegerField,
+    ExpressionWrapper,
+)
+from django.shortcuts import render
 from django.utils import timezone
 
 from apps.order.models import Order, UserAddress, State
@@ -9,22 +17,270 @@ from apps.order.models import Order, UserAddress, State
 
 @login_required
 def loadDashboard(request):
-    orders = (
-        Order.objects.filter(customer=request.user)
-        .order_by("-registerDate")
-        .prefetch_related("details", "address__state", "address__city")
+    user = request.user
+
+    # ============================================================
+    # Base QuerySets
+    # ============================================================
+
+    user_orders = Order.objects.filter(
+        customer=user
     )
 
-    context = {
-        "order_count": orders.count(),
-        "recent_orders": orders[:20],
-        "addresses": UserAddress.objects.filter(user=request.user).select_related("state", "city"),
-        "states": State.objects.all().order_by("name"),
+    user_addresses = UserAddress.objects.filter(
+        user=user
+    ).select_related(
+        "state",
+        "city",
+    )
+
+    # ============================================================
+    # Order Statistics
+    # ============================================================
+
+    order_statistics = user_orders.aggregate(
+        total_orders=Count("id"),
+
+        pending_orders=Count(
+            "id",
+            filter=Q(status="pending"),
+        ),
+
+        processing_orders=Count(
+            "id",
+            filter=Q(status="processing"),
+        ),
+
+        paid_orders=Count(
+            "id",
+            filter=Q(status="paid"),
+        ),
+
+        shipped_orders=Count(
+            "id",
+            filter=Q(status="shipped"),
+        ),
+
+        delivered_orders=Count(
+            "id",
+            filter=Q(status="delivered"),
+        ),
+
+        canceled_orders=Count(
+            "id",
+            filter=Q(status="canceled"),
+        ),
+    )
+
+    # ============================================================
+    # Product Purchase Statistics
+    # ============================================================
+
+    order_details = Order.objects.filter(
+        customer=user
+    ).values(
+        "details__id",
+        "details__product_id",
+    ).annotate(
+        total_quantity=Sum("details__qty"),
+    )
+
+    product_statistics = Order.objects.filter(
+        customer=user
+    ).aggregate(
+        total_items=Sum("details__qty"),
+
+        unique_products=Count(
+            "details__product_id",
+            distinct=True,
+        ),
+
+        total_purchase_amount=Sum(
+            ExpressionWrapper(
+                F("details__price") * F("details__qty"),
+                output_field=BigIntegerField(),
+            )
+        ),
+    )
+
+    # ============================================================
+    # Payment Statistics
+    # ============================================================
+
+    payment_statistics = user_orders.aggregate(
+        total_payments=Count(
+            "peyment_order",
+            distinct=True,
+        ),
+
+        successful_payments=Count(
+            "peyment_order",
+            filter=Q(
+                peyment_order__isFinaly=True
+            ),
+            distinct=True,
+        ),
+
+        failed_or_pending_payments=Count(
+            "peyment_order",
+            filter=Q(
+                peyment_order__isFinaly=False
+            ),
+            distinct=True,
+        ),
+
+        total_paid_amount=Sum(
+            "peyment_order__amount",
+            filter=Q(
+                peyment_order__isFinaly=True
+            ),
+        ),
+    )
+
+    # ============================================================
+    # Address Statistics
+    # ============================================================
+
+    address_count = user_addresses.count()
+
+    default_address = user_addresses.first()
+
+    # ============================================================
+    # Recent Orders
+    # ============================================================
+
+    recent_orders_queryset = (
+        user_orders
+        .select_related(
+            "customer",
+            "address",
+            "address__state",
+            "address__city",
+        )
+        .prefetch_related(
+            "details",
+            "details__product",
+            "details__brand",
+            "peyment_order",
+        )
+        .order_by("-registerDate")
+    )
+
+    recent_orders = recent_orders_queryset[:5]
+
+    # ============================================================
+    # Paginated Orders
+    # ============================================================
+
+    paginator = Paginator(
+        recent_orders_queryset,
+        10,
+    )
+
+    page_number = request.GET.get("page")
+
+    orders_page = paginator.get_page(page_number)
+
+    # ============================================================
+    # Order Status Information
+    # ============================================================
+
+    order_statuses = [
+        {
+            "value": value,
+            "label": label,
+            "count": order_statistics.get(
+                f"{value}_orders",
+                0,
+            ),
+        }
+        for value, label in Order.STATUS_CHOICES
+    ]
+
+    # ============================================================
+    # Final Statistics
+    # ============================================================
+
+    statistics = {
+        "total_orders": order_statistics["total_orders"] or 0,
+
+        "pending_orders": order_statistics["pending_orders"] or 0,
+
+        "processing_orders": order_statistics["processing_orders"] or 0,
+
+        "paid_orders": order_statistics["paid_orders"] or 0,
+
+        "shipped_orders": order_statistics["shipped_orders"] or 0,
+
+        "delivered_orders": order_statistics["delivered_orders"] or 0,
+
+        "canceled_orders": order_statistics["canceled_orders"] or 0,
+
+        "total_items": product_statistics["total_items"] or 0,
+
+        "unique_products": product_statistics["unique_products"] or 0,
+
+        "total_purchase_amount": (
+            product_statistics["total_purchase_amount"] or 0
+        ),
+
+        "total_payments": payment_statistics["total_payments"] or 0,
+
+        "successful_payments": (
+            payment_statistics["successful_payments"] or 0
+        ),
+
+        "failed_or_pending_payments": (
+            payment_statistics["failed_or_pending_payments"] or 0
+        ),
+
+        "total_paid_amount": (
+            payment_statistics["total_paid_amount"] or 0
+        ),
+
+        "address_count": address_count,
     }
 
-    return render(request, "dashboard_app/dashboard.html", context)
+    # ============================================================
+    # Dashboard Context
+    # ============================================================
 
-from django.core.paginator import Paginator
+    context = {
+        # User
+        "user": user,
+
+        # Statistics
+        "statistics": statistics,
+
+        # Orders
+        "orders": orders_page,
+        "orders_page": orders_page,
+        "recent_orders": recent_orders,
+
+        # Order Status
+        "order_statuses": order_statuses,
+
+        # Addresses
+        "addresses": user_addresses,
+        "address_count": address_count,
+        "default_address": default_address,
+
+        # States
+        "states": State.objects.all().order_by("name"),
+
+        # Pagination
+        "paginator": paginator,
+
+        # Dashboard Information
+        "dashboard_date": timezone.now(),
+    }
+
+    return render(
+        request,
+        "dashboard_app/dashboard.html",
+        context,
+    )
+
 
 @login_required
 def orders_page(request):
