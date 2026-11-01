@@ -11,7 +11,7 @@
 
 {% block meta1 %}
 
-
+<title>{{ product.title }}</title>
 
 <meta name="description"
       content="{{ product.description|striptags|truncatechars:160|default:product.title }}">
