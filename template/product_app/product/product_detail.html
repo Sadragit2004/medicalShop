@@ -4,13 +4,14 @@
 {% load static %}
 {% load humanize %}
 
-{% block title %}{{ meta.title }}{% endblock %}
+{% block title %}{{ product.title }}{% endblock %}
+
+
 
 
 {% block meta1 %}
 
 
-<link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
 
 <meta name="description"
       content="{{ product.description|striptags|truncatechars:160|default:product.title }}">
