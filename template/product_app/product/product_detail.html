@@ -200,6 +200,9 @@
     --pd-glass-border: rgba(255, 255, 255, 0.85);
     --pd-shadow: 0 12px 40px rgba(30, 64, 90, 0.08);
     --pd-radius: 22px;
+    --pd-table-line: rgba(100, 116, 139, 0.38);
+    --pd-table-head: rgba(34, 173, 189, 0.14);
+    --pd-table-zebra: rgba(34, 173, 189, 0.05);
     position: relative;
 }
 
@@ -211,6 +214,9 @@
     --pd-glass-border: rgba(255, 255, 255, 0.08);
     --pd-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
     --pd-teal-soft: rgba(34, 173, 189, 0.14);
+    --pd-table-line: rgba(148, 163, 184, 0.32);
+    --pd-table-head: rgba(34, 173, 189, 0.22);
+    --pd-table-zebra: rgba(255, 255, 255, 0.03);
 }
 
 /* لکه‌های رنگی نرم (کاملاً داخل کادر؛ بدون اسکرول افقی و بدون stacking context) */
@@ -920,6 +926,12 @@ input[type="number"]::-webkit-outer-spin-button {
     background: var(--pd-teal-dark) !important;
 }
 
+/* جلوگیری از بیرون‌زدن محتوای تب‌ها (برای اسکرول افقی جدول‌ها) */
+.pd-tabs .tab-content {
+    min-width: 0;
+    max-width: 100%;
+}
+
 /* =====================================================
    CSS معرفی محصول (خروجی CKEditor)
    ===================================================== */
@@ -985,13 +997,165 @@ input[type="number"]::-webkit-outer-spin-button {
     overflow-wrap: anywhere;
 }
 
-/* جدول و محتوای چندرسانه‌ای */
-.product-description-content table {
+/* =====================================================
+   جدول‌های داخل معرفی محصول
+   - خط‌های جدول (Tailwind preflight همه بوردرها را صفر می‌کند)
+   - اسکرول افقی داخل قاب مخصوص (برای موبایل)
+   قاب .pd-table-wrap توسط جاوااسکریپت دور هر <table> ساخته می‌شود
+   ===================================================== */
+.product-description-content figure.table {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    overflow: visible !important;
+}
+
+.pd-table-wrap {
     display: block;
+    position: relative;
     width: 100%;
     max-width: 100%;
+    margin: 24px auto;
     overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    border: 1px solid var(--pd-table-line);
+    border-radius: 16px;
+    background: var(--pd-glass-strong);
     box-sizing: border-box;
+    box-shadow: 0 6px 20px rgba(30, 64, 90, 0.06);
+    scrollbar-width: thin;
+    scrollbar-color: var(--pd-teal-line) transparent;
+}
+
+.pd-table-wrap::-webkit-scrollbar { height: 6px; }
+.pd-table-wrap::-webkit-scrollbar-thumb { background: var(--pd-teal-line); border-radius: 10px; }
+
+.product-description-content .pd-table-wrap table,
+.product-description-content table {
+    display: table !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
+    table-layout: auto;
+    background: transparent !important;
+    font-size: 14px;
+    line-height: 1.9;
+    direction: inherit;
+}
+
+.product-description-content table caption {
+    caption-side: top;
+    padding: 10px 14px;
+    font-weight: 700;
+    color: var(--pd-ink);
+    text-align: center;
+}
+
+.product-description-content table th,
+.product-description-content table td {
+    min-width: 90px;
+    padding: 10px 14px !important;
+    border: 1px solid var(--pd-table-line) !important;
+    vertical-align: middle;
+    text-align: start;
+    color: inherit;
+    overflow-wrap: break-word;
+    word-break: normal;
+    line-height: 1.9;
+}
+
+/* حذف خط‌های دوبل در لبه‌های بیرونی (قاب بیرونی خودش خط دارد) */
+.product-description-content table > :first-child > tr:first-child > th,
+.product-description-content table > :first-child > tr:first-child > td {
+    border-top: 0 !important;
+}
+
+.product-description-content table > :last-child > tr:last-child > th,
+.product-description-content table > :last-child > tr:last-child > td {
+    border-bottom: 0 !important;
+}
+
+.product-description-content table tr > :first-child {
+    border-inline-start: 0 !important;
+}
+
+.product-description-content table tr > :last-child {
+    border-inline-end: 0 !important;
+}
+
+/* سرستون‌ها */
+.product-description-content table th,
+.product-description-content table thead td {
+    background: var(--pd-table-head);
+    color: var(--pd-ink);
+    font-weight: 700;
+}
+
+/* ردیف‌های یک‌درمیان */
+.product-description-content table tbody tr:nth-child(even) > td {
+    background-color: var(--pd-table-zebra);
+}
+
+/* محتوای داخل سلول‌ها */
+.product-description-content table p {
+    margin: 0 !important;
+    text-align: inherit !important;
+}
+
+.product-description-content table p + p {
+    margin-top: 6px !important;
+}
+
+.product-description-content table img {
+    margin: 8px auto !important;
+    max-width: 100% !important;
+    border-radius: 10px;
+}
+
+/* راهنمای اسکرول (فقط موبایل و فقط وقتی جدول بزرگ‌تر از صفحه است) */
+.pd-table-hint {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 18px 0 -12px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--pd-muted);
+    text-align: center;
+}
+
+.pd-table-hint[hidden] { display: none !important; }
+
+/* جدول‌های چندستونه روی موبایل فشرده نشوند؛ به‌جای آن اسکرول افقی شوند */
+@media (max-width: 768px) {
+    .pd-table-hint:not([hidden]) { display: flex; }
+
+    .pd-table-wrap {
+        margin: 24px 0;
+        border-radius: 14px;
+    }
+
+    .pd-table-wrap.is-wide table {
+        min-width: 560px;
+    }
+
+    .product-description-content table {
+        font-size: 13px;
+    }
+
+    .product-description-content table th,
+    .product-description-content table td {
+        min-width: 110px;
+        padding: 8px 10px !important;
+    }
 }
 
 .product-description-content iframe,
@@ -2119,6 +2283,66 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ========================
+    // جدول‌های معرفی محصول:
+    // دور هر جدول یک قاب اسکرول افقی می‌سازیم (مناسب موبایل)
+    // ========================
+    let pdCheckTables = function() {};
+    try {
+        const descBox = document.querySelector('.product-description-content');
+        if (descBox) {
+            const tableItems = [];
+
+            descBox.querySelectorAll('table').forEach(function(table) {
+                if (table.closest('.pd-table-wrap')) return;
+
+                // حذف عرض/ارتفاع ثابتی که ادیتور روی خود جدول گذاشته
+                table.removeAttribute('width');
+                table.removeAttribute('height');
+                table.removeAttribute('border');
+
+                const wrap = document.createElement('div');
+                wrap.className = 'pd-table-wrap';
+                table.parentNode.insertBefore(wrap, table);
+                wrap.appendChild(table);
+
+                // جدول با 3 ستون یا بیشتر روی موبایل فشرده نشود
+                let maxCols = 0;
+                table.querySelectorAll('tr').forEach(function(tr) {
+                    maxCols = Math.max(maxCols, tr.children.length);
+                });
+                if (maxCols > 2) wrap.classList.add('is-wide');
+
+                // راهنمای اسکرول (فقط وقتی لازم است نشان داده می‌شود)
+                const hint = document.createElement('div');
+                hint.className = 'pd-table-hint';
+                hint.hidden = true;
+                hint.textContent = '↔ برای دیدن همه ستون‌ها، جدول را به چپ و راست بکشید';
+                wrap.parentNode.insertBefore(hint, wrap);
+
+                wrap.addEventListener('scroll', function() {
+                    if (Math.abs(wrap.scrollLeft) > 8) hint.hidden = true;
+                }, { passive: true });
+
+                tableItems.push({ wrap: wrap, hint: hint });
+            });
+
+            pdCheckTables = function() {
+                tableItems.forEach(function(item) {
+                    const overflowing = item.wrap.scrollWidth > item.wrap.clientWidth + 2;
+                    const atStart = Math.abs(item.wrap.scrollLeft) <= 8;
+                    item.hint.hidden = !(overflowing && atStart);
+                });
+            };
+
+            pdCheckTables();
+            window.addEventListener('resize', pdCheckTables);
+            window.addEventListener('load', pdCheckTables);
+        }
+    } catch (tableError) {
+        console.error('Table wrap error:', tableError);
+    }
+
+    // ========================
     // Tab management
     // ========================
     const tabBtns = document.querySelectorAll('.tab-btn');
@@ -2136,6 +2360,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             tabContents.forEach(content => content.classList.add('hidden'));
             document.querySelector(`.${target}`).classList.remove('hidden');
+
+            // بعد از برگشت به تب معرفی، راهنمای اسکرول جدول‌ها دوباره بررسی شود
+            pdCheckTables();
         });
     });
 
