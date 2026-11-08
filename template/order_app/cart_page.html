@@ -1,61 +1,305 @@
+
 {% extends "main_template.html" %}
 {% load static %}
 {% load humanize %}
 
-{% block title %}سبد خرید - سایا شاپ{% endblock %}
+{% block title %}سبد خرید - سایا مِد{% endblock %}
 
 {% block content %}
-<main class="container">
+
+<style>
+    .cart-page {
+        --cart-primary: #2563eb;
+        --cart-primary-dark: #1d4ed8;
+        --cart-border: #e5e7eb;
+        --cart-muted: #64748b;
+        --cart-surface: #ffffff;
+        --cart-radius: 18px;
+    }
+
+    .dark .cart-page {
+        --cart-border: rgba(255,255,255,.10);
+        --cart-surface: #1f2937;
+        --cart-muted: #9ca3af;
+    }
+
+    .cart-page .cart-panel {
+        background: var(--cart-surface);
+        border: 1px solid var(--cart-border);
+        border-radius: var(--cart-radius);
+        box-shadow: 0 4px 20px rgba(15,23,42,.035);
+    }
+
+    .cart-page .cart-item {
+        border: 1px solid var(--cart-border);
+        border-radius: 15px;
+        padding: 16px;
+        transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+        background: var(--cart-surface);
+    }
+
+    .cart-page .cart-item:hover {
+        border-color: rgba(37,99,235,.35);
+        box-shadow: 0 5px 18px rgba(15,23,42,.045);
+    }
+
+    .cart-page .cart-product-image {
+        width: 124px;
+        height: 124px;
+        object-fit: contain;
+        padding: 9px;
+        border-radius: 13px;
+        background: #f8fafc;
+    }
+
+    .dark .cart-page .cart-product-image {
+        background: #273449;
+    }
+
+    .cart-page .quantity-control {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        width: 132px;
+        min-height: 42px;
+        padding: 5px 8px;
+        border: 1px solid var(--cart-border);
+        border-radius: 11px;
+        background: var(--cart-surface);
+    }
+
+    .cart-page .quantity-control button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        transition: background .2s ease;
+    }
+
+    .cart-page .quantity-control .decrement:hover:not(:disabled) {
+        background: #fef2f2;
+    }
+
+    .cart-page .quantity-control .increment:hover:not(:disabled) {
+        background: #ecfdf5;
+    }
+
+    .cart-page .quantity-input {
+        width: 40px;
+        border: 0;
+        outline: 0;
+        font-weight: 700;
+        font-size: 14px;
+    }
+
+    .cart-page .quantity-control button:disabled {
+        opacity: .35;
+        cursor: not-allowed;
+    }
+
+    .cart-page .cart-summary {
+        border-radius: 18px;
+        border: 1px solid var(--cart-border);
+        background: var(--cart-surface);
+        padding: 20px;
+        box-shadow: 0 5px 24px rgba(15,23,42,.04);
+    }
+
+    .cart-page .checkout-button {
+        min-height: 52px;
+        border-radius: 12px;
+        font-weight: 700;
+        transition: all .2s ease;
+        box-shadow: 0 5px 14px rgba(37,99,235,.16);
+    }
+
+    .cart-page .checkout-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(37,99,235,.23);
+    }
+
+    .cart-page .remove-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        transition: background .2s ease;
+    }
+
+    .cart-page .remove-button:hover {
+        background: #fef2f2;
+    }
+
+    .dark .cart-page .remove-button:hover {
+        background: rgba(239,68,68,.12);
+    }
+
+    .cart-page .cart-notification {
+        animation: cartSlideIn .3s ease-out;
+        box-shadow: 0 8px 30px rgba(0,0,0,.15);
+    }
+
+    @keyframes cartSlideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .cart-page [data-product-id] {
+        transition: opacity .3s ease;
+    }
+
+    .cart-page .empty-cart-icon {
+        width: 112px;
+        height: 112px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 30px;
+        background: #eff6ff;
+        color: #3b82f6;
+        margin-bottom: 25px;
+    }
+
+    .dark .cart-page .empty-cart-icon {
+        background: rgba(59,130,246,.12);
+        color: #60a5fa;
+    }
+
+    @media (max-width: 640px) {
+        .cart-page .cart-item {
+            padding: 12px;
+        }
+
+        .cart-page .cart-product-image {
+            width: 100%;
+            height: 150px;
+        }
+
+        .cart-page .cart-summary {
+            padding: 16px;
+        }
+
+        .cart-page .cart-item-content {
+            align-items: stretch;
+        }
+
+        .cart-page .cart-product-info {
+            min-width: 0;
+            width: 100%;
+        }
+    }
+</style>
+
+<main class="container cart-page pb-12">
+
     <!-- Breadcrumb -->
-    <nav class="flex mt-8" aria-label="Breadcrumb">
+    <nav class="flex mt-7 mb-6" aria-label="Breadcrumb">
         <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
             <li class="inline-flex items-center">
                 <a href="{% url 'main:index' %}"
-                    class="inline-flex items-center text-sm gap-x-1 text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-                    <svg class="size-4 mb-0.5">
-                        <use href="#home" />
+                   class="inline-flex items-center gap-x-1 text-sm text-gray-500 hover:text-blue-600 transition-colors dark:text-gray-400">
+                    <svg class="size-4">
+                        <use href="#home"/>
                     </svg>
                     صفحه اصلی
                 </a>
             </li>
+
             <li aria-current="page">
                 <div class="flex items-center">
-                    <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="m1 9 4-4-4-4" />
+                    <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1"
+                         aria-hidden="true" viewBox="0 0 6 10" fill="none">
+                        <path stroke="currentColor" stroke-linecap="round"
+                              stroke-linejoin="round" stroke-width="2"
+                              d="m1 9 4-4-4-4"/>
                     </svg>
-                    <span class="ms-1 text-sm text-gray-500 md:ms-2 dark:text-gray-400">سبد خرید</span>
+                    <span class="ms-1 text-sm text-gray-700 dark:text-gray-300 md:ms-2">
+                        سبد خرید
+                    </span>
                 </div>
             </li>
         </ol>
     </nav>
 
     {% if cart_items %}
-    <section class="flex flex-col lg:flex-row justify-between items-start gap-4 child:rounded-lg child:bg-white child:dark:bg-gray-800 child:shadow child:p-4 mt-5">
-        <div class="w-full lg:w-3/4 flex flex-col gap-y-8">
-            <div class="flex items-center justify-between">
-                <span class="flex items-center gap-x-2">
-                    <h2 class="font-DanaMedium text-xl">سبد خرید</h2>
-                    <p class="text-gray-400" id="cart-items-count">({{ cart_count }} کالا)</p>
+
+    <!-- Cart Heading -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl md:text-3xl font-DanaMedium text-gray-900 dark:text-white">
+                    سبد خرید شما
+                </h1>
+                <span class="flex items-center justify-center min-w-8 h-8 px-2 rounded-full bg-blue-50 text-blue-600 text-sm font-DanaMedium dark:bg-blue-500/10 dark:text-blue-400"
+                      id="cart-items-count">
+                    {{ cart_count }}
                 </span>
-                {% if cart_items %}
-                <span class="flex items-center gap-x-1 text-red-600 dark:text-white cursor-pointer" onclick="clearCart()">
-                    <p class="mt-1 font-DanaMedium">حذف همه</p>
-                    <svg class="w-5 h-5">
-                        <use href="#trash"></use>
-                    </svg>
-                </span>
-                {% endif %}
             </div>
 
-            <div class="w-full flex flex-col gap-y-4 child:p-2 lg:child:p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                محصولات انتخاب‌شده خود را بررسی و سفارش خود را تکمیل کنید.
+            </p>
+        </div>
+
+        <button type="button"
+                onclick="clearCart()"
+                class="flex items-center gap-2 text-sm text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl px-3 py-2 transition-colors">
+            <svg class="w-4 h-4">
+                <use href="#trash"/>
+            </svg>
+            حذف همه محصولات
+        </button>
+    </div>
+
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+        <!-- Products -->
+        <div class="lg:col-span-8 cart-panel p-4 md:p-5">
+
+            <div class="flex items-center justify-between border-b border-gray-100 dark:border-white/10 pb-4 mb-4">
+                <div>
+                    <h2 class="font-DanaMedium text-lg text-gray-900 dark:text-white">
+                        محصولات انتخاب‌شده
+                    </h2>
+                    <p class="text-xs text-gray-400 mt-1">
+                        تعداد و مشخصات هر محصول را بررسی کنید.
+                    </p>
+                </div>
+
+                <svg class="w-6 h-6 text-blue-500">
+                    <use href="#shopping-bag"/>
+                </svg>
+            </div>
+
+            <div class="flex flex-col gap-4">
+
                 {% for item in cart_items %}
-                <div class="w-full flex justify-between relative {% if not forloop.last %}border-b-2 border-gray-200 dark:border-white/20{% endif %}" id="cart-item-{{ item.id }}-{{ item.detail }}">
-                    <div class="flex flex-col sm:flex-row items-center gap-6">
-                        <div class="flex w-fit flex-col">
-                            <img loading="lazy" src="{{ item.image }}" class="w-36" alt="{{ item.title }}">
-                            <div class="flex items-center justify-between gap-x-1 rounded-lg border border-gray-200 dark:border-white/20 py-1 px-2 mt-2"
+
+                <div class="cart-item w-full relative"
+                     id="cart-item-{{ item.id }}-{{ item.detail }}">
+
+                    <div class="flex flex-col sm:flex-row gap-4 cart-item-content">
+
+                        <!-- Product Image and Quantity -->
+                        <div class="flex flex-col items-center sm:items-start gap-3 shrink-0">
+
+                            <img loading="lazy"
+                                 src="{{ item.image }}"
+                                 class="cart-product-image"
+                                 alt="{{ item.title }}">
+
+                            <div class="quantity-control"
                                  data-product-id="{{ item.id }}"
                                  data-detail="{{ item.detail }}"
                                  data-sale-type="{{ item.sale_type }}"
@@ -65,138 +309,297 @@
                                  data-current-quantity="{{ item.quantity }}"
                                  data-max-stock="{{ item.max_stock|default:999 }}"
                                  data-product-title="{{ item.title }}">
-                                <button onclick="changeQuantity(this, -1)" class="w-4 h-4 decrement text-red-500">
+
+                                <button type="button"
+                                        onclick="changeQuantity(this, -1)"
+                                        class="decrement text-red-500"
+                                        aria-label="کاهش تعداد">
                                     <svg class="w-4 h-4">
-                                        <use href="#minus"></use>
+                                        <use href="#minus"/>
                                     </svg>
                                 </button>
-                                <input type="number" value="{{ item.quantity }}" readonly
-                                    step="{% if item.sale_type == 2 %}{{ item.member_carton|default:1 }}{% elif item.sale_type == 3 %}{{ item.limited_sale|default:1 }}{% else %}1{% endif %}"
-                                    class="quantity-input custom-input text-center text-sm bg-transparent w-12">
-                                <button onclick="changeQuantity(this, 1)" class="w-4 h-4 increment text-green-600">
+
+                                <input type="number"
+                                       value="{{ item.quantity }}"
+                                       readonly
+                                       step="{% if item.sale_type == 2 %}{{ item.member_carton|default:1 }}{% elif item.sale_type == 3 %}{{ item.limited_sale|default:1 }}{% else %}1{% endif %}"
+                                       class="quantity-input custom-input text-center text-sm bg-transparent">
+
+                                <button type="button"
+                                        onclick="changeQuantity(this, 1)"
+                                        class="increment text-green-600"
+                                        aria-label="افزایش تعداد">
                                     <svg class="w-4 h-4">
-                                        <use href="#plus"></use>
+                                        <use href="#plus"/>
                                     </svg>
                                 </button>
                             </div>
+
                             {% if item.sale_type == 2 or item.sale_type == 3 %}
-                            <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                            <p class="text-xs text-amber-600 dark:text-amber-400 text-center">
                                 {% if item.sale_type == 2 %}
-                                هر کارتن {{ item.member_carton }} عدد - حداقل {{ item.min_quantity }} کارتن
+                                هر کارتن {{ item.member_carton }} عدد
+                                <br>
+                                حداقل {{ item.min_quantity }} کارتن
                                 {% else %}
                                 حداقل خرید: {{ item.min_quantity }} عدد
                                 {% endif %}
                             </p>
                             {% endif %}
+
                             {% if item.max_stock %}
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <p class="text-xs text-gray-400">
                                 موجودی: {{ item.max_stock }} عدد
                             </p>
                             {% endif %}
+
                         </div>
 
-                        <div class="flex flex-col gap-y-4">
-                            <div class="flex items-center gap-2">
-                                <h2 class="font-DanaMedium line-clamp-1">{{ item.title }}</h2>
-                                {% if item.sale_type == 1 %}
-                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-DanaMedium">فروش تک</span>
-                                {% elif item.sale_type == 2 %}
-                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-DanaMedium">فروش کارتن</span>
-                                {% elif item.sale_type == 3 %}
-                                <span class="px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-full font-DanaMedium">فروش محدود</span>
-                                {% endif %}
+                        <!-- Product Information -->
+                        <div class="cart-product-info flex flex-col flex-1 min-w-0 pt-1">
+
+                            <div class="flex items-start justify-between gap-2">
+
+                                <div class="min-w-0">
+                                    <h3 class="font-DanaMedium text-base md:text-lg text-gray-900 dark:text-white leading-7">
+                                        {{ item.title }}
+                                    </h3>
+
+                                    <div class="flex flex-wrap items-center gap-2 mt-2">
+
+                                        {% if item.sale_type == 1 %}
+                                        <span class="px-2.5 py-1 bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400 text-xs rounded-lg">
+                                            فروش تکی
+                                        </span>
+                                        {% elif item.sale_type == 2 %}
+                                        <span class="px-2.5 py-1 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 text-xs rounded-lg">
+                                            فروش کارتنی
+                                        </span>
+                                        {% elif item.sale_type == 3 %}
+                                        <span class="px-2.5 py-1 bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 text-xs rounded-lg">
+                                            فروش محدود
+                                        </span>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+
+                                <button type="button"
+                                        onclick="removeFromCart('{{ item.id }}', '{{ item.detail }}')"
+                                        class="remove-button shrink-0 text-gray-400 hover:text-red-500"
+                                        title="حذف محصول"
+                                        aria-label="حذف محصول">
+                                    <svg class="w-5 h-5">
+                                        <use href="#x-mark"/>
+                                    </svg>
+                                </button>
+
                             </div>
-                            <ul class="space-y-3 child:text-sm text-gray-400 child:flex child:items-center child:gap-x-1.5">
+
+                            <ul class="flex flex-col gap-3 mt-5 text-sm text-gray-500 dark:text-gray-400">
+
                                 {% if item.color %}
-                                <li>
-                                    <span class="size-5 bg-{{ item.color|lower }}-500 rounded-full"></span>
-                                    <p>{{ item.color }}</p>
+                                <li class="flex items-center gap-2">
+                                    <span class="size-4 bg-{{ item.color|lower }}-500 rounded-full ring-2 ring-gray-100 dark:ring-white/10"></span>
+                                    <span>{{ item.color }}</span>
                                 </li>
                                 {% endif %}
+
                                 {% if item.sale_type == 2 %}
-                                <li>
-                                    <svg class="w-5 h-5 text-purple-500">
-                                        <use href="#cube"></use>
+                                <li class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-purple-500">
+                                        <use href="#cube"/>
                                     </svg>
-                                    <p class="mt-1">فروش کارتن - هر کارتن {{ item.member_carton }} عدد</p>
+                                    <span>فروش کارتنی - هر کارتن {{ item.member_carton }} عدد</span>
                                 </li>
                                 {% elif item.sale_type == 3 %}
-                                <li>
-                                    <svg class="w-5 h-5 text-orange-500">
-                                        <use href="#exclamation-circle"></use>
+                                <li class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-orange-500">
+                                        <use href="#exclamation-circle"/>
                                     </svg>
-                                    <p class="mt-1">فروش محدود - حداقل {{ item.min_quantity }} عدد</p>
+                                    <span>فروش محدود - حداقل {{ item.min_quantity }} عدد</span>
                                 </li>
                                 {% endif %}
+
                                 {% if item.sale_type == 2 %}
-                                <li>
-                                    <svg class="w-5 h-5 text-blue-500">
-                                        <use href="#squares"></use>
+                                <li class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-blue-500">
+                                        <use href="#squares"/>
                                     </svg>
-                                    <p class="mt-1">هر کارتن {{ item.member_carton }} عددی</p>
+                                    <span>هر کارتن {{ item.member_carton }} عددی</span>
                                 </li>
                                 {% endif %}
+
                                 {% if item.sale_type == 3 %}
-                                <li>
-                                    <svg class="w-5 h-5 text-amber-500">
-                                        <use href="#exclamation-triangle"></use>
+                                <li class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-amber-500">
+                                        <use href="#exclamation-triangle"/>
                                     </svg>
-                                    <p class="mt-1">حداقل خرید {{ item.limited_sale }} عدد</p>
+                                    <span>حداقل خرید {{ item.limited_sale }} عدد</span>
                                 </li>
                                 {% endif %}
+
                             </ul>
-                            <span class="flex items-center gap-x-1 text-gray-700 dark:text-gray-300 font-DanaMedium mt-4 item-price">
-                                <p class="font-DanaMedium text-xl item-price-value">{{ item.price|intcomma }}</p>
-                                <p class="text-lg">تومان</p>
-                            </span>
+
+                            <div class="mt-auto pt-5 flex items-center justify-between gap-3">
+
+                                <span class="text-xs text-gray-400">
+                                    قیمت محصول
+                                </span>
+
+                                <div class="flex items-center gap-1 text-gray-900 dark:text-white">
+                                    <span class="font-DanaMedium text-xl md:text-2xl item-price-value">
+                                        {{ item.price|intcomma }}
+                                    </span>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">
+                                        تومان
+                                    </span>
+                                </div>
+
+                            </div>
+
                         </div>
-                    </div>
-                    <div class="flex items-start">
-                        <button onclick="removeFromCart('{{ item.id }}', '{{ item.detail }}')" class="w-5 h-5 cursor-pointer text-red-500 hover:text-red-600 ml-2">
-                            <svg class="w-5 h-5">
-                                <use href="#x-mark"></use>
-                            </svg>
-                        </button>
                     </div>
                 </div>
+
                 {% endfor %}
+
             </div>
+
         </div>
 
-        <div class="w-full lg:w-1/4 lg:sticky top-5 flex flex-col gap-y-4">
-            <ul class="child:flex child:items-center child:justify-between space-y-8">
-                <li>
-                    <p>قیمت کالاها (<span id="cart-count-display">{{ cart_count }}</span>)</p>
-                    <p class="flex gap-x-1 text-gray-600 dark:text-gray-300" id="products-price">{{ total_price|intcomma }} <span class="hidden xl:flex">تومان</span></p>
-                </li>
-                <li class="border-t-2 border-dashed border-gray-400 pt-8">
-                    <p>مجموع سبد خرید:</p>
-                    <p class="font-DanaMedium text-xl text-gray-900 dark:text-white" id="total-price">{{ total_price|intcomma }} تومان</p>
-                </li>
-            </ul>
-            {% if cart_items %}
-            <a href="{% url 'order:createOrder' %}"
-                class="w-full mt-4 flex items-center gap-x-1 justify-center bg-blue-500 text-white hover:bg-blue-600 transition-all rounded-lg shadow py-3">
-                تایید و تکمیل سفارش
-                <svg class="w-5 h-5">
-                    <use href="#shopping-bag"></use>
+        <!-- Order Summary -->
+        <aside class="lg:col-span-4 lg:sticky lg:top-5">
+
+            <div class="cart-summary">
+
+                <div class="flex items-center gap-2 pb-4 border-b border-gray-100 dark:border-white/10">
+                    <div class="flex items-center justify-center size-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                        <svg class="w-5 h-5">
+                            <use href="#shopping-bag"/>
+                        </svg>
+                    </div>
+
+                    <div>
+                        <h2 class="font-DanaMedium text-lg text-gray-900 dark:text-white">
+                            خلاصه سفارش
+                        </h2>
+                        <p class="text-xs text-gray-400 mt-1">
+                            بررسی نهایی سبد خرید
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between mt-5 text-sm">
+                    <span class="text-gray-500 dark:text-gray-400">
+                        تعداد کالاها
+                    </span>
+
+                    <span class="font-DanaMedium text-gray-800 dark:text-gray-200"
+                          id="cart-count-display">
+                        {{ cart_count }}
+                    </span>
+                </div>
+
+                <div class="flex items-center justify-between mt-5 text-sm">
+                    <span class="text-gray-500 dark:text-gray-400">
+                        قیمت کالاها
+                    </span>
+
+                    <span class="text-gray-800 dark:text-gray-200 flex items-center gap-1"
+                          id="products-price">
+                        {{ total_price|intcomma }}
+                        <span class="text-xs">تومان</span>
+                    </span>
+                </div>
+
+                <div class="border-t border-dashed border-gray-200 dark:border-white/15 my-5"></div>
+
+                <div class="flex items-center justify-between gap-3">
+                    <span class="font-DanaMedium text-gray-800 dark:text-gray-200">
+                        مجموع سبد خرید
+                    </span>
+
+                    <div class="text-left">
+                        <div class="font-DanaMedium text-xl md:text-2xl text-blue-600 dark:text-blue-400"
+                             id="total-price">
+                            {{ total_price|intcomma }} تومان
+                        </div>
+                    </div>
+                </div>
+
+                <a href="{% url 'order:createOrder' %}"
+                   class="checkout-button w-full mt-6 flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 transition-all">
+                    <span>تأیید و تکمیل سفارش</span>
+                    <svg class="w-5 h-5">
+                        <use href="#shopping-bag"/>
+                    </svg>
+                </a>
+
+                <div class="mt-5 rounded-xl bg-gray-50 dark:bg-white/5 p-3.5">
+                    <div class="flex items-start gap-2.5">
+                        <svg class="w-5 h-5 shrink-0 text-green-600 dark:text-green-400 mt-0.5">
+                            <use href="#shield-check"/>
+                        </svg>
+
+                        <div>
+                            <p class="text-sm font-DanaMedium text-gray-700 dark:text-gray-200">
+                                خرید مطمئن از سایا مِد
+                            </p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 leading-6 mt-1">
+                                پیش از نهایی کردن سفارش، اطلاعات محصولات و تعداد انتخاب‌شده را بررسی کنید.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <a href="{% url 'main:index' %}"
+               class="mt-4 flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-blue-600 transition-colors py-3">
+                <svg class="w-4 h-4">
+                    <use href="#arrow-right"/>
                 </svg>
+                ادامه خرید و بازگشت به فروشگاه
             </a>
-            {% endif %}
-        </div>
+
+        </aside>
+
     </section>
+
     {% else %}
-    <section class="flex flex-col items-center justify-center py-16 text-center">
-        <svg class="w-24 h-24 text-gray-300 dark:text-gray-600 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5M7 13l-2.5-2.5M17 13v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m10 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01"></path>
-        </svg>
-        <h2 class="text-2xl font-DanaMedium text-gray-900 dark:text-white mb-2">سبد خرید شما خالی است</h2>
-        <p class="text-gray-500 dark:text-gray-400 mb-6">محصولی در سبد خرید شما وجود ندارد</p>
-        <a href="{% url 'main:index' %}" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors">
-            بازگشت به فروشگاه
+
+    <!-- Empty Cart -->
+    <section class="cart-panel flex flex-col items-center justify-center py-16 md:py-24 px-5 text-center">
+
+        <div class="empty-cart-icon">
+            <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"
+                      d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5M7 13l-2.5-2.5M17 13v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m10 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01"/>
+            </svg>
+        </div>
+
+        <h2 class="text-xl md:text-2xl font-DanaMedium text-gray-900 dark:text-white mb-3">
+            سبد خرید شما خالی است!
+        </h2>
+
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-8 max-w-sm leading-7">
+            هنوز محصولی به سبد خرید خود اضافه نکرده‌اید.
+            به فروشگاه سر بزنید و محصولات مورد نیازتان را انتخاب کنید.
+        </p>
+
+        <a href="{% url 'main:index' %}"
+           class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl transition-all shadow-lg shadow-blue-500/15">
+            <span>مشاهده محصولات فروشگاه</span>
+            <svg class="w-5 h-5">
+                <use href="#arrow-left"/>
+            </svg>
         </a>
+
     </section>
+
     {% endif %}
+
 </main>
 
 <script>
@@ -406,7 +809,7 @@ function updateAllCartData(data) {
     if (cartCountDisplay) cartCountDisplay.textContent = data.cart_count;
 
     const productsPrice = document.getElementById('products-price');
-    if (productsPrice) productsPrice.innerHTML = `${data.total_price.toLocaleString()} <span class="hidden xl:flex">تومان</span>`;
+    if (productsPrice) productsPrice.innerHTML = `${data.total_price.toLocaleString()} <span class="text-xs">تومان</span>`;
 
     const totalPrice = document.getElementById('total-price');
     if (totalPrice) totalPrice.textContent = `${data.total_price.toLocaleString()} تومان`;
@@ -434,14 +837,18 @@ function showNotification(message, type = 'success') {
     const existingNotifications = document.querySelectorAll('.cart-notification');
     existingNotifications.forEach(notification => notification.remove());
 
-    const notification = document.createElement('div');
     const bgColor = type === 'success' ? '#22c55e' : (type === 'error' ? '#ef4444' : '#eab308');
-    notification.className = 'cart-notification fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg font-DanaMedium text-white';
+    const notification = document.createElement('div');
+    notification.className = 'cart-notification fixed top-4 right-4 z-50 px-6 py-3 rounded-lg font-DanaMedium text-white';
     notification.style.cssText = `background-color: ${bgColor}; transform: translateX(100%); opacity: 0; transition: all 0.3s ease;`;
     notification.innerHTML = `<div class="flex items-center gap-3"><span>${type === 'success' ? '✅' : (type === 'error' ? '❌' : '⚠️')}</span><span>${message}</span></div>`;
     document.body.appendChild(notification);
 
-    setTimeout(() => { notification.style.transform = 'translateX(0)'; notification.style.opacity = '1'; }, 10);
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+        notification.style.opacity = '1';
+    }, 10);
+
     setTimeout(() => {
         notification.style.transform = 'translateX(100%)';
         notification.style.opacity = '0';
@@ -461,21 +868,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<style>
-.cart-notification {
-    animation: slideIn 0.3s ease-out;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-@keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-.decrement.opacity-50, .increment.opacity-50 {
-    opacity: 0.5 !important;
-    cursor: not-allowed !important;
-}
-[data-product-id] {
-    transition: opacity 0.3s ease;
-}
-</style>
 {% endblock %}
