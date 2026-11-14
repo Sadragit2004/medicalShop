@@ -286,6 +286,12 @@
             </a>
 
             <div class="flex items-center gap-x-2">
+                <!-- Mobile cart icon -->
+                <a href="/order/cart" class="mobile-cart-link" aria-label="سبد خرید">
+                    <svg class="size-5" aria-hidden="true"><use href="#shopping-bag" /></svg>
+                    <span class="mobile-cart-badge" data-cart-badge aria-hidden="true">0</span>
+                </a>
+
                 {% if request.user.is_authenticated %}
                 <a href="{% url 'dashboard:notifications' %}" class="relative p-2" aria-label="پیام‌ها">
                     <svg class="size-6"><use href="#bell" /></svg>
@@ -355,6 +361,11 @@
                 <svg class="size-5"><use href="#search" /></svg>
                 <span>جستجو در سایا مِد...</span>
             </button>
+
+            <a href="/order/cart" class="mobile-sticky__btn mobile-sticky__cart" aria-label="سبد خرید" tabindex="-1">
+                <svg class="size-5"><use href="#shopping-bag" /></svg>
+                <span class="mobile-cart-badge" data-cart-badge aria-hidden="true">0</span>
+            </a>
 
             {% if request.user.is_authenticated %}
             <a href="{% url 'dashboard:notifications' %}" class="mobile-sticky__btn" aria-label="پیام‌ها" tabindex="-1">
@@ -538,6 +549,99 @@
                 console.error('Notification badge error:', err);
             });
         {% endif %}
+    }
+
+    // ==================== Mobile Cart Badge ====================
+    // شمارنده سبد خرید در هدر موبایل و نوار چسبان.
+    // مقدار از شمارنده‌های موجود سبد (.cart-counter و .mobile-cart-counter) خوانده و همگام می‌شود
+    // و همچنین با رویداد 'cart:updated' یا تابع window.updateMobileCartBadge(count) قابل به‌روزرسانی است.
+    function initMobileCartBadge() {
+        const badges = document.querySelectorAll('[data-cart-badge]');
+        if (!badges.length) return;
+
+        let lastCount = null;
+
+        function toNumber(text) {
+            const normalized = String(text || '')
+                .replace(/[۰-۹]/g, function (d) { return String(d.charCodeAt(0) - 1776); })
+                .replace(/[٠-٩]/g, function (d) { return String(d.charCodeAt(0) - 1632); })
+                .replace(/[^\d]/g, '');
+            const n = parseInt(normalized, 10);
+            return isNaN(n) ? 0 : n;
+        }
+
+        function render(count) {
+            count = Math.max(0, parseInt(count, 10) || 0);
+            const changed = lastCount !== null && lastCount !== count;
+            lastCount = count;
+
+            badges.forEach(function (badge) {
+                if (count > 0) {
+                    badge.textContent = count > 99 ? '99+' : String(count);
+                    badge.classList.add('is-visible');
+                    if (changed) {
+                        badge.classList.remove('bump');
+                        void badge.offsetWidth; // ری‌استارت انیمیشن
+                        badge.classList.add('bump');
+                    }
+                } else {
+                    badge.textContent = '0';
+                    badge.classList.remove('is-visible', 'bump');
+                }
+            });
+        }
+
+        function readCount() {
+            let max = 0;
+            document.querySelectorAll('.cart-counter > span:last-child, .mobile-cart-counter > span:last-child').forEach(function (el) {
+                const n = toNumber(el.textContent);
+                if (n > max) max = n;
+            });
+            return max;
+        }
+
+        function sync() {
+            const count = readCount();
+            if (count !== lastCount) render(count);
+        }
+
+        // به‌روزرسانی دستی از بیرون
+        window.updateMobileCartBadge = render;
+
+        // رویداد سفارشی: window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count: 3 } }))
+        window.addEventListener('cart:updated', function (e) {
+            const detail = e && e.detail;
+            if (detail && typeof detail.count !== 'undefined') {
+                render(detail.count);
+            } else {
+                sync();
+            }
+        });
+
+        // رصد تغییر شمارنده‌های اصلی سبد
+        if ('MutationObserver' in window) {
+            const observer = new MutationObserver(sync);
+            const targets = document.querySelectorAll('.open-cart, .bottom-navbar, .cart');
+            targets.forEach(function (target) {
+                observer.observe(target, {
+                    childList: true,
+                    characterData: true,
+                    subtree: true,
+                    attributes: true,
+                    attributeFilter: ['style', 'class']
+                });
+            });
+        }
+
+        // پشتیبان: بررسی دوره‌ای و بعد از بارگذاری کامل
+        window.addEventListener('load', function () { setTimeout(sync, 300); });
+        window.addEventListener('pageshow', sync);
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) sync();
+        });
+        setInterval(sync, 2000);
+
+        render(readCount());
     }
 
     // ==================== Popular Searches ====================
@@ -876,6 +980,7 @@
         initScrollToFooter();
         initStickyNav();
         initMobileSticky();
+        initMobileCartBadge();
     });
 })();
 </script>
@@ -1266,6 +1371,69 @@
     .main-nav.is-stuck { animation: none; }
 }
 
+/* ---------- Mobile cart icon + badge ---------- */
+.mobile-cart-link {
+    position: relative;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 9999px;
+    border: 1px solid rgba(34, 173, 189, 0.28);
+    background: linear-gradient(145deg, rgba(34, 173, 189, 0.14), rgba(34, 173, 189, 0.05));
+    color: var(--theme);
+    box-shadow: 0 4px 12px rgba(34, 173, 189, 0.14);
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .2s ease, background-color .25s ease, box-shadow .25s ease;
+}
+.mobile-cart-link svg { width: 22px; height: 22px; }
+.mobile-cart-link:active {
+    transform: scale(0.93);
+    box-shadow: 0 2px 6px rgba(34, 173, 189, 0.18);
+}
+.dark .mobile-cart-link {
+    border-color: rgba(34, 173, 189, 0.38);
+    background: linear-gradient(145deg, rgba(34, 173, 189, 0.24), rgba(34, 173, 189, 0.10));
+    box-shadow: none;
+}
+
+.mobile-cart-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-width: 19px;
+    height: 19px;
+    padding: 0 5px;
+    border: 2px solid #fff;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.45);
+    pointer-events: none;
+}
+.mobile-cart-badge.is-visible { display: inline-flex; }
+.mobile-cart-badge.bump { animation: cartBadgeBump .45s cubic-bezier(.22, 1, .36, 1); }
+.dark .mobile-cart-badge { border-color: #111827; }
+
+@keyframes cartBadgeBump {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.35); }
+    100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mobile-cart-badge.bump { animation: none; }
+    .mobile-cart-link { transition: none; }
+}
+
 /* ---------- Mobile sticky bar ---------- */
 .mobile-sticky {
     position: fixed;
@@ -1328,6 +1496,19 @@
 .mobile-sticky__btn:active {
     background: var(--theme-soft);
     color: var(--theme);
+}
+
+/* دکمه سبد خرید در نوار چسبان */
+.mobile-sticky__cart {
+    position: relative;
+    color: var(--theme);
+    border-color: rgba(34, 173, 189, 0.28);
+    background: var(--theme-softer);
+}
+.dark .mobile-sticky__cart {
+    color: var(--theme);
+    border-color: rgba(34, 173, 189, 0.38);
+    background: var(--theme-soft);
 }
 
 .mobile-sticky__search {
