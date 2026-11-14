@@ -146,7 +146,7 @@
 
                     </svg>
 
-                    <h1 class="ms-1 text-sm text-gray-500 md:ms-2 dark:text-gray-400">{{ group.title }}</h1>
+                    <span class="ms-1 text-sm text-gray-500 md:ms-2 dark:text-gray-400">{{ group.title }}</span>
 
                 </div>
 
@@ -155,6 +155,13 @@
         </ol>
 
     </nav>
+
+    <!-- عنوان اصلی صفحه (تنها H1) -->
+    <div class="page-title-wrap mt-4 lg:mt-6">
+
+        <h1 class="page-title font-DanaDemiBold">{{ group.title }}</h1>
+
+    </div>
 
     <div class="flex flex-col lg:flex-row gap-4 mt-5">
 
@@ -1321,6 +1328,28 @@
 </main>
 
 <style>
+/* ================== عنوان اصلی صفحه (H1) ================== */
+.page-title {
+    margin: 0;
+    padding-right: 0.75rem;
+    border-right: 4px solid #22adbd;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.8;
+    color: #111827;
+    overflow-wrap: anywhere;
+}
+
+@media (min-width: 768px) {
+    .page-title { font-size: 1.5rem; }
+}
+
+@media (min-width: 1024px) {
+    .page-title { font-size: 1.75rem; }
+}
+
+.dark .page-title { color: #f3f4f6; }
+
 #mobile-sort-modal,
 
 #mobile-filter-modal {
