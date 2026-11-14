@@ -258,6 +258,11 @@ handleIncrement(e) {
                 this.cartCounter.style.display = data.cart_count > 0 ? 'flex' : 'none';
             }
 
+            // همگام‌سازی بی‌درنگ همه شمارنده‌ها (موبایل و دسکتاپ)
+            if (typeof data.cart_count !== 'undefined' && typeof window.__announceCartCount === 'function') {
+                window.__announceCartCount(data.cart_count);
+            }
+
             // Update cart items count in header
             if (this.cartItemCount) {
                 this.cartItemCount.textContent = `(${data.cart_count} مورد)`;
@@ -318,7 +323,7 @@ handleIncrement(e) {
                         ${item.name}
                     </h2>
                     <div class="flex items-center justify-between gap-x-2 mt-2">
-                      
+
                         <div class="flex flex-col items-end">
                             <p class="text-lg text-blue-500 dark:text-blue-400 font-DanaMedium">
                                 ${item.total_price.toLocaleString()} تومان
@@ -373,3 +378,76 @@ handleIncrement(e) {
 document.addEventListener('DOMContentLoaded', () => {
     window.cartManager = new ShoppingCartManager();
 });
+
+// ==================== Cart Counter Broadcast (بدون نیاز به رفرش) ====================
+// هر درخواست موفق افزودن/تغییر/حذف سبد (از هر اسکریپتی، مثل صفحه محصول) را می‌گیرد
+// و شمارنده‌های سبد (دسکتاپ، نوار پایین موبایل و آیکون هدر موبایل) را بی‌درنگ به‌روز می‌کند.
+(function () {
+    if (window.__CART_FETCH_HOOKED__ || typeof window.fetch !== 'function') return;
+    window.__CART_FETCH_HOOKED__ = true;
+
+    const originalFetch = window.fetch.bind(window);
+    const CART_URL_RE = /\/cart\/(add|update|remove|clear|summary)\b/;
+
+    function announce(count) {
+        const n = parseInt(count, 10);
+        if (isNaN(n)) return;
+
+        // شمارنده دسکتاپ
+        document.querySelectorAll('.cart-counter').forEach(function (el) {
+            const num = el.querySelector('span.bg-red-500') || el.querySelector('span:last-child');
+            if (num) num.textContent = n;
+            el.style.display = n > 0 ? 'flex' : 'none';
+        });
+
+        // شمارنده نوار پایین موبایل
+        document.querySelectorAll('.mobile-cart-counter').forEach(function (el) {
+            const num = el.querySelector('span:last-child');
+            if (num) num.textContent = n;
+            el.style.display = n > 0 ? 'flex' : 'none';
+        });
+
+        // آیکون سبد در هدر موبایل
+        if (typeof window.updateMobileCartBadge === 'function') {
+            window.updateMobileCartBadge(n);
+        }
+        window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count: n } }));
+    }
+
+    window.__announceCartCount = announce;
+
+    window.fetch = function () {
+        const args = arguments;
+        return originalFetch.apply(window, args).then(function (response) {
+            try {
+                const input = args[0];
+                const url = typeof input === 'string' ? input : ((input && input.url) || '');
+
+                if (CART_URL_RE.test(url) && response.ok) {
+                    response.clone().json().then(function (data) {
+                        if (!data || data.success === false) return;
+
+                        let count = data.cart_count;
+                        if (typeof count === 'undefined') count = data.count;
+                        if (typeof count === 'undefined') count = data.cart_items_count;
+
+                        if (typeof count !== 'undefined') {
+                            announce(count);
+                        } else if (!/\/summary\b/.test(url)) {
+                            // اگر پاسخ تعداد نداشت، از خلاصه سبد بگیر
+                            originalFetch('/order/cart/summary/', { credentials: 'same-origin' })
+                                .then(function (r) { return r.json(); })
+                                .then(function (d) {
+                                    if (d && typeof d.cart_count !== 'undefined') announce(d.cart_count);
+                                })
+                                .catch(function () {});
+                        }
+                    }).catch(function () {});
+                }
+            } catch (e) {
+                // خطا نباید روی درخواست اصلی اثر بگذارد
+            }
+            return response;
+        });
+    };
+})();
