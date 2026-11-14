@@ -263,7 +263,7 @@
                     </li>
                     {% endif %}
 
-                    
+
                     <li class="mobile-menu-item">
                         <svg class="size-5"><use href="#shopping-cart" /></svg>
                         <a href="/order/cart">سبد خرید</a>
@@ -687,19 +687,62 @@
 
         if (!mobileModal) return;
 
+        // آیا برای مودال یک ورودی در history ثبت کرده‌ایم؟
+        let historyPushed = false;
+
+        // اگر کاربر از صفحه نتایج با دکمه بک برگشته و state قدیمی مونده، پاکش کن
+        if (history.state && history.state.mobileSearchModal) {
+            history.replaceState(null, '');
+        }
+
+        function openModal() {
+            mobileModal.classList.remove('hidden');
+
+            if (!historyPushed) {
+                history.pushState({ mobileSearchModal: true }, '');
+                historyPushed = true;
+            }
+
+            const input = mobileModal.querySelector('.search-input');
+            if (input) input.focus();
+        }
+
+        function hideModal() {
+            mobileModal.classList.add('hidden');
+        }
+
+        function closeModal() {
+            if (historyPushed) {
+                // با back بستن؛ بقیه کار در popstate انجام می‌شود
+                history.back();
+            } else {
+                hideModal();
+            }
+        }
+
         if (openBtn) {
-            openBtn.addEventListener('click', function () {
-                mobileModal.classList.remove('hidden');
-                const input = mobileModal.querySelector('.search-input');
-                if (input) input.focus();
-            });
+            openBtn.addEventListener('click', openModal);
         }
 
         if (closeBtn) {
-            closeBtn.addEventListener('click', function () {
-                mobileModal.classList.add('hidden');
-            });
+            closeBtn.addEventListener('click', closeModal);
         }
+
+        // دکمه بک گوشی / مرورگر
+        window.addEventListener('popstate', function () {
+            if (historyPushed) {
+                historyPushed = false;
+                hideModal();
+            }
+        });
+
+        // اگر صفحه از bfcache برگشت، مودال بسته باشد
+        window.addEventListener('pageshow', function (e) {
+            if (e.persisted) {
+                historyPushed = false;
+                hideModal();
+            }
+        });
     }
 
     // ==================== Scroll to Footer ====================
