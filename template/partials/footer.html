@@ -1,3 +1,5 @@
+{% load render_partial %}
+
 <footer class="md:container my-12">
     <div class="relative w-full bg-gray-900 dark:bg-gray-800 text-white rounded-2xl p-4 lg:p-9">
         <div class="flex items-start flex-col gap-x-7 lg:gap-x-10 gap-y-10 lg:flex-row flex-wrap">
@@ -120,15 +122,7 @@
 
     <!-- درباره سایا مِد -->
     <div class="w-full mt-6">
-     
-
-        <div id="aboutText"
-             class="leading-8 text-gray-400 mb-5 overflow-hidden transition-all duration-500 ease-in-out"
-             style="max-height: 5.6rem;">
-            {% autoescape off %}
-                {{ about_shop }}
-            {% endautoescape %}
-        </div>
+        {% render_partial "main:shop_about" %}
 
         <button id="toggleAbout"
                 type="button"
@@ -147,17 +141,17 @@
 (function () {
     'use strict';
 
-    const aboutText   = document.getElementById('aboutText');
-    const toggleBtn   = document.getElementById('toggleAbout');
-    const toggleText  = document.getElementById('toggleText');
-    const toggleIcon  = document.getElementById('toggleIcon');
+    const aboutText = document.getElementById('aboutText');
+    const toggleBtn = document.getElementById('toggleAbout');
+    const toggleText = document.getElementById('toggleText');
+    const toggleIcon = document.getElementById('toggleIcon');
 
     if (!aboutText || !toggleBtn) return;
 
-    let fullHeight      = 0;
+    let fullHeight = 0;
     let collapsedHeight = 0;
-    let isExpanded      = false;
-    let isReady         = false;
+    let isExpanded = false;
+    let isReady = false;
 
     function recalcHeights() {
         aboutText.style.maxHeight = 'none';
@@ -198,39 +192,16 @@
         applyState();
     });
 
-    // دریافت متن از API
-    fetch('/shop-about/', {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(function (res) {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-    })
-    .then(function (json) {
-        if (json && json.success && json.data && json.data.about_shop) {
-            aboutText.innerHTML = json.data.about_shop.trim();
-        }
-
-        requestAnimationFrame(function () {
-            recalcHeights();
-            applyState();
-        });
-    })
-    .catch(function () {
-        requestAnimationFrame(function () {
-            recalcHeights();
-            applyState();
-        });
+    requestAnimationFrame(function () {
+        recalcHeights();
+        applyState();
     });
 
-    // در صورت تغییر سایز صفحه، ارتفاع‌ها رو دوباره حساب کن
+    // در صورت تغییر سایز صفحه، ارتفاع‌ها را دوباره محاسبه کن.
     let resizeTimer = null;
     window.addEventListener('resize', function () {
         if (!isReady) return;
+
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function () {
             const prevExpanded = isExpanded;
@@ -240,6 +211,5 @@
             applyState();
         }, 150);
     });
-
 })();
 </script>

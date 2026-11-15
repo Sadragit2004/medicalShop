@@ -23,7 +23,8 @@ urlpatterns = [
     path('api/stats/export/', uniqvisi.ExportStatsAPI.as_view(), name='api_stats_export'),
     path('api/stats/reset/', uniqvisi.ResetStatsAPI.as_view(), name='api_stats_reset'),
     path('shop-about/', views.api_shop_about, name='api_shop_about'),
-   
+    path('shop_about_footer/',views.shop_about,name='shop_about')
+
 
 
 

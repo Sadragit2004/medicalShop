@@ -125,3 +125,15 @@ from django.http import HttpResponseGone
 
 def gone_page(request, *args, **kwargs):
     return HttpResponseGone()
+
+
+
+
+def shop_about(request):
+
+    setting = SettingShop.objects.first()
+    about = {
+        "about_shop":setting.description2
+    }
+
+    return render(request,'main_app/shop_about.html',context=about)
