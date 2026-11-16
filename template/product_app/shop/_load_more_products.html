@@ -1,77 +1,30 @@
-{# کارت تکی محصول؛ فیلدها مطابق قالب اصلی: title و mainImage #}
-<article class="product-card group">
-    <a href="{{ product.get_absolute_url }}" aria-label="مشاهده {{ product.title }}">
-        {% if product.mainImage %}
-            <img
-                class="product-card_img group-hover:opacity-0 absolute"
-                src="{{ product.mainImage.url }}"
-                alt="{{ product.title }}"
-                {% if position and position <= 3 %}loading="eager"{% else %}loading="lazy"{% endif %}
-                {% if position == 1 %}fetchpriority="high"{% endif %}
-                decoding="async"
-                onerror="this.onerror=null;this.src='{{ media_url }}/images/default-product.jpg'"
-            >
-            <img
-                class="product-card_img opacity-0 group-hover:opacity-100"
-                src="{{ product.mainImage.url }}"
-                alt=""
-                aria-hidden="true"
-                loading="lazy"
-                decoding="async"
-                onerror="this.onerror=null;this.src='{{ media_url }}/images/default-product.jpg'"
-            >
-        {% else %}
-            <img
-                class="product-card_img group-hover:opacity-0 absolute"
-                src="{{ media_url }}/images/default-product.jpg"
-                alt="{{ product.title }}"
-                loading="lazy"
-                decoding="async"
-            >
-            <img
-                class="product-card_img opacity-0 group-hover:opacity-100"
-                src="{{ media_url }}/images/default-product.jpg"
-                alt=""
-                aria-hidden="true"
-                loading="lazy"
-                decoding="async"
-            >
-        {% endif %}
-    </a>
+{% for product in products %}
+    <article class="product-card">
+        <a href="{{ product.get_absolute_url }}" class="block">
+            {% if product.image %}
+                <img
+                    src="{{ product.image.url }}"
+                    alt="{{ product.name }}"
+                    loading="lazy"
+                    class="w-full h-auto object-contain"
+                >
+            {% endif %}
 
-    <div class="space-y-2">
-        <a href="{{ product.get_absolute_url }}" class="product-card_link">
-            {{ product.title|truncatechars:70 }}
+            <h3>{{ product.name }}</h3>
+
+            {% if product.brand %}
+                <p>{{ product.brand }}</p>
+            {% endif %}
+
+            {% if product.discount_percent %}
+                <p class="line-through">
+                    {{ product.price }}
+                </p>
+            {% endif %}
+
+            <p>
+                {{ product.final_price|default:product.price }}
+            </p>
         </a>
-
-        <div class="product-card_price-wrapper">
-            <div class="product-card_rate">
-                <span class="flex items-center gap-x-0.5">
-                    <svg class="size-4 text-blue-500 mb-0.5" aria-hidden="true"><use href="#rocket"></use></svg>
-                    <p class="text-xs">ارسال امروز</p>
-                </span>
-                <span class="text-gray-400 flex items-center text-sm gap-x-0.5">
-                    <p>{{ product.average_rating|floatformat:1 }}</p>
-                    <svg class="size-4 mb-1" aria-hidden="true"><use href="#star"></use></svg>
-                </span>
-            </div>
-
-            <div class="product-card_price">
-                {% if is_call %}
-                    <p>تماس بگیرید</p>
-                {% else %}
-                    {% if product.discount_percent %}
-                        <del>
-                            <p>{{ product.price|intcomma }}</p>
-                            <h6 class="inline">تومان</h6>
-                        </del>
-                        <p class="text-blue-600 font-DanaDemiBold">{{ product.final_price|intcomma }}</p>
-                    {% else %}
-                        <p>{{ product.price|intcomma }}</p>
-                    {% endif %}
-                    <span style='background:#22adbd;'>تومان</span>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</article>
+    </article>
+{% endfor %}
