@@ -1,2527 +1,840 @@
 {% extends "main_template.html" %}
-
-{% load humanize %}
+{% load humanize render_partial %}
 
 {% block meta1 %}
+{% with origin=request.scheme|add:"://"|add:request.get_host %}
+{% with canonical_url=origin|add:request.path %}
+<title>{{ group.title|striptags }} | خرید و قیمت روز از سایا مد</title>
 
-<title>{{ group.title }} - خرید ارزان ترین قیمت از سایا مِد</title>
-
-<meta name="description" content="{{ group.description|striptags|truncatechars:150 }}">
-
-<meta name="robots" content="index, follow">
-
-<meta property="og:title" content="{{ group.title }}">
-
-<meta property="og:description" content="{{ group.description|striptags|truncatechars:150 }}">
-
-<meta property="og:type" content="website">
-
-<meta property="og:url" content="{{ request.build_absolute_uri }}">
-
-{% if group.image %}
-
-<meta property="og:image" content="{{ site_url }}{{ group.image.url }}">
-
+{% if group.description %}
+<meta name="description" content="{{ group.description|striptags|truncatechars:160 }}">
+{% else %}
+<meta name="description" content="مشاهده و مقایسه محصولات {{ group.title|striptags }} در سایا مد؛ بررسی مشخصات، برندها، موجودی و قیمت روز محصولات.">
 {% endif %}
 
-<meta property="og:site_name" content="{{ site_name }}">
+{% if request.GET %}
+    {% if request.GET|length == 1 and request.GET.page %}
+        <meta name="robots" content="index,follow,max-image-preview:large">
+    {% else %}
+        <meta name="robots" content="noindex,follow">
+    {% endif %}
+{% else %}
+    <meta name="robots" content="index,follow,max-image-preview:large">
+{% endif %}
+
+{% if request.GET.page and request.GET|length == 1 and request.GET.page != "1" %}
+<link rel="canonical" href="{{ canonical_url }}?page={{ request.GET.page|urlencode }}">
+{% else %}
+<link rel="canonical" href="{{ canonical_url }}">
+{% endif %}
+
+<meta property="og:title" content="{{ group.title|striptags }} | خرید و قیمت روز از سایا مد">
+{% if group.description %}
+<meta property="og:description" content="{{ group.description|striptags|truncatechars:160 }}">
+{% else %}
+<meta property="og:description" content="مشاهده و مقایسه محصولات {{ group.title|striptags }} در سایا مد.">
+{% endif %}
+<meta property="og:type" content="website">
+<meta property="og:url" content="{% if request.GET.page and request.GET|length == 1 and request.GET.page != '1' %}{{ canonical_url }}?page={{ request.GET.page|urlencode }}{% else %}{{ canonical_url }}{% endif %}">
+<meta property="og:site_name" content="{{ site_name|default:'سایا مد' }}">
+<meta property="og:locale" content="fa_IR">
+{% if group.image %}
+<meta property="og:image" content="{{ origin }}{{ group.image.url }}">
+{% endif %}
 
 <meta name="twitter:card" content="summary_large_image">
-
-<meta name="twitter:title" content="{{ group.title }}">
-
-<meta name="twitter:description" content="{{ group.description|striptags|truncatechars:150 }}">
-
+<meta name="twitter:title" content="{{ group.title|striptags }} | خرید و قیمت روز از سایا مد">
+{% if group.description %}
+<meta name="twitter:description" content="{{ group.description|striptags|truncatechars:160 }}">
+{% else %}
+<meta name="twitter:description" content="مشاهده و مقایسه محصولات {{ group.title|striptags }} در سایا مد.">
+{% endif %}
 {% if group.image %}
-
-<meta name="twitter:image" content="{{ site_url }}{{ group.image.url }}">
-
+<meta name="twitter:image" content="{{ origin }}{{ group.image.url }}">
 {% endif %}
 
+{# CollectionPage و ItemList برای معرفی معنایی فهرست محصولات؛ Product/Offer باید در صفحه اختصاصی هر محصول درج شود. #}
 <script type="application/ld+json">
-
 {
-
   "@context": "https://schema.org",
-
-  "@type": "ItemList",
-
-  "name": "{{ group.title }}",
-
-  "description": "{{ group.description|striptags|truncatechars:150 }}",
-
-  "url": "{{ request.build_absolute_uri }}",
-
-  {% if group.image %}
-
-  "image": "{{ site_url }}{{ group.image.url }}",
-
-  {% endif %}
-
-  "numberOfItems": {{ total_products }},
-
-  "itemListOrder": "https://schema.org/ItemListUnordered",
-
-  "itemListElement": [
-
-    {% for product in products|slice:":10" %}
-
-    {
-
-      "@type": "ListItem",
-
-      "position": {{ forloop.counter }},
-
-      "url": "{{ site_url }}{{ product.get_absolute_url }}",
-
-      "name": "{{ product.title }}",
-
-      "image": "{{ site_url }}{{ product.mainImage.url }}",
-
-      "offers": {
-
-        "@type": "Offer",
-
-        "priceCurrency": "IRR",
-
-        "price": "{{ product.final_price }}",
-
-        "availability": "http://schema.org/{% if product.quantity > 0 %}InStock{% else %}OutOfStock{% endif %}",
-
-        "url": "{{ site_url }}{{ product.get_absolute_url }}"
-
-      }
-
-    }{% if not forloop.last %},{% endif %}
-
-    {% endfor %}
-
-  ]
-
+  "@type": "CollectionPage",
+  "name": "{{ group.title|escapejs }}",
+  "url": "{{ canonical_url|escapejs }}{% if request.GET.page and request.GET|length == 1 and request.GET.page != '1' %}?page={{ request.GET.page|urlencode }}{% endif %}"{% if group.description %},
+  "description": "{{ group.description|striptags|truncatechars:300|escapejs }}"{% endif %}{% if group.image %},
+  "image": "{{ origin }}{{ group.image.url }}"{% endif %},
+  "mainEntity": {
+    "@type": "ItemList",
+    "itemListOrder": "https://schema.org/ItemListUnordered",
+    "itemListElement": [
+      {% for product in products|slice:":10" %}
+      {
+        "@type": "ListItem",
+        "position": {{ forloop.counter }},
+        "name": "{{ product.title|escapejs }}",
+        "url": "{{ origin }}{{ product.get_absolute_url|escapejs }}"
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ]
+  }
 }
-
 </script>
 
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "صفحه اصلی",
+      "item": "{{ origin }}/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{ group.title|escapejs }}",
+      "item": "{{ canonical_url|escapejs }}"
+    }
+  ]
+}
+</script>
+{% endwith %}
+{% endwith %}
 {% endblock meta1 %}
 
 {% block content %}
-
-{% load render_partial %}
-
 <main class="container">
-
-    <nav class="flex mt-8" aria-label="Breadcrumb">
-
+    <nav class="flex mt-8" aria-label="مسیر راهنما">
         <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
-
             <li class="inline-flex items-center">
-
-                <a href="/"
-
-                    class="inline-flex items-center text-sm gap-x-1 text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-
-                    <svg class="size-4 mb-0.5">
-
-                        <use href="#home" />
-
-                    </svg>
-
+                <a href="/" class="inline-flex items-center text-sm gap-x-1 text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+                    <svg class="size-4 mb-0.5" aria-hidden="true"><use href="#home"></use></svg>
                     صفحه اصلی
-
                 </a>
-
             </li>
-
             <li aria-current="page">
-
                 <div class="flex items-center">
-
-                    <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true"
-
-                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-
-                            d="m1 9 4-4-4-4" />
-
+                    <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"></path>
                     </svg>
-
                     <span class="ms-1 text-sm text-gray-500 md:ms-2 dark:text-gray-400">{{ group.title }}</span>
-
                 </div>
-
             </li>
-
         </ol>
-
     </nav>
 
-    <!-- عنوان اصلی صفحه (تنها H1) -->
-    <div class="page-title-wrap mt-4 lg:mt-6">
-
+    <header class="page-title-wrap mt-4 lg:mt-6">
         <h1 class="page-title font-DanaDemiBold">{{ group.title }}</h1>
-
-    </div>
+    </header>
 
     <div class="flex flex-col lg:flex-row gap-4 mt-5">
-
-        <div
-
-            class="lg:sticky top-1 h-fit lg:w-1/4 hidden lg:flex flex-col gap-y-4 items-center shadow rounded-lg py-4 dark:bg-gray-800 bg-white">
-
+        <aside class="lg:sticky top-1 h-fit lg:w-1/4 hidden lg:flex flex-col gap-y-4 items-center shadow rounded-lg py-4 dark:bg-gray-800 bg-white" aria-label="فیلتر محصولات">
             <div class="flex items-center justify-between w-full px-2 xl:px-4">
-
-                <span class="flex items-center gap-x-1">
-
-                    <p class="font-DanaMedium text-gray-700 dark:text-gray-200 text-lg">فیلترها
-
-                    </p>
-
-                </span>
-
-                <a href="?page=1" class="text-blue-500 dark:text-blue-400 text-sm cursor-pointer hover:text-blue-700">
-
-                    حذف فیلتر‌ها
-
-                </a>
-
+                <span class="font-DanaMedium text-gray-700 dark:text-gray-200 text-lg">فیلترها</span>
+                <a href="?page=1" class="text-blue-500 dark:text-blue-400 text-sm cursor-pointer hover:text-blue-700">حذف فیلترها</a>
             </div>
 
             <div class="w-full divide-y divide-slate-200 dark:divide-gray-700/20">
-
                 {% if is_brand_page %}
-
                     {% render_partial 'product:get_brand_feature_filter' slug=slug %}
-
                 {% else %}
-
                     {% render_partial 'product:get_feature_filter' slug=slug %}
-
                 {% endif %}
 
                 <div class="w-full justify-between flex items-center gap-x-3 px-2 xl:px-4 py-4" dir="ltr">
-
                     <label for="hs-valid-toggle-switch" class="relative inline-block w-11 h-6 cursor-pointer">
-
                         <input type="checkbox" id="hs-valid-toggle-switch" class="peer sr-only" {% if request.GET.available %}checked{% endif %}>
-
-                        <span
-
-                            class="absolute inset-0 bg-gray-200 rounded-full transition-colors duration-200 ease-in-out peer-checked:bg-blue-500 dark:bg-neutral-700 dark:peer-checked:bg-blue-500 peer-disabled:opacity-50 peer-disabled:pointer-events-none"></span>
-
-                        <span
-
-                            class="absolute top-1/2 start-0.5 -translate-y-1/2 size-5 bg-white rounded-full shadow-xs transition-transform duration-200 ease-in-out peer-checked:translate-x-full dark:bg-neutral-400 dark:peer-checked:bg-white"></span>
-
+                        <span class="absolute inset-0 bg-gray-200 rounded-full transition-colors duration-200 ease-in-out peer-checked:bg-blue-500 dark:bg-neutral-700 dark:peer-checked:bg-blue-500"></span>
+                        <span class="absolute top-1/2 start-0.5 -translate-y-1/2 size-5 bg-white rounded-full shadow-xs transition-transform duration-200 ease-in-out peer-checked:translate-x-full dark:bg-neutral-400 dark:peer-checked:bg-white"></span>
                     </label>
-
-                    <label for="hs-valid-toggle-switch" class="text-gray-800 dark:text-gray-100">
-
-                        فقط کالا های موجود
-
-                    </label>
-
+                    <label for="hs-valid-toggle-switch" class="text-gray-800 dark:text-gray-100">فقط کالاهای موجود</label>
                 </div>
 
-                <div class="">
-
-                    <button onclick="toggleAccordion(2)"
-
-                        class="w-full flex justify-between items-center px-2 xl:px-4 py-4 text-gray-800 dark:text-gray-100">
-
+                <div>
+                    <button type="button" onclick="toggleAccordion(2)" class="w-full flex justify-between items-center px-2 xl:px-4 py-4 text-gray-800 dark:text-gray-100" aria-controls="content-2">
                         <span>محدوده قیمت</span>
-
-                        <span id="icon-2" class="text-gray-800 dark:text-gray-100">
-
-                            <svg class="size-4 transition-transform duration-300">
-
-                                <use href="#chevron-left"></use>
-
-                            </svg>
-
-                        </span>
-
+                        <span id="icon-2" class="text-gray-800 dark:text-gray-100"><svg class="size-4 transition-transform duration-300" aria-hidden="true"><use href="#chevron-left"></use></svg></span>
                     </button>
-
                     <div id="content-2" class="overflow-hidden max-h-0 transition-all duration-300">
-
                         {% include "./pricefilter.html" %}
-
                     </div>
-
                 </div>
-
-
 
                 <div class="w-full justify-between flex items-center gap-x-3 px-2 xl:px-4 py-4" dir="ltr">
-
                     <label for="hs-valid-toggle-switch4" class="relative inline-block w-11 h-6 cursor-pointer">
-
                         <input type="checkbox" id="hs-valid-toggle-switch4" class="peer sr-only" {% if request.GET.local_pickup %}checked{% endif %}>
-
-                        <span
-
-                            class="absolute inset-0 bg-gray-200 rounded-full transition-colors duration-200 ease-in-out peer-checked:bg-blue-500 dark:bg-neutral-700 dark:peer-checked:bg-blue-500 peer-disabled:opacity-50 peer-disabled:pointer-events-none"></span>
-
-                        <span
-
-                            class="absolute top-1/2 start-0.5 -translate-y-1/2 size-5 bg-white rounded-full shadow-xs transition-transform duration-200 ease-in-out peer-checked:translate-x-full dark:bg-neutral-400 dark:peer-checked:bg-white"></span>
-
+                        <span class="absolute inset-0 bg-gray-200 rounded-full transition-colors duration-200 ease-in-out peer-checked:bg-blue-500 dark:bg-neutral-700 dark:peer-checked:bg-blue-500"></span>
+                        <span class="absolute top-1/2 start-0.5 -translate-y-1/2 size-5 bg-white rounded-full shadow-xs transition-transform duration-200 ease-in-out peer-checked:translate-x-full dark:bg-neutral-400 dark:peer-checked:bg-white"></span>
                     </label>
-
-                    <label for="hs-valid-toggle-switch4"
-
-                        class="text-gray-800 dark:text-gray-100 flex items-center gap-x-1">
-
-                        <img loading="lazy" class="size-5" src="{{media_url}}/images/svg/shop.png" alt="ایکون دکمه حضوری">
-
+                    <label for="hs-valid-toggle-switch4" class="text-gray-800 dark:text-gray-100 flex items-center gap-x-1">
+                        <img loading="lazy" decoding="async" class="size-5" src="{{ media_url }}/images/svg/shop.png" alt="">
                         خرید حضوری در تبریز
-
                     </label>
-
                 </div>
 
                 <div class="w-full px-2 xl:px-4 py-4">
-
-                    <button type="button"
-
-                            onclick="applyDesktopFilters()"
-
-                            class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">
-
-                        اعمال فیلترها
-
-                    </button>
-
+                    <button type="button" onclick="applyDesktopFilters()" class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">اعمال فیلترها</button>
                 </div>
-
             </div>
+        </aside>
 
-        </div>
-
-        <div class="lg:w-3/4">
-
+        <section class="lg:w-3/4" aria-label="فهرست محصولات {{ group.title }}">
             <div class="flex lg:hidden items-center justify-between mb-4 bg-white p-3 rounded-lg shadow-sm">
-
                 <div class="flex items-center gap-2">
-
-                    <span class="text-gray-500 text-sm">
-
-                        <span class="font-medium text-gray-700">{{ total_products|intcomma }}</span> کالا
-
-                    </span>
-
+                    <span class="text-gray-500 text-sm"><span class="font-medium text-gray-700">{{ total_products|intcomma }}</span> کالا</span>
                 </div>
-
                 <div class="flex items-center gap-2">
-
-                    <button id="mobile-sort-btn" class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 active:bg-gray-100 transition-colors">
-
-                        <svg class="size-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
-
-                        </svg>
-
+                    <button type="button" id="mobile-sort-btn" class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 active:bg-gray-100 transition-colors" aria-haspopup="dialog" aria-controls="mobile-sort-modal">
+                        <svg class="size-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path></svg>
                         <span class="text-sm text-gray-700">
-
-                            {% if sort_option == '1' %}جدیدترین
-
-                            {% elif sort_option == '2' %}گران‌ترین
-
-                            {% elif sort_option == '3' %}ارزان‌ترین
-
-                            {% else %}مرتب‌سازی
-
-                            {% endif %}
-
+                            {% if sort_option == '1' %}جدیدترین{% elif sort_option == '2' %}گران‌ترین{% elif sort_option == '3' %}ارزان‌ترین{% elif sort_option == '4' %}محبوب‌ترین{% elif sort_option == '5' %}پرفروش‌ترین{% else %}مرتب‌سازی{% endif %}
                         </span>
-
                     </button>
-
-                    <button id="mobile-filter-btn" class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 active:bg-gray-100 transition-colors">
-
-                        <svg class="size-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
-
-                        </svg>
-
+                    <button type="button" id="mobile-filter-btn" class="relative flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 active:bg-gray-100 transition-colors" aria-haspopup="dialog" aria-controls="mobile-filter-modal">
+                        <svg class="size-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
                         <span class="text-sm text-gray-700">فیلتر</span>
-
-                        {% if has_active_filters %}
-
-                        <span class="size-2 bg-red-500 rounded-full"></span>
-
-                        {% endif %}
-
+                        {% if has_active_filters %}<span class="size-2 bg-red-500 rounded-full" aria-label="فیلتر فعال"></span>{% endif %}
                     </button>
-
                 </div>
-
             </div>
 
-            <div id="mobile-sort-modal" class="lg:hidden fixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 ease-out translate-y-full">
-
+            <div id="mobile-sort-modal" class="lg:hidden fixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 ease-out translate-y-full" role="dialog" aria-modal="true" aria-label="مرتب‌سازی محصولات">
                 <div class="absolute inset-0 bg-black/50" onclick="closeSortModal()"></div>
-
                 <div class="absolute bottom-0 w-full bg-white rounded-t-2xl shadow-xl">
-
                     <div class="flex items-center justify-between p-4 border-b border-gray-200">
-
                         <span class="text-lg font-medium text-gray-900">مرتب‌سازی</span>
-
-                        <button onclick="closeSortModal()" class="p-2 rounded-lg hover:bg-gray-100">
-
-                            <svg class="size-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-
-                            </svg>
-
-                        </button>
-
+                        <button type="button" onclick="closeSortModal()" class="p-2 rounded-lg hover:bg-gray-100" aria-label="بستن مرتب‌سازی"><svg class="size-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
                     </div>
-
                     <div class="p-4 space-y-1 max-h-[60vh] overflow-y-auto">
-
-                        <button onclick="applySort('1')" class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 {% if sort_option == '1' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
-
+                        <button type="button" onclick="applySort('1')" class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 {% if sort_option == '1' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
                             <span class="text-right">جدیدترین</span>
-
                             {% if sort_option == '1' %}
-
-                            <svg class="size-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-
-                            </svg>
-
+                            <svg class="size-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             {% endif %}
-
                         </button>
-
-                        <button onclick="applySort('2')" class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 {% if sort_option == '2' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
-
+                        <button type="button" onclick="applySort('2')" class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 {% if sort_option == '2' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
                             <span class="text-right">گران‌ترین</span>
-
                             {% if sort_option == '2' %}
-
-                            <svg class="size-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-
-                            </svg>
-
+                            <svg class="size-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             {% endif %}
-
                         </button>
-
-                        <button onclick="applySort('3')" class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 {% if sort_option == '3' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
-
+                        <button type="button" onclick="applySort('3')" class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 {% if sort_option == '3' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
                             <span class="text-right">ارزان‌ترین</span>
-
                             {% if sort_option == '3' %}
-
-                            <svg class="size-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-
-                            </svg>
-
+                            <svg class="size-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             {% endif %}
-
                         </button>
-
-                        <button onclick="applySort('4')" class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 {% if sort_option == '4' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
-
+                        <button type="button" onclick="applySort('4')" class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 {% if sort_option == '4' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
                             <span class="text-right">محبوب‌ترین</span>
-
                             {% if sort_option == '4' %}
-
-                            <svg class="size-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-
-                            </svg>
-
+                            <svg class="size-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             {% endif %}
-
                         </button>
-
-                        <button onclick="applySort('5')" class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 {% if sort_option == '5' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
-
+                        <button type="button" onclick="applySort('5')" class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 {% if sort_option == '5' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
                             <span class="text-right">پرفروش‌ترین</span>
-
                             {% if sort_option == '5' %}
-
-                            <svg class="size-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-
-                            </svg>
-
+                            <svg class="size-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             {% endif %}
-
                         </button>
-
                     </div>
-
                 </div>
-
             </div>
 
-            <div id="mobile-filter-modal" class="lg:hidden fixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 ease-out translate-y-full">
-
+            <div id="mobile-filter-modal" class="lg:hidden fixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 ease-out translate-y-full" role="dialog" aria-modal="true" aria-label="فیلتر محصولات">
                 <div class="absolute inset-0 bg-black/50" onclick="closeFilterModal()"></div>
-
-                <div class="absolute bottom-0 w-full bg-white rounded-t-2xl shadow-xl" style="height: 85vh;">
-
+                <div class="absolute bottom-0 w-full bg-white rounded-t-2xl shadow-xl" style="height:85vh">
                     <div class="flex items-center justify-between p-4 border-b border-gray-200">
-
                         <div class="flex items-center gap-3">
-
                             <span class="text-lg font-medium text-gray-900">فیلترها</span>
-
-                            {% if has_active_filters %}
-
-                            <span class="px-2 py-1 text-xs bg-red-100 text-red-600 rounded-full">فعال</span>
-
-                            {% endif %}
-
+                            {% if has_active_filters %}<span class="px-2 py-1 text-xs bg-red-100 text-red-600 rounded-full">فعال</span>{% endif %}
                         </div>
-
                         <div class="flex items-center gap-2">
-
-                            <button onclick="resetAllFilters()" class="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg">
-
-                                حذف همه
-
-                            </button>
-
-                            <button onclick="closeFilterModal()" class="p-2 rounded-lg hover:bg-gray-100">
-
-                                <svg class="size-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-
-                                </svg>
-
-                            </button>
-
+                            <button type="button" onclick="resetAllFilters()" class="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg">حذف همه</button>
+                            <button type="button" onclick="closeFilterModal()" class="p-2 rounded-lg hover:bg-gray-100" aria-label="بستن فیلترها"><svg class="size-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
                         </div>
-
                     </div>
-
                     <div class="h-[calc(85vh-140px)] overflow-y-auto pb-4">
-
                         <div class="p-4">
-
                             {% if is_brand_page %}
-
                                 {% render_partial 'product:get_brand_feature_filter' slug=slug %}
-
                             {% else %}
-
                                 {% render_partial 'product:get_feature_filter' slug=slug %}
-
                             {% endif %}
-
                         </div>
-
                         {% include "./pricefilter.html" %}
-
                         <div class="p-4 border-t border-gray-200">
-
                             <span class="font-medium text-gray-900 mb-3">وضعیت موجودی</span>
-
                             <div class="space-y-2">
-
                                 <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 cursor-pointer">
-
                                     <input type="checkbox" id="mobile-available" class="rounded text-blue-600 focus:ring-blue-500" {% if request.GET.available %}checked{% endif %}>
-
                                     <span class="text-gray-700">فقط کالاهای موجود</span>
-
                                 </label>
-
                                 <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 cursor-pointer">
-
                                     <input type="checkbox" id="mobile-fast-delivery" class="rounded text-blue-600 focus:ring-blue-500" {% if request.GET.fast_delivery %}checked{% endif %}>
-
-                                    <span class="text-gray-700 flex items-center gap-2">
-
-                                        <svg class="size-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
-
-                                        </svg>
-
-                                        ارسال امروز
-
-                                    </span>
-
+                                    <span class="text-gray-700 flex items-center gap-2"><svg class="size-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg>ارسال امروز</span>
                                 </label>
-
                             </div>
-
                         </div>
-
                         <div class="p-4 border-t border-gray-200">
-
                             <span class="font-medium text-gray-900 mb-3">نوع فروشنده</span>
-
                             <div class="space-y-2">
-
                                 <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 cursor-pointer">
-
                                     <input type="checkbox" id="mobile-seller-delivery" class="rounded text-blue-600 focus:ring-blue-500" {% if request.GET.seller_delivery %}checked{% endif %}>
-
-                                    <span class="text-gray-700 flex items-center gap-2">
-
-                                        <svg class="size-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-
-                                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-
-                                        </svg>
-
-                                        ارسال فروشنده
-
-                                    </span>
-
+                                    <span class="text-gray-700">ارسال فروشنده</span>
                                 </label>
-
                                 <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 cursor-pointer">
-
                                     <input type="checkbox" id="mobile-local-pickup" class="rounded text-blue-600 focus:ring-blue-500" {% if request.GET.local_pickup %}checked{% endif %}>
-
-                                    <span class="text-gray-700 flex items-center gap-2">
-
-                                        <svg class="size-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-
-                                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
-
-                                        </svg>
-
-                                        خرید حضوری در تبریز
-
-                                    </span>
-
+                                    <span class="text-gray-700">خرید حضوری در تبریز</span>
                                 </label>
-
                             </div>
-
                         </div>
-
                     </div>
-
                     <div class="absolute bottom-0 w-full p-4 bg-white border-t border-gray-200">
-
-                        <div class="flex items-center gap-3">
-
-                            <button onclick="applyMobileFilters()" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 active:bg-blue-800 transition-colors">
-
-                                نمایش نتایج
-
-                                <span class="text-sm font-normal">({{ total_products|intcomma }} کالا)</span>
-
-                            </button>
-
-                        </div>
-
+                        <button type="button" onclick="applyMobileFilters()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 active:bg-blue-800 transition-colors">
+                            نمایش نتایج <span class="text-sm font-normal">({{ total_products|intcomma }} کالا)</span>
+                        </button>
                     </div>
-
                 </div>
-
             </div>
 
             <div class="hidden lg:flex items-center justify-between mb-6">
-
-               <div class="flex items-center gap-x-5">
-
+                <div class="flex items-center gap-x-5">
                     <div class="flex items-center gap-x-2">
-
-                        <svg class="size-6 text-gray-400">
-
-                            <use href="#sort-list"></use>
-
-                        </svg>
-
-                        <span class="font-DanaDemiBold text-gray-400">مرتب سازی :</span>
-
+                        <svg class="size-6 text-gray-400" aria-hidden="true"><use href="#sort-list"></use></svg>
+                        <span class="font-DanaDemiBold text-gray-400">مرتب‌سازی:</span>
                     </div>
-
                     <ul class="flex items-center gap-x-1 lg:gap-x-4 child:transition-all child:cursor-pointer child:rounded-lg child:px-1 child:py-1 child:text-sm child:lg:text-base">
-
-                        <li class="{% if sort_option == '1' %}text-blue-500{% else %}text-gray-400 hover:text-blue-500{% endif %}"
-
-                            onclick="applySort('1')">جدیدترین</li>
-
-                        <li class="{% if sort_option == '2' %}text-blue-500{% else %}text-gray-400 hover:text-blue-500{% endif %}"
-
-                            onclick="applySort('2')">گران‌ترین</li>
-
-                        <li class="{% if sort_option == '3' %}text-blue-500{% else %}text-gray-400 hover:text-blue-500{% endif %}"
-
-                            onclick="applySort('3')">ارزان‌ترین</li>
-
+                        <li class="{% if sort_option == '1' %}text-blue-500{% else %}text-gray-400 hover:text-blue-500{% endif %}" onclick="applySort('1')">جدیدترین</li>
+                        <li class="{% if sort_option == '2' %}text-blue-500{% else %}text-gray-400 hover:text-blue-500{% endif %}" onclick="applySort('2')">گران‌ترین</li>
+                        <li class="{% if sort_option == '3' %}text-blue-500{% else %}text-gray-400 hover:text-blue-500{% endif %}" onclick="applySort('3')">ارزان‌ترین</li>
                     </ul>
-
-               </div>
-
-               <div class="flex items-center gap-x-3">
-
-                   <div class="hidden xl:flex items-center gap-x-2">
-
-                       <span class="text-sm text-gray-400">تاریخچه فیلتر:</span>
-
-                       <select id="filter-history-select"
-
-                               class="border border-gray-300 rounded-lg px-2 py-1 text-sm text-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100">
-
-                           <option value="">انتخاب...</option>
-
-                       </select>
-
-                   </div>
-
-                   <button type="button"
-
-                           onclick="applySelectedHistory()"
-
-                           class="hidden xl:inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700">
-
-                       اعمال
-
-                   </button>
-
-                   <span class="text-sm text-gray-400 end">{{ total_products|intcomma }} کالا</span>
-
-               </div>
-
+                </div>
+                <div class="flex items-center gap-x-3">
+                    <div class="hidden xl:flex items-center gap-x-2">
+                        <label for="filter-history-select" class="text-sm text-gray-400">تاریخچه فیلتر:</label>
+                        <select id="filter-history-select" class="border border-gray-300 rounded-lg px-2 py-1 text-sm text-gray-700 bg-white dark:bg-gray-800 dark:text-gray-100">
+                            <option value="">انتخاب...</option>
+                        </select>
+                    </div>
+                    <button type="button" onclick="applySelectedHistory()" class="hidden xl:inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700">اعمال</button>
+                    <span class="text-sm text-gray-400">{{ total_products|intcomma }} کالا</span>
+                </div>
             </div>
 
-          <div class="grid grid-cols-1 xxs:grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 xs:gap-2 sm:gap-4" id="products-container">
-
+            <div class="grid grid-cols-1 xxs:grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 xs:gap-2 sm:gap-4" id="products-container">
                 {% for product in products %}
-
-                <div class="product-card group">
-
-                    <a href="{{ product.get_absolute_url }}">
-
-                        {% if product.mainImage %}
-                        <img loading="lazy" class="product-card_img group-hover:opacity-0 absolute"
-                             src="{{ product.mainImage.url }}"
-                             alt="{{ product.title }}"
-                             onerror="this.onerror=null;this.src='{{ media_url }}/images/default-product.jpg'">
-                        <img loading="lazy" class="product-card_img opacity-0 group-hover:opacity-100"
-                             src="{{ product.mainImage.url }}"
-                             alt="{{ product.title }}"
-                             onerror="this.onerror=null;this.src='{{ media_url }}/images/default-product.jpg'">
-                        {% else %}
-                        <img loading="lazy" class="product-card_img group-hover:opacity-0 absolute"
-                             src="{{ media_url }}/images/default-product.jpg"
-                             alt="{{ product.title }}">
-                        <img loading="lazy" class="product-card_img opacity-0 group-hover:opacity-100"
-                             src="{{ media_url }}/images/default-product.jpg"
-                             alt="{{ product.title }}">
-                        {% endif %}
-
-                    </a>
-
-                    <div class="space-y-2">
-
-                        <a href="{{ product.get_absolute_url }}" class="product-card_link">
-
-                            {{ product.title|truncatechars:70 }}
-
-                        </a>
-
-                        <div class="product-card_price-wrapper">
-
-                            <div class="product-card_rate">
-
-                                <span class="flex items-center gap-x-0.5">
-
-                                    <svg class="size-4 text-blue-500 mb-0.5">
-
-                                        <use href="#rocket"></use>
-
-                                    </svg>
-
-                                    <p class="text-xs">ارسال امروز</p>
-
-                                </span>
-
-                                <span class="text-gray-400 flex items-center text-sm gap-x-0.5">
-
-                                    <p>{{ product.average_rating|floatformat:1 }}</p>
-
-                                    <svg class="size-4 mb-1">
-
-                                        <use href="#star"></use>
-
-                                    </svg>
-
-                                </span>
-
-                            </div>
-
-                            <div class="product-card_price">
-
-                                {% if is_call %}
-
-                                    <p class="">تماس بگیرید</p>
-
-                                {% else %}
-
-                                    {% if product.discount_percent %}
-
-                                    <del>
-
-                                        <p>{{ product.price|intcomma }}</p>
-
-                                        <h6 class="inline">تومان</h6>
-
-                                    </del>
-
-                                    <p class="text-blue-600 font-DanaDemiBold">{{ product.final_price|intcomma }}</p>
-
-                                    {% else %}
-
-                                    <p>{{ product.price|intcomma }}</p>
-
-                                    {% endif %}
-
-                                    <span style='background:#22adbd;'>تومان</span>
-
-                                {% endif %}
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
+                    {% include "./product_card.html" with product=product position=forloop.counter is_call=is_call %}
                 {% empty %}
-
-                <div class="col-span-full text-center py-12">
-
-                    <svg class="w-24 h-24 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-
-                              d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-
-                    </svg>
-
-                    <span class="mt-4 text-lg font-medium text-gray-900 dark:text-white">محصولی یافت نشد</span>
-
-                    <p class="mt-1 text-gray-500 dark:text-gray-400">هیچ محصولی با فیلترهای انتخابی شما مطابقت ندارد.</p>
-
-                    <a href="?page=1" class="mt-4 inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-
-                        حذف فیلترها
-
-                    </a>
-
-                </div>
-
+                    <div class="col-span-full text-center py-12">
+                        <svg class="w-24 h-24 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <h2 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">محصولی یافت نشد</h2>
+                        <p class="mt-1 text-gray-500 dark:text-gray-400">هیچ محصولی با فیلترهای انتخابی شما مطابقت ندارد.</p>
+                        <a href="?page=1" class="mt-4 inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">حذف فیلترها</a>
+                    </div>
                 {% endfor %}
-
             </div>
 
             {% if products.has_next %}
             <div id="load-more-wrapper" class="mt-10 w-full flex items-center justify-center">
-                <button
-                    type="button"
-                    id="load-more-btn"
-                    data-current-page="{{ products.number }}"
-                    data-next-page="{{ products.next_page_number }}"
-                    data-total-pages="{{ products.paginator.num_pages }}"
-                    class="inline-flex min-w-52 items-center justify-center gap-3 px-6 py-3 rounded-xl bg-blue-600 text-white shadow-sm hover:bg-blue-700 hover:shadow-md transition-all duration-200 disabled:opacity-80 disabled:cursor-wait disabled:shadow-none"
-                    aria-live="polite"
-                >
-                    <svg
-                        id="load-more-spinner"
-                        class="hidden size-5 shrink-0 animate-spin"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                    >
-                        <circle
-                            class="opacity-20"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            stroke-width="3"
-                        />
-                        <path
-                            class="opacity-90"
-                            fill="currentColor"
-                            d="M12 2a10 10 0 0 1 10 10h-3a7 7 0 0 0-7-7V2z"
-                        />
-                    </svg>
+                <button type="button" id="load-more-btn" data-current-page="{{ products.number }}" data-next-page="{{ products.next_page_number }}" data-total-pages="{{ products.paginator.num_pages }}" class="inline-flex min-w-52 items-center justify-center gap-3 px-6 py-3 rounded-xl bg-blue-600 text-white shadow-sm hover:bg-blue-700 hover:shadow-md transition-all duration-200 disabled:opacity-80 disabled:cursor-wait disabled:shadow-none" aria-live="polite">
+                    <svg id="load-more-spinner" class="hidden size-5 shrink-0 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle><path class="opacity-90" fill="currentColor" d="M12 2a10 10 0 0 1 10 10h-3a7 7 0 0 0-7-7V2z"></path></svg>
                     <span id="load-more-text">نمایش محصولات بیشتر</span>
                 </button>
             </div>
-            <p id="load-more-error" class="hidden mt-3 text-center text-sm text-red-500" role="alert">
-                دریافت محصولات ناموفق بود. دوباره تلاش کنید.
-            </p>
+            <p id="load-more-error" class="hidden mt-3 text-center text-sm text-red-500" role="alert">دریافت محصولات ناموفق بود. دوباره تلاش کنید.</p>
             {% endif %}
 
             {% if products.paginator.num_pages > 1 %}
             <nav class="mt-6 flex flex-wrap items-center justify-center gap-2" aria-label="صفحه‌بندی محصولات">
                 {% if products.has_previous %}
-                <a
-                    href="?{% for key, values in request.GET.lists %}{% if key != 'page' %}{% for value in values %}{{ key|urlencode }}={{ value|urlencode }}&amp;{% endfor %}{% endif %}{% endfor %}page={{ products.previous_page_number }}"
-                    rel="prev"
-                    class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition hover:border-blue-500 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
-                >صفحه قبل</a>
+                <a href="?{% for key, values in request.GET.lists %}{% if key != 'page' %}{% for value in values %}{{ key|urlencode }}={{ value|urlencode }}&amp;{% endfor %}{% endif %}{% endfor %}page={{ products.previous_page_number }}" rel="prev" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition hover:border-blue-500 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">صفحه قبل</a>
                 {% endif %}
-
                 {% if products.has_next %}
-                <a
-                    id="seo-next-page"
-                    href="?{% for key, values in request.GET.lists %}{% if key != 'page' %}{% for value in values %}{{ key|urlencode }}={{ value|urlencode }}&amp;{% endfor %}{% endif %}{% endfor %}page={{ products.next_page_number }}"
-                    rel="next"
-                    class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition hover:border-blue-500 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
-                >صفحه بعد</a>
+                <a id="seo-next-page" href="?{% for key, values in request.GET.lists %}{% if key != 'page' %}{% for value in values %}{{ key|urlencode }}={{ value|urlencode }}&amp;{% endfor %}{% endif %}{% endfor %}page={{ products.next_page_number }}" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition hover:border-blue-500 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">صفحه بعد</a>
                 {% endif %}
             </nav>
             {% endif %}
 
             {% if group.description %}
-
-<div class="mt-10">
-
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-
-        <button onclick="toggleDescription()"
-
-                id="toggle-description-btn"
-
-                class="w-full flex items-center justify-between p-4 text-right hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-
-            <div class="flex items-center gap-2">
-
-                <svg id="toggle-icon" class="w-5 h-5 transform transition-transform text-gray-500 dark:text-gray-400 rotate-180"
-
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-
-                </svg>
-
-                <h2 class="text-lg font-DanaDemiBold text-gray-800 dark:text-gray-200">
-
-                    درباره {{ group.title }}
-
-                </h2>
-
-            </div>
-
-            <span id="toggle-text" class="text-blue-600 dark:text-blue-400 text-sm font-DanaMedium">
-
-                بستن توضیحات
-
-            </span>
-
-        </button>
-
-        <div id="description-content">
-
-            <div class="p-4 pt-0 border-t border-gray-200 dark:border-gray-700">
-
-                <div class="category-description text-gray-600 dark:text-gray-300 text-sm leading-relaxed text-justify prose prose-sm dark:prose-invert max-w-none">
-
-                    {{ group.description|safe }}
-
+            <section class="mt-10" aria-labelledby="category-description-heading">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <button type="button" onclick="toggleDescription()" id="toggle-description-btn" class="w-full flex items-center justify-between p-4 text-right hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" aria-controls="description-content" aria-expanded="true">
+                        <div class="flex items-center gap-2">
+                            <svg id="toggle-icon" class="w-5 h-5 transform transition-transform text-gray-500 dark:text-gray-400 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            <h2 id="category-description-heading" class="text-lg font-DanaDemiBold text-gray-800 dark:text-gray-200">درباره {{ group.title }}</h2>
+                        </div>
+                        <span id="toggle-text" class="text-blue-600 dark:text-blue-400 text-sm font-DanaMedium">بستن توضیحات</span>
+                    </button>
+                    <div id="description-content">
+                        <div class="p-4 pt-0 border-t border-gray-200 dark:border-gray-700">
+                            <div class="category-description text-gray-600 dark:text-gray-300 text-sm leading-relaxed text-justify prose prose-sm dark:prose-invert max-w-none">
+                                {{ group.description|safe }}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
-            </div>
-
-        </div>
-
+            </section>
+            {% endif %}
+        </section>
     </div>
-
-</div>
-
-<style>
-/* ================== معرفی محصول: متن ================== */
-.category-description,
-.category-description p,
-.category-description li,
-.category-description div {
-    text-align: justify;
-    text-justify: inter-word;
-    line-height: 2;
-    word-break: break-word;
-    overflow-wrap: anywhere;
-}
-
-.category-description {
-    font-size: 0.9375rem;
-    color: #4b5563;
-    padding-top: 1rem;
-}
-
-.category-description p {
-    margin: 0 0 1rem;
-}
-
-.category-description h1,
-.category-description h2,
-.category-description h3,
-.category-description h4 {
-    text-align: right;
-    font-weight: 700;
-    line-height: 1.7;
-    color: #111827;
-    margin: 1.75rem 0 0.75rem;
-    padding-right: 0.75rem;
-    border-right: 4px solid #22adbd;
-    scroll-margin-top: 80px;
-}
-
-.category-description h2 { font-size: 1.25rem; }
-.category-description h3 { font-size: 1.125rem; }
-.category-description h4 { font-size: 1rem; border-right-width: 3px; }
-
-.category-description strong,
-.category-description b {
-    color: #111827;
-    font-weight: 700;
-}
-
-.category-description a {
-    color: #0e8fa0;
-    text-decoration: underline;
-    text-underline-offset: 4px;
-    text-decoration-thickness: 1px;
-    transition: color .2s;
-}
-
-.category-description a:hover { color: #22adbd; }
-
-.category-description ul,
-.category-description ol {
-    margin: 0 0 1rem;
-    padding-right: 1.5rem;
-}
-
-.category-description ul { list-style: disc; }
-.category-description ol { list-style: decimal; }
-.category-description li { margin-bottom: 0.35rem; }
-.category-description li::marker { color: #22adbd; }
-
-.category-description blockquote {
-    margin: 1.25rem 0;
-    padding: 0.75rem 1rem;
-    border-right: 4px solid #22adbd;
-    background: #f0fbfc;
-    border-radius: 10px;
-    color: #374151;
-}
-
-.category-description hr {
-    border: 0;
-    height: 1px;
-    background: #e5e7eb;
-    margin: 1.75rem 0;
-}
-
-/* ================== معرفی محصول: تصاویر (همه هم‌اندازه) ================== */
-.category-description img {
-    display: block !important;
-    width: 100% !important;
-    max-width: 720px !important;
-    height: auto !important;
-    aspect-ratio: 16 / 10;
-    object-fit: contain;
-    margin: 1.25rem auto !important;
-    padding: 0;
-    background: #f8fafc;
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, .06);
-}
-
-.category-description a img,
-.category-description p img,
-.category-description figure img {
-    margin-left: auto !important;
-    margin-right: auto !important;
-}
-
-.category-description figure {
-    margin: 1.25rem 0;
-}
-
-.category-description figcaption {
-    text-align: center;
-    font-size: 0.8125rem;
-    color: #6b7280;
-    margin-top: -0.5rem;
-}
-
-@media (max-width: 767px) {
-    .category-description img {
-        max-width: 100% !important;
-        margin: 1rem auto !important;
-        border-radius: 12px;
-    }
-}
-
-/* ================== معرفی محصول: جدول‌ها ================== */
-.category-description .cd-table-wrap {
-    position: relative;
-    margin: 1.5rem 0;
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-    background: #fff;
-    box-shadow: 0 4px 16px rgba(15, 23, 42, .06);
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    scrollbar-color: #22adbd #f1f5f9;
-}
-
-.category-description .cd-table-wrap::-webkit-scrollbar { height: 6px; }
-.category-description .cd-table-wrap::-webkit-scrollbar-track { background: #f1f5f9; }
-.category-description .cd-table-wrap::-webkit-scrollbar-thumb { background: #22adbd; border-radius: 6px; }
-
-.category-description table {
-    display: table !important;
-    width: 100% !important;
-    max-width: none !important;
-    min-width: 520px;
-    margin: 0 !important;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.875rem;
-    line-height: 1.8;
-    background: transparent;
-}
-
-.category-description table th,
-.category-description table td {
-    padding: 0.8rem 1rem;
-    text-align: right;
-    vertical-align: middle;
-    border-bottom: 1px solid #eef2f6;
-    border-left: 1px solid #eef2f6;
-    word-break: normal;
-    overflow-wrap: break-word;
-    background: transparent;
-}
-
-.category-description table th:last-child,
-.category-description table td:last-child { border-left: 0; }
-
-.category-description table tr:last-child td,
-.category-description table tr:last-child th { border-bottom: 0; }
-
-.category-description table thead th,
-.category-description table th[scope="col"] {
-    background: linear-gradient(135deg, #22adbd, #1a8f9d);
-    color: #fff;
-    font-weight: 700;
-    white-space: nowrap;
-    border-color: rgba(255, 255, 255, .18);
-}
-
-.category-description table tbody th,
-.category-description table th[scope="row"] {
-    background: #f0fbfc;
-    color: #0e6f7b;
-    font-weight: 700;
-}
-
-.category-description table tbody tr:nth-child(even) td { background: #f8fafc; }
-.category-description table tbody tr { transition: background-color .2s; }
-.category-description table tbody tr:hover td { background: #e8f8fa; }
-
-.category-description table caption {
-    caption-side: top;
-    padding: 0.75rem 1rem;
-    font-weight: 700;
-    color: #111827;
-    text-align: right;
-}
-
-.category-description table p,
-.category-description table ul,
-.category-description table ol { margin: 0; padding-right: 0; }
-
-.category-description table img {
-    width: 56px !important;
-    max-width: 56px !important;
-    aspect-ratio: 1 / 1;
-    margin: 0 auto !important;
-    border-radius: 8px;
-    box-shadow: none;
-}
-
-.category-description .cd-scroll-hint {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    gap: 0.35rem;
-    margin: -0.75rem 0 1.25rem;
-    font-size: 0.75rem;
-    color: #6b7280;
-}
-
-/* موبایل: جدول‌های دارای سرتیتر به کارت تبدیل می‌شوند */
-@media (max-width: 640px) {
-    .category-description .cd-table-wrap.cd-cards {
-        overflow: visible;
-        border: 0;
-        box-shadow: none;
-        background: transparent;
-    }
-
-    .category-description .cd-cards table {
-        min-width: 0;
-        display: block !important;
-    }
-
-    .category-description .cd-cards thead {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip: rect(0 0 0 0);
-    }
-
-    .category-description .cd-cards tbody,
-    .category-description .cd-cards tr {
-        display: block;
-        width: 100%;
-    }
-
-    .category-description .cd-cards tr {
-        margin-bottom: 0.9rem;
-        border: 1px solid #e5e7eb;
-        border-radius: 14px;
-        background: #fff;
-        box-shadow: 0 3px 12px rgba(15, 23, 42, .06);
-        overflow: hidden;
-    }
-
-    .category-description .cd-cards td,
-    .category-description .cd-cards th {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 1rem;
-        width: 100%;
-        padding: 0.65rem 0.9rem;
-        border-left: 0;
-        border-bottom: 1px solid #eef2f6;
-        background: transparent !important;
-        text-align: left;
-    }
-
-    .category-description .cd-cards td:last-child,
-    .category-description .cd-cards th:last-child { border-bottom: 0; }
-
-    .category-description .cd-cards td::before,
-    .category-description .cd-cards th::before {
-        content: attr(data-label);
-        flex: 0 0 38%;
-        max-width: 38%;
-        font-weight: 700;
-        color: #0e6f7b;
-        text-align: right;
-    }
-
-    .category-description .cd-cards td:first-child,
-    .category-description .cd-cards th:first-child {
-        background: #f0fbfc !important;
-        font-weight: 700;
-    }
-
-    .category-description .cd-cards tbody tr:hover td { background: transparent !important; }
-
-    .category-description .cd-table-wrap:not(.cd-cards) + .cd-scroll-hint { display: flex; }
-}
-
-/* ================== حالت تاریک ================== */
-.dark .category-description { color: #d1d5db; }
-
-.dark .category-description h1,
-.dark .category-description h2,
-.dark .category-description h3,
-.dark .category-description h4,
-.dark .category-description strong,
-.dark .category-description b { color: #f3f4f6; }
-
-.dark .category-description a { color: #5fd3e0; }
-.dark .category-description blockquote { background: #12313a; color: #d1d5db; }
-.dark .category-description hr { background: #374151; }
-
-.dark .category-description img {
-    background: #1f2937;
-    border-color: #374151;
-    box-shadow: none;
-}
-
-.dark .category-description .cd-table-wrap {
-    background: #111827;
-    border-color: #374151;
-    box-shadow: none;
-}
-
-.dark .category-description table th,
-.dark .category-description table td { border-color: #1f2937; }
-
-.dark .category-description table tbody th,
-.dark .category-description table th[scope="row"] { background: #12313a; color: #7fdbe6; }
-
-.dark .category-description table tbody tr:nth-child(even) td { background: #172033; }
-.dark .category-description table tbody tr:hover td { background: #1c3340; }
-.dark .category-description table caption { color: #f3f4f6; }
-.dark .category-description .cd-scroll-hint { color: #9ca3af; }
-
-@media (max-width: 640px) {
-    .dark .category-description .cd-cards tr { background: #111827; border-color: #374151; }
-    .dark .category-description .cd-cards td,
-    .dark .category-description .cd-cards th { border-color: #1f2937; }
-    .dark .category-description .cd-cards td::before,
-    .dark .category-description .cd-cards th::before { color: #7fdbe6; }
-    .dark .category-description .cd-cards td:first-child,
-    .dark .category-description .cd-cards th:first-child { background: #12313a !important; }
-}
-
-/* ویدیو و iframe */
-.category-description iframe,
-.category-description video {
-    display: block;
-    width: 100%;
-    max-width: 100%;
-    margin: 1.25rem auto;
-    border: 0;
-    border-radius: 14px;
-    aspect-ratio: 16 / 9;
-    height: auto;
-}
-
-@media print {
-    .category-description .cd-table-wrap { overflow: visible; box-shadow: none; }
-}
-
-</style>
-
-{% endif %}
-
-        </div>
-
-    </div>
-
 </main>
 
 <style>
-/* ================== عنوان اصلی صفحه (H1) ================== */
-.page-title {
-    margin: 0;
-    padding-right: 0.75rem;
-    border-right: 4px solid #22adbd;
-    font-size: 1.25rem;
-    font-weight: 700;
-    line-height: 1.8;
-    color: #111827;
-    overflow-wrap: anywhere;
+.page-title{margin:0;padding-right:.75rem;border-right:4px solid #22adbd;font-size:1.25rem;font-weight:700;line-height:1.8;color:#111827;overflow-wrap:anywhere}
+@media(min-width:768px){.page-title{font-size:1.5rem}}
+@media(min-width:1024px){.page-title{font-size:1.75rem}}
+.dark .page-title{color:#f3f4f6}
+#mobile-sort-modal,#mobile-filter-modal{display:none}
+#mobile-sort-modal.show,#mobile-filter-modal.show{display:block;transform:translateY(0)}
+.wrapper{width:100%;padding:0 10px}
+.slider-bar{height:4px;background:#ddd;border-radius:5px;position:relative}
+.slider-bar .progress{height:100%;left:0;right:0;position:absolute;border-radius:5px;background:#3b82f6}
+.range-input{position:relative}
+.range-input input{position:absolute;width:100%;height:4px;top:-4px;background:none;pointer-events:none;-webkit-appearance:none}
+input[type=range]::-webkit-slider-thumb{height:20px;width:20px;border-radius:50%;background:#3b82f6;pointer-events:auto;-webkit-appearance:none;cursor:pointer;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,.1)}
+input[type=range]::-moz-range-thumb{height:20px;width:20px;border-radius:50%;background:#3b82f6;pointer-events:auto;cursor:pointer;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,.1)}
+.filter-item-active{background-color:#eff6ff;border-color:#3b82f6;color:#1d4ed8}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:1024px){.product-card{min-height:320px}.product-card_img{height:180px;object-fit:contain}}
+@media(max-width:640px){#mobile-sort-btn,#mobile-filter-btn{padding:8px 12px;font-size:13px}}
+#description-content.show{display:block;animation:fadeIn .3s ease-in-out}
+.prose{max-width:none}.prose p{margin-bottom:1rem}.prose ul{list-style-type:disc;padding-right:1.5rem;margin-bottom:1rem}.prose ol{list-style-type:decimal;padding-right:1.5rem;margin-bottom:1rem}
+.category-description,.category-description p,.category-description li,.category-description div{text-align:justify;text-justify:inter-word;line-height:2;word-break:break-word;overflow-wrap:anywhere}
+.category-description{font-size:.9375rem;color:#4b5563;padding-top:1rem}
+.category-description p{margin:0 0 1rem}
+.category-description h1,.category-description h2,.category-description h3,.category-description h4{text-align:right;font-weight:700;line-height:1.7;color:#111827;margin:1.75rem 0 .75rem;padding-right:.75rem;border-right:4px solid #22adbd;scroll-margin-top:80px}
+.category-description h2{font-size:1.25rem}.category-description h3{font-size:1.125rem}.category-description h4{font-size:1rem;border-right-width:3px}
+.category-description strong,.category-description b{color:#111827;font-weight:700}
+.category-description a{color:#0e8fa0;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px;transition:color .2s}.category-description a:hover{color:#22adbd}
+.category-description ul,.category-description ol{margin:0 0 1rem;padding-right:1.5rem}.category-description ul{list-style:disc}.category-description ol{list-style:decimal}.category-description li{margin-bottom:.35rem}.category-description li::marker{color:#22adbd}
+.category-description blockquote{margin:1.25rem 0;padding:.75rem 1rem;border-right:4px solid #22adbd;background:#f0fbfc;border-radius:10px;color:#374151}
+.category-description hr{border:0;height:1px;background:#e5e7eb;margin:1.75rem 0}
+.category-description img{display:block!important;width:100%!important;max-width:720px!important;height:auto!important;aspect-ratio:16/10;object-fit:contain;margin:1.25rem auto!important;padding:0;background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 4px 14px rgba(15,23,42,.06)}
+.category-description a img,.category-description p img,.category-description figure img{margin-left:auto!important;margin-right:auto!important}.category-description figure{margin:1.25rem 0}.category-description figcaption{text-align:center;font-size:.8125rem;color:#6b7280;margin-top:-.5rem}
+@media(max-width:767px){.category-description img{max-width:100%!important;margin:1rem auto!important;border-radius:12px}}
+.category-description .cd-table-wrap{position:relative;margin:1.5rem 0;border:1px solid #e5e7eb;border-radius:14px;background:#fff;box-shadow:0 4px 16px rgba(15,23,42,.06);overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#22adbd #f1f5f9}
+.category-description .cd-table-wrap::-webkit-scrollbar{height:6px}.category-description .cd-table-wrap::-webkit-scrollbar-track{background:#f1f5f9}.category-description .cd-table-wrap::-webkit-scrollbar-thumb{background:#22adbd;border-radius:6px}
+.category-description table{display:table!important;width:100%!important;max-width:none!important;min-width:520px;margin:0!important;border-collapse:separate;border-spacing:0;font-size:.875rem;line-height:1.8;background:transparent}
+.category-description table th,.category-description table td{padding:.8rem 1rem;text-align:right;vertical-align:middle;border-bottom:1px solid #eef2f6;border-left:1px solid #eef2f6;word-break:normal;overflow-wrap:break-word;background:transparent}
+.category-description table th:last-child,.category-description table td:last-child{border-left:0}.category-description table tr:last-child td,.category-description table tr:last-child th{border-bottom:0}
+.category-description table thead th,.category-description table th[scope=col]{background:linear-gradient(135deg,#22adbd,#1a8f9d);color:#fff;font-weight:700;white-space:nowrap;border-color:rgba(255,255,255,.18)}
+.category-description table tbody th,.category-description table th[scope=row]{background:#f0fbfc;color:#0e6f7b;font-weight:700}.category-description table tbody tr:nth-child(even) td{background:#f8fafc}.category-description table tbody tr:hover td{background:#e8f8fa}
+.category-description table caption{caption-side:top;padding:.75rem 1rem;font-weight:700;color:#111827;text-align:right}.category-description table p,.category-description table ul,.category-description table ol{margin:0;padding-right:0}
+.category-description table img{width:56px!important;max-width:56px!important;aspect-ratio:1/1;margin:0 auto!important;border-radius:8px;box-shadow:none}
+.category-description .cd-scroll-hint{display:none;align-items:center;justify-content:center;gap:.35rem;margin:-.75rem 0 1.25rem;font-size:.75rem;color:#6b7280}
+@media(max-width:640px){
+.category-description .cd-table-wrap.cd-cards{overflow:visible;border:0;box-shadow:none;background:transparent}
+.category-description .cd-cards table{min-width:0;display:block!important}.category-description .cd-cards thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.category-description .cd-cards tbody,.category-description .cd-cards tr{display:block;width:100%}
+.category-description .cd-cards tr{margin-bottom:.9rem;border:1px solid #e5e7eb;border-radius:14px;background:#fff;box-shadow:0 3px 12px rgba(15,23,42,.06);overflow:hidden}
+.category-description .cd-cards td,.category-description .cd-cards th{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;width:100%;padding:.65rem .9rem;border-left:0;border-bottom:1px solid #eef2f6;background:transparent!important;text-align:left}
+.category-description .cd-cards td:last-child,.category-description .cd-cards th:last-child{border-bottom:0}
+.category-description .cd-cards td::before,.category-description .cd-cards th::before{content:attr(data-label);flex:0 0 38%;max-width:38%;font-weight:700;color:#0e6f7b;text-align:right}
+.category-description .cd-cards td:first-child,.category-description .cd-cards th:first-child{background:#f0fbfc!important;font-weight:700}.category-description .cd-cards tbody tr:hover td{background:transparent!important}
+.category-description .cd-table-wrap:not(.cd-cards)+.cd-scroll-hint{display:flex}
 }
-
-@media (min-width: 768px) {
-    .page-title { font-size: 1.5rem; }
-}
-
-@media (min-width: 1024px) {
-    .page-title { font-size: 1.75rem; }
-}
-
-.dark .page-title { color: #f3f4f6; }
-
-#mobile-sort-modal,
-
-#mobile-filter-modal {
-
-    display: none;
-
-}
-
-#mobile-sort-modal.show,
-
-#mobile-filter-modal.show {
-
-    display: block;
-
-    transform: translateY(0);
-
-}
-.wrapper {
-
-    width: 100%;
-
-    padding: 0 10px;
-
-}
-
-.slider-bar {
-
-    height: 4px;
-
-    background: #ddd;
-
-    border-radius: 5px;
-
-    position: relative;
-
-}
-
-.slider-bar .progress {
-
-    height: 100%;
-
-    left: 0;
-
-    right: 0;
-
-    position: absolute;
-
-    border-radius: 5px;
-
-    background: #3b82f6;
-
-}
-
-.range-input {
-
-    position: relative;
-
-}
-
-.range-input input {
-
-    position: absolute;
-
-    width: 100%;
-
-    height: 4px;
-
-    top: -4px;
-
-    background: none;
-
-    pointer-events: none;
-
-    -webkit-appearance: none;
-
-}
-
-input[type="range"]::-webkit-slider-thumb {
-
-    height: 20px;
-
-    width: 20px;
-
-    border-radius: 50%;
-
-    background: #3b82f6;
-
-    pointer-events: auto;
-
-    -webkit-appearance: none;
-
-    cursor: pointer;
-
-    border: 2px solid white;
-
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-
-}
-
-input[type="range"]::-moz-range-thumb {
-
-    height: 20px;
-
-    width: 20px;
-
-    border-radius: 50%;
-
-    background: #3b82f6;
-
-    pointer-events: auto;
-
-    cursor: pointer;
-
-    border: 2px solid white;
-
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-
-}
-.filter-item-active {
-
-    background-color: #eff6ff;
-
-    border-color: #3b82f6;
-
-    color: #1d4ed8;
-
-}
-@keyframes slideInUp {
-
-    from {
-
-        transform: translateY(100%);
-
-    }
-
-    to {
-
-        transform: translateY(0);
-
-    }
-
-}
-
-@keyframes fadeIn {
-
-    from {
-
-        opacity: 0;
-
-        transform: translateY(-10px);
-
-    }
-
-    to {
-
-        opacity: 1;
-
-        transform: translateY(0);
-
-    }
-
-}
-@media (max-width: 1024px) {
-
-    .product-card {
-
-        min-height: 320px;
-
-    }
-
-    .product-card_img {
-
-        height: 180px;
-
-        object-fit: contain;
-
-    }
-
-}
-@media (max-width: 640px) {
-
-    #mobile-sort-btn,
-
-    #mobile-filter-btn {
-
-        padding: 8px 12px;
-
-        font-size: 13px;
-
-    }
-
-}
-#description-content.show {
-
-    display: block;
-
-    animation: fadeIn 0.3s ease-in-out;
-
-}
-
-.prose {
-
-    max-width: none;
-
-}
-
-.prose p {
-
-    margin-bottom: 1rem;
-
-}
-
-.prose ul {
-
-    list-style-type: disc;
-
-    padding-right: 1.5rem;
-
-    margin-bottom: 1rem;
-
-}
-
-.prose ol {
-
-    list-style-type: decimal;
-
-    padding-right: 1.5rem;
-
-    margin-bottom: 1rem;
-
-}
-
+.dark .category-description{color:#d1d5db}.dark .category-description h1,.dark .category-description h2,.dark .category-description h3,.dark .category-description h4,.dark .category-description strong,.dark .category-description b{color:#f3f4f6}
+.dark .category-description a{color:#5fd3e0}.dark .category-description blockquote{background:#12313a;color:#d1d5db}.dark .category-description hr{background:#374151}
+.dark .category-description img{background:#1f2937;border-color:#374151;box-shadow:none}.dark .category-description .cd-table-wrap{background:#111827;border-color:#374151;box-shadow:none}
+.dark .category-description table th,.dark .category-description table td{border-color:#1f2937}.dark .category-description table tbody th,.dark .category-description table th[scope=row]{background:#12313a;color:#7fdbe6}
+.dark .category-description table tbody tr:nth-child(even) td{background:#172033}.dark .category-description table tbody tr:hover td{background:#1c3340}.dark .category-description table caption{color:#f3f4f6}.dark .category-description .cd-scroll-hint{color:#9ca3af}
+@media(max-width:640px){.dark .category-description .cd-cards tr{background:#111827;border-color:#374151}.dark .category-description .cd-cards td,.dark .category-description .cd-cards th{border-color:#1f2937}.dark .category-description .cd-cards td::before,.dark .category-description .cd-cards th::before{color:#7fdbe6}.dark .category-description .cd-cards td:first-child,.dark .category-description .cd-cards th:first-child{background:#12313a!important}}
+.category-description iframe,.category-description video{display:block;width:100%;max-width:100%;margin:1.25rem auto;border:0;border-radius:14px;aspect-ratio:16/9;height:auto}
 </style>
 
 <script>
 let currentMinPrice = {{ price_min|default:'0' }};
-
 let currentMaxPrice = {{ price_max|default:'35000' }};
-
 const FILTER_HISTORY_KEY = 'shopFilterHistory';
 
-let isDescriptionExpanded = false;
 function toggleDescription() {
-
     const content = document.getElementById('description-content');
-
-    const toggleIcon = document.getElementById('toggle-icon');
-
-    const toggleText = document.getElementById('toggle-text');
-
+    const icon = document.getElementById('toggle-icon');
+    const label = document.getElementById('toggle-text');
+    const button = document.getElementById('toggle-description-btn');
     if (!content) return;
 
-    if (content.classList.contains('hidden')) {
-        content.classList.remove('hidden');
-
-        content.classList.add('show');
-
-        if (toggleIcon) {
-
-            toggleIcon.style.transform = 'rotate(180deg)';
-
-        }
-
-        if (toggleText) {
-
-            toggleText.textContent = 'بستن توضیحات';
-
-        }
-
-        isDescriptionExpanded = true;
-
-    } else {
+    const isVisible = !content.classList.contains('hidden');
+    if (isVisible) {
         content.classList.remove('show');
-
-        setTimeout(() => {
-
-            content.classList.add('hidden');
-
-        }, 300);
-
-        if (toggleIcon) {
-
-            toggleIcon.style.transform = 'rotate(0deg)';
-
-        }
-
-        if (toggleText) {
-
-            toggleText.textContent = 'نمایش توضیحات';
-
-        }
-
-        isDescriptionExpanded = false;
-
+        content.classList.add('hidden');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+        if (label) label.textContent = 'نمایش توضیحات';
+        if (button) button.setAttribute('aria-expanded', 'false');
+    } else {
+        content.classList.remove('hidden');
+        content.classList.add('show');
+        if (icon) icon.style.transform = 'rotate(180deg)';
+        if (label) label.textContent = 'بستن توضیحات';
+        if (button) button.setAttribute('aria-expanded', 'true');
     }
-
 }
 
 function saveFilterToHistory(queryString) {
-
     try {
-
-        const url = new URL(window.location.origin + window.location.pathname + '?' + queryString);
-
-        const params = new URLSearchParams(url.search);
-
+        const params = new URLSearchParams(queryString);
         params.delete('page');
-
         const cleanQuery = params.toString();
-
         if (!cleanQuery) return;
-
         let history = [];
-
-        try {
-
-            history = JSON.parse(localStorage.getItem(FILTER_HISTORY_KEY) || '[]');
-
-        } catch (e) {
-
-            history = [];
-
-        }
-
-        history = history.filter(item => item.query !== cleanQuery);
-
-        history.unshift({
-
-            query: cleanQuery,
-
-            label: new Date().toLocaleString('fa-IR')
-
-        });
-
-        history = history.slice(0, 5);
-
-        localStorage.setItem(FILTER_HISTORY_KEY, JSON.stringify(history));
-
-    } catch (e) {
-
-        console.error(e);
-
-    }
-
+        try { history = JSON.parse(localStorage.getItem(FILTER_HISTORY_KEY) || '[]'); } catch (_) { history = []; }
+        history = history.filter(item => item && item.query !== cleanQuery);
+        history.unshift({ query: cleanQuery, label: new Date().toLocaleString('fa-IR') });
+        localStorage.setItem(FILTER_HISTORY_KEY, JSON.stringify(history.slice(0, 5)));
+    } catch (error) { /* تاریخچه قابلیت جانبی است و نباید مانع فیلتر شود. */ }
 }
 
 function populateHistorySelect() {
-
     const select = document.getElementById('filter-history-select');
-
     if (!select) return;
-
     let history = [];
-
-    try {
-
-        history = JSON.parse(localStorage.getItem(FILTER_HISTORY_KEY) || '[]');
-
-    } catch (e) {
-
-        history = [];
-
-    }
-
+    try { history = JSON.parse(localStorage.getItem(FILTER_HISTORY_KEY) || '[]'); } catch (_) { history = []; }
     select.innerHTML = '';
-
-    const defaultOption = document.createElement('option');
-
-    defaultOption.value = '';
-
-    defaultOption.textContent = 'انتخاب...';
-
-    select.appendChild(defaultOption);
-
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = 'انتخاب...';
+    select.appendChild(option);
     history.forEach((item, index) => {
-
-        const option = document.createElement('option');
-
-        option.value = index;
-
-        option.textContent = item.label;
-
-        select.appendChild(option);
-
+        if (!item || typeof item.query !== 'string') return;
+        const historyOption = document.createElement('option');
+        historyOption.value = String(index);
+        historyOption.textContent = item.label || 'فیلتر ذخیره‌شده';
+        select.appendChild(historyOption);
     });
-
 }
 
 function applySelectedHistory() {
-
     const select = document.getElementById('filter-history-select');
-
-    if (!select) return;
-
-    const index = select.value;
-
-    if (index === '') return;
-
+    if (!select || select.value === '') return;
     let history = [];
-
-    try {
-
-        history = JSON.parse(localStorage.getItem(FILTER_HISTORY_KEY) || '[]');
-
-    } catch (e) {
-
-        history = [];
-
-    }
-
-    const item = history[index];
-
-    if (!item) return;
-
+    try { history = JSON.parse(localStorage.getItem(FILTER_HISTORY_KEY) || '[]'); } catch (_) { history = []; }
+    const item = history[Number(select.value)];
+    if (!item || typeof item.query !== 'string') return;
     const params = new URLSearchParams(item.query);
-
-    params.set('page', 1);
-
+    params.set('page', '1');
     window.location.search = params.toString();
-
 }
+
 function openSortModal() {
-
     const modal = document.getElementById('mobile-sort-modal');
-
+    if (!modal) return;
     modal.style.display = 'block';
-
-    setTimeout(() => {
-
-        modal.classList.add('show');
-
-    }, 10);
-
+    requestAnimationFrame(() => modal.classList.add('show'));
     document.body.style.overflow = 'hidden';
-
 }
-
 function closeSortModal() {
-
     const modal = document.getElementById('mobile-sort-modal');
-
+    if (!modal) return;
     modal.classList.remove('show');
-
-    setTimeout(() => {
-
-        modal.style.display = 'none';
-
-    }, 300);
-
-    document.body.style.overflow = 'auto';
-
+    window.setTimeout(() => { modal.style.display = 'none'; }, 300);
+    document.body.style.overflow = '';
 }
-
 function openFilterModal() {
-
     const modal = document.getElementById('mobile-filter-modal');
-
+    if (!modal) return;
     modal.style.display = 'block';
-
-    setTimeout(() => {
-
-        modal.classList.add('show');
-
-    }, 10);
-
+    requestAnimationFrame(() => modal.classList.add('show'));
     document.body.style.overflow = 'hidden';
-
     initPriceSlider();
-
 }
-
 function closeFilterModal() {
-
     const modal = document.getElementById('mobile-filter-modal');
-
+    if (!modal) return;
     modal.classList.remove('show');
-
-    setTimeout(() => {
-
-        modal.style.display = 'none';
-
-    }, 300);
-
-    document.body.style.overflow = 'auto';
-
+    window.setTimeout(() => { modal.style.display = 'none'; }, 300);
+    document.body.style.overflow = '';
 }
+
 function applySort(sortValue) {
-
-    const urlParams = new URLSearchParams(window.location.search);
-
-    urlParams.set('sort', sortValue);
-
-    urlParams.set('page', 1);
-
-    const newQuery = urlParams.toString();
-
-    saveFilterToHistory(newQuery);
-
-    window.location.search = newQuery;
-
+    const params = new URLSearchParams(window.location.search);
+    params.set('sort', sortValue);
+    params.set('page', '1');
+    const query = params.toString();
+    saveFilterToHistory(query);
+    window.location.search = query;
 }
+
 function initPriceSlider() {
-
-    const containers = document.querySelectorAll('[data-price-filter]');
-
-    containers.forEach(container => {
-
+    document.querySelectorAll('[data-price-filter]').forEach(container => {
         const min = container.querySelector('.price-range-min');
-
         const max = container.querySelector('.price-range-max');
-
         const progress = container.querySelector('.price-range-progress');
-
         const minDisplay = container.querySelector('.min-price-display');
-
         const maxDisplay = container.querySelector('.max-price-display');
-
         const numericMin = container.querySelector('.price-number-min');
-
         const numericMax = container.querySelector('.price-number-max');
-
-        if (!min || !max || !progress) return;
+        if (!min || !max || !progress || container.dataset.sliderInitialized === 'true') return;
+        container.dataset.sliderInitialized = 'true';
 
         function updateSlider() {
-
-            let minVal = parseInt(min.value);
-
-            let maxVal = parseInt(max.value);
-            if (maxVal - minVal < 10000) {
-
-                if (min === document.activeElement) {
-
-                    min.value = maxVal - 10000;
-
-                } else {
-
-                    max.value = minVal + 10000;
-
-                }
-
-                minVal = parseInt(min.value);
-
-                maxVal = parseInt(max.value);
-
+            let minValue = parseInt(min.value, 10) || 0;
+            let maxValue = parseInt(max.value, 10) || 0;
+            if (maxValue - minValue < 10000) {
+                if (min === document.activeElement) min.value = String(Math.max(parseInt(min.min, 10) || 0, maxValue - 10000));
+                else max.value = String(Math.min(parseInt(max.max, 10) || 100000, minValue + 10000));
+                minValue = parseInt(min.value, 10) || 0;
+                maxValue = parseInt(max.value, 10) || 0;
             }
-
-            const sliderMax = parseInt(max.getAttribute('max')) || 100000;
-
-            const sliderMin = parseInt(min.getAttribute('min')) || 0;
-
+            const sliderMax = parseInt(max.max, 10) || 100000;
+            const sliderMin = parseInt(min.min, 10) || 0;
             const range = sliderMax - sliderMin || 1;
-
-            const minPercent = ((minVal - sliderMin) / range) * 100;
-
-            const maxPercent = ((maxVal - sliderMin) / range) * 100;
-
-            progress.style.left = minPercent + "%";
-
-            progress.style.right = (100 - maxPercent) + "%";
-
-            if (minDisplay) minDisplay.textContent = minVal.toLocaleString() + ' تومان';
-
-            if (maxDisplay) maxDisplay.textContent = maxVal.toLocaleString() + ' تومان';
-
-            if (numericMin) numericMin.value = minVal;
-
-            if (numericMax) numericMax.value = maxVal;
-
-            currentMinPrice = minVal;
-
-            currentMaxPrice = maxVal;
-
+            const minPercent = ((minValue - sliderMin) / range) * 100;
+            const maxPercent = ((maxValue - sliderMin) / range) * 100;
+            progress.style.left = minPercent + '%';
+            progress.style.right = (100 - maxPercent) + '%';
+            if (minDisplay) minDisplay.textContent = minValue.toLocaleString('fa-IR') + ' تومان';
+            if (maxDisplay) maxDisplay.textContent = maxValue.toLocaleString('fa-IR') + ' تومان';
+            if (numericMin) numericMin.value = String(minValue);
+            if (numericMax) numericMax.value = String(maxValue);
+            currentMinPrice = minValue;
+            currentMaxPrice = maxValue;
         }
 
         min.addEventListener('input', updateSlider);
-
         max.addEventListener('input', updateSlider);
-
+        if (numericMin) numericMin.addEventListener('input', function () {
+            min.value = String(Math.min(parseInt(this.value, 10) || 0, currentMaxPrice - 10000));
+            updateSlider();
+        });
+        if (numericMax) numericMax.addEventListener('input', function () {
+            max.value = String(Math.max(parseInt(this.value, 10) || 100000, currentMinPrice + 10000));
+            updateSlider();
+        });
         updateSlider();
-
-        if (numericMin) {
-
-            numericMin.addEventListener('input', function() {
-
-                const value = Math.min(parseInt(this.value) || 0, currentMaxPrice - 10000);
-
-                min.value = value;
-
-                updateSlider();
-
-            });
-
-        }
-
-        if (numericMax) {
-
-            numericMax.addEventListener('input', function() {
-
-                const value = Math.max(parseInt(this.value) || 100000, currentMinPrice + 10000);
-
-                max.value = value;
-
-                updateSlider();
-
-            });
-
-        }
-
     });
+}
 
+function collectFeatureFilters(params) {
+    params.delete('feature');
+    const selectedFeatures = new Set(Array.from(document.querySelectorAll('.feature-checkbox:checked')).map(checkbox => checkbox.value));
+    selectedFeatures.forEach(value => params.append('feature', value));
+}
+function setBooleanParam(params, key, checked) {
+    if (checked) params.set(key, 'true');
+    else params.delete(key);
 }
 function applyDesktopFilters() {
-
-    const urlParams = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(window.location.search);
     const minRange = document.getElementById('minRange');
-
     const maxRange = document.getElementById('maxRange');
-
     if (minRange && maxRange) {
-
-        const minVal = minRange.value;
-
-        const maxVal = maxRange.value;
-
-        if (minVal && maxVal) {
-
-            urlParams.set('price_min', minVal);
-
-            urlParams.set('price_max', maxVal);
-
-        }
-
+        params.set('price_min', minRange.value);
+        params.set('price_max', maxRange.value);
     }
-    urlParams.delete('feature');
-
-    document.querySelectorAll('.feature-checkbox:checked').forEach(cb => {
-
-        urlParams.append('feature', cb.value);
-
-    });
-    const desktopAvailable = document.getElementById('hs-valid-toggle-switch')?.checked;
-
-    const desktopFastDelivery = document.getElementById('hs-valid-toggle-switch2')?.checked;
-
-    const desktopSellerDelivery = document.getElementById('hs-valid-toggle-switch3')?.checked;
-
-    const desktopLocalPickup = document.getElementById('hs-valid-toggle-switch4')?.checked;
-
-    if (desktopAvailable) {
-
-        urlParams.set('available', 'true');
-
-    } else {
-
-        urlParams.delete('available');
-
-    }
-
-    if (desktopFastDelivery) {
-
-        urlParams.set('fast_delivery', 'true');
-
-    } else {
-
-        urlParams.delete('fast_delivery');
-
-    }
-
-    if (desktopSellerDelivery) {
-
-        urlParams.set('seller_delivery', 'true');
-
-    } else {
-
-        urlParams.delete('seller_delivery');
-
-    }
-
-    if (desktopLocalPickup) {
-
-        urlParams.set('local_pickup', 'true');
-
-    } else {
-
-        urlParams.delete('local_pickup');
-
-    }
-
-    urlParams.set('page', 1);
-
-    const newQuery = urlParams.toString();
-
-    saveFilterToHistory(newQuery);
-
-    window.location.search = newQuery;
-
+    collectFeatureFilters(params);
+    setBooleanParam(params, 'available', !!document.getElementById('hs-valid-toggle-switch')?.checked);
+    setBooleanParam(params, 'fast_delivery', !!document.getElementById('hs-valid-toggle-switch2')?.checked);
+    setBooleanParam(params, 'seller_delivery', !!document.getElementById('hs-valid-toggle-switch3')?.checked);
+    setBooleanParam(params, 'local_pickup', !!document.getElementById('hs-valid-toggle-switch4')?.checked);
+    params.set('page', '1');
+    const query = params.toString();
+    saveFilterToHistory(query);
+    window.location.search = query;
 }
 function applyMobileFilters() {
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const minPrice = document.getElementById('mobile-min-price').value;
-
-    const maxPrice = document.getElementById('mobile-max-price').value;
-
-    if (minPrice && maxPrice && (minPrice > 0 || maxPrice < 100000)) {
-
-        urlParams.set('price_min', minPrice);
-
-        urlParams.set('price_max', maxPrice);
-
+    const params = new URLSearchParams(window.location.search);
+    const minInput = document.getElementById('mobile-min-price');
+    const maxInput = document.getElementById('mobile-max-price');
+    const minPrice = minInput ? minInput.value : '';
+    const maxPrice = maxInput ? maxInput.value : '';
+    if (minPrice !== '' && maxPrice !== '' && (Number(minPrice) > 0 || Number(maxPrice) < 100000)) {
+        params.set('price_min', minPrice);
+        params.set('price_max', maxPrice);
     } else {
-
-        urlParams.delete('price_min');
-
-        urlParams.delete('price_max');
-
+        params.delete('price_min');
+        params.delete('price_max');
     }
-    const available = document.getElementById('mobile-available').checked;
-
-    if (available) {
-
-        urlParams.set('available', 'true');
-
-    } else {
-
-        urlParams.delete('available');
-
-    }
-    const fastDelivery = document.getElementById('mobile-fast-delivery').checked;
-
-    if (fastDelivery) {
-
-        urlParams.set('fast_delivery', 'true');
-
-    } else {
-
-        urlParams.delete('fast_delivery');
-
-    }
-    const sellerDelivery = document.getElementById('mobile-seller-delivery').checked;
-
-    if (sellerDelivery) {
-
-        urlParams.set('seller_delivery', 'true');
-
-    } else {
-
-        urlParams.delete('seller_delivery');
-
-    }
-    const localPickup = document.getElementById('mobile-local-pickup').checked;
-
-    if (localPickup) {
-
-        urlParams.set('local_pickup', 'true');
-
-    } else {
-
-        urlParams.delete('local_pickup');
-
-    }
-
-    urlParams.set('page', 1);
-
-    const newQuery = urlParams.toString();
-
-    saveFilterToHistory(newQuery);
-
-    window.location.search = newQuery;
-
+    collectFeatureFilters(params);
+    setBooleanParam(params, 'available', !!document.getElementById('mobile-available')?.checked);
+    setBooleanParam(params, 'fast_delivery', !!document.getElementById('mobile-fast-delivery')?.checked);
+    setBooleanParam(params, 'seller_delivery', !!document.getElementById('mobile-seller-delivery')?.checked);
+    setBooleanParam(params, 'local_pickup', !!document.getElementById('mobile-local-pickup')?.checked);
+    params.set('page', '1');
+    const query = params.toString();
+    saveFilterToHistory(query);
+    window.location.search = query;
 }
-function resetAllFilters() {
-
-    window.location.search = '?page=1';
-
-}
+function resetAllFilters() { window.location.search = '?page=1'; }
 function resetPriceFilter() {
-
-    const minRange = document.querySelector('.min-range');
-
-    const maxRange = document.querySelector('.max-range');
-
-    const mobileMinInput = document.getElementById('mobile-min-price');
-
-    const mobileMaxInput = document.getElementById('mobile-max-price');
-
-    if (minRange) minRange.value = 0;
-
-    if (maxRange) maxRange.value = 100000;
-
-    if (mobileMinInput) mobileMinInput.value = 0;
-
-    if (mobileMaxInput) mobileMaxInput.value = 100000;
-
+    document.querySelectorAll('.min-range,.price-range-min').forEach(input => { input.value = input.min || 0; });
+    document.querySelectorAll('.max-range,.price-range-max').forEach(input => { input.value = input.max || 100000; });
+    document.querySelectorAll('#mobile-min-price').forEach(input => { input.value = 0; });
+    document.querySelectorAll('#mobile-max-price').forEach(input => { input.value = 100000; });
+    document.querySelectorAll('[data-price-filter]').forEach(container => { delete container.dataset.sliderInitialized; });
     initPriceSlider();
-
 }
 function toggleAccordion(id) {
-
-    const content = document.getElementById(`content-${id}`);
-
-    const icon = document.getElementById(`icon-${id}`);
-
+    const content = document.getElementById('content-' + id);
+    const icon = document.getElementById('icon-' + id);
     if (!content) return;
-
-    if (content.classList.contains('max-h-0')) {
-
-        content.classList.remove('max-h-0');
-
-        content.classList.add('max-h-96');
-
-        if (icon) {
-
-            const svg = icon.querySelector('svg');
-
-            if (svg) svg.style.transform = 'rotate(-90deg)';
-
-        }
-
-    } else {
-
-        content.classList.remove('max-h-96');
-
-        content.classList.add('max-h-0');
-
-        if (icon) {
-
-            const svg = icon.querySelector('svg');
-
-            if (svg) svg.style.transform = 'rotate(0deg)';
-
-        }
-
-    }
-
+    const isClosed = content.classList.contains('max-h-0');
+    content.classList.toggle('max-h-0', !isClosed);
+    content.classList.toggle('max-h-96', isClosed);
+    const svg = icon?.querySelector('svg');
+    if (svg) svg.style.transform = isClosed ? 'rotate(-90deg)' : 'rotate(0deg)';
 }
 function toggleFeatureAccordion(button) {
-
-    const content = button.nextElementSibling;
-
+    const content = button?.nextElementSibling;
     if (!content) return;
-
-    const svg = button.querySelector('svg');
-
     const isOpen = !content.classList.contains('max-h-0');
-
-    if (isOpen) {
-
-        content.classList.remove('max-h-96');
-
-        content.classList.add('max-h-0');
-
-        if (svg) svg.style.transform = 'rotate(0deg)';
-
-    } else {
-
-        content.classList.remove('max-h-0');
-
-        content.classList.add('max-h-96');
-
-        if (svg) svg.style.transform = 'rotate(-90deg)';
-
-    }
-
+    content.classList.toggle('max-h-0', isOpen);
+    content.classList.toggle('max-h-96', !isOpen);
+    const svg = button.querySelector('svg');
+    if (svg) svg.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
 }
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('mobile-sort-btn')?.addEventListener('click', openSortModal);
+function hasActiveFilters() {
+    const params = new URLSearchParams(window.location.search);
+    return ['price_min','price_max','available','fast_delivery','seller_delivery','local_pickup','sort','feature'].some(key => params.has(key));
+}
 
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('mobile-sort-btn')?.addEventListener('click', openSortModal);
     document.getElementById('mobile-filter-btn')?.addEventListener('click', openFilterModal);
     initPriceSlider();
-    document.querySelectorAll('#hs-valid-toggle-switch, #hs-valid-toggle-switch2, #hs-valid-toggle-switch3, #hs-valid-toggle-switch4').forEach(checkbox => {
-
-        checkbox.addEventListener('change', function() {
-
-            const urlParams = new URLSearchParams(window.location.search);
-
-            const filterName = this.id.replace('hs-valid-toggle-switch', '').replace('2', '').replace('3', '').replace('4', '');
-
-            const filterMap = {
-
-                '': 'available',
-
-                '2': 'fast_delivery',
-
-                '3': 'seller_delivery',
-
-                '4': 'local_pickup'
-
-            };
-
-            if (this.checked) {
-
-                urlParams.set(filterMap[filterName], 'true');
-
-            } else {
-
-                urlParams.delete(filterMap[filterName]);
-
-            }
-
-            urlParams.set('page', 1);
-
-            const newQuery = urlParams.toString();
-
-            saveFilterToHistory(newQuery);
-
-            window.location.search = newQuery;
-
-        });
-
-    });
-    document.querySelectorAll('.feature-accordion-section').forEach(section => {
-
-        const anyChecked = section.querySelector('.feature-checkbox:checked');
-
-        if (anyChecked) {
-
-            const button = section.querySelector('button');
-
-            const content = section.querySelector('.feature-accordion-content');
-
-            const svg = section.querySelector('button svg');
-
-            if (content && content.classList.contains('max-h-0')) {
-
-                content.classList.remove('max-h-0');
-
-                content.classList.add('max-h-96');
-
-                if (svg) svg.style.transform = 'rotate(-90deg)';
-
-            }
-
-        }
-
-    });
-    document.querySelectorAll('#mobile-sort-modal, #mobile-filter-modal').forEach(modal => {
-
-        modal.addEventListener('touchmove', function(e) {
-
-            const content = this.querySelector('.overflow-y-auto');
-
-            if (content && content.scrollHeight > content.clientHeight) {
-
-                if (e.target.closest('.overflow-y-auto')) {
-
-                    e.stopPropagation();
-
-                } else {
-
-                    e.preventDefault();
-
-                }
-
-            } else {
-
-                e.preventDefault();
-
-            }
-
-        }, { passive: false });
-
-    });
-    document.querySelectorAll('#mobile-sort-modal .absolute.inset-0, #mobile-filter-modal .absolute.inset-0').forEach(overlay => {
-
-        overlay.addEventListener('click', function() {
-
-            if (this.closest('#mobile-sort-modal')) {
-
-                closeSortModal();
-
-            } else {
-
-                closeFilterModal();
-
-            }
-
-        });
-
-    });
-
     populateHistorySelect();
 
-});
-function hasActiveFilters() {
+    document.querySelectorAll('#hs-valid-toggle-switch,#hs-valid-toggle-switch2,#hs-valid-toggle-switch3,#hs-valid-toggle-switch4').forEach(checkbox => {
+        checkbox.addEventListener('change', function () {
+            const suffix = this.id.replace('hs-valid-toggle-switch', '');
+            const filterMap = {'': 'available', '2': 'fast_delivery', '3': 'seller_delivery', '4': 'local_pickup'};
+            const key = filterMap[suffix];
+            if (!key) return;
+            const params = new URLSearchParams(window.location.search);
+            setBooleanParam(params, key, this.checked);
+            params.set('page', '1');
+            const query = params.toString();
+            saveFilterToHistory(query);
+            window.location.search = query;
+        });
+    });
 
-    const urlParams = new URLSearchParams(window.location.search);
-
-    const activeFilters = ['price_min', 'price_max', 'available', 'fast_delivery', 'seller_delivery', 'local_pickup', 'sort'];
-
-    for (const filter of activeFilters) {
-
-        if (urlParams.has(filter)) {
-
-            return true;
-
+    document.querySelectorAll('.feature-accordion-section').forEach(section => {
+        if (!section.querySelector('.feature-checkbox:checked')) return;
+        const button = section.querySelector('button');
+        const content = section.querySelector('.feature-accordion-content');
+        const svg = button?.querySelector('svg');
+        if (content?.classList.contains('max-h-0')) {
+            content.classList.remove('max-h-0');
+            content.classList.add('max-h-96');
+            if (svg) svg.style.transform = 'rotate(-90deg)';
         }
+    });
 
-    }
-
-    return false;
-
-}
-document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('#mobile-sort-modal,#mobile-filter-modal').forEach(modal => {
+        modal.addEventListener('touchmove', function (event) {
+            const scrollArea = event.target.closest('.overflow-y-auto');
+            if (!scrollArea) event.preventDefault();
+        }, {passive: false});
+    });
 
     if (hasActiveFilters()) {
-
-        const filterBtn = document.getElementById('mobile-filter-btn');
-
-        if (filterBtn) {
-
-            let badge = filterBtn.querySelector('.bg-red-500');
-
-            if (!badge) {
-
-                badge = document.createElement('span');
-
-                badge.className = 'size-2 bg-red-500 rounded-full absolute -top-1 -right-1';
-
-                filterBtn.style.position = 'relative';
-
-                filterBtn.appendChild(badge);
-
-            }
-
+        const filterButton = document.getElementById('mobile-filter-btn');
+        if (filterButton && !filterButton.querySelector('.bg-red-500')) {
+            const badge = document.createElement('span');
+            badge.className = 'size-2 bg-red-500 rounded-full absolute -top-1 -right-1';
+            badge.setAttribute('aria-label', 'فیلتر فعال');
+            filterButton.appendChild(badge);
         }
-
     }
-
 });
-
 </script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const button = document.getElementById("load-more-btn");
-    const container = document.getElementById("products-container");
-    const wrapper = document.getElementById("load-more-wrapper");
-    const label = document.getElementById("load-more-text");
-    const spinner = document.getElementById("load-more-spinner");
-    const error = document.getElementById("load-more-error");
-    const nextPageLink = document.getElementById("seo-next-page");
-
+document.addEventListener('DOMContentLoaded', function () {
+    const button = document.getElementById('load-more-btn');
+    const container = document.getElementById('products-container');
+    const wrapper = document.getElementById('load-more-wrapper');
+    const label = document.getElementById('load-more-text');
+    const spinner = document.getElementById('load-more-spinner');
+    const error = document.getElementById('load-more-error');
+    const nextPageLink = document.getElementById('seo-next-page');
     if (!button || !container || !wrapper || !label || !spinner || !error) return;
 
     let isLoading = false;
     let finished = false;
     let observer = null;
-    const currentPage = Number(button.dataset.currentPage) || 1;
+    let currentPage = Number(button.dataset.currentPage) || 1;
     const loadedPages = new Set([currentPage]);
 
     async function loadNextPage() {
         if (isLoading || finished || !document.body.contains(button)) return;
-
         const nextPage = Number(button.dataset.nextPage);
         if (!Number.isInteger(nextPage) || nextPage <= currentPage || loadedPages.has(nextPage)) {
-            error.textContent = "شماره صفحه بعد معتبر نیست. صفحه را تازه‌سازی کنید.";
-            error.classList.remove("hidden");
+            error.textContent = 'شماره صفحه بعد معتبر نیست. صفحه را تازه‌سازی کنید.';
+            error.classList.remove('hidden');
             return;
         }
 
         isLoading = true;
         button.disabled = true;
-        spinner.classList.remove("hidden");
-        label.textContent = "در حال دریافت محصولات...";
-        error.classList.add("hidden");
+        spinner.classList.remove('hidden');
+        label.textContent = 'در حال دریافت محصولات...';
+        error.classList.add('hidden');
 
         try {
             const url = new URL(window.location.href);
-            url.searchParams.set("page", String(nextPage));
-
-            const response = await fetch(url.toString(), {
-                method: "GET",
-                credentials: "same-origin",
-                headers: { "Accept": "text/html" }
-            });
-
-            if (!response.ok) throw new Error("HTTP " + response.status);
-
+            url.searchParams.set('page', String(nextPage));
+            const response = await fetch(url.toString(), {method: 'GET', credentials: 'same-origin', headers: {'Accept': 'text/html'}});
+            if (!response.ok) throw new Error('HTTP ' + response.status);
             const html = await response.text();
-            const parsed = new DOMParser().parseFromString(html, "text/html");
-            const newCards = Array.from(parsed.querySelectorAll("#products-container .product-card"));
+            const parsed = new DOMParser().parseFromString(html, 'text/html');
+            const newCards = Array.from(parsed.querySelectorAll('#products-container .product-card'));
+            if (!newCards.length) throw new Error('No product cards found in the requested page');
 
-            if (!newCards.length) {
-                throw new Error("No product cards found in the requested page");
-            }
-
-            const existingLinks = new Set(
-                Array.from(container.querySelectorAll(".product-card a[href]"))
-                    .map(function (link) { return link.href; })
-            );
-
+            const existingLinks = new Set(Array.from(container.querySelectorAll('.product-card a[href]')).map(link => link.href));
             let addedCount = 0;
-            newCards.forEach(function (card) {
-                const link = card.querySelector("a[href]");
-                const href = link ? link.href : "";
-                if (href && existingLinks.has(href)) return;
-                if (href) existingLinks.add(href);
-
+            newCards.forEach(card => {
+                const link = card.querySelector('a[href]');
+                const href = link ? link.href : '';
+                if (!href || existingLinks.has(href)) return;
+                existingLinks.add(href);
                 const cardToAdd = document.importNode(card, true);
                 container.appendChild(cardToAdd);
-
-                if (typeof cardToAdd.animate === "function") {
-                    cardToAdd.animate(
-                        [
-                            { opacity: 0, transform: "translateY(12px) scale(0.985)" },
-                            { opacity: 1, transform: "translateY(0) scale(1)" }
-                        ],
-                        {
-                            duration: 360,
-                            delay: Math.min(addedCount * 35, 280),
-                            easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-                            fill: "both"
-                        }
-                    );
+                if (typeof cardToAdd.animate === 'function') {
+                    cardToAdd.animate([{opacity: 0, transform: 'translateY(12px) scale(.985)'}, {opacity: 1, transform: 'translateY(0) scale(1)'}], {
+                        duration: 360, delay: Math.min(addedCount * 35, 280), easing: 'cubic-bezier(.22,1,.36,1)', fill: 'both'
+                    });
                 }
                 addedCount += 1;
             });
+            if (!addedCount) throw new Error('No new unique products found');
 
-            if (addedCount === 0) {
-                finished = true;
-                observer?.disconnect();
-                wrapper.remove();
-                error.remove();
-                return;
-            }
-
+            currentPage = nextPage;
             loadedPages.add(nextPage);
-
-            const fetchedButton = parsed.querySelector("#load-more-btn");
+            const fetchedButton = parsed.querySelector('#load-more-btn');
             const fetchedNextPage = fetchedButton ? Number(fetchedButton.dataset.nextPage) : NaN;
-            const fetchedNextLink = parsed.querySelector("#seo-next-page");
-
+            const fetchedNextLink = parsed.querySelector('#seo-next-page');
             if (Number.isInteger(fetchedNextPage) && fetchedNextPage > nextPage) {
                 button.dataset.currentPage = String(nextPage);
                 button.dataset.nextPage = String(fetchedNextPage);
-                if (nextPageLink && fetchedNextLink) {
-                    nextPageLink.href = fetchedNextLink.href;
-                }
+                if (nextPageLink && fetchedNextLink) nextPageLink.href = fetchedNextLink.href;
             } else {
                 finished = true;
                 observer?.disconnect();
                 wrapper.remove();
                 error.remove();
-                if (nextPageLink) nextPageLink.remove();
+                nextPageLink?.remove();
             }
         } catch (exception) {
-            error.textContent = "دریافت محصولات ناموفق بود. دوباره تلاش کنید.";
-            error.classList.remove("hidden");
-            console.error("Load more products failed:", exception);
+            error.textContent = 'دریافت محصولات ناموفق بود. دوباره تلاش کنید.';
+            error.classList.remove('hidden');
+            console.error('Load more products failed:', exception);
         } finally {
             isLoading = false;
             if (document.body.contains(button)) {
                 button.disabled = false;
-                spinner.classList.add("hidden");
-                label.textContent = "نمایش محصولات بیشتر";
+                spinner.classList.add('hidden');
+                label.textContent = 'نمایش محصولات بیشتر';
             }
         }
     }
 
-    button.addEventListener("click", loadNextPage);
-
-    if ("IntersectionObserver" in window) {
-        observer = new IntersectionObserver(function (entries) {
-            if (entries.some(function (entry) { return entry.isIntersecting; })) {
-                loadNextPage();
-            }
-        }, {
-            root: null,
-            rootMargin: "1000px 0px",
-            threshold: 0
-        });
+    button.addEventListener('click', loadNextPage);
+    if ('IntersectionObserver' in window) {
+        observer = new IntersectionObserver(entries => {
+            if (entries.some(entry => entry.isIntersecting)) loadNextPage();
+        }, {root: null, rootMargin: '1000px 0px', threshold: 0});
         observer.observe(wrapper);
     }
 });
@@ -2529,137 +842,108 @@ document.addEventListener("DOMContentLoaded", function () {
 
 {% if group.description %}
 <script>
-/* بهینه‌سازی «معرفی محصول»: تصاویر، جدول‌ها، سرتیترها و لینک‌ها */
-document.addEventListener("DOMContentLoaded", function () {
-    var root = document.querySelector(".category-description");
+/* ساختاردهی محتوای مدیریت‌شده: بدون تولید محتوای جدید یا حذف متن */
+document.addEventListener('DOMContentLoaded', function () {
+    const root = document.querySelector('.category-description');
     if (!root) return;
+    const pageTitle = "{{ group.title|striptags|escapejs }}";
 
-    var pageTitle = "{{ group.title|escapejs }}";
-
-    /* 1) فقط یک h1 در صفحه: h1های داخل توضیحات به h2 تبدیل می‌شوند */
-    root.querySelectorAll("h1").forEach(function (h) {
-        var n = document.createElement("h2");
-        n.innerHTML = h.innerHTML;
-        n.className = h.className;
-        if (h.id) n.id = h.id;
-        h.replaceWith(n);
+    /* H1های داخل توضیحات به H2 تبدیل می‌شوند؛ بهتر است در ویرایشگر از ابتدا H2 استفاده شود. */
+    root.querySelectorAll('h1').forEach(heading => {
+        const replacement = document.createElement('h2');
+        replacement.innerHTML = heading.innerHTML;
+        replacement.className = heading.className;
+        if (heading.id) replacement.id = heading.id;
+        heading.replaceWith(replacement);
     });
 
-    /* 2) تصاویر: ابعاد یکسان، lazy، alt */
-    root.querySelectorAll("img").forEach(function (img, i) {
-        var inTable = !!img.closest("table");
-        img.removeAttribute("style");
-        img.removeAttribute("srcset");
-        img.removeAttribute("sizes");
-        img.setAttribute("width", inTable ? "56" : "800");
-        img.setAttribute("height", inTable ? "56" : "500");
-        img.setAttribute("loading", "lazy");
-        img.setAttribute("decoding", "async");
-        if (!img.getAttribute("alt") || !img.getAttribute("alt").trim()) {
-            img.setAttribute("alt", pageTitle ? (pageTitle + " - تصویر " + (i + 1)) : ("تصویر " + (i + 1)));
+    root.querySelectorAll('img').forEach((img, index) => {
+        const inTable = !!img.closest('table');
+        img.setAttribute('width', inTable ? '56' : '800');
+        img.setAttribute('height', inTable ? '56' : '500');
+        img.setAttribute('loading', 'lazy');
+        img.setAttribute('decoding', 'async');
+        if (!img.getAttribute('alt') || !img.getAttribute('alt').trim()) {
+            img.setAttribute('alt', (pageTitle || 'تصویر دسته‌بندی') + ' - تصویر ' + (index + 1));
         }
     });
 
-    /* 3) لینک‌ها: امنیت لینک‌های بیرونی */
-    root.querySelectorAll('a[target="_blank"]').forEach(function (a) {
-        a.setAttribute("rel", "noopener noreferrer");
+    root.querySelectorAll('a[target="_blank"]').forEach(anchor => {
+        anchor.setAttribute('rel', 'noopener noreferrer');
     });
 
-    /* 4) جدول‌ها */
-    function cellText(el) {
-        return (el.textContent || "").replace(/\s+/g, " ").trim();
-    }
-
+    function cellText(element) { return (element.textContent || '').replace(/\s+/g, ' ').trim(); }
     function firstRowIsHeader(table) {
-        var row = table.rows[0];
+        const row = table.rows[0];
         if (!row || row.cells.length < 2) return false;
-        return Array.prototype.every.call(row.cells, function (c) {
-            return c.tagName === "TH" || c.querySelector("strong, b");
-        });
+        return Array.prototype.every.call(row.cells, cell => cell.tagName === 'TH' || !!cell.querySelector('strong,b'));
     }
-
     function toTh(cell) {
-        if (cell.tagName === "TH") return cell;
-        var th = document.createElement("th");
-        Array.prototype.forEach.call(cell.attributes, function (a) { th.setAttribute(a.name, a.value); });
+        if (cell.tagName === 'TH') return cell;
+        const th = document.createElement('th');
+        Array.prototype.forEach.call(cell.attributes, attribute => th.setAttribute(attribute.name, attribute.value));
         th.innerHTML = cell.innerHTML;
         cell.replaceWith(th);
         return th;
     }
 
-    root.querySelectorAll("table").forEach(function (table) {
-        if (table.closest(".cd-table-wrap")) return;
+    root.querySelectorAll('table').forEach(table => {
+        if (table.closest('.cd-table-wrap')) return;
+        table.removeAttribute('style');
+        table.removeAttribute('width');
+        table.removeAttribute('height');
+        table.removeAttribute('border');
+        table.removeAttribute('cellpadding');
+        table.removeAttribute('cellspacing');
 
-        table.removeAttribute("style");
-        table.removeAttribute("width");
-        table.removeAttribute("height");
-        table.removeAttribute("border");
-        table.removeAttribute("cellpadding");
-        table.removeAttribute("cellspacing");
-
-        /* سرتیتر معنایی (thead/th) برای گوگل */
-        var hasThead = !!table.tHead && table.tHead.rows.length > 0;
+        let hasThead = !!(table.tHead && table.tHead.rows.length);
         if (!hasThead && firstRowIsHeader(table)) {
-            var firstRow = table.rows[0];
-            var thead = document.createElement("thead");
+            const firstRow = table.rows[0];
+            const thead = document.createElement('thead');
             Array.prototype.slice.call(firstRow.cells).forEach(toTh);
             thead.appendChild(firstRow);
             table.insertBefore(thead, table.firstChild);
             hasThead = true;
         }
-        if (hasThead) {
-            Array.prototype.forEach.call(table.tHead.querySelectorAll("th"), function (th) {
-                th.setAttribute("scope", "col");
-            });
-        }
+        if (hasThead) Array.prototype.forEach.call(table.tHead.querySelectorAll('th'), th => th.setAttribute('scope', 'col'));
 
-        /* آیا می‌توان آن را در موبایل به کارت تبدیل کرد؟ */
-        var simple = hasThead &&
-            table.tHead.rows.length === 1 &&
-            !table.querySelector("[colspan], [rowspan]");
-
-        var headers = [];
-        if (simple) {
+        let isSimpleTable = hasThead && table.tHead.rows.length === 1 && !table.querySelector('[colspan],[rowspan]');
+        let headers = [];
+        if (isSimpleTable) {
             headers = Array.prototype.map.call(table.tHead.rows[0].cells, cellText);
-            simple = headers.length >= 2 && headers.every(Boolean);
+            isSimpleTable = headers.length >= 2 && headers.every(Boolean);
         }
-
-        if (simple) {
-            Array.prototype.forEach.call(table.tBodies, function (tb) {
-                Array.prototype.forEach.call(tb.rows, function (tr) {
-                    if (tr.cells.length !== headers.length) { simple = false; return; }
+        if (isSimpleTable) {
+            Array.prototype.forEach.call(table.tBodies, body => {
+                Array.prototype.forEach.call(body.rows, row => {
+                    if (row.cells.length !== headers.length) isSimpleTable = false;
+                });
+            });
+        }
+        if (isSimpleTable) {
+            Array.prototype.forEach.call(table.tBodies, body => {
+                Array.prototype.forEach.call(body.rows, row => {
+                    Array.prototype.forEach.call(row.cells, (cell, index) => cell.setAttribute('data-label', headers[index]));
                 });
             });
         }
 
-        if (simple) {
-            Array.prototype.forEach.call(table.tBodies, function (tb) {
-                Array.prototype.forEach.call(tb.rows, function (tr) {
-                    Array.prototype.forEach.call(tr.cells, function (c, idx) {
-                        c.setAttribute("data-label", headers[idx]);
-                    });
-                });
-            });
-        }
-
-        var wrap = document.createElement("div");
-        wrap.className = "cd-table-wrap" + (simple ? " cd-cards" : "");
-        wrap.setAttribute("role", "region");
-        wrap.setAttribute("tabindex", "0");
-        wrap.setAttribute("aria-label", "جدول مشخصات");
-        table.parentNode.insertBefore(wrap, table);
-        wrap.appendChild(table);
-
-        if (!simple) {
-            var hint = document.createElement("div");
-            hint.className = "cd-scroll-hint";
-            hint.setAttribute("aria-hidden", "true");
-            hint.textContent = "برای دیدن بقیه جدول به چپ و راست بکشید";
-            wrap.parentNode.insertBefore(hint, wrap.nextSibling);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'cd-table-wrap' + (isSimpleTable ? ' cd-cards' : '');
+        wrapper.setAttribute('role', 'region');
+        wrapper.setAttribute('tabindex', '0');
+        wrapper.setAttribute('aria-label', 'جدول مشخصات');
+        table.parentNode.insertBefore(wrapper, table);
+        wrapper.appendChild(table);
+        if (!isSimpleTable) {
+            const hint = document.createElement('div');
+            hint.className = 'cd-scroll-hint';
+            hint.setAttribute('aria-hidden', 'true');
+            hint.textContent = 'برای دیدن بقیه جدول به چپ و راست بکشید';
+            wrapper.parentNode.insertBefore(hint, wrapper.nextSibling);
         }
     });
 });
 </script>
 {% endif %}
-
-{% endblock %}
+{% endblock content %}
