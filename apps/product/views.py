@@ -752,6 +752,7 @@ def load_more_comments(request, product_slug):
             'success': False,
             'error': str(e)
         })
+
 def show_by_filter(request, slug):
     category = get_object_or_404(Category, slug=slug)
 
@@ -931,6 +932,7 @@ def show_by_filter(request, slug):
         "product_app/shop/shop.html",
         context,
     )
+
 
 
 
