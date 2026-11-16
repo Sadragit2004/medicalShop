@@ -752,7 +752,6 @@ def load_more_comments(request, product_slug):
             'success': False,
             'error': str(e)
         })
-
 def show_by_filter(request, slug):
     category = get_object_or_404(Category, slug=slug)
 
@@ -883,7 +882,7 @@ def show_by_filter(request, slug):
         "name": category.title,
         "description": category.description or "",
         "url": request.build_absolute_uri(),
-        "numberOfItems": len(page_obj),
+        "numberOfItems": paginator.count,
         "itemListOrder": "https://schema.org/ItemListUnordered",
         "itemListElement": [],
     }
@@ -898,32 +897,11 @@ def show_by_filter(request, slug):
             product.get_absolute_url()
         )
 
-        product_data = {
-    "@type": "Product",
-    "name": product.title,
-    "url": product_url,
-    "offers": {
-        "@type": "Offer",
-        "url": product_url,
-        "priceCurrency": "IRR",
-        "price": str(product.final_price),
-        "availability": (
-            "https://schema.org/InStock"
-            if product.stock > 0
-            else "https://schema.org/OutOfStock"
-        ),
-    },
-}
-
-        if product.mainImage:
-            product_data["image"] = request.build_absolute_uri(
-                product.mainImage.url
-            )
-
         item_list["itemListElement"].append({
             "@type": "ListItem",
             "position": position,
-            "item": product_data,
+            "name": product.title,
+            "url": product_url,
         })
 
     item_list_json = json.dumps(
@@ -953,6 +931,7 @@ def show_by_filter(request, slug):
         "product_app/shop/shop.html",
         context,
     )
+
 
 
 
