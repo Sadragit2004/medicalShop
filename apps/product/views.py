@@ -899,10 +899,21 @@ def show_by_filter(request, slug):
         )
 
         product_data = {
-            "@type": "Product",
-            "name": product.title,
-            "url": product_url,
-        }
+    "@type": "Product",
+    "name": product.title,
+    "url": product_url,
+    "offers": {
+        "@type": "Offer",
+        "url": product_url,
+        "priceCurrency": "IRR",
+        "price": str(product.final_price),
+        "availability": (
+            "https://schema.org/InStock"
+            if product.stock > 0
+            else "https://schema.org/OutOfStock"
+        ),
+    },
+}
 
         if product.mainImage:
             product_data["image"] = request.build_absolute_uri(
