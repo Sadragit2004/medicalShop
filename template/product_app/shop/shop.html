@@ -2,6 +2,7 @@
 
 {% load humanize %}
 
+
 {% block meta1 %}
 
 <title>{{ group.title }} - خرید ارزان ترین قیمت از سایا مِد</title>
@@ -19,9 +20,7 @@
 <meta property="og:url" content="{{ request.build_absolute_uri }}">
 
 {% if group.image %}
-
 <meta property="og:image" content="{{ site_url }}{{ group.image.url }}">
-
 {% endif %}
 
 <meta property="og:site_name" content="{{ site_name }}">
@@ -33,76 +32,15 @@
 <meta name="twitter:description" content="{{ group.description|striptags|truncatechars:150 }}">
 
 {% if group.image %}
-
 <meta name="twitter:image" content="{{ site_url }}{{ group.image.url }}">
-
 {% endif %}
 
 <script type="application/ld+json">
-
-{
-
-  "@context": "https://schema.org",
-
-  "@type": "ItemList",
-
-  "name": "{{ group.title }}",
-
-  "description": "{{ group.description|striptags|truncatechars:150 }}",
-
-  "url": "{{ request.build_absolute_uri }}",
-
-  {% if group.image %}
-
-  "image": "{{ site_url }}{{ group.image.url }}",
-
-  {% endif %}
-
-  "numberOfItems": {{ total_products }},
-
-  "itemListOrder": "https://schema.org/ItemListUnordered",
-
-  "itemListElement": [
-
-    {% for product in products|slice:":10" %}
-
-    {
-
-      "@type": "ListItem",
-
-      "position": {{ forloop.counter }},
-
-      "url": "{{ site_url }}{{ product.get_absolute_url }}",
-
-      "name": "{{ product.title }}",
-
-      "image": "{{ site_url }}{{ product.mainImage.url }}",
-
-      "offers": {
-
-        "@type": "Offer",
-
-        "priceCurrency": "IRR",
-
-        "price": "{{ product.final_price }}",
-
-        "availability": "http://schema.org/{% if product.quantity > 0 %}InStock{% else %}OutOfStock{% endif %}",
-
-        "url": "{{ site_url }}{{ product.get_absolute_url }}"
-
-      }
-
-    }{% if not forloop.last %},{% endif %}
-
-    {% endfor %}
-
-  ]
-
-}
-
+{{ item_list_json|safe }}
 </script>
 
 {% endblock meta1 %}
+
 
 {% block content %}
 

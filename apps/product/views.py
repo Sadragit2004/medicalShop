@@ -752,6 +752,7 @@ def load_more_comments(request, product_slug):
             'success': False,
             'error': str(e)
         })
+
 def show_by_filter(request, slug):
     category = get_object_or_404(Category, slug=slug)
 
@@ -765,7 +766,7 @@ def show_by_filter(request, slug):
         .distinct()
     )
 
-    # قیمت پایه؛ بدون تغییر در منطق قبلی
+    # Base price
     price_subquery = (
         ProductSaleType.objects.filter(
             product=OuterRef("pk"),
@@ -780,6 +781,7 @@ def show_by_filter(request, slug):
         .filter(price__isnull=False)
     )
 
+    # Active discount
     now = timezone.now()
 
     discount_subquery = (
@@ -809,7 +811,7 @@ def show_by_filter(request, slug):
         ),
     )
 
-    # حداقل و حداکثر قیمت؛ مثل قبل
+    # Price range
     price_stats = ProductSaleType.objects.filter(
         product__in=products,
         isActive=True,
@@ -821,7 +823,7 @@ def show_by_filter(request, slug):
     price_min = price_stats["min_price"] or 0
     price_max = price_stats["max_price"] or 0
 
-    # فیلترهای قبلی
+    # Existing filters
     filter_obj = ProductFilter(request.GET, queryset=products)
     filtered_products = filter_obj.qs
 
@@ -845,7 +847,7 @@ def show_by_filter(request, slug):
             price__lte=req_max,
         )
 
-    # فقط فیلتر جدید موجودی
+    # Availability filter
     available = request.GET.get("available", "").strip().lower()
 
     if available in ("true", "1", "on", "yes"):
@@ -853,7 +855,7 @@ def show_by_filter(request, slug):
             stock__gt=0,
         )
 
-    # مرتب‌سازی قبلی
+    # Sorting
     sort = request.GET.get("sort", "1")
 
     if sort in ("3", "cheap"):
@@ -865,13 +867,59 @@ def show_by_filter(request, slug):
 
     filtered_products = filtered_products.distinct()
 
-    # صفحه‌بندی قبلی
+    # Pagination
     paginator = Paginator(filtered_products, 12)
     page_obj = paginator.get_page(request.GET.get("page", 1))
 
+    # Brands
     brands = Brand.objects.filter(
         products__in=filtered_products,
     ).distinct()
+
+    # JSON-LD: ItemList
+    item_list = {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": category.title,
+        "description": category.description or "",
+        "url": request.build_absolute_uri(),
+        "numberOfItems": len(page_obj),
+        "itemListOrder": "https://schema.org/ItemListUnordered",
+        "itemListElement": [],
+    }
+
+    if category.image:
+        item_list["image"] = request.build_absolute_uri(
+            category.image.url
+        )
+
+    for position, product in enumerate(page_obj.object_list, start=1):
+        product_url = request.build_absolute_uri(
+            product.get_absolute_url()
+        )
+
+        product_data = {
+            "@type": "Product",
+            "name": product.title,
+            "url": product_url,
+        }
+
+        if product.mainImage:
+            product_data["image"] = request.build_absolute_uri(
+                product.mainImage.url
+            )
+
+        item_list["itemListElement"].append({
+            "@type": "ListItem",
+            "position": position,
+            "item": product_data,
+        })
+
+    item_list_json = json.dumps(
+        item_list,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
 
     context = {
         "products": page_obj,
@@ -886,6 +934,7 @@ def show_by_filter(request, slug):
         "total_products": paginator.count,
         "slug": slug,
         "available": available in ("true", "1", "on", "yes"),
+        "item_list_json": item_list_json,
     }
 
     return render(
@@ -893,6 +942,7 @@ def show_by_filter(request, slug):
         "product_app/shop/shop.html",
         context,
     )
+
 
 
 def show_brand_products(request, slug):
