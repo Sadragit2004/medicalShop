@@ -1,4 +1,5 @@
 {# کارت تکی محصول؛ فیلدها مطابق قالب اصلی: title و mainImage #}
+{% load humanize render_partial %}
 <article class="product-card group">
     <a href="{{ product.get_absolute_url }}" aria-label="مشاهده {{ product.title }}">
         {% if product.mainImage %}
